@@ -9,6 +9,8 @@ class OddsItem(BaseModel):
     team_home: str
     team_away: str
     match_time: Optional[str] = None
+    sport: Optional[str] = "Soccer"
+    league: Optional[str] = None
 
 class ValueBetOpportunity(BaseModel):
     match_name: str
