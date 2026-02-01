@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=smartproto
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    # Mount source code for live editing (optional, good for dev)
+    # volumes:
+    #   - ./backend/app:/app/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@db/smartproto
+    depends_on:
+      - db
+    restart: always
+
+volumes:
+  postgres_data:

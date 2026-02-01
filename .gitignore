@@ -1,0 +1,24 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+*.db
+debug_trace.log
+
+# Node
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Backend
+backend/venv/
+backend/.env
+backend/test.db
