@@ -21,6 +21,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://user:password@db/smartproto
+      - PINNACLE_API_KEY=${PINNACLE_API_KEY}
     depends_on:
       - db
     restart: always

@@ -12,14 +12,24 @@ class SystemConfig(BaseModel):
     
     @classmethod
     def load(cls) -> 'SystemConfig':
-        if not os.path.exists(CONFIG_FILE_PATH):
-            return cls()
-        try:
-            with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            return cls(**data)
-        except Exception:
-            return cls()
+        # Priority 1: Environment Variables
+        env_key = os.getenv("PINNACLE_API_KEY")
+        
+        # Priority 2: JSON File
+        file_data = {}
+        if os.path.exists(CONFIG_FILE_PATH):
+            try:
+                with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
+                    file_data = json.load(f)
+            except Exception:
+                pass
+        
+        # Merge (Env overrides File)
+        config = cls(**file_data)
+        if env_key:
+            config.pinnacle_api_key = env_key
+            
+        return config
 
     def save(self):
         with open(CONFIG_FILE_PATH, 'w', encoding='utf-8') as f:
