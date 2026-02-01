@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import os
 from typing import List
 from app.schemas.odds import ValueBetOpportunity
 from app.services.pinnacle_api import PinnacleService
@@ -33,6 +34,10 @@ async def get_positive_ev_bets(db: AsyncSession = Depends(get_db)):
         
         if sys_config and sys_config.pinnacle_api_key:
             pin_service.set_api_key(sys_config.pinnacle_api_key)
+        else:
+            env_key = os.getenv("PINNACLE_API_KEY")
+            if env_key:
+                pin_service.set_api_key(env_key)
             
         # 1. Fetch & Analyze (Same logic as before)
         pin_odds = pin_service.fetch_odds()
@@ -73,7 +78,9 @@ async def get_positive_ev_bets(db: AsyncSession = Depends(get_db)):
                         expected_value=opp.expected_value,
                         kelly_pct=opp.kelly_pct
                     )
+
                     db.add(db_pick)
+                    new_opportunities.append(opp)
 
         if new_opportunities:
             await db.commit()

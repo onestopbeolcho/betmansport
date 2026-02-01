@@ -15,6 +15,8 @@ $DEST = "${REMOTE_USER}@${IP}:~/app/"
 
 # Copy docker-compose
 scp -i $KEY docker-compose.yml $DEST
+# Copy .env
+scp -i $KEY .env $DEST
 # Copy backend folder
 scp -i $KEY -r backend $DEST
 

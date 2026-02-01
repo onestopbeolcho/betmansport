@@ -1,0 +1,2256 @@
+The Odds API를 단 3단계 로 시작해 보세요.
+
+1단계
+API 키는 이메일로 받으세요
+계획 보기
+
+
+2단계
+시즌 중인 스포츠 목록을 확인하세요
+
+세부
+
+GET /v4/sports?apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+{
+  "key": "americanfootball_nfl",
+  "group": "American Football",
+  "title": "NFL",
+  "description": "US Football",
+  "active": true,
+  "has_outrights": false
+},
+...
+
+
+3단계
+2단계에서 얻은 스포츠 키를 사용하여 여러 북메이커의 예정된 경기 목록과 배당률을 확인하세요.
+
+
+매개변수를 사용하여 oddsFormat배당률을 소수점 형식 또는 미국식 형식으로 표시할 수 있습니다.
+
+세부
+
+GET /v4/sports/americanfootball_nfl/odds?regions=us&oddsFormat=american&apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+{
+  "id": "bda33adca828c09dc3cac3a856aef176",
+  "sport_key": "americanfootball_nfl",
+  "commence_time": "2021-09-10T00:20:00Z",
+  "home_team": "Tampa Bay Buccaneers",
+  "away_team": "Dallas Cowboys",
+  "bookmakers": [
+  {
+    "key": "fanduel",
+    "title": "FanDuel",
+    "last_update": "2021-06-10T10:46:09Z",
+    "markets": [
+    {
+      "key": "h2h",
+      "outcomes": [
+        {
+          "name": "Dallas Cowboys", 
+          "price": 240 
+        },
+        {
+          "name": "Tampa Bay Buccaneers", 
+          "price": -303
+        }
+      ]
+  ...
+
+
+#주인
+모든 요청은 호스트를 사용합니다.https://api.the-odds-api.com
+
+IPv6가 필요한 연결은 다음을 사용할 수 있습니다.https://ipv6-api.the-odds-api.com
+
+
+#스포츠를 즐기세요
+시즌 중인 스포츠 종목 목록을 반환합니다. 스포츠 키는 다른 엔드포인트의 매개변수로 사용할 수 있습니다 sport. 이 엔드포인트는 사용량 할당량에 포함되지 않습니다.
+
+#엔드포인트
+GET /v4/sports/?apiKey={apiKey}
+
+#매개변수
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+모두   선택 사항 - 이 매개변수를 true( )로 설정하면 all=true시즌 중 스포츠와 시즌 외 스포츠 목록이 모두 반환됩니다.
+
+
+브라우저에서 직접 사용해 보세요.
+
+https://api.the-odds-api.com/v4/sports/?apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+JSON Viewer 와 같은 보기 좋게 정리해주는 도구를 사용하면 브라우저에서 JSON을 더 쉽게 볼 수 있습니다. (새 창에서 열립니다)크롬용
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/?apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+#예시 답변
+[
+    {
+        "key": "americanfootball_ncaaf",
+        "group": "American Football",
+        "title": "NCAAF",
+        "description": "US College Football",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "americanfootball_nfl",
+        "group": "American Football",
+        "title": "NFL",
+        "description": "US Football",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "americanfootball_nfl_super_bowl_winner",
+        "group": "American Football",
+        "title": "NFL Super Bowl Winner",
+        "description": "Super Bowl Winner 2021/2022",
+        "active": true,
+        "has_outrights": true
+    },
+    {
+        "key": "aussierules_afl",
+        "group": "Aussie Rules",
+        "title": "AFL",
+        "description": "Aussie Football",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "baseball_mlb",
+        "group": "Baseball",
+        "title": "MLB",
+        "description": "Major League Baseball",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "basketball_nba",
+        "group": "Basketball",
+        "title": "NBA",
+        "description": "US Basketball",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "cricket_test_match",
+        "group": "Cricket",
+        "title": "Test Matches",
+        "description": "International Test Matches",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "golf_masters_tournament_winner",
+        "group": "Golf",
+        "title": "Masters Tournament Winner",
+        "description": "2022 WInner",
+        "active": true,
+        "has_outrights": true
+    },
+    {
+        "key": "golf_the_open_championship_winner",
+        "group": "Golf",
+        "title": "The Open Winner",
+        "description": "2021 WInner",
+        "active": true,
+        "has_outrights": true
+    },
+    {
+        "key": "golf_us_open_winner",
+        "group": "Golf",
+        "title": "US Open Winner",
+        "description": "2021 WInner",
+        "active": true,
+        "has_outrights": true
+    },
+    {
+        "key": "icehockey_nhl",
+        "group": "Ice Hockey",
+        "title": "NHL",
+        "description": "US Ice Hockey",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "mma_mixed_martial_arts",
+        "group": "Mixed Martial Arts",
+        "title": "MMA",
+        "description": "Mixed Martial Arts",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "rugbyleague_nrl",
+        "group": "Rugby League",
+        "title": "NRL",
+        "description": "Aussie Rugby League",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_australia_aleague",
+        "group": "Soccer",
+        "title": "A-League",
+        "description": "Aussie Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_brazil_campeonato",
+        "group": "Soccer",
+        "title": "Brazil Série A",
+        "description": "Brasileirão Série A",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_denmark_superliga",
+        "group": "Soccer",
+        "title": "Denmark Superliga",
+        "description": "",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_finland_veikkausliiga",
+        "group": "Soccer",
+        "title": "Veikkausliiga - Finland",
+        "description": "",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_japan_j_league",
+        "group": "Soccer",
+        "title": "J League",
+        "description": "Japan Soccer League",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_league_of_ireland",
+        "group": "Soccer",
+        "title": "League of Ireland",
+        "description": "Airtricity League Premier Division",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_norway_eliteserien",
+        "group": "Soccer",
+        "title": "Eliteserien - Norway",
+        "description": "Norwegian Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_spain_segunda_division",
+        "group": "Soccer",
+        "title": "La Liga 2 - Spain",
+        "description": "Spanish Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_sweden_allsvenskan",
+        "group": "Soccer",
+        "title": "Allsvenskan - Sweden",
+        "description": "Swedish Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_sweden_superettan",
+        "group": "Soccer",
+        "title": "Superettan - Sweden",
+        "description": "Swedish Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_uefa_european_championship",
+        "group": "Soccer",
+        "title": "UEFA Euro 2020",
+        "description": "UEFA European Championship",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "soccer_usa_mls",
+        "group": "Soccer",
+        "title": "MLS",
+        "description": "Major League Soccer",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "tennis_atp_french_open",
+        "group": "Tennis",
+        "title": "ATP French Open",
+        "description": "Men's Singles",
+        "active": true,
+        "has_outrights": false
+    },
+    {
+        "key": "tennis_wta_french_open",
+        "group": "Tennis",
+        "title": "WTA French Open",
+        "description": "Women's Singles",
+        "active": true,
+        "has_outrights": false
+    }
+]
+#응답 헤더
+/sports 엔드포인트 호출은 할당량 사용량에 영향을 미치지 않습니다. 다음 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+이 엔드포인트는 사용량 할당량에 포함되지 않습니다.
+
+
+#GET 확률
+지정된 스포츠, 지역 및 시장에 대한 예정된 경기와 진행 중인 경기의 목록과 최근 배당률을 반환합니다.
+
+#엔드포인트
+GET /v4/sports/{sport}/odds/?apiKey={apiKey}®ions={regions}&markets={markets}
+
+#매개변수
+스포츠   키는 /sports 엔드포인트를 호출하여 얻습니다. 이 키 upcoming는 항상 유효하며, 모든 스포츠 종목의 현재 진행 중인 경기와 향후 8개의 예정된 경기를 반환합니다.
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+regions는   반환할 북메이커를 결정합니다. 예를 들어, us, us2(미국), uk(영국), au(호주) 및 (유럽)을 지정할 수 있습니다. 쉼표로 구분하여 여러 지역을 지정할 수 있습니다. 지역별 북메이커 목록을eu 참조하십시오 .
+
+markets   (선택 사항) - 반환할 배당률 시장을 결정합니다. 기본값은 h2h(승리승부/머니라인)입니다. 유효한 시장은 h2h(머니라인), spreads(핸디캡), totals(오버/언더) , outrights(선물)입니다. 쉼표로 구분하여 여러 시장을 지정할 수 있습니다. 현재 spreads이러한 totals시장은 주로 미국 스포츠 및 북메이커에서 이용 가능합니다. 지정된 각 시장은 지역별 사용 할당량에서 1의 비용이 발생합니다.
+
+h2h관련 베팅 거래소(Betfair, Matchbook 등)의 경우, 결과 에 레이 배당률이 자동으로 포함됩니다 . 레이 배당률에는 h2h_lay마켓 키가 있습니다.
+
+outrights골프와 같이 승패 예측 시장이 있는 스포츠의 경우, 별도로 지정하지 않으면 기본 시장이 적용됩니다 . 승패 예측에 대한 레이 배당률( outrights_lay)은 관련 거래소에서 자동으로 제공됩니다.
+
+더 자세한 정보는 베팅 시장 설명을 참조하세요 .
+
+dateFormat (   선택 사항) - 응답의 타임스탬프 형식을 결정합니다. 유효한 값은 unix및 iso(ISO 8601)입니다. 기본값은 입니다 iso.
+
+oddsFormat   (선택 사항) - 응답에서 배당률 형식을 결정합니다. 유효한 값은 decimal및 입니다 american. 기본값은 입니다 decimal. 로 설정하면 american일부 북메이커의 경우 반올림 오류로 인해 약간의 차이가 발생할 수 있습니다.
+
+eventIds   (선택 사항) - 쉼표로 구분된 게임 ID입니다. 지정된 ID를 가진 게임만 반환하도록 응답을 필터링합니다.
+
+북메이커 (   선택 사항) - 반환할 북메이커 목록을 쉼표로 구분하여 입력합니다. bookmakers및 가 regions모두 지정된 경우 bookmakers가 우선합니다. 북메이커는 어느 지역이든 상관없습니다. 북메이커 10개 그룹은 1개 지역으로 간주됩니다. 예를 들어, 북메이커를 최대 10개 지정하면 1개 지역으로, 11개에서 20개 사이 지정하면 2개 지역으로 계산됩니다.
+
+commenceTimeFrom   (선택 사항) - 이 매개변수 이후에 시작하는 게임만 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식(예: 2023-09-09T00:00:00Z)입니다. 게임이 '예정됨'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+commenceTimeTo   (선택 사항) - 이 매개변수를 기준으로 시작하거나 그 이전에 시작하는 경기를 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식이며, 예: 2023-09-10T23:59:59Z입니다. 경기가 '예정'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+includeLinks   (선택 사항) - true이 값을 선택하면 응답에 이벤트, 마켓 및 베팅 내역에 대한 북메이커 링크가 포함됩니다(사용 가능한 경우). 유효한 값은 true또는 입니다.false
+
+includeSids (   선택 사항) - true이 값을 선택하면 응답에 이벤트, 시장 및 결과에 대한 소스 ID(북메이커 ID)가 포함됩니다(사용 가능한 경우). 유효한 값은 true또는 입니다 false. 이 필드는 주별 변형이나 모바일 앱 링크를 처리하기 위한 자체 링크를 구성하는 데 유용할 수 있습니다.
+
+includeBetLimits   (선택 사항) - true이 옵션을 선택하면 응답에 각 베팅 옵션의 베팅 한도가 포함됩니다. 주로 베팅 거래소에서 사용 가능합니다. 유효한 값은 true또는 입니다.false
+
+includeRotationNumbers   (선택 사항) - true이 값을 입력하면 응답에 홈 및 어웨이 로테이션 번호가 포함됩니다(사용 가능한 경우). 자세한 내용은 이 링크를 참조하세요 . 유효한 값은 true또는 입니다 false.
+
+
+브라우저에서 직접 사용해 보세요.
+
+https://api.the-odds-api.com/v4/sports/upcoming/odds/?regions=...(새 창에서 열립니다)
+
+JSON Viewer 와 같은 보기 좋게 정리해주는 도구를 사용하면 브라우저에서 JSON을 더 쉽게 볼 수 있습니다. (새 창에서 열립니다)크롬용
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey=YOUR_API_KEY®ions=us&markets=h2h,spreads&oddsFormat=american(새 창에서 열립니다)
+
+#예시 답변
+[
+    {
+        "id": "bda33adca828c09dc3cac3a856aef176",
+        "sport_key": "americanfootball_nfl",
+        "commence_time": "2021-09-10T00:20:00Z",
+        "home_team": "Tampa Bay Buccaneers",
+        "away_team": "Dallas Cowboys",
+        "bookmakers": [
+            {
+                "key": "unibet",
+                "title": "Unibet",
+                "last_update": "2021-06-10T13:33:18Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -303
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -109,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -111,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "caesars",
+                "title": "Caesars",
+                "last_update": "2021-06-10T13:33:48Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -278
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "sugarhouse",
+                "title": "SugarHouse",
+                "last_update": "2021-06-10T13:34:07Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -305
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -109,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -112,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "draftkings",
+                "title": "DraftKings",
+                "last_update": "2021-06-10T13:33:26Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -305
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -109,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -112,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "pointsbetus",
+                "title": "PointsBet (US)",
+                "last_update": "2021-06-10T13:36:20Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 230
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -291
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "betonlineag",
+                "title": "BetOnline.ag",
+                "last_update": "2021-06-10T13:37:29Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -286
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -105,
+                                "point": 6
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -115,
+                                "point": -6
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "betmgm",
+                "title": "BetMGM",
+                "last_update": "2021-06-10T13:32:45Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 225
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -275
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "betrivers",
+                "title": "BetRivers",
+                "last_update": "2021-06-10T13:35:33Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -305
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -109,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -112,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "fanduel",
+                "title": "FanDuel",
+                "last_update": "2021-06-10T13:33:23Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 225
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -275
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "barstool",
+                "title": "Barstool Sportsbook",
+                "last_update": "2021-06-10T13:34:48Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -305
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -109,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -112,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "bovada",
+                "title": "Bovada",
+                "last_update": "2021-06-10T13:35:51Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -290
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "williamhill_us",
+                "title": "William Hill (US)",
+                "last_update": "2021-06-10T13:34:10Z",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": 240
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -280
+                            }
+                        ]
+                    },
+                    {
+                        "key": "spreads",
+                        "outcomes": [
+                            {
+                                "name": "Dallas Cowboys",
+                                "price": -110,
+                                "point": 6.5
+                            },
+                            {
+                                "name": "Tampa Bay Buccaneers",
+                                "price": -110,
+                                "point": -6.5
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+사용량 할당량 비용은 지역별, 시장별로 1입니다.
+
+cost = [number of markets specified] x [number of regions specified]
+
+예시
+
+시장 1개, 지역 1개,
+비용:
+예시 1개/v4/sports/americanfootball_nfl/odds?markets=h2h&regions=us&...
+
+3개 시장, 1개 지역
+비용: 3
+예시/v4/sports/americanfootball_nfl/odds?markets=h2h,spreads,totals&regions=us&...
+
+1개 시장, 3개 지역
+비용: 3
+예시/v4/sports/soccer_epl/odds?markets=h2h&regions=us,uk,eu&...
+
+3개 시장, 3개 지역
+비용: 9
+예시:/v4/sports/basketball_nba/odds?markets=h2h,spreads,totals&regions=us,uk,au&...
+
+
+할당량 사용량 추적
+
+사용량 크레딧을 추적하기 위해 모든 API 호출에는 다음과 같은 응답 헤더가 포함됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#더 자세한 정보
+/odds 엔드포인트에서 반환되는 이벤트 목록은 주요 북메이커들이 제공하는 이벤트 목록과 동일합니다. 일반적으로 현재 라운드의 경기가 포함됩니다.
+경기 일정이 한 라운드 종료 후 일시적으로 제공되지 않을 수 있으며, 이후 북메이커들은 다음 라운드 경기 목록을 제공하기 시작합니다.
+해당 스포츠가 시즌 중이 아닐 경우 이벤트 참여가 불가능할 수 있습니다. 인기 스포츠의 경우, 베팅 업체들은 몇 달 전부터 새로운 시즌 이벤트를 공지하기 시작할 수 있습니다.
+반환되는 이벤트가 없으면 해당 요청은 사용량 할당량에 포함되지 않습니다.
+이벤트가 진행 중인지 여부를 확인하려면 `/odds` 엔드포인트를 commence_time사용할 수 있습니다. ` commence_time/odds`가 현재 시간보다 작으면 이벤트는 진행 중입니다. `/odds` 엔드포인트는 완료된 이벤트를 반환하지 않습니다.
+
+
+#점수를 받으세요
+지정된 스포츠 종목의 예정된 경기, 진행 중인 경기 및 최근 종료된 경기 목록을 반환합니다. 진행 중인 경기와 최근 종료된 경기에는 점수가 포함됩니다. 최대 3일 전 경기까지 반환할 수 있습니다 daysFrom. 실시간 점수는 약 30초마다 업데이트됩니다.
+
+점수 집계 기능은 일부 스포츠 종목에 적용되며 점차 더 많은 스포츠 종목으로 확대될 예정입니다. 현재 지원되는 스포츠 종목 및 리그 목록을 확인하세요 .
+
+
+#엔드포인트
+GET /v4/sports/{sport}/scores/?apiKey={apiKey}&daysFrom={daysFrom}&dateFormat={dateFormat}
+
+#매개변수
+스포츠   /sports 엔드포인트를 호출하여 얻은 스포츠 키입니다.
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+daysFrom   (선택 사항) - 완료된 게임을 반환할 과거 일수를 지정합니다. 유효한 값은 부터 까지의 정수입니다 1. 3이 매개변수가 누락된 경우 진행 중인 게임과 예정된 게임만 반환됩니다.
+
+dateFormat (   선택 사항) - 응답의 타임스탬프 형식을 결정합니다. 유효한 값은 unix및 iso(ISO 8601)입니다. 기본값은 입니다 iso.
+
+eventIds   (선택 사항) - 쉼표로 구분된 게임 ID입니다. 지정된 게임 ID에 해당하는 게임만 응답에 포함되도록 필터링합니다.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/basketball_nba/scores/?daysFrom=1&apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+#예시 답변
+[
+    {
+        "id": "572d984e132eddaac3da93e5db332e7e",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T03:10:38Z",
+        "completed": true,
+        "home_team": "Sacramento Kings",
+        "away_team": "Oklahoma City Thunder",
+        "scores": [
+            {
+                "name": "Sacramento Kings",
+                "score": "113"
+            },
+            {
+                "name": "Oklahoma City Thunder",
+                "score": "103"
+            }
+        ],
+        "last_update": "2022-02-06T05:18:19Z"
+    },
+    {
+        "id": "e2296d6d1206f8d185466876e2b444ea",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T03:11:26Z",
+        "completed": true,
+        "home_team": "Portland Trail Blazers",
+        "away_team": "Milwaukee Bucks",
+        "scores": [
+            {
+                "name": "Portland Trail Blazers",
+                "score": "108"
+            },
+            {
+                "name": "Milwaukee Bucks",
+                "score": "137"
+            }
+        ],
+        "last_update": "2022-02-06T05:21:01Z"
+    },
+    {
+        "id": "8d8affc2e29bcafd3cdec8b414256cda",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T20:41:04Z",
+        "completed": true,
+        "home_team": "Denver Nuggets",
+        "away_team": "Brooklyn Nets",
+        "scores": [
+            {
+                "name": "Denver Nuggets",
+                "score": "124"
+            },
+            {
+                "name": "Brooklyn Nets",
+                "score": "104"
+            }
+        ],
+        "last_update": "2022-02-06T22:50:22Z"
+    },
+    {
+        "id": "aae8b3294ab2de36e63c614e44e94d80",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T20:41:47Z",
+        "completed": true,
+        "home_team": "Minnesota Timberwolves",
+        "away_team": "Detroit Pistons",
+        "scores": [
+            {
+                "name": "Minnesota Timberwolves",
+                "score": "118"
+            },
+            {
+                "name": "Detroit Pistons",
+                "score": "105"
+            }
+        ],
+        "last_update": "2022-02-06T22:52:29Z"
+    },
+    {
+        "id": "07767ff2952c6b025aa5584626db2910",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T20:42:13Z",
+        "completed": true,
+        "home_team": "Chicago Bulls",
+        "away_team": "Philadelphia 76ers",
+        "scores": [
+            {
+                "name": "Chicago Bulls",
+                "score": "108"
+            },
+            {
+                "name": "Philadelphia 76ers",
+                "score": "119"
+            }
+        ],
+        "last_update": "2022-02-06T22:58:23Z"
+    },
+    {
+        "id": "3f63cadf65ad249c5bc6b1aac8ba426d",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T23:10:53Z",
+        "completed": true,
+        "home_team": "Orlando Magic",
+        "away_team": "Boston Celtics",
+        "scores": [
+            {
+                "name": "Orlando Magic",
+                "score": "83"
+            },
+            {
+                "name": "Boston Celtics",
+                "score": "116"
+            }
+        ],
+        "last_update": "2022-02-07T01:18:57Z"
+    },
+    {
+        "id": "4843de62e910869ee34065ffe4c20137",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T23:11:42Z",
+        "completed": true,
+        "home_team": "Dallas Mavericks",
+        "away_team": "Atlanta Hawks",
+        "scores": [
+            {
+                "name": "Dallas Mavericks",
+                "score": "103"
+            },
+            {
+                "name": "Atlanta Hawks",
+                "score": "94"
+            }
+        ],
+        "last_update": "2022-02-07T01:26:29Z"
+    },
+    {
+        "id": "e0f6669de3ae5af63162c3d9459184bf",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-06T23:12:42Z",
+        "completed": true,
+        "home_team": "Cleveland Cavaliers",
+        "away_team": "Indiana Pacers",
+        "scores": [
+            {
+                "name": "Cleveland Cavaliers",
+                "score": "98"
+            },
+            {
+                "name": "Indiana Pacers",
+                "score": "85"
+            }
+        ],
+        "last_update": "2022-02-07T01:36:15Z"
+    },
+    {
+        "id": "a306576b1789dd1c884cc1aa61fda4bf",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-07T00:11:03Z",
+        "completed": true,
+        "home_team": "Houston Rockets",
+        "away_team": "New Orleans Pelicans",
+        "scores": [
+            {
+                "name": "Houston Rockets",
+                "score": "107"
+            },
+            {
+                "name": "New Orleans Pelicans",
+                "score": "120"
+            }
+        ],
+        "last_update": "2022-02-07T02:25:17Z"
+    },
+    {
+        "id": "4b25562aa9e87b57aa16f970abaec8cc",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-07T02:11:01Z",
+        "completed": false,
+        "home_team": "Los Angeles Clippers",
+        "away_team": "Milwaukee Bucks",
+        "scores": [
+            {
+                "name": "Los Angeles Clippers",
+                "score": "40"
+            },
+            {
+                "name": "Milwaukee Bucks",
+                "score": "37"
+            }
+        ],
+        "last_update": "2022-02-07T02:47:23Z"
+    },
+    {
+        "id": "19434a586e3723c55cd3d028b90eb112",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-08T00:10:00Z",
+        "completed": false,
+        "home_team": "Charlotte Hornets",
+        "away_team": "Toronto Raptors",
+        "scores": null,
+        "last_update": null
+    },
+    {
+        "id": "444e56cbf5a6d534741bb8d1298e2d50",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-08T01:10:00Z",
+        "completed": false,
+        "home_team": "Oklahoma City Thunder",
+        "away_team": "Golden State Warriors",
+        "scores": null,
+        "last_update": null
+    },
+    {
+        "id": "16d461b95e9d643d7f2469f72c098a20",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2022-02-08T02:10:00Z",
+        "completed": false,
+        "home_team": "Utah Jazz",
+        "away_team": "New York Knicks",
+        "scores": null,
+        "last_update": null
+    }
+]
+
+팁
+
+id점수 응답의 게임 필드는 id배당률 응답의 게임 필드 와 일치합니다.
+
+
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+매개변수가 지정된 경우(완료된 이벤트를 반환하는 경우) 사용량 할당량 비용은 2이고 daysFrom, 그렇지 않으면 사용량 할당량 비용은 1입니다.
+
+예시
+
+현재 진행 중인 게임과 예정된 게임, 그리고 지난 3일 이내에 완료된 게임을 반환합니다.
+
+진행 중이며 완료된 게임에만 점수가 표시됩니다.
+비용: 2
+예시/v4/sports/americanfootball_nfl/scores?daysFrom=3&apiKey=...
+
+라이브 및 예정된 게임으로 돌아가기
+
+실시간 경기만 점수가 표시됩니다.
+비용: 1
+예시/v4/sports/americanfootball_nfl/scores?apiKey=...
+
+
+할당량 사용량 추적
+
+사용량 크레딧을 추적하기 위해 모든 API 호출에는 다음과 같은 응답 헤더가 포함됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+
+
+
+#이벤트 참여하기
+지정된 스포츠 또는 리그의 경기 중 및 경기 전 이벤트 목록을 반환합니다. 응답에는 이벤트 ID, 홈팀 및 원정팀, 각 이벤트의 시작 시간이 포함됩니다. 배당률은 응답에 포함되지 않습니다. 이 엔드포인트는 사용량 할당량에 포함되지 않습니다.
+
+#엔드포인트
+GET /v4/sports/{sport}/events?apiKey={apiKey}
+
+#매개변수
+스포츠   /sports 엔드포인트를 호출하여 얻은 스포츠 키
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+dateFormat (   선택 사항) - 응답의 타임스탬프 형식을 결정합니다. 유효한 값은 unix및 iso(ISO 8601)입니다. 기본값은 입니다 iso.
+
+eventIds   (선택 사항) - 쉼표로 구분된 게임 ID입니다. 지정된 ID를 가진 게임만 반환하도록 응답을 필터링합니다.
+
+commenceTimeFrom   (선택 사항) - 이 매개변수 이후에 시작하는 게임만 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식(예: 2023-09-09T00:00:00Z)입니다. 게임이 '예정됨'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+commenceTimeTo   (선택 사항) - 이 매개변수를 기준으로 시작하거나 그 이전에 시작하는 경기를 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식이며, 예: 2023-09-10T23:59:59Z입니다. 경기가 '예정'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+includeRotationNumbers   (선택 사항) - true이 값을 입력하면 응답에 홈 및 어웨이 로테이션 번호가 포함됩니다(사용 가능한 경우). 자세한 내용은 이 링크를 참조하세요 . 유효한 값은 true또는 입니다 false.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events?apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+#예시 답변
+[
+    {
+      "id": "a512a48a58c4329048174217b2cc7ce0",
+      "sport_key": "americanfootball_nfl",
+      "sport_title": "NFL",
+      "commence_time": "2023-01-01T18:00:00Z",
+      "home_team": "Atlanta Falcons",
+      "away_team": "Arizona Cardinals"
+    },
+    {
+      "id": "0ba747b1414a31b05ef37f0bf3d7fbe9",
+      "sport_key": "americanfootball_nfl",
+      "sport_title": "NFL",
+      "commence_time": "2023-01-01T18:00:00Z",
+      "home_team": "Tampa Bay Buccaneers",
+      "away_team": "Carolina Panthers"
+    },
+    {
+      "id": "d7120d8231032db343cb86b20cfaaf48",
+      "sport_key": "americanfootball_nfl",
+      "sport_title": "NFL",
+      "commence_time": "2023-01-01T18:00:00Z",
+      "home_team": "Detroit Lions",
+      "away_team": "Chicago Bears"
+    },
+    {
+      "id": "c7e2faa6faf714fbe08621a727604cd8",
+      "sport_key": "americanfootball_nfl",
+      "sport_title": "NFL",
+      "commence_time": "2023-01-01T18:00:00Z",
+      "home_team": "Washington Commanders",
+      "away_team": "Cleveland Browns"
+    },
+    {
+      "id": "2ed3fd0d267bbae31360e9f19d5adbab",
+      "sport_key": "americanfootball_nfl",
+      "sport_title": "NFL",
+      "commence_time": "2023-01-01T18:00:00Z",
+      "home_team": "Kansas City Chiefs",
+      "away_team": "Denver Broncos"
+    },
+    ...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+이 엔드포인트는 사용량 할당량에 포함되지 않습니다.
+
+
+#이벤트 배당률 가져오기
+단일 이벤트에 대한 배당률을 반환합니다. 매개변수를 사용하여 이용 가능한 모든 베팅 시장을markets 허용합니다 . 현재는 일부 북메이커와 스포츠 종목에 한해 비주요 시장 제공이 제한되어 있으며, 향후 확대될 예정입니다.
+
+이 엔드포인트 사용 시점 : 지원되는 모든 시장의 배당률에 접근하려면 이 엔드포인트를 사용하십시오. 반환되는 데이터 양이 많을 수 있으므로, 이러한 요청은 한 번에 하나의 이벤트만 조회합니다. 승패 예측(머니라인), 포인트 스프레드(핸디캡), 오버/언더(토털) 등 가장 인기 있는 베팅 시장에만 관심이 있다면, 기본 /odds 엔드포인트를 통합하는 것이 더 간단하고 비용 효율적입니다.
+
+#엔드포인트
+GET /v4/sports/{sport}/events/{eventId}/odds?apiKey={apiKey}®ions={regions}&markets={markets}&dateFormat={dateFormat}&oddsFormat={oddsFormat}
+
+#매개변수
+매개변수는 아래에 나열된 예외 사항을 제외하고는 /odds 엔드포인트 와 동일합니다 . markets 매개변수에는 사용 가능한 모든 시장 키가 허용됩니다.
+
+eventId는 예정된 게임 또는 진행 중인 게임의 ID로, URL 경로에 사용됩니다. 이벤트 ID는 events 엔드포인트   응답의 "id" 필드에서 찾을 수 있습니다 .
+
+includeMultipliers는   선택 사항입니다. 미국 DFS 사이트에 적용됩니다. true이 옵션을 선택하면, 가능한 경우 각 베팅 결과에 대한 배율이 포함됩니다. 유효한 값은 true또는 입니다 false. 기본값은 입니다 false.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/a512a48a58c4329048174217b2cc7ce0/odds?apiKey=YOUR_API_KEY®ions=us&markets=player_pass_tds&oddsFormat=american(새 창에서 열립니다)
+
+#예시 답변
+응답 스키마는 몇 가지 차이점을 제외하면 /odds 엔드포인트 와 거의 동일합니다 .
+
+매개변수 에 따라 하나의 게임이 반환됩니다 eventId.
+해당 last_update필드는 응답에서 시장 수준에서만 사용 가능하며 북메이커 수준에서는 사용할 수 없습니다. 이는 시장이 자체 일정에 따라 업데이트될 수 있다는 점을 반영합니다.
+description관련 시장들은 결과에 있어 다양한 가능성을 가질 것입니다 .
+{
+    "id": "a512a48a58c4329048174217b2cc7ce0",
+    "sport_key": "americanfootball_nfl",
+    "sport_title": "NFL",
+    "commence_time": "2023-01-01T18:00:00Z",
+    "home_team": "Atlanta Falcons",
+    "away_team": "Arizona Cardinals",
+    "bookmakers": [
+        {
+            "key": "draftkings",
+            "title": "DraftKings",
+            "markets": [
+                {
+                    "key": "player_pass_tds",
+                    "last_update": "2023-01-01T05:31:29Z",
+                    "outcomes": [
+                        {
+                            "name": "Over",
+                            "description": "David Blough",
+                            "price": -205,
+                            "point": 0.5
+                        },
+                        {
+                            "name": "Under",
+                            "description": "David Blough",
+                            "price": 150,
+                            "point": 0.5
+                        },
+                        {
+                            "name": "Over",
+                            "description": "Desmond Ridder",
+                            "price": -270,
+                            "point": 0.5
+                        },
+                        {
+                            "name": "Under",
+                            "description": "Desmond Ridder",
+                            "price": 195,
+                            "point": 0.5
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "key": "fanduel",
+            "title": "FanDuel",
+            "markets": [
+                {
+                    "key": "player_pass_tds",
+                    "last_update": "2023-01-01T05:35:06Z",
+                    "outcomes": [
+                        {
+                            "name": "Over",
+                            "description": "David Blough",
+                            "price": -215,
+                            "point": 0.5
+                        },
+                        {
+                            "name": "Under",
+                            "description": "David Blough",
+                            "price": 164,
+                            "point": 0.5
+                        },
+                        {
+                            "name": "Over",
+                            "description": "Desmond Ridder",
+                            "price": 196,
+                            "point": 1.5
+                        },
+                        {
+                            "name": "Under",
+                            "description": "Desmond Ridder",
+                            "price": -260,
+                            "point": 1.5
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+사용량 할당량 비용은 요청에 사용된 시장 및 지역 수에 따라 달라집니다.
+
+cost = [number of unique markets returned] x [number of regions specified]
+
+사용량 할당량 비용의 예시
+
+시장 1개, 지역 1개,
+비용:
+예시 1개/v4/sports/americanfootball_nfl/events/a512a48a58c4329048174217b2cc7ce0/odds?markets=h2h&regions=us&...
+
+3개 시장, 1개 지역
+비용: 3
+예시/v4/sports/americanfootball_nfl/events/a512a48a58c4329048174217b2cc7ce0/odds?markets=h2h,spreads,totals&regions=us&...
+
+1개 시장, 3개 지역
+비용: 3
+예시/v4/sports/soccer_epl/events/037d7b6bb128546961e2a06680f63944/odds?markets=h2h&regions=us,uk,eu&...
+
+3개 시장, 3개 지역
+비용: 9
+예시:/v4/sports/basketball_nba/events/0b83beff5f82f8623eea93dbc1d7cd4e/odds?markets=h2h,spreads,totals&regions=us,uk,au&...
+
+
+할당량 사용량 추적
+
+사용량 크레딧을 추적하기 위해 모든 API 응답에는 다음과 같은 응답 헤더가 포함됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#더 자세한 정보
+입력값이 없는 응답은 사용량 할당량에 포함되지 않습니다.
+사용량 할당량 비용의 시장 구성 요소를 계산할 때 API 응답에 포함된 고유 시장 수를 사용합니다. 예를 들어 API 호출에서 5개의 서로 다른 시장과 1개의 지역을 지정했는데 데이터가 2개의 시장에 대해서만 사용 가능한 경우 비용은 [2개 시장] x [1개 지역] = 2가 됩니다.
+
+
+#GET 이벤트 마켓
+각 북메이커별로 특정 이벤트에 대해 사용 가능한 마켓 키를 반환합니다.
+
+이 엔드포인트는 각 북메이커에 대해 최근에 확인된 마켓 키만 반환하며, 지원되는 모든 마켓 목록을 제공하는 것은 아닙니다. 이벤트 시작 시간이 가까워지면 북메이커들이 더 많은 마켓을 개설하므로 이 엔드포인트는 더 많은 마켓 키를 반환합니다.
+
+#엔드포인트
+GET /v4/sports/{sport}/events/{eventId}/markets?apiKey={apiKey}®ions={regions}&dateFormat={dateFormat}
+
+#매개변수
+스포츠 엔드포인트를   호출하여 얻은 스포츠 키입니다 .
+
+eventId는 예정된 게임 또는 진행 중인 게임의 ID입니다. 이벤트 ID는 events 엔드포인트   응답의 "id" 필드에서 찾을 수 있습니다 .
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+regions는   반환할 북메이커를 결정합니다. 예를 들어, us, us2(미국), uk(영국), au(호주) 및 (유럽)을 지정할 수 있습니다. 쉼표로 구분하여 여러 지역을 지정할 수 있습니다. 지역별 북메이커 목록을eu 참조하십시오 .
+
+북메이커 (   선택 사항) - 반환할 북메이커 목록을 쉼표로 구분하여 입력합니다. bookmakers및 가 regions모두 지정된 경우 bookmakers가 우선합니다. 북메이커는 어느 지역이든 상관없습니다. 북메이커 10개 그룹은 1개 지역으로 간주됩니다. 예를 들어, 북메이커를 최대 10개 지정하면 1개 지역으로, 11개에서 20개 사이 지정하면 2개 지역으로 계산됩니다.
+
+dateFormat (   선택 사항) - 응답의 타임스탬프 형식을 결정합니다. 유효한 값은 unix및 iso(ISO 8601)입니다. 기본값은 입니다 iso.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/baseball_mlb/events/19699ba901294e39cb07fc4f19929a38/markets?apiKey=YOUR_API_KEY®ions=us(새 창에서 열립니다)
+
+#예시 답변
+{
+    "id": "19699ba901294e39cb07fc4f19929a38",
+    "sport_key": "baseball_mlb",
+    "sport_title": "MLB",
+    "commence_time": "2025-08-06T16:36:00Z",
+    "home_team": "Philadelphia Phillies",
+    "away_team": "Baltimore Orioles",
+    "bookmakers": [
+        {
+            "key": "fanduel",
+            "title": "FanDuel",
+            "markets": [
+                {
+                    "key": "alternate_spreads",
+                    "last_update": "2025-08-06T07:39:57Z"
+                },
+                {
+                    "key": "batter_doubles",
+                    "last_update": "2025-08-06T07:39:57Z"
+                },
+                {
+                    "key": "batter_hits",
+                    "last_update": "2025-08-06T07:39:57Z"
+                },
+                {
+                    "key": "batter_home_runs",
+                    "last_update": "2025-08-06T07:39:57Z"
+                },
+                ...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+이 엔드포인트에 대한 호출에는 사용 크레딧 1이 소모됩니다.
+
+
+#GET 참가자
+지정된 스포츠 종목의 참가자 목록을 반환합니다. 종목에 따라 참가자는 팀 또는 개인일 수 있습니다. 예를 들어 NBA의 경우 팀 목록이 반환되고, 테니스의 경우 선수 목록이 반환됩니다.
+
+이 엔드포인트는 팀에 속한 선수 정보를 반환하지 않습니다.
+
+반환된 목록은 화이트리스트로 간주해야 하며 현재 활동하지 않는 참가자도 포함될 수 있습니다.
+
+#엔드포인트
+GET /v4/sports/{sport}/participants?apiKey={apiKey}
+
+#매개변수
+스포츠   /sports 엔드포인트를 호출하여 얻은 스포츠 키
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/sports/americanfootball_nfl/participants?apiKey=YOUR_API_KEY(새 창에서 열립니다)
+
+#예시 답변
+[
+    {
+        "full_name": "Arizona Cardinals",
+        "id": "par_01hqmkr1xsfxmrj5pdq0f23asx"
+    },
+    {
+        "full_name": "Atlanta Falcons",
+        "id": "par_01hqmkr1xtexkbhkq7ct921rne"
+    },
+    {
+        "full_name": "Baltimore Ravens",
+        "id": "par_01hqmkr1xvev9rf557fy09k2cx"
+    },
+    {
+        "full_name": "Buffalo Bills",
+        "id": "par_01hqmkr1xwe6prjwr3j4gpqwx8"
+    },
+    {
+        "full_name": "Carolina Panthers",
+        "id": "par_01hqmkr1xxf2ebbqzb95qzxxxm"
+    },
+    {
+        "full_name": "Chicago Bears",
+        "id": "par_01hqmkr1xye20ahvp8fr2bvt74"
+    },
+    {
+        "full_name": "Cincinnati Bengals",
+        "id": "par_01hqmkr1xze7xbceshy9tka512"
+    },
+    {
+        "full_name": "Cleveland Browns",
+        "id": "par_01hqmkr1y0ez5bem3gdncd8a0d"
+    },
+    {
+        "full_name": "Dallas Cowboys",
+        "id": "par_01hqmkr1y1esas88pmaxe87by4"
+    },
+    {
+        "full_name": "Denver Broncos",
+        "id": "par_01hqmkr1y2e15tjsz9afcsj7da"
+    },
+    {
+        "full_name": "Detroit Lions",
+        "id": "par_01hqmkr1y3fex9sq94dgg1107y"
+    },
+    {
+        "full_name": "Green Bay Packers",
+        "id": "par_01hqmkr1y4ez38hyananses4hq"
+    },
+    {
+        "full_name": "Houston Texans",
+        "id": "par_01hqmkr1y5f63reha26n71p2jx"
+    },
+    {
+        "full_name": "Indianapolis Colts",
+        "id": "par_01hqmkr1y6f10rxbf8y2y2xthh"
+    },
+    {
+        "full_name": "Jacksonville Jaguars",
+        "id": "par_01hqmkr1y7e2r9kcn2qe0dt1d5"
+    },
+    {
+        "full_name": "Kansas City Chiefs",
+        "id": "par_01hqmkr1y8e9gt2q2rhmv196pv"
+    },
+    {
+        "full_name": "Las Vegas Raiders",
+        "id": "par_01hqmkr1y9fkaaeekn9w035jft"
+    },
+    {
+        "full_name": "Los Angeles Chargers",
+        "id": "par_01hqmkr1yafvas6wtv3jfs9f7a"
+    },
+    {
+        "full_name": "Los Angeles Rams",
+        "id": "par_01hqmkr1ybfmfb8mhz10drfe21"
+    },
+    {
+        "full_name": "Miami Dolphins",
+        "id": "par_01hqmkr1ycf7dsbr1997gz03y9"
+    },
+    {
+        "full_name": "Minnesota Vikings",
+        "id": "par_01hqmkr1ydf6vrfmd5f07caj88"
+    },
+    {
+        "full_name": "New England Patriots",
+        "id": "par_01hqmkr1yeffz9y9spwv8bx3na"
+    },
+    {
+        "full_name": "New Orleans Saints",
+        "id": "par_01hqmkr1yfe62tp0rvy8bn2jyc"
+    },
+    {
+        "full_name": "New York Giants",
+        "id": "par_01hqmkr1ygfzrv5sqe2v97c43e"
+    },
+    {
+        "full_name": "New York Jets",
+        "id": "par_01hqmkr1yhe4sb3y0wfzga67tf"
+    },
+    {
+        "full_name": "Philadelphia Eagles",
+        "id": "par_01hqmkr1yjedgakx37g743855e"
+    },
+    {
+        "full_name": "Pittsburgh Steelers",
+        "id": "par_01hqmkr1yker5bwcznt0b1jpj1"
+    },
+    {
+        "full_name": "San Francisco 49ers",
+        "id": "par_01hqmkr1ymfv0a8kfg96ha10ag"
+    },
+    {
+        "full_name": "Seattle Seahawks",
+        "id": "par_01hqmkr1ynfwaa91y9zvagkavd"
+    },
+    {
+        "full_name": "Tampa Bay Buccaneers",
+        "id": "par_01hqmkr1ypeszan8sq8dh7rqbg"
+    },
+    {
+        "full_name": "Tennessee Titans",
+        "id": "par_01hqmkr1yqexebpc06vyfwxqqm"
+    },
+    {
+        "full_name": "Washington Commanders",
+        "id": "par_01hqmkr1yrfsvbjjasn01a7xz4"
+    }
+]
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+이 엔드포인트에 대한 호출에는 사용 크레딧 1이 소모됩니다.
+
+#과거 확률을 확인하세요
+지정된 스포츠, 지역 및 시장에 대한 북메이커 배당률 정보를 특정 시점의 스냅샷으로 반환합니다. 과거 배당률 데이터는 2020년 6월 6일부터 10분 간격으로 제공되며, 2022년 9월부터는 5분 간격으로 제공됩니다. 이 엔드포인트는 유료 플랜에서만 이용 가능합니다.
+
+#엔드포인트
+GET /v4/historical/sports/{sport}/odds?apiKey={apiKey}®ions={regions}&markets={markets}&date={date}
+
+#매개변수
+매개변수는 /odds 엔드포인트 와 동일하며 , 추가 매개 date변수가 하나 더 있습니다.
+
+  반환될 데이터 스냅샷의 타임스탬프를 ISO8601 형식으로 지정합니다. 예를 들어, 과거2021-10-18T12:00:00Z 배당률 API는 제공된 date매개변수와 같거나 그 이전의 가장 가까운 스냅샷을 반환합니다.
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/historical/sports/americanfootball_nfl/odds/?apiKey=YOUR_API_KEY®ions=us&markets=h2h&oddsFormat=american&date=2021-10-18T12:00:00Z(새 창에서 열립니다)
+
+#예시 답변
+응답 스키마는 /odds 엔드포인트 와 동일 하지만, 스냅샷에 대한 정보를 포함하는 구조로 래핑되어 있습니다. 여기에는 다음이 포함됩니다.
+
+타임스탬프: 스냅샷의 타임스탬프입니다. 이 값은 제공된 매개변수와 같거나 그 이전인 가장 가까운 타임스탬프가 됩니다 date.
+dateprevious_timestamp: 이전의 사용 가능한 타임스탬프입니다. 이 값은 시간을 되돌리기 위한 새 요청의 매개변수 로 사용할 수 있습니다 .
+next_timestamp: 사용 가능한 다음 타임스탬프입니다. 이 값은 새 요청의 매개변수로 사용하여 date시간을 앞당길 수 있습니다.
+선택한 스포츠 종목에 대한 추가 샘플 응답
+
+{
+    "timestamp": "2021-10-18T11:55:00Z",
+    "previous_timestamp": "2021-10-18T11:45:00Z",
+    "next_timestamp": "2021-10-18T12:05:00Z",
+    "data": [
+        {
+            "id": "4edd5ce090a3ec6192053b10d27b87b0",
+            "sport_key": "americanfootball_nfl",
+            "sport_title": "NFL",
+            "commence_time": "2021-10-19T00:15:00Z",
+            "home_team": "Tennessee Titans",
+            "away_team": "Buffalo Bills",
+            "bookmakers": [
+                {
+                    "key": "draftkings",
+                    "title": "DraftKings",
+                    "last_update": "2021-10-18T11:48:09Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -294
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 230
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "twinspires",
+                    "title": "TwinSpires",
+                    "last_update": "2021-10-18T11:48:00Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -278
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 220
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "betfair",
+                    "title": "Betfair",
+                    "last_update": "2021-10-18T11:48:25Z",
+                    "markets": [
+                        {
+                            "key": "h2h_lay",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -233
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 240
+                                }
+                            ]
+                        },
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -238
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 230
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "sugarhouse",
+                    "title": "SugarHouse",
+                    "last_update": "2021-10-18T11:48:27Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -263
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 228
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "betrivers",
+                    "title": "BetRivers",
+                    "last_update": "2021-10-18T11:45:46Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -263
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 228
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "barstool",
+                    "title": "Barstool Sportsbook",
+                    "last_update": "2021-10-18T11:48:21Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -278
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 220
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "fanduel",
+                    "title": "FanDuel",
+                    "last_update": "2021-10-18T11:47:58Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -270
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 220
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "betmgm",
+                    "title": "BetMGM",
+                    "last_update": "2021-10-18T11:44:23Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -250
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 210
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "unibet",
+                    "title": "Unibet",
+                    "last_update": "2021-10-18T11:49:57Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -263
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 225
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "williamhill_us",
+                    "title": "William Hill (US)",
+                    "last_update": "2021-10-18T11:48:21Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -270
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 220
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "betonlineag",
+                    "title": "BetOnline.ag",
+                    "last_update": "2021-10-18T11:48:28Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -256
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 215
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "pointsbetus",
+                    "title": "PointsBet (US)",
+                    "last_update": "2021-10-18T11:48:46Z",
+                    "markets": [
+                        {
+                            "key": "h2h",
+                            "outcomes": [
+                                {
+                                    "name": "Buffalo Bills",
+                                    "price": -263
+                                },
+                                {
+                                    "name": "Tennessee Titans",
+                                    "price": 210
+                                }
+                            ]
+                        }
+                    ]
+                },
+ ...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+과거 배당률 사용 할당량 비용은 지역별, 시장별로 10입니다.
+
+cost = 10 x [number of markets specified] x [number of regions specified]
+
+과거 확률에 대한 사용 할당량 비용의 예시
+
+시장 1개, 지역 1개
+비용: 10
+예시/v4/historical/sports/americanfootball_nfl/odds?markets=h2h&regions=us&...
+
+3개 시장, 1개 지역
+비용: 30
+예시/v4/historical/sports/americanfootball_nfl/odds?markets=h2h,spreads,totals&regions=us&...
+
+시장 1개, 지역 3개,
+비용: 30
+예시/v4/historical/sports/soccer_epl/odds?markets=h2h&regions=us,uk,eu&...
+
+3개 시장, 3개 지역
+비용: 90
+예시:/v4/historical/sports/basketball_nba/odds?markets=h2h,spreads,totals&regions=us,uk,au&...
+
+
+할당량 사용량 추적
+
+사용량 크레딧을 추적하기 위해 모든 API 응답에는 다음과 같은 응답 헤더가 포함됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#더 자세한 정보
+입력값이 없는 응답은 사용량 할당량에 포함되지 않습니다.
+2022년 9월 18일 이전에는 소수점 배당률만 기록되었습니다. 이 시점 이전의 미국 배당률은 소수점 배당률을 기준으로 계산되었으며, 약간의 반올림 오차가 포함될 수 있습니다.
+데이터 오류는 흔하지 않지만 간혹 발생할 수 있습니다. 현재 배당률 API의 오류는 신속하게 수정하고 있지만, 과거 배당률 스냅샷에는 여전히 오류가 남아 있을 수 있습니다. 향후 알려진 오류는 과거 스냅샷에서 제거할 계획입니다.
+북메이커, 스포츠 종목 및 시장 정보는 현재 배당률 API에 추가된 시점부터만 과거 배당률 API에서 이용 가능합니다.
+
+
+#역사적 사건을 확인하세요
+지정된 타임스탬프(매개변수)에 API에 표시된 과거 이벤트 목록을 반환합니다 . 응답에는 이벤트 ID, 홈팀 및 원정팀, 각 이벤트의 시작 시간이 포함됩니다. 배당률은 응답에 포함되지 않습니다. 이 엔드포인트는 과거 이벤트 배당률 엔드포인트date 에서 사용할 과거 이벤트 ID를 찾는 데 사용할 수 있습니다 . 이 엔드포인트는 유료 플랜에서만 사용할 수 있습니다.
+
+#엔드포인트
+GET /v4/historical/sports/{sport}/events?apiKey={apiKey}&date={date}
+
+#매개변수
+스포츠   /sports 엔드포인트를 호출하여 얻은 스포츠 키
+
+apiKey는   구독과 연결된 API 키입니다. 사용량 플랜을 참조하세요 .
+
+  반환될 데이터 스냅샷의 타임스탬프를 ISO8601 형식으로 지정합니다. 예를 들어, 과거2021-10-18T12:00:00Z 배당률 API는 제공된 date매개변수와 같거나 그 이전의 가장 가까운 스냅샷을 반환합니다.
+
+dateFormat (   선택 사항) - 응답의 타임스탬프 형식을 결정합니다. 유효한 값은 unix및 iso(ISO 8601)입니다. 기본값은 입니다 iso.
+
+eventIds   (선택 사항) - 쉼표로 구분된 게임 ID입니다. 지정된 ID를 가진 게임만 반환하도록 응답을 필터링합니다.
+
+commenceTimeFrom   (선택 사항) - 이 매개변수 이후에 시작하는 게임만 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식(예: 2023-09-09T00:00:00Z)입니다. 게임이 '예정됨'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+commenceTimeTo   (선택 사항) - 이 매개변수를 기준으로 시작하거나 그 이전에 시작하는 경기를 표시하도록 응답을 필터링합니다. 값은 ISO 8601 형식이며, 예: 2023-09-10T23:59:59Z입니다. 경기가 '예정'으로 설정된 경우 이 매개변수는 영향을 미치지 않습니다.
+
+includeRotationNumbers   (선택 사항) - true이 값을 입력하면 응답에 홈 및 어웨이 로테이션 번호가 포함됩니다(사용 가능한 경우). 자세한 내용은 이 링크를 참조하세요 . 유효한 값은 true또는 입니다 false.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/historical/sports/basketball_nba/events?apiKey=YOUR_API_KEY&date=2023-11-29T22:42:00Z(새 창에서 열립니다)
+
+#예시 답변
+응답 스키마는 /events 엔드포인트 의 스키마와 거의 동일 하지만, 스냅샷에 대한 정보를 포함하는 구조로 래핑되어 있습니다. 여기에는 다음이 포함됩니다.
+
+타임스탬프: 스냅샷의 타임스탬프입니다. 이는 제공된 날짜 매개변수와 같거나 그 이전인 가장 가까운 타임스탬프입니다.
+previous_timestamp: 이전의 사용 가능한 타임스탬프입니다. 이 값은 새 요청에서 날짜 매개변수로 사용하여 시간을 되돌릴 수 있습니다.
+next_timestamp: 사용 가능한 다음 타임스탬프입니다. 이 값은 새 요청에서 날짜 매개변수로 사용하여 시간을 앞당길 수 있습니다.
+{
+    "timestamp": "2023-11-29T22:40:39Z",
+    "previous_timestamp": "2023-11-29T22:35:39Z",
+    "next_timestamp": "2023-11-29T22:45:40Z",
+    "data": [
+        {
+            "id": "da359da99aa27e97d38f2df709343998",
+            "sport_key": "basketball_nba",
+            "sport_title": "NBA",
+            "commence_time": "2023-11-30T00:10:00Z",
+            "home_team": "Detroit Pistons",
+            "away_team": "Los Angeles Lakers"
+        },
+        {
+            "id": "0a502b246aa29f8ac2edb7a3ddf71ae9",
+            "sport_key": "basketball_nba",
+            "sport_title": "NBA",
+            "commence_time": "2023-11-30T00:10:00Z",
+            "home_team": "Orlando Magic",
+            "away_team": "Washington Wizards"
+        },
+        {
+            "id": "2667f897a67e6cdad61bd26a3b941d83",
+            "sport_key": "basketball_nba",
+            "sport_title": "NBA",
+            "commence_time": "2023-11-30T00:40:00Z",
+            "home_team": "Toronto Raptors",
+            "away_team": "Phoenix Suns"
+        },
+        ...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+이 엔드포인트는 사용량 할당량에서 1만큼 차감됩니다. 이벤트가 없으면 비용이 발생하지 않습니다.
+
+
+#과거 사건 발생 확률을 확인하세요
+지정된 시점의 특정 이벤트에 대한 과거 배당률을 반환합니다. 매개변수를 사용하여 이용 가능한 모든 베팅 시장을markets 허용합니다 . 추가 시장(플레이어 프롭, 대체 라인, 기간 시장)에 대한 과거 데이터는 2023년 5월 3일(UTC) 05시 30분(UTC) 이후에 제공됩니다. 이 엔드포인트는 유료 플랜에서만 사용할 수 있습니다.
+
+팁
+
+주요 시장 의 과거 배당률을 조회할 때 , 과거 배당률 엔드포인트는 구현이 더 간단하고 비용 효율적입니다.
+
+#엔드포인트
+GET /v4/historical/sports/{sport}/events/{eventId}/odds?apiKey={apiKey}®ions={regions}&markets={markets}&dateFormat={dateFormat}&oddsFormat={oddsFormat}&date={date}
+
+#매개변수
+매개변수는 /odds 엔드포인트 와 동일하며 , 아래에 추가 매개변수가 나열되어 있습니다. markets 매개변수에는 사용 가능한 모든 시장 키가 허용됩니다.
+
+eventId는   URL 경로에 사용될 과거 게임의 ID입니다. 과거 이벤트 ID는 과거 이벤트 엔드포인트 응답의 "id" 필드에서 찾을 수 있습니다 .
+
+날짜   반환될 데이터 스냅샷의 타임스탬프를 ISO8601 형식으로 지정합니다(예: ). 2023-11-29T22:42:00Z과거 배당률 API는 제공된 date매개변수와 같거나 그 이전의 가장 가까운 스냅샷을 반환합니다. 추가 시장의 과거 데이터는 2023년 5월 3일(UTC) 05:30:00Z 이후에 이용 가능합니다. 스냅샷은 5분 간격으로 제공됩니다.
+
+includeMultipliers는   선택 사항입니다. 미국 DFS 사이트에 적용됩니다. true이 옵션을 선택하면, 가능한 경우 각 베팅 결과에 대한 배율이 포함됩니다. 유효한 값은 true또는 입니다 false. 기본값은 입니다 false.
+
+#개요
+자세한 API 사양은 Swagger API 문서를 참조하세요.(새 창에서 열립니다)
+
+#예시 요청
+GET https://api.the-odds-api.com/v4/historical/sports/basketball_nba/events/da359da99aa27e97d38f2df709343998/odds?apiKey=YOUR_API_KEY&date=2023-11-29T22:45:00Z®ions=us&markets=player_points,h2h_q1(새 창에서 열립니다)
+
+#예시 답변
+응답 스키마는 /event odds 엔드포인트 의 스키마와 거의 동일 하지만, 스냅샷에 대한 정보를 포함하는 구조로 래핑되어 있습니다. 여기에는 다음이 포함됩니다.
+
+타임스탬프: 스냅샷의 타임스탬프입니다. 이는 제공된 날짜 매개변수와 같거나 그 이전인 가장 가까운 타임스탬프입니다.
+previous_timestamp: 이전의 사용 가능한 타임스탬프입니다. 이 값은 새 요청에서 날짜 매개변수로 사용하여 시간을 되돌릴 수 있습니다.
+next_timestamp: 사용 가능한 다음 타임스탬프입니다. 이 값은 새 요청에서 날짜 매개변수로 사용하여 시간을 앞당길 수 있습니다.
+{
+    "timestamp": "2023-11-29T22:40:39Z",
+    "previous_timestamp": "2023-11-29T22:35:39Z",
+    "next_timestamp": "2023-11-29T22:45:40Z",
+    "data": {
+        "id": "da359da99aa27e97d38f2df709343998",
+        "sport_key": "basketball_nba",
+        "sport_title": "NBA",
+        "commence_time": "2023-11-30T00:10:00Z",
+        "home_team": "Detroit Pistons",
+        "away_team": "Los Angeles Lakers",
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "title": "DraftKings",
+                "last_update": "2023-11-29T22:40:09Z",
+                "markets": [
+                    {
+                        "key": "h2h_q1",
+                        "last_update": "2023-11-29T22:40:55Z",
+                        "outcomes": [
+                            {
+                                "name": "Detroit Pistons",
+                                "price": 2.5
+                            },
+                            {
+                                "name": "Los Angeles Lakers",
+                                "price": 1.56
+                            }
+                        ]
+                    },
+                    {
+                        "key": "player_points",
+                        "last_update": "2023-11-29T22:40:55Z",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Anthony Davis",
+                                "price": 1.83,
+                                "point": 23.5
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Anthony Davis",
+                                "price": 1.91,
+                                "point": 23.5
+                            },
+                            {
+                                "name": "Over",
+                                "description": "Ausar Thompson",
+                                "price": 1.87,
+                                "point": 11.5
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Ausar Thompson",
+                                "price": 1.87,
+                                "point": 11.5
+                            },
+                            {
+                                "name": "Over",
+                                "description": "Cade Cunningham",
+                                "price": 1.91,
+                                "point": 23.5
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Cade Cunningham",
+                                "price": 1.83,
+                                "point": 23.5
+                            },
+                            {
+                                "name": "Over",
+                                "description": "D'Angelo Russell",
+                                "price": 1.87,
+                                "point": 14.5
+                            },
+                            ...
+#응답 헤더
+다음과 같은 응답 헤더가 반환됩니다.
+
+x-requests-remaining은   할당량이 재설정될 때까지 남은 사용 크레딧입니다.
+x-requests-used는   마지막 할당량 재설정 이후 사용된 사용 크레딧입니다.
+x-requests-last는   마지막 API 호출의 사용 비용입니다.
+#사용량 할당량 비용
+사용량 할당량 비용은 요청에 사용된 시장 및 지역 수에 따라 달라집니다.
+
+cost = 10 x [number of unique markets returned] x [number of regions specified]
+
+사용량 할당량 비용의 예시
+
+시장 1개, 지역 1개
+비용: 10
+예시/v4/historical/sports/americanfootball_nfl/events/a512a48a58c4329048174217b2cc7ce0/odds?markets=player_pass_tds&regions=us&...
+
+3개 시장, 1개 지역
+비용: 30
+예시/v4/historical/sports/americanfootball_nfl/events/a512a48a58c4329048174217b2cc7ce0/odds?markets=player_pass_tds,player_anytime_td,player_rush_longest&regions=us&...
+
+시장 1개, 지역 3개,
+비용: 30
+예시/v4/historical/sports/basketball_nba/events/037d7b6bb128546961e2a06680f63944/odds?markets=player_points&regions=us,us2,au&...
+
+3개 시장, 3개 지역
+비용: 90
+예시:/v4/historical/sports/basketball_nba/events/0b83beff5f82f8623eea93dbc1d7cd4e/odds?markets=player_points,player_assists,alternate_spreads&regions=us,us2,au&...
+
+
+할당량 사용량 추적
+
+사용량 크레딧을 추적하기 위해 모든 API 응답에는 다음과 같은 응답 헤더가 포함됩니다.
+
+x-요청-사용됨
+x-요청 잔여
+x-요청-마지막
+#더 자세한 정보
+입력값이 없는 응답은 사용량 할당량에 포함되지 않습니다.
+사용량 할당량 비용의 시장 구성 요소를 계산할 때 API 응답에 포함된 고유 시장 수를 사용합니다. 예를 들어 API 호출에서 5개의 서로 다른 시장과 1개의 지역을 지정했는데 데이터가 2개의 시장에 대해서만 사용 가능한 경우 비용은 10 x [2개 시장] x [1개 지역] = 20이 됩니다.
+
+
+#속도 제한(상태 코드 429)
+시스템 보호를 위해 갑작스러운 트래픽 급증에 대비하여 요청 횟수를 제한하고 있습니다. 요청 횟수 제한에 걸리면 API에서 상태 코드 429를 반환합니다. 이 경우 몇 초 간격을 두고 요청을 보내주시기 바랍니다. 자세한 내용은 여기에서 확인할 수 있습니다 .
+
+#코드 샘플
+Python 및 Node.js 코드 샘플을 통해 바로 시작해 보세요 . 코드 샘플은 GitHub 에서도 확인할 수 있습니다.(새 창에서 열립니다)
+
+#더 자세한 정보
+트위터에서 저희를 팔로우 하시면 새로운 스포츠, 베팅업체 및 특집 기사에 대한 최신 정보를 받아보실 수 있습니다
+
+
+
+확률 API
+집API시트계정
+#코드 샘플 V4
+Odds API는 선호하는 프로그래밍 언어로 쉽게 사용할 수 있습니다. 시작하는 데 도움이 되도록 간단한 Python 및 Node.js 코드 예제를 제공합니다.
+
+예제를 사용하려면 API 키를 반드시 입력하세요. 여기에서 무료 API 키를 받을 수 있습니다 .
+
+자세한 내용은 API 문서를 참조하세요. 코드 샘플은 GitHub 에서도 확인할 수 있습니다.(새 창에서 열립니다)
+
+#파이썬
+
+
+메모
+
+이 예제는 파이썬의 requests 라이브러리를 사용합니다. (새 창에서 열립니다)다음과 함께 설치할 수 있습니다.
+pip install requests
+
+Repl.it 사용자들을 위한 보안 팁
+
+이 예제는 Repl.it을 사용합니다. (새 창에서 열립니다)* 실제 코드를 실행하려면 API 키를 사용하세요. 무료 Repl.it 계정을 사용하여 계속 코딩하는 경우, Repl.it 저장소를 방문하는 모든 사람이 API 키를 볼 수 있습니다.
+
+비밀 유지를 위해, .env해당 내용을 담은 파일을 생성하세요.api_key=YOUR_API_KEY
+
+main.py로 돌아가서 다음 명령어를 사용하여 API 키를 가져오세요:
+
+import os
+api_key = os.getenv("api_key")
+더 자세한 내용은 Repl.it 문서를 참조하세요.(새 창에서 열립니다)
+
+* Odds API는 Repl.it과 어떠한 제휴 관계도 없습니다.
+이 코드 샘플은 GitHub 에서도 확인할 수 있습니다.(새 창에서 열립니다)
+
+
+#노드.js
+
+
+
+메모
+
+이 예제는 Node.js의 axios 라이브러리를 사용합니다. (새 창에서 열립니다)npm install axios또는 를 사용하여 설치할 수 있습니다.bower install axios
+
+Repl.it 사용자들을 위한 보안 팁
+
+이 예제는 Repl.it을 사용합니다. (새 창에서 열립니다)* 실제 코드를 실행하려면 API 키를 사용하세요. 무료 Repl.it 계정을 사용하여 계속 코딩하는 경우, Repl.it 저장소를 방문하는 모든 사람이 API 키를 볼 수 있습니다.
+
+비밀 유지를 위해, .env해당 내용을 담은 파일을 생성하세요.api_key=YOUR_API_KEY
+
+index.js 파일로 돌아가서 다음 명령어를 사용하여 API 키를 가져오세요.
+
+const api_key = process.env.api_key
+더 자세한 내용은 Repl.it 문서를 참조하세요.(새 창에서 열립니다)
+
+* Odds API는 Repl.it과 어떠한 제휴 관계도 없습니다.
+이 코드 샘플은 GitHub 에서도 확인할 수 있습니다.(새 창에서 열립니다)
+
+
+
+X.com
+•
+블루스카이
+•
+깃허브
+상태
+•
+자귀
+•
+개인정보 보호정책
+•
+연락하다
+© 2026 The Odds API
+설명

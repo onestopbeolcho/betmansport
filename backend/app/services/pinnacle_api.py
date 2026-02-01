@@ -1,4 +1,5 @@
 import httpx
+import time
 import logging
 from typing import List, Optional, Dict
 from app.services.base_provider import BaseOddsProvider
@@ -12,6 +13,9 @@ class PinnacleService(BaseOddsProvider):
         super().__init__("Pinnacle")
         self.api_key: Optional[str] = None
         self.base_url = "https://api.the-odds-api.com/v4"
+        self._cache = []
+        self._last_fetch_time = 0.0
+        self._cache_duration = 300 # 5 minutes
         # Major leagues supported by Betman
         self.target_sports = [
             "soccer_epl",
@@ -26,23 +30,36 @@ class PinnacleService(BaseOddsProvider):
         self.api_key = api_key
 
     def fetch_odds(self) -> List[OddsItem]:
-        if self.api_key and "mock" not in self.api_key.lower():
-            logger.info("Attempting to fetch Real Data from The Odds API...")
-            try:
-                real_data = self._fetch_real_data()
-                if real_data:
-                    logger.info(f"Successfully fetched {len(real_data)} items from The Odds API.")
-                    return real_data
-            except Exception as e:
-                logger.error(f"The Odds API Fetch Error: {e}")
-                traceback.print_exc()
+        if not self.api_key or "mock" in self.api_key.lower():
+            logger.info("Using Mock Data (The Odds API structure).")
+            return self._get_mock_data()
+            
+        # Check Cache
+        current_time = time.time()
+        if self._cache and (current_time - self._last_fetch_time < self._cache_duration):
+            logger.info(f"Returning Cached Data ({len(self._cache)} items). Age: {int(current_time - self._last_fetch_time)}s")
+            return self._cache
+            
+        logger.info("Cache expired. Fetching Real Data...")
+        try:
+            real_data = self._fetch_real_data()
+            if real_data:
+                logger.info(f"Successfully fetched {len(real_data)} items. Cache updated.")
+                self._cache = real_data
+                self._last_fetch_time = current_time
+                return real_data
+        except Exception as e:
+            logger.error(f"The Odds API Fetch Error: {e}")
+            traceback.print_exc()
+            if self._cache:
+                logger.warning("Returning stale cache due to error.")
+                return self._cache
         
-        logger.info("Using Mock Data (The Odds API structure).")
-        return self._get_mock_data()
+        return []
 
     def _fetch_real_data(self) -> List[OddsItem]:
         all_odds = []
-        for sport in self.target_sports[:2]: 
+        for sport in self.target_sports: 
             url = f"{self.base_url}/sports/{sport}/odds"
             params = {
                 "apiKey": self.api_key,
