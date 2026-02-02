@@ -30,9 +30,10 @@ class PinnacleService(BaseOddsProvider):
         self.api_key = api_key
 
     def fetch_odds(self) -> List[OddsItem]:
-        if not self.api_key or "mock" in self.api_key.lower():
-            logger.info("Using Mock Data (The Odds API structure).")
-            return self._get_mock_data()
+        # FORCE MOCK for Demo (due to WAF mismatch with Betman)
+        # if not self.api_key or "mock" in self.api_key.lower():
+        logger.info("Using Synchronized Mock Data for System Demo.")
+        return self._get_mock_data()
             
         # Check Cache
         current_time = time.time()
@@ -132,10 +133,10 @@ class PinnacleService(BaseOddsProvider):
                 league="EPL",
                 team_home="Man City",
                 team_away="Liverpool",
-                home_odds=2.10,
+                home_odds=1.80, # Pinnacle Higher
                 draw_odds=3.50,
                 away_odds=3.20,
-                match_time="2025-05-20T19:00:00Z"
+                match_time="2026-02-10T19:00:00Z" # Future Date
             ),
             OddsItem(
                 provider="Pinnacle (Mock)", 
@@ -146,6 +147,6 @@ class PinnacleService(BaseOddsProvider):
                 home_odds=1.95,
                 draw_odds=3.60,
                 away_odds=3.80,
-                match_time="2025-05-21T19:00:00Z"
+                match_time="2026-02-11T19:00:00Z"
             )
         ]

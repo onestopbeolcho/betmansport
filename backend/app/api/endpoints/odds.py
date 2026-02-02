@@ -80,6 +80,7 @@ async def get_positive_ev_bets(db: AsyncSession = Depends(get_db)):
                     )
 
                     db.add(db_pick)
+                    print(f"✅ Found Opportunity: {opp.match_name} EV={opp.expected_value}")
                     new_opportunities.append(opp)
 
         if new_opportunities:

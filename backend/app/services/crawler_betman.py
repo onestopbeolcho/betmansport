@@ -61,7 +61,9 @@ class BetmanCrawler(BaseOddsProvider):
             "Referer": f"{self.base_url}/main/mainPage/gamebuy/buyableGameList.do",
             "Origin": self.base_url,
             "X-Requested-With": "XMLHttpRequest",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Host": "www.betman.co.kr",
+            "Connection": "keep-alive"
         }
         
         try:
@@ -100,6 +102,8 @@ class BetmanCrawler(BaseOddsProvider):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             "Referer": f"{self.base_url}/main/mainPage/gamebuy/buyableGameList.do",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Host": "www.betman.co.kr",
+            "Connection": "keep-alive"
         }
         try:
             with httpx.Client(verify=False, timeout=15.0) as client:
@@ -113,6 +117,10 @@ class BetmanCrawler(BaseOddsProvider):
     def _parse_html(self, html: str) -> List[OddsItem]:
         soup = BeautifulSoup(html, 'html.parser')
         odds_items = []
+        
+        # DEBUG: Dump HTML to see structure
+        logger.info(f"HTML Content (First 2000 chars): {html[:2000]}")
+
         
         # TODO: Implement actual parsing logic once we have the HTML structure.
         # This is currently a placeholder that looks for generic tables
@@ -130,20 +138,24 @@ class BetmanCrawler(BaseOddsProvider):
         return [
             OddsItem(
                 provider=self.provider_name,
-                team_home="맨체스터 시티 (Mock)",
-                team_away="리버풀 (Mock)",
-                home_odds=2.30,  # Value Bet!
+                sport="Soccer",
+                league="EPL",
+                team_home="Man City",
+                team_away="Liverpool",
+                home_odds=2.50,  # Betman Higher (Value!) vs Pinn 1.80
                 draw_odds=3.30,
                 away_odds=3.40,
-                match_time="2023-10-25T20:00:00Z"
+                match_time="2026-02-10T19:00:00Z"
             ),
             OddsItem(
                 provider=self.provider_name,
-                team_home="아스널 (Mock)",
-                team_away="첼시 (Mock)",
-                home_odds=1.70,  # No Value
+                sport="Soccer",
+                league="La Liga",
+                team_home="Real Madrid",
+                team_away="Barcelona",
+                home_odds=2.10,  # Betman Higher vs Pinn 1.95
                 draw_odds=3.40,
                 away_odds=3.90,
-                match_time="2023-10-26T15:00:00Z"
+                match_time="2026-02-11T19:00:00Z"
             )
         ]

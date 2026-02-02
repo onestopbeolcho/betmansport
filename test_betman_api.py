@@ -35,7 +35,7 @@ async def test_betman_api():
                         print(f"Found {len(games)} proto games.")
                         if games:
                             first_game = games[0]
-                            print(f"Sample Game: {first_game.get('gameMaster', {}).get('gameNickName')} | ID: {first_game.get('gmId')} | Round: {first_game.get('gmTs')}")
+                            print(f"Sample Game: {first_game}")
                             print(f"Constructed URL: https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do?frameType=typeA&gmId={first_game.get('gmId')}&gmTs={first_game.get('gmTs')}")
                     else:
                         print("Keys found:", json_data.keys())
