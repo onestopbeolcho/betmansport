@@ -20,4 +20,5 @@ class ValueBetOpportunity(BaseModel):
     pinnacle_odds: float
     expected_value: float  # EV
     kelly_pct: float
+    max_tax_free_stake: Optional[int] = None
     timestamp: str

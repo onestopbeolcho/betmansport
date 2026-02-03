@@ -140,8 +140,8 @@ class BetmanCrawler(BaseOddsProvider):
                 provider=self.provider_name,
                 sport="Soccer",
                 league="EPL",
-                team_home="Man City",
-                team_away="Liverpool",
+                team_home="맨체스터 시티", # Korean Name Required
+                team_away="리버풀",
                 home_odds=2.50,  # Betman Higher (Value!) vs Pinn 1.80
                 draw_odds=3.30,
                 away_odds=3.40,
@@ -151,8 +151,8 @@ class BetmanCrawler(BaseOddsProvider):
                 provider=self.provider_name,
                 sport="Soccer",
                 league="La Liga",
-                team_home="Real Madrid",
-                team_away="Barcelona",
+                team_home="레알 마드리드",
+                team_away="바르셀로나",
                 home_odds=2.10,  # Betman Higher vs Pinn 1.95
                 draw_odds=3.40,
                 away_odds=3.90,

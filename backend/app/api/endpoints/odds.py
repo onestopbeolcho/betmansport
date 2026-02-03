@@ -6,6 +6,7 @@ from app.services.pinnacle_api import PinnacleService
 from app.services.crawler_betman import BetmanCrawler
 from app.services.team_mapper import TeamMapper
 from app.core.value_bet import ValueBetFinder
+from app.core.calculator import calculate_tax_free_limit
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -79,10 +80,30 @@ async def get_positive_ev_bets(db: AsyncSession = Depends(get_db)):
                         kelly_pct=opp.kelly_pct
                     )
 
-                    db.add(db_pick)
-                    print(f"✅ Found Opportunity: {opp.match_name} EV={opp.expected_value}")
-                    new_opportunities.append(opp)
-
+                    
+                    # Deduplication Check
+                    # Check if the exact same bet was recently added
+                    stmt = select(ValuePickDB).where(
+                        ValuePickDB.match_name == opp.match_name,
+                        ValuePickDB.bet_type == opp.bet_type
+                    ).order_by(ValuePickDB.id.desc()).limit(1)
+                    
+                    existing_result = await db.execute(stmt)
+                    existing = existing_result.scalars().first()
+                    
+                    is_duplicate = False
+                    if existing:
+                         # Compare odds to see if they changed
+                         # If odds are same (float comparison with epsilon), it's a duplicate
+                         if abs(existing.domestic_odds - opp.domestic_odds) < 0.001:
+                             is_duplicate = True
+                    
+                    if not is_duplicate:
+                        db.add(db_pick)
+                        print(f"✅ Found Opportunity (New): {opp.match_name} EV={opp.expected_value}")
+                        new_opportunities.append(opp)
+                    else:
+                        print(f"ℹ️ Duplicate skipped: {opp.match_name}")
         if new_opportunities:
             await db.commit()
     
@@ -99,7 +120,9 @@ async def get_positive_ev_bets(db: AsyncSession = Depends(get_db)):
                 true_probability=p.true_probability,
                 pinnacle_odds=p.pinnacle_odds,
                 expected_value=p.expected_value,
+                expected_value=p.expected_value,
                 kelly_pct=p.kelly_pct,
+                max_tax_free_stake=calculate_tax_free_limit(p.domestic_odds),
                 timestamp=str(p.created_at)
             ) for p in picks
         ]

@@ -1,11 +1,12 @@
 from fastapi import FastAPI
-from app.api.endpoints import admin, odds
+from app.api.endpoints import admin, odds, auth, payments, portfolio
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.base import Base
 from app.db.session import engine
 # Import models to register them with Base.metadata
 import app.models.bets_db
 import app.models.config_db
+import app.models.user_db # Register User Models
 
 app = FastAPI(title="Smart Proto Investor API")
 
@@ -21,6 +22,9 @@ app.add_middleware(
 # Include Routers
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(odds.router, prefix="/api", tags=["odds"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
+app.include_router(portfolio.router, prefix="/api/portfolio", tags=["portfolio"])
 
 @app.on_event("startup")
 async def startup_event():
