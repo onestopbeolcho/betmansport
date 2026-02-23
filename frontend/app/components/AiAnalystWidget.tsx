@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { usePathname } from 'next/navigation';
 
 interface Message {
     id: number;
@@ -11,6 +12,7 @@ interface Message {
 }
 
 export default function AiAnalystWidget() {
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { id: 1, role: 'assistant', content: "안녕하세요! 스포츠 분석 AI입니다. 경기나 팀 이름을 말씀해 주세요." }
@@ -18,6 +20,9 @@ export default function AiAnalystWidget() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Hide on mypage — inline AI prompt is embedded there instead
+    const isMyPage = pathname.includes('/mypage');
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -46,7 +51,7 @@ export default function AiAnalystWidget() {
         } finally { setLoading(false); }
     };
 
-    return (
+    return isMyPage ? null : (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
             {!isOpen && (
                 <button
