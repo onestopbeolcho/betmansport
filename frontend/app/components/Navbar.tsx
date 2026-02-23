@@ -82,23 +82,23 @@ export default function Navbar() {
         <nav className="glass-heavy sticky top-0 z-50 border-b border-[var(--glass-border)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
                 <div className="flex items-center space-x-8">
-                    <Link href={`/${currentLang}`} className="flex items-center space-x-2 group">
+                    <a href={`/${currentLang}`} className="flex items-center space-x-2 group">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center text-white font-black text-sm shadow-lg group-hover:shadow-[var(--glow-cyan-strong)] transition-shadow">
                             SN
                         </div>
                         <span className="text-lg font-extrabold tracking-tight gradient-text hidden sm:block">Scorenix</span>
-                    </Link>
+                    </a>
 
                     {/* Desktop Nav */}
                     <div className="hidden md:flex items-center space-x-1">
                         {navLinks.map(link => (
-                            <Link key={link.href} href={link.href} className={linkClass(link.href)}>
+                            <a key={link.href} href={link.href} className={linkClass(link.href)}>
                                 {link.label}
                                 <span className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-2.5 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-50"
                                     style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
                                     {link.icon} {link.desc}
                                 </span>
-                            </Link>
+                            </a>
                         ))}
                     </div>
                 </div>
@@ -170,12 +170,12 @@ export default function Navbar() {
                                             <span className="mt-1.5 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] uppercase tracking-wider">{user.role}</span>
                                         </div>
                                         <div className="py-1">
-                                            <Link href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
+                                            <a href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
                                                 <span className="text-base">💼</span> {t.portfolio || '내 포트폴리오'}
-                                            </Link>
-                                            <Link href={`/${currentLang}/pricing`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
+                                            </a>
+                                            <a href={`/${currentLang}/pricing`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
                                                 <span className="text-base">💎</span> {t.subscription || '구독 관리'}
-                                            </Link>
+                                            </a>
                                         </div>
                                         <div className="border-t border-[var(--border-subtle)] py-1">
                                             <button
@@ -190,12 +190,12 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="hidden sm:flex items-center space-x-2">
-                                <Link href={`/${currentLang}/login`} className="btn-ghost text-sm !py-1.5 !px-4">
+                                <a href={`/${currentLang}/login`} className="btn-ghost text-sm !py-1.5 !px-4">
                                     {t.login || '로그인'}
-                                </Link>
-                                <Link href={`/${currentLang}/register`} className="btn-primary text-sm !py-1.5 !px-4">
+                                </a>
+                                <a href={`/${currentLang}/register`} className="btn-primary text-sm !py-1.5 !px-4">
                                     {t.register || '회원가입'}
-                                </Link>
+                                </a>
                             </div>
                         )
                     )}
@@ -218,13 +218,13 @@ export default function Navbar() {
                 <div className={`absolute top-16 left-0 right-0 glass-heavy border-b border-[var(--border-default)] z-50 md:hidden transition-all duration-300 ${mobileOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
                     <div className="px-4 py-3 space-y-1 stagger-children">
                         {navLinks.map(link => (
-                            <Link key={link.href} href={link.href} className={mobileLinkClass(link.href)} onClick={() => setMobileOpen(false)}>
+                            <a key={link.href} href={link.href} className={mobileLinkClass(link.href)} onClick={() => setMobileOpen(false)}>
                                 <span>{link.icon}</span>
                                 <div className="flex flex-col">
                                     <span>{link.label}</span>
                                     <span className="text-[10px] font-normal" style={{ color: 'var(--text-muted)' }}>{link.desc}</span>
                                 </div>
-                            </Link>
+                            </a>
                         ))}
 
                         {/* Mobile Language Switcher */}
@@ -270,12 +270,12 @@ export default function Navbar() {
                                 </>
                             ) : (
                                 <div className="space-y-2 pb-2">
-                                    <Link href={`/${currentLang}/login`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setMobileOpen(false)}>
+                                    <a href={`/${currentLang}/login`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setMobileOpen(false)}>
                                         {t.login || '로그인'}
-                                    </Link>
-                                    <Link href={`/${currentLang}/register`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl btn-primary" onClick={() => setMobileOpen(false)}>
+                                    </a>
+                                    <a href={`/${currentLang}/register`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl btn-primary" onClick={() => setMobileOpen(false)}>
                                         {t.register || '회원가입'}
-                                    </Link>
+                                    </a>
                                 </div>
                             )}
                         </div>
