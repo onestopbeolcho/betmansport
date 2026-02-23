@@ -9,7 +9,7 @@ interface PremiumGateProps {
     children: React.ReactNode;
     /** Feature name shown in the overlay */
     featureName?: string;
-    /** Tier required: 'basic' | 'pro' | 'premium' */
+    /** Tier required: 'pro' | 'vip' */
     requiredTier?: string;
     /** If true, shows a teaser instead of full blur */
     showTeaser?: boolean;
@@ -29,7 +29,7 @@ interface PremiumGateProps {
 export default function PremiumGate({
     children,
     featureName = "프리미엄 기능",
-    requiredTier = "basic",
+    requiredTier = "pro",
     showTeaser = true,
 }: PremiumGateProps) {
     const { user } = useAuth();
@@ -39,7 +39,7 @@ export default function PremiumGate({
 
     // Determine if user has access
     const userTier = user?.tier || 'free';
-    const tierOrder: Record<string, number> = { free: 0, basic: 1, pro: 2, premium: 3 };
+    const tierOrder: Record<string, number> = { free: 0, pro: 1, vip: 2 };
     const hasAccess = (tierOrder[userTier] || 0) >= (tierOrder[requiredTier] || 1);
 
     if (hasAccess) {
@@ -79,7 +79,7 @@ export default function PremiumGate({
                     <h3 className="text-base font-extrabold text-white">{featureName}</h3>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed">
                         이 기능은 <span className="text-[var(--accent-primary)] font-bold">
-                            {requiredTier === 'basic' ? 'Basic' : requiredTier === 'pro' ? 'Pro' : 'Premium'}
+                            {requiredTier === 'pro' ? 'Pro Investor' : 'VIP'}
                         </span> 멤버십 이상에서 이용 가능합니다.
                     </p>
 

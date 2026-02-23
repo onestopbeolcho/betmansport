@@ -357,7 +357,7 @@ export default function BetsPage() {
 
                                                 {/* 기능3: 확률 예측 패널 (Premium Gated) */}
                                                 {isExpanded && (
-                                                    <PremiumGate featureName="Pinnacle 확률 예측 분석" requiredTier="basic">
+                                                    <PremiumGate featureName="Pinnacle 확률 예측 분석" requiredTier="pro">
                                                         <div className="px-4 pb-4 pt-1 animate-fade-up" style={{ background: 'var(--bg-elevated)' }}>
                                                             <div className="text-[10px] text-white/30 mb-2 font-bold uppercase">Pinnacle 역산 확률 예측</div>
                                                             <div className="grid grid-cols-3 gap-3">
