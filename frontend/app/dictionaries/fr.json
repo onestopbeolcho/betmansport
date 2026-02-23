@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | Analyse sportive par IA",
+        "description": "Plateforme d'analyse de données sportives alimentée par l'IA. Comparaison statistique en temps réel, prédiction de probabilités et optimisation des combinaisons.",
+        "keywords": "analyse sportive, prédiction IA, analyse de données, statistiques"
+    },
+    "nav": {
+        "home": "Accueil",
+        "valueBet": "Value Bet",
+        "aiPredict": "Prédiction IA",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Calculateur",
+        "portfolio": "Portefeuille",
+        "guide": "Guide",
+        "homeDesc": "Présentation du service",
+        "valueBetDesc": "Détection des surévaluations",
+        "aiPredictDesc": "Analyse IA multi-sources",
+        "multiComboDesc": "Simulateur multi-paris",
+        "taxCalcDesc": "Calculateur net d'impôts",
+        "portfolioDesc": "Historique · Bénéfices",
+        "guideDesc": "Mode d'emploi",
+        "login": "Connexion",
+        "register": "Inscription",
+        "logout": "Déconnexion",
+        "subscription": "Gérer l'abonnement",
+        "language": "Langue"
+    },
+    "hero": {
+        "badge": "Analyse IA en temps réel active",
+        "titleLine1": "Analyse sportive",
+        "titleLine2": "alimentée par l'IA",
+        "subtitle": "Analyse statistique IA basée sur des données mondiales · Prédiction de probabilités · Optimisation des combinaisons",
+        "ctaPrimary": "Lancer l'analyse IA →",
+        "ctaSecondary": "Voir tous les matchs",
+        "statMatches": "Matchs analysés",
+        "statLeagues": "Ligues couvertes",
+        "statUpdate": "Mise à jour",
+        "statUpdateValue": "En temps réel"
+    },
+    "pricing": {
+        "title": "Maximisez vos gains avec",
+        "titleHighlight": "l'analyse intelligente",
+        "subtitle": "Ne manquez pas les opportunités d'analyse sportive basée sur les données.",
+        "free": {
+            "name": "Free",
+            "badge": "Essai",
+            "price": "0€",
+            "period": "/mois",
+            "description": "Aperçu de base",
+            "features": [
+                "3 analyses quotidiennes",
+                "Calculateur ROI basique"
+            ],
+            "cta": "Commencer gratuitement"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Populaire",
+            "price": "36,99€",
+            "period": "/mois",
+            "description": "Pour une génération de profits sérieuse",
+            "features": [
+                "Rapports IA illimités",
+                "Alertes en temps réel",
+                "Gestion avancée du portefeuille",
+                "Analyse approfondie par match"
+            ],
+            "cta": "S'abonner maintenant"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "69,99€",
+            "period": "/mois",
+            "description": "Accompagnement 1:1 pour professionnels",
+            "features": [
+                "Toutes les fonctionnalités Pro",
+                "Canal Telegram exclusif",
+                "Support prioritaire"
+            ],
+            "cta": "Nous contacter"
+        },
+        "currency": "EUR",
+        "currencySymbol": "€"
+    },
+    "payment": {
+        "title": "Paiement d'abonnement",
+        "selectedPlan": "Plan sélectionné",
+        "period": "/mois",
+        "badge": "Paiement sécurisé via PortOne · Carte / E-wallet / Virement",
+        "agreeTerms": "J'accepte les conditions ci-dessus.",
+        "agreeAge": "J'ai 19 ans ou plus et je comprends que ce service est un outil d'analyse statistique, pas un conseil en investissement.",
+        "loginFirst": "Connectez-vous pour payer",
+        "processing": "Traitement du paiement...",
+        "payButton": "Payer",
+        "note1": "Paiement sécurisé via PortOne · Carte et e-wallet acceptés",
+        "note2": "Accès 30 jours à compter du paiement · Annulez à tout moment",
+        "otherPlans": "← Voir d'autres plans",
+        "termsLink": "Conditions d'utilisation",
+        "privacyLink": "Politique de confidentialité",
+        "refundLink": "Politique de remboursement",
+        "disclaimerLink": "Avertissement sur les risques",
+        "errorLogin": "Connexion requise.",
+        "errorAgree": "Veuillez cocher toutes les cases d'accord.",
+        "errorGeneral": "Une erreur est survenue lors du paiement."
+    },
+    "footer": {
+        "services": "Services",
+        "valueBet": "Analyse Value Bet",
+        "aiPredict": "Prédiction IA",
+        "taxCalc": "Calculateur fiscal",
+        "plans": "Plans",
+        "info": "Informations",
+        "userGuide": "Guide d'utilisation",
+        "membership": "Info abonnement",
+        "legal": "Mentions légales",
+        "terms": "Conditions d'utilisation",
+        "privacy": "Politique de confidentialité",
+        "refund": "Politique de remboursement",
+        "disclaimer": "Avertissement sur les risques",
+        "support": "Support",
+        "counseling": "Aide addiction aux jeux : 1336",
+        "bizInfo": "Informations entreprise",
+        "bizCompany": "Raison sociale",
+        "bizRep": "Représentant",
+        "bizRegNo": "N° d'immatriculation",
+        "bizCommerceNo": "N° de commerce électronique",
+        "bizAddress": "Adresse",
+        "bizPhone": "Téléphone",
+        "bizEmail": "E-mail",
+        "footerNotice": "Ce service est un outil d'analyse statistique et ne fournit pas de conseils en investissement. L'utilisateur est seul responsable des pertes résultant des analyses."
+    },
+    "common": {
+        "loading": "Chargement...",
+        "error": "Une erreur est survenue.",
+        "back": "Retour",
+        "close": "Fermer",
+        "confirm": "Confirmer",
+        "cancel": "Annuler"
+    }
+}

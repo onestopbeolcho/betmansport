@@ -1,0 +1,12 @@
+Starting get_positive_ev_bets
+Fetching Pinnacle Odds...
+Fetched 4 Pinnacle items.
+Fetching Betman Odds...
+Fetched 2 Betman items.
+Pinnacle Map Keys: ['맨체스터 시티_리버풀', '레알 마드리드_바르셀로나', 'LA 다저스_NY 양키스', 'LA 레이커스_골든스테이트']
+Checking Betman Key: 맨체스터 시티_리버풀
+MATCH FOUND for 맨체스터 시티_리버풀
+Opp found: {'id': None, 'match_name': '맨체스터 시티 vs 리버풀', 'bet_type': 'Home', 'domestic_odds': 2.5, 'true_probability': 0.4815, 'pinnacle_odds': 1.8, 'expected_value': 1.2038, 'kelly_pct': 0.0679, 'max_tax_free_stake': 100000, 'timestamp': 'now'}
+Checking Betman Key: 레알 마드리드_바르셀로나
+MATCH FOUND for 레알 마드리드_바르셀로나
+Opp found: {'id': None, 'match_name': '레알 마드리드 vs 바르셀로나', 'bet_type': 'Home', 'domestic_odds': 2.3, 'true_probability': 0.4867, 'pinnacle_odds': 1.95, 'expected_value': 1.1193, 'kelly_pct': 0.0459, 'max_tax_free_stake': 100000, 'timestamp': 'now'}

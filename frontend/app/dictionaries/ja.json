@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AIスポーツデータ分析",
+        "description": "AIによるスポーツデータ分析プラットフォーム。リアルタイム統計比較、確率予測、組み合わせ最適化。",
+        "keywords": "スポーツ分析, AI予測, データ分析, 統計分析"
+    },
+    "nav": {
+        "home": "ホーム",
+        "valueBet": "バリューベット",
+        "aiPredict": "AI予測",
+        "multiCombo": "マルチコンボ",
+        "taxCalc": "税金計算",
+        "portfolio": "ポートフォリオ",
+        "guide": "ガイド",
+        "homeDesc": "サービス紹介",
+        "valueBetDesc": "高評価データ検出",
+        "aiPredictDesc": "4ソースAI分析",
+        "multiComboDesc": "マルチフォールドシミュレーター",
+        "taxCalcDesc": "税引後計算機",
+        "portfolioDesc": "分析履歴・収益",
+        "guideDesc": "使い方",
+        "login": "ログイン",
+        "register": "新規登録",
+        "logout": "ログアウト",
+        "subscription": "プラン管理",
+        "language": "言語"
+    },
+    "hero": {
+        "badge": "リアルタイムAI分析稼働中",
+        "titleLine1": "AIが分析する",
+        "titleLine2": "スポーツデータ",
+        "subtitle": "グローバルデータソース基盤のAI統計分析・試合確率予測・組み合わせ最適化",
+        "ctaPrimary": "AI分析を開始 →",
+        "ctaSecondary": "全試合を見る",
+        "statMatches": "分析試合",
+        "statLeagues": "対応リーグ",
+        "statUpdate": "更新",
+        "statUpdateValue": "リアルタイム"
+    },
+    "pricing": {
+        "title": "収益を最大化する",
+        "titleHighlight": "スマート分析",
+        "subtitle": "データに基づく正確なスポーツ分析の機会をお見逃しなく。",
+        "free": {
+            "name": "Free",
+            "badge": "トライアル",
+            "price": "¥0",
+            "period": "/月",
+            "description": "基本的な価値確認が可能",
+            "features": [
+                "毎日3試合分析",
+                "基本収益率計算機"
+            ],
+            "cta": "無料で始める"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "人気",
+            "price": "¥5,500",
+            "period": "/月",
+            "description": "本格的な収益創出のためのプラン",
+            "features": [
+                "無制限AI分析レポート",
+                "リアルタイムアラート",
+                "高度なポートフォリオ管理",
+                "個別試合深層分析"
+            ],
+            "cta": "今すぐ購読"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "¥10,500",
+            "period": "/月",
+            "description": "専門家向け1:1ケア",
+            "features": [
+                "Proプランの全機能",
+                "専用Telegramチャンネル",
+                "優先カスタマーサポート"
+            ],
+            "cta": "お問い合わせ"
+        },
+        "currency": "JPY",
+        "currencySymbol": "¥"
+    },
+    "payment": {
+        "title": "サブスクリプション決済",
+        "selectedPlan": "選択したプラン",
+        "period": "/月",
+        "badge": "PortOneセキュア決済・カード/電子マネー/銀行振込",
+        "agreeTerms": "に同意します。",
+        "agreeAge": "19歳以上であり、本サービスが投資アドバイスではなく統計分析ツールであることを理解します。",
+        "loginFirst": "ログイン後に決済",
+        "processing": "決済処理中...",
+        "payButton": "決済する",
+        "note1": "PortOneセキュア決済・カード/電子マネー対応",
+        "note2": "決済日から30日間利用可能・いつでも解約可能",
+        "otherPlans": "← 他のプランを見る",
+        "termsLink": "利用規約",
+        "privacyLink": "プライバシーポリシー",
+        "refundLink": "返金ポリシー",
+        "disclaimerLink": "分析リスク告知",
+        "errorLogin": "ログインが必要です。",
+        "errorAgree": "全ての同意項目をチェックしてください。",
+        "errorGeneral": "決済処理中にエラーが発生しました。"
+    },
+    "footer": {
+        "services": "サービス",
+        "valueBet": "バリューベット分析",
+        "aiPredict": "AI予測",
+        "taxCalc": "税金計算機",
+        "plans": "プラン",
+        "info": "ご案内",
+        "userGuide": "利用ガイド",
+        "membership": "メンバーシップ案内",
+        "legal": "法的事項",
+        "terms": "利用規約",
+        "privacy": "プライバシーポリシー",
+        "refund": "返金ポリシー",
+        "disclaimer": "分析リスク告知",
+        "support": "カスタマーサポート",
+        "counseling": "ギャンブル依存症相談: 1336",
+        "bizInfo": "事業者情報",
+        "bizCompany": "商号",
+        "bizRep": "代表者",
+        "bizRegNo": "事業者登録番号",
+        "bizCommerceNo": "通信販売業番号",
+        "bizAddress": "事業所所在地",
+        "bizPhone": "代表電話番号",
+        "bizEmail": "メール",
+        "footerNotice": "本サービスは統計分析ツールであり、投資アドバイスを提供するものではありません。分析結果に基づく損失は全て利用者の責任となります。"
+    },
+    "common": {
+        "loading": "読み込み中...",
+        "error": "エラーが発生しました。",
+        "back": "戻る",
+        "close": "閉じる",
+        "confirm": "確認",
+        "cancel": "キャンセル"
+    }
+}

@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | KI-Sportdatenanalyse",
+        "description": "KI-gestützte Sportdaten-Analyseplattform. Echtzeit-Statistikvergleich, Wahrscheinlichkeitsvorhersage und Kombinationsoptimierung.",
+        "keywords": "Sportanalyse, KI-Vorhersage, Datenanalyse, Statistiken"
+    },
+    "nav": {
+        "home": "Startseite",
+        "valueBet": "Value Bet",
+        "aiPredict": "KI-Prognose",
+        "multiCombo": "Multi-Kombi",
+        "taxCalc": "Steuerrechner",
+        "portfolio": "Portfolio",
+        "guide": "Anleitung",
+        "homeDesc": "Service-Übersicht",
+        "valueBetDesc": "Überbewertete Daten erkennen",
+        "aiPredictDesc": "4-Quellen-KI-Analyse",
+        "multiComboDesc": "Multi-Wett-Simulator",
+        "taxCalcDesc": "Netto-Steuerrechner",
+        "portfolioDesc": "Verlauf · Gewinne",
+        "guideDesc": "Bedienungsanleitung",
+        "login": "Anmelden",
+        "register": "Registrieren",
+        "logout": "Abmelden",
+        "subscription": "Abo verwalten",
+        "language": "Sprache"
+    },
+    "hero": {
+        "badge": "KI-Echtzeitanalyse aktiv",
+        "titleLine1": "KI-gestützte",
+        "titleLine2": "Sportdatenanalyse",
+        "subtitle": "KI-Statistikanalyse basierend auf globalen Datenquellen · Spielwahrscheinlichkeits-Vorhersage · Kombinationsoptimierung",
+        "ctaPrimary": "KI-Analyse starten →",
+        "ctaSecondary": "Alle Spiele anzeigen",
+        "statMatches": "Analysierte Spiele",
+        "statLeagues": "Abgedeckte Ligen",
+        "statUpdate": "Aktualisierung",
+        "statUpdateValue": "Echtzeit"
+    },
+    "pricing": {
+        "title": "Maximieren Sie Ihre Gewinne mit",
+        "titleHighlight": "intelligenter Analyse",
+        "subtitle": "Verpassen Sie keine datengestützten Sportanalyse-Chancen.",
+        "free": {
+            "name": "Free",
+            "badge": "Testversion",
+            "price": "0€",
+            "period": "/Monat",
+            "description": "Grundlegende Einblicke",
+            "features": [
+                "3 tägliche Analysen",
+                "Basis-ROI-Rechner"
+            ],
+            "cta": "Kostenlos starten"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Beliebt",
+            "price": "36,99€",
+            "period": "/Monat",
+            "description": "Für ernsthafte Gewinnerzielung",
+            "features": [
+                "Unbegrenzte KI-Berichte",
+                "Echtzeit-Benachrichtigungen",
+                "Erweiterte Portfolio-Verwaltung",
+                "Tiefenanalyse pro Spiel"
+            ],
+            "cta": "Jetzt abonnieren"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "69,99€",
+            "period": "/Monat",
+            "description": "1:1-Betreuung für Profis",
+            "features": [
+                "Alle Pro-Funktionen",
+                "Exklusiver Telegram-Kanal",
+                "Prioritäts-Support"
+            ],
+            "cta": "Kontaktieren"
+        },
+        "currency": "EUR",
+        "currencySymbol": "€"
+    },
+    "payment": {
+        "title": "Abonnement-Zahlung",
+        "selectedPlan": "Ausgewählter Plan",
+        "period": "/Monat",
+        "badge": "Sichere Zahlung über PortOne · Karte / E-Wallet / Überweisung",
+        "agreeTerms": "Ich stimme den obigen Bedingungen zu.",
+        "agreeAge": "Ich bin 19 Jahre oder älter und verstehe, dass dieser Service ein statistisches Analysetool ist, keine Anlageberatung.",
+        "loginFirst": "Zum Bezahlen anmelden",
+        "processing": "Zahlung wird verarbeitet...",
+        "payButton": "Bezahlen",
+        "note1": "Sichere Zahlung über PortOne · Karte & E-Wallet unterstützt",
+        "note2": "30 Tage Zugang ab Zahlungsdatum · Jederzeit kündbar",
+        "otherPlans": "← Andere Pläne anzeigen",
+        "termsLink": "Nutzungsbedingungen",
+        "privacyLink": "Datenschutzrichtlinie",
+        "refundLink": "Rückerstattungsrichtlinie",
+        "disclaimerLink": "Risikohinweis",
+        "errorLogin": "Anmeldung erforderlich.",
+        "errorAgree": "Bitte alle Kontrollkästchen aktivieren.",
+        "errorGeneral": "Bei der Zahlung ist ein Fehler aufgetreten."
+    },
+    "footer": {
+        "services": "Dienste",
+        "valueBet": "Value Bet Analyse",
+        "aiPredict": "KI-Prognose",
+        "taxCalc": "Steuerrechner",
+        "plans": "Pläne",
+        "info": "Informationen",
+        "userGuide": "Benutzerhandbuch",
+        "membership": "Mitgliedschafts-Info",
+        "legal": "Rechtliches",
+        "terms": "Nutzungsbedingungen",
+        "privacy": "Datenschutz",
+        "refund": "Rückerstattung",
+        "disclaimer": "Risikohinweis",
+        "support": "Support",
+        "counseling": "Spielsucht-Hilfe: 1336",
+        "bizInfo": "Unternehmensinformationen",
+        "bizCompany": "Firmenname",
+        "bizRep": "Vertreter",
+        "bizRegNo": "Handelsregisternummer",
+        "bizCommerceNo": "E-Commerce-Lizenz",
+        "bizAddress": "Adresse",
+        "bizPhone": "Telefon",
+        "bizEmail": "E-Mail",
+        "footerNotice": "Dieser Service ist ein statistisches Analysetool und bietet keine Anlageberatung. Für Verluste aus Analyseergebnissen ist der Nutzer selbst verantwortlich."
+    },
+    "common": {
+        "loading": "Laden...",
+        "error": "Ein Fehler ist aufgetreten.",
+        "back": "Zurück",
+        "close": "Schließen",
+        "confirm": "Bestätigen",
+        "cancel": "Abbrechen"
+    }
+}

@@ -1,0 +1,37 @@
+============================================================
+Pipeline Verification
+============================================================
+
+[1] Manual crawl trigger...
+  Status: 200
+  Success: True
+  Count: 57
+  Round: 260020
+  Source: crawl
+    에스파뇰 vs RC셀타 W=2.3 D=2.8 L=2.7
+    코모1907 vs 피오렌티 W=1.52 D=3.5 L=4.55
+    레버쿠젠 vs 장크트파 W=1.36 D=3.75 L=6.2
+
+[2] Saved rounds in Firestore...
+  Status: 200
+  Rounds count: 1
+    {'round_id': '260020', 'match_count': 57, 'crawled_at': '2026-02-14T12:31:57.348492+00:00'}
+
+[3] Latest matches...
+  Status: 200
+  Round: latest
+  Count: 57
+    에스파뇰 vs RC셀타 W=2.3 D=2.8 L=2.7
+    코모1907 vs 피오렌티 W=1.52 D=3.5 L=4.55
+    레버쿠젠 vs 장크트파 W=1.36 D=3.75 L=6.2
+
+[4] Value bets API...
+  Status: 200
+  Value bets: 0
+
+[5] Scheduler status...
+  Status: 200
+  {'api_key_configured': True, 'cache_age_seconds': None, 'requests_remaining': 19814, 'requests_used': 10, 'target_sports': ['soccer_epl', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a', 'soccer_france_ligue_one', 'soccer_uefa_champs_league', 'basketball_nba', 'basketball_euroleague', 'baseball_mlb', 'icehockey_nhl']}
+
+============================================================
+DONE

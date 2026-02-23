@@ -1,0 +1,23 @@
+﻿node.exe : error: unkn
+own option '--limit'
+위치 C:\Users\청솔\AppData
+\Roaming\npm\firebase.
+ps1:24 문자:5
++     & "node$exe"  "$
+basedir/node_modules/f
+irebase-tools/lib/bin/
+fireb ...
++     ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (error: unk   
+ nown option '--li    
+mit':String) [],     R
+emoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 

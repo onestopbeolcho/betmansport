@@ -1,0 +1,50 @@
+--- Testing /bets endpoint logic ---
+Traceback (most recent call last):
+  File "C:\Smart_Proto_Investor_Plan\backend\app\api\endpoints\odds.py", line 25, in get_positive_ev_bets
+    pinnacle_data = await pinnacle_service.fetch_odds()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Smart_Proto_Investor_Plan\backend\app\services\pinnacle_api.py", line 52, in fetch_odds
+    cached_data = await get_market_cache(cache_key)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Smart_Proto_Investor_Plan\backend\app\models\bets_db.py", line 10, in get_market_cache
+    db = get_firestore_db()
+  File "C:\Smart_Proto_Investor_Plan\backend\app\db\firestore.py", line 20, in get_firestore_db
+    raise e
+  File "C:\Smart_Proto_Investor_Plan\backend\app\db\firestore.py", line 16, in get_firestore_db
+    _db = firestore.Client()
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\firestore_v1\client.py", line 96, in __init__
+    super(Client, self).__init__(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        project=project,
+        ^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        client_options=client_options,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\firestore_v1\base_client.py", line 146, in __init__
+    super(BaseClient, self).__init__(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        project=project,
+        ^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        _http=None,
+        ^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\client\__init__.py", line 339, in __init__
+    _ClientProjectMixin.__init__(self, project=project, credentials=credentials)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\client\__init__.py", line 287, in __init__
+    project = self._determine_default(project)
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\client\__init__.py", line 306, in _determine_default
+    return _determine_default_project(project)
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\cloud\_helpers\__init__.py", line 152, in _determine_default_project
+    _, project = google.auth.default()
+                 ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\청솔\AppData\Roaming\Python\Python313\site-packages\google\auth\_default.py", line 752, in default
+    raise exceptions.DefaultCredentialsError(_CLOUD_SDK_MISSING_CREDENTIALS)
+google.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc for more information.
+--- Result ---
+Found 0 value bets.
+WARNING: No value bets found. Check threshold or mock data values.

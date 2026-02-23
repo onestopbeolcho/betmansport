@@ -1,0 +1,8 @@
+Testing URL: https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do
+Status: 200
+No gmTs found via Regex.
+--------------------------------------------------
+Testing URL: https://www.betman.co.kr/main/mainPage.do
+Status: 302
+No gmTs found via Regex.
+--------------------------------------------------

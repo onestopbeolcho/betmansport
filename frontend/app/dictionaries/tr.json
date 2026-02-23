@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | Yapay Zeka Spor Veri Analizi",
+        "description": "Yapay zeka destekli spor veri analiz platformu. Gerçek zamanlı istatistik karşılaştırma, olasılık tahmini ve kombinasyon optimizasyonu.",
+        "keywords": "spor analizi, yapay zeka tahmin, veri analizi, istatistikler"
+    },
+    "nav": {
+        "home": "Ana Sayfa",
+        "valueBet": "Value Bet",
+        "aiPredict": "YZ Tahmin",
+        "multiCombo": "Çoklu Kombo",
+        "taxCalc": "Vergi Hesap",
+        "portfolio": "Portföy",
+        "guide": "Rehber",
+        "homeDesc": "Hizmet tanıtımı",
+        "valueBetDesc": "Aşırı değerlenmiş veri tespiti",
+        "aiPredictDesc": "4 kaynaklı YZ analizi",
+        "multiComboDesc": "Çoklu bahis simülatörü",
+        "taxCalcDesc": "Vergi sonrası hesaplayıcı",
+        "portfolioDesc": "Geçmiş · Kazançlar",
+        "guideDesc": "Nasıl kullanılır",
+        "login": "Giriş Yap",
+        "register": "Kayıt Ol",
+        "logout": "Çıkış Yap",
+        "subscription": "Plan Yönetimi",
+        "language": "Dil"
+    },
+    "hero": {
+        "badge": "Gerçek zamanlı YZ analizi aktif",
+        "titleLine1": "Yapay zeka destekli",
+        "titleLine2": "spor veri analizi",
+        "subtitle": "Küresel verilere dayalı YZ istatistik analizi · Maç olasılık tahmini · Kombinasyon optimizasyonu",
+        "ctaPrimary": "YZ Analizi Başlat →",
+        "ctaSecondary": "Tüm maçları gör",
+        "statMatches": "Analiz edilen maçlar",
+        "statLeagues": "Kapsanan ligler",
+        "statUpdate": "Güncelleme",
+        "statUpdateValue": "Gerçek zamanlı"
+    },
+    "pricing": {
+        "title": "Kazançlarınızı maksimize edin",
+        "titleHighlight": "akıllı analizle",
+        "subtitle": "Verilere dayalı spor analizi fırsatlarını kaçırmayın.",
+        "free": {
+            "name": "Free",
+            "badge": "Deneme",
+            "price": "$0",
+            "period": "/ay",
+            "description": "Temel değer bilgileri",
+            "features": [
+                "Günlük 3 maç analizi",
+                "Temel ROI hesaplayıcı"
+            ],
+            "cta": "Ücretsiz başla"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Popüler",
+            "price": "$39.99",
+            "period": "/ay",
+            "description": "Ciddi kazanç elde etmek için",
+            "features": [
+                "Sınırsız YZ raporları",
+                "Gerçek zamanlı uyarılar",
+                "Gelişmiş portföy yönetimi",
+                "Maç bazlı derinlemesine analiz"
+            ],
+            "cta": "Şimdi abone ol"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "$74.99",
+            "period": "/ay",
+            "description": "Profesyoneller için 1:1 destek",
+            "features": [
+                "Tüm Pro özellikleri",
+                "Özel Telegram kanalı",
+                "Öncelikli destek"
+            ],
+            "cta": "İletişime geçin"
+        },
+        "currency": "USD",
+        "currencySymbol": "$"
+    },
+    "payment": {
+        "title": "Abonelik Ödemesi",
+        "selectedPlan": "Seçilen plan",
+        "period": "/ay",
+        "badge": "PortOne güvenli ödeme · Kart / E-cüzdan / Havale",
+        "agreeTerms": "Yukarıdaki koşulları kabul ediyorum.",
+        "agreeAge": "19 yaşında veya daha büyüğüm ve bu hizmetin yatırım tavsiyesi değil, istatistiksel bir analiz aracı olduğunu anlıyorum.",
+        "loginFirst": "Ödeme için giriş yapın",
+        "processing": "Ödeme işleniyor...",
+        "payButton": "Öde",
+        "note1": "PortOne güvenli ödeme · Kart ve e-cüzdan desteklenir",
+        "note2": "Ödeme tarihinden itibaren 30 gün erişim · İstediğiniz zaman iptal",
+        "otherPlans": "← Diğer planları gör",
+        "termsLink": "Kullanım koşulları",
+        "privacyLink": "Gizlilik politikası",
+        "refundLink": "İade politikası",
+        "disclaimerLink": "Risk uyarısı",
+        "errorLogin": "Giriş yapmanız gerekiyor.",
+        "errorAgree": "Lütfen tüm onay kutularını işaretleyin.",
+        "errorGeneral": "Ödeme sırasında bir hata oluştu."
+    },
+    "footer": {
+        "services": "Hizmetler",
+        "valueBet": "Value Bet Analizi",
+        "aiPredict": "YZ Tahmin",
+        "taxCalc": "Vergi Hesaplayıcı",
+        "plans": "Planlar",
+        "info": "Bilgi",
+        "userGuide": "Kullanım kılavuzu",
+        "membership": "Üyelik bilgisi",
+        "legal": "Yasal",
+        "terms": "Kullanım koşulları",
+        "privacy": "Gizlilik politikası",
+        "refund": "İade politikası",
+        "disclaimer": "Risk uyarısı",
+        "support": "Destek",
+        "counseling": "Kumar bağımlılığı yardım hattı: 1336",
+        "bizInfo": "Şirket bilgileri",
+        "bizCompany": "Şirket adı",
+        "bizRep": "Temsilci",
+        "bizRegNo": "Ticaret sicil no",
+        "bizCommerceNo": "E-ticaret lisans no",
+        "bizAddress": "Adres",
+        "bizPhone": "Telefon",
+        "bizEmail": "E-posta",
+        "footerNotice": "Bu hizmet istatistiksel bir analiz aracıdır ve yatırım tavsiyesi sağlamaz. Analiz sonuçlarından kaynaklanan zararlardan kullanıcı sorumludur."
+    },
+    "common": {
+        "loading": "Yükleniyor...",
+        "error": "Bir hata oluştu.",
+        "back": "Geri",
+        "close": "Kapat",
+        "confirm": "Onayla",
+        "cancel": "İptal"
+    }
+}

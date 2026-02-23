@@ -1,0 +1,41 @@
+# Test & debug files
+test_*.py
+debug_*.py
+create_tables.py
+requestClient.js
+
+# Logs & output
+*.log
+*.db
+simple_output.txt
+simple_result.log
+cache_api_result.txt
+test_betman_output.txt
+test_betman_result.txt
+test_odds_output.txt
+test_odds_result.txt
+test_round_discovery.txt
+test_urls_result.txt
+
+# HTML files (debug)
+betman_browser_discovery.html
+betman_list.html
+blocked_response.html
+
+# JSON debug files
+betman_requests.json
+
+# Data & cache
+data/
+awskey/
+__pycache__/
+*.pyc
+
+# Config files not needed in container
+.env
+
+# System
+.git
+.gitignore
+Dockerfile
+.dockerignore

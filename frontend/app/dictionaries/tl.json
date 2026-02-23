@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AI Sports Data Analytics",
+        "description": "AI-powered sports data analytics platform. Real-time statistical comparison, probability prediction, at combination optimization.",
+        "keywords": "sports analytics, AI prediction, data analysis, statistics"
+    },
+    "nav": {
+        "home": "Home",
+        "valueBet": "Value Bet",
+        "aiPredict": "AI Predict",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Tax Calc",
+        "portfolio": "Portfolio",
+        "guide": "Gabay",
+        "homeDesc": "Pangkalahatang-ideya ng serbisyo",
+        "valueBetDesc": "Pag-detect ng overvalued na data",
+        "aiPredictDesc": "4-source AI analysis",
+        "multiComboDesc": "Multi-fold simulator",
+        "taxCalcDesc": "After-tax calculator",
+        "portfolioDesc": "Kasaysayan · Kita",
+        "guideDesc": "Paano gamitin",
+        "login": "Mag-sign in",
+        "register": "Mag-sign up",
+        "logout": "Mag-sign out",
+        "subscription": "I-manage ang Plan",
+        "language": "Wika"
+    },
+    "hero": {
+        "badge": "Real-time AI analysis aktibo",
+        "titleLine1": "AI-Powered",
+        "titleLine2": "Sports Analytics",
+        "subtitle": "AI statistical analysis batay sa global data · Prediction ng match probability · Optimization ng combination",
+        "ctaPrimary": "Simulan ang AI Analysis →",
+        "ctaSecondary": "Tingnan lahat ng laro",
+        "statMatches": "Na-analyze na laro",
+        "statLeagues": "Sakop na liga",
+        "statUpdate": "Update",
+        "statUpdateValue": "Real-time"
+    },
+    "pricing": {
+        "title": "I-maximize ang iyong kita gamit ang",
+        "titleHighlight": "Smart Analytics",
+        "subtitle": "Huwag palampasin ang data-driven sports analysis opportunities.",
+        "free": {
+            "name": "Free",
+            "badge": "Trial",
+            "price": "₱0",
+            "period": "/buwan",
+            "description": "Basic value insights",
+            "features": [
+                "3 daily match analyses",
+                "Basic ROI calculator"
+            ],
+            "cta": "Magsimula nang libre"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Sikat",
+            "price": "₱2,199",
+            "period": "/buwan",
+            "description": "Para sa seryosong pag-generate ng kita",
+            "features": [
+                "Unlimited AI analysis reports",
+                "Real-time alerts",
+                "Advanced portfolio management",
+                "Deep single-match analysis"
+            ],
+            "cta": "Mag-subscribe ngayon"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "₱4,199",
+            "period": "/buwan",
+            "description": "1:1 expert care para sa professionals",
+            "features": [
+                "Lahat ng Pro features",
+                "Exclusive Telegram channel",
+                "Priority support"
+            ],
+            "cta": "Makipag-ugnayan"
+        },
+        "currency": "PHP",
+        "currencySymbol": "₱"
+    },
+    "payment": {
+        "title": "Bayad sa Subscription",
+        "selectedPlan": "Napiling Plan",
+        "period": "/buwan",
+        "badge": "Secure payment via PortOne · Card / E-wallet / Bank Transfer",
+        "agreeTerms": "Sumasang-ayon ako sa mga kondisyon sa itaas.",
+        "agreeAge": "Ako ay 19 taong gulang o higit pa at nauunawaan ko na ang serbisyong ito ay statistical analysis tool, hindi investment advice.",
+        "loginFirst": "Mag-sign in para magbayad",
+        "processing": "Pinoproseso ang bayad...",
+        "payButton": "Magbayad",
+        "note1": "Secure payment via PortOne · Suportado ang card at e-wallet",
+        "note2": "30-araw na access mula sa petsa ng bayad · I-cancel anumang oras",
+        "otherPlans": "← Tingnan ang ibang plano",
+        "termsLink": "Mga Tuntunin ng Serbisyo",
+        "privacyLink": "Patakaran sa Privacy",
+        "refundLink": "Patakaran sa Refund",
+        "disclaimerLink": "Babala sa Panganib",
+        "errorLogin": "Kailangan mag-sign in.",
+        "errorAgree": "Pakicheck lahat ng agreement boxes.",
+        "errorGeneral": "May naganap na error habang nagbabayad."
+    },
+    "footer": {
+        "services": "Mga Serbisyo",
+        "valueBet": "Value Bet Analysis",
+        "aiPredict": "AI Prediction",
+        "taxCalc": "Tax Calculator",
+        "plans": "Mga Plano",
+        "info": "Impormasyon",
+        "userGuide": "Gabay sa Gumagamit",
+        "membership": "Info ng Membership",
+        "legal": "Legal",
+        "terms": "Mga Tuntunin ng Serbisyo",
+        "privacy": "Patakaran sa Privacy",
+        "refund": "Patakaran sa Refund",
+        "disclaimer": "Babala sa Panganib",
+        "support": "Suporta",
+        "counseling": "Gambling Addiction Helpline: 1336",
+        "bizInfo": "Impormasyon ng Negosyo",
+        "bizCompany": "Pangalan ng Kumpanya",
+        "bizRep": "Kinatawan",
+        "bizRegNo": "Business Registration No.",
+        "bizCommerceNo": "E-Commerce License No.",
+        "bizAddress": "Address",
+        "bizPhone": "Telepono",
+        "bizEmail": "Email",
+        "footerNotice": "Ang serbisyong ito ay statistical analysis tool at hindi nagbibigay ng investment advice. Ang mga gumagamit ay tanging responsable sa anumang pagkalugi mula sa mga resulta ng analysis."
+    },
+    "common": {
+        "loading": "Naglo-load...",
+        "error": "May naganap na error.",
+        "back": "Bumalik",
+        "close": "Isara",
+        "confirm": "Kumpirmahin",
+        "cancel": "I-cancel"
+    }
+}

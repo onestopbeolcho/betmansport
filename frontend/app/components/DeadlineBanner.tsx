@@ -1,43 +1,52 @@
-import React, { useEffect, useState } from 'react';
+
+"use client";
+import React, { useState, useEffect } from 'react';
 
 export default function DeadlineBanner() {
-    const [status, setStatus] = useState<'OPEN' | 'CLOSING_SOON' | 'CLOSED'>('OPEN');
     const [timeLeft, setTimeLeft] = useState('');
+    const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
-        const checkTime = () => {
+        const updateTimer = () => {
             const now = new Date();
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
+            const nextSaturday = new Date(now);
+            const daysUntilSat = (6 - now.getDay() + 7) % 7 || 7;
+            nextSaturday.setDate(now.getDate() + daysUntilSat);
+            nextSaturday.setHours(14, 0, 0, 0);
 
-            // Betman Blackout: 23:00 ~ 08:00
-            // Closing Soon: 22:00 ~ 23:00
-
-            if (hours >= 23 || hours < 8) {
-                setStatus('CLOSED');
-            } else if (hours === 22) {
-                setStatus('CLOSING_SOON');
-                const minLeft = 60 - minutes;
-                setTimeLeft(`${minLeft}분`);
-            } else {
-                setStatus('OPEN');
+            if (nextSaturday <= now) {
+                nextSaturday.setDate(nextSaturday.getDate() + 7);
             }
+
+            const diff = nextSaturday.getTime() - now.getTime();
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff / (1000 * 60)) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+            setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
         };
 
-        checkTime();
-        const interval = setInterval(checkTime, 60000); // Check every minute
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
         return () => clearInterval(interval);
     }, []);
 
-    if (status === 'OPEN') return null;
+    if (!isVisible) return null;
 
     return (
-        <div className={`w-full p-3 text-center text-white font-bold shadow-md animate-pulse ${status === 'CLOSED' ? 'bg-gray-800' : 'bg-red-600'}`}>
-            {status === 'CLOSED' ? (
-                <span>💤 발매 차단 시간 (23:00 ~ 08:00) - 내일 아침 8시에 만나요!</span>
-            ) : (
-                <span>⏰ 마감 임박! {timeLeft} 뒤에 발매가 중단됩니다. (서두르세요!)</span>
-            )}
+        <div className="relative border-b border-[var(--border-subtle)] overflow-hidden">
+            {/* Animated gradient background */}
+            <div className="absolute inset-0 animate-gradient"
+                style={{ background: 'linear-gradient(90deg, rgba(0,212,255,0.06) 0%, rgba(139,92,246,0.06) 50%, rgba(0,212,255,0.06) 100%)', backgroundSize: '200% 100%' }} />
+            <div className="relative max-w-7xl mx-auto px-4 py-2 flex items-center justify-center text-xs gap-2">
+                <span className="text-[var(--text-muted)]">⏱ 이번 매치데이 마감까지</span>
+                <span className="text-[var(--accent-primary)] font-bold font-mono tracking-wider">{timeLeft}</span>
+                <button
+                    onClick={() => setIsVisible(false)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+                >
+                    ✕
+                </button>
+            </div>
         </div>
     );
 }

@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | Phân tích Thể thao AI",
+        "description": "Nền tảng phân tích dữ liệu thể thao bằng AI. So sánh thống kê thời gian thực, dự đoán xác suất và tối ưu hóa tổ hợp.",
+        "keywords": "phân tích thể thao, dự đoán AI, phân tích dữ liệu, thống kê"
+    },
+    "nav": {
+        "home": "Trang chủ",
+        "valueBet": "Value Bet",
+        "aiPredict": "AI Dự đoán",
+        "multiCombo": "Đa tổ hợp",
+        "taxCalc": "Tính thuế",
+        "portfolio": "Danh mục",
+        "guide": "Hướng dẫn",
+        "homeDesc": "Giới thiệu dịch vụ",
+        "valueBetDesc": "Phát hiện dữ liệu định giá cao",
+        "aiPredictDesc": "Phân tích AI 4 nguồn",
+        "multiComboDesc": "Mô phỏng đa cược",
+        "taxCalcDesc": "Máy tính sau thuế",
+        "portfolioDesc": "Lịch sử · Lợi nhuận",
+        "guideDesc": "Cách sử dụng",
+        "login": "Đăng nhập",
+        "register": "Đăng ký",
+        "logout": "Đăng xuất",
+        "subscription": "Quản lý gói",
+        "language": "Ngôn ngữ"
+    },
+    "hero": {
+        "badge": "Phân tích AI thời gian thực đang hoạt động",
+        "titleLine1": "Phân tích thể thao",
+        "titleLine2": "bằng trí tuệ nhân tạo",
+        "subtitle": "Phân tích thống kê AI dựa trên dữ liệu toàn cầu · Dự đoán xác suất · Tối ưu hóa tổ hợp",
+        "ctaPrimary": "Bắt đầu phân tích AI →",
+        "ctaSecondary": "Xem tất cả trận đấu",
+        "statMatches": "Trận đã phân tích",
+        "statLeagues": "Giải đấu",
+        "statUpdate": "Cập nhật",
+        "statUpdateValue": "Thời gian thực"
+    },
+    "pricing": {
+        "title": "Tối đa hóa lợi nhuận với",
+        "titleHighlight": "phân tích thông minh",
+        "subtitle": "Đừng bỏ lỡ cơ hội phân tích thể thao dựa trên dữ liệu.",
+        "free": {
+            "name": "Free",
+            "badge": "Dùng thử",
+            "price": "0₫",
+            "period": "/tháng",
+            "description": "Thông tin giá trị cơ bản",
+            "features": [
+                "3 phân tích mỗi ngày",
+                "Máy tính ROI cơ bản"
+            ],
+            "cta": "Bắt đầu miễn phí"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Phổ biến",
+            "price": "899.000₫",
+            "period": "/tháng",
+            "description": "Dành cho tạo lợi nhuận chuyên nghiệp",
+            "features": [
+                "Báo cáo AI không giới hạn",
+                "Cảnh báo thời gian thực",
+                "Quản lý danh mục nâng cao",
+                "Phân tích chuyên sâu theo trận"
+            ],
+            "cta": "Đăng ký ngay"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "1.799.000₫",
+            "period": "/tháng",
+            "description": "Chăm sóc 1:1 cho chuyên gia",
+            "features": [
+                "Tất cả tính năng Pro",
+                "Kênh Telegram riêng",
+                "Hỗ trợ ưu tiên"
+            ],
+            "cta": "Liên hệ"
+        },
+        "currency": "VND",
+        "currencySymbol": "₫"
+    },
+    "payment": {
+        "title": "Thanh toán đăng ký",
+        "selectedPlan": "Gói đã chọn",
+        "period": "/tháng",
+        "badge": "Thanh toán bảo mật qua PortOne · Thẻ / Ví điện tử / Chuyển khoản",
+        "agreeTerms": "Tôi đồng ý với các điều khoản trên.",
+        "agreeAge": "Tôi từ 19 tuổi trở lên và hiểu rằng dịch vụ này là công cụ phân tích thống kê, không phải tư vấn đầu tư.",
+        "loginFirst": "Đăng nhập để thanh toán",
+        "processing": "Đang xử lý thanh toán...",
+        "payButton": "Thanh toán",
+        "note1": "Thanh toán bảo mật qua PortOne · Hỗ trợ thẻ và ví điện tử",
+        "note2": "Truy cập 30 ngày từ ngày thanh toán · Hủy bất cứ lúc nào",
+        "otherPlans": "← Xem gói khác",
+        "termsLink": "Điều khoản dịch vụ",
+        "privacyLink": "Chính sách quyền riêng tư",
+        "refundLink": "Chính sách hoàn tiền",
+        "disclaimerLink": "Cảnh báo rủi ro",
+        "errorLogin": "Cần đăng nhập.",
+        "errorAgree": "Vui lòng đánh dấu tất cả các ô đồng ý.",
+        "errorGeneral": "Đã xảy ra lỗi trong quá trình thanh toán."
+    },
+    "footer": {
+        "services": "Dịch vụ",
+        "valueBet": "Phân tích Value Bet",
+        "aiPredict": "Dự đoán AI",
+        "taxCalc": "Máy tính thuế",
+        "plans": "Gói dịch vụ",
+        "info": "Thông tin",
+        "userGuide": "Hướng dẫn sử dụng",
+        "membership": "Thông tin thành viên",
+        "legal": "Pháp lý",
+        "terms": "Điều khoản dịch vụ",
+        "privacy": "Chính sách quyền riêng tư",
+        "refund": "Chính sách hoàn tiền",
+        "disclaimer": "Cảnh báo rủi ro",
+        "support": "Hỗ trợ",
+        "counseling": "Đường dây nóng cờ bạc: 1336",
+        "bizInfo": "Thông tin doanh nghiệp",
+        "bizCompany": "Tên công ty",
+        "bizRep": "Đại diện",
+        "bizRegNo": "Mã đăng ký kinh doanh",
+        "bizCommerceNo": "Giấy phép TMĐT",
+        "bizAddress": "Địa chỉ",
+        "bizPhone": "Điện thoại",
+        "bizEmail": "Email",
+        "footerNotice": "Dịch vụ này là công cụ phân tích thống kê và không cung cấp tư vấn đầu tư. Người dùng tự chịu trách nhiệm về mọi tổn thất từ kết quả phân tích."
+    },
+    "common": {
+        "loading": "Đang tải...",
+        "error": "Đã xảy ra lỗi.",
+        "back": "Quay lại",
+        "close": "Đóng",
+        "confirm": "Xác nhận",
+        "cancel": "Hủy"
+    }
+}

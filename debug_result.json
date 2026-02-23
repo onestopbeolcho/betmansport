@@ -1,0 +1,347 @@
+{
+  "betman_count": 27,
+  "pinnacle_count": 94,
+  "matched_count": 14,
+  "unmatched_count": 13,
+  "matched": [
+    {
+      "betman": "우디네세 vs 사수올로",
+      "pinnacle": "Udinese vs Sassuolo",
+      "betman_odds": {
+        "W": 2.23,
+        "D": 2.75,
+        "L": 2.85
+      },
+      "pinnacle_odds": {
+        "W": 2.62,
+        "D": 3.0,
+        "L": 3.14
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8236,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.887,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8782,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "오비에도 vs 빌바오",
+      "pinnacle": "Oviedo vs Athletic Bilbao",
+      "betman_odds": {
+        "W": 3.2,
+        "D": 2.9,
+        "L": 1.98
+      },
+      "pinnacle_odds": {
+        "W": 3.84,
+        "D": 3.16,
+        "L": 2.19
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8063,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.888,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8748,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "크레모네 vs 제노아",
+      "pinnacle": "Cremonese vs Genoa",
+      "betman_odds": {
+        "W": 2.8,
+        "D": 2.75,
+        "L": 2.26
+      },
+      "pinnacle_odds": {
+        "W": 3.24,
+        "D": 2.9,
+        "L": 2.64
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8372,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.9186,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8293,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "파르마 vs 엘라스",
+      "pinnacle": "Parma vs Hellas Verona",
+      "betman_odds": {
+        "W": 2.17,
+        "D": 2.75,
+        "L": 2.95
+      },
+      "pinnacle_odds": {
+        "W": 2.46,
+        "D": 2.9,
+        "L": 3.55
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8539,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.918,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8044,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "르아브르 vs 툴루즈",
+      "pinnacle": "Le Havre vs Toulouse",
+      "betman_odds": {
+        "W": 2.95,
+        "D": 2.9,
+        "L": 2.09
+      },
+      "pinnacle_odds": {
+        "W": 3.22,
+        "D": 3.22,
+        "L": 2.42
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8857,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.8707,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.835,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "아우크스 vs 하이덴하",
+      "pinnacle": "Augsburg vs 1. FC Heidenheim",
+      "betman_odds": {
+        "W": 1.72,
+        "D": 3.35,
+        "L": 3.55
+      },
+      "pinnacle_odds": {
+        "W": 1.94,
+        "D": 3.78,
+        "L": 3.91
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.856,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.8556,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8766,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "로리앙 vs 앙제SCO",
+      "pinnacle": "Lorient vs Angers",
+      "betman_odds": {
+        "W": 1.82,
+        "D": 2.95,
+        "L": 3.65
+      },
+      "pinnacle_odds": {
+        "W": 1.99,
+        "D": 3.2,
+        "L": 4.55
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8838,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.8909,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.7752,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "메스 vs 오세르",
+      "pinnacle": "Metz vs Auxerre",
+      "betman_odds": {
+        "W": 2.5,
+        "D": 2.9,
+        "L": 2.39
+      },
+      "pinnacle_odds": {
+        "W": 3.05,
+        "D": 3.07,
+        "L": 2.64
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.794,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.915,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8769,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "라이프치 vs 볼프스부",
+      "pinnacle": "RB Leipzig vs VfL Wolfsburg",
+      "betman_odds": {
+        "W": 1.34,
+        "D": 4.3,
+        "L": 5.4
+      },
+      "pinnacle_odds": {
+        "W": 1.51,
+        "D": 4.85,
+        "L": 5.98
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.8569,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.8561,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.8719,
+          "kelly": 0.0
+        }
+      ]
+    },
+    {
+      "betman": "토리노 vs 볼로냐",
+      "pinnacle": "Torino vs Bologna",
+      "betman_odds": {
+        "W": 2.85,
+        "D": 3.0,
+        "L": 2.09
+      },
+      "pinnacle_odds": {
+        "W": 3.13,
+        "D": 3.06,
+        "L": 2.59
+      },
+      "value_bets": [
+        {
+          "type": "Home",
+          "ev": 0.882,
+          "kelly": 0.0
+        },
+        {
+          "type": "Draw",
+          "ev": 0.9496,
+          "kelly": 0.0
+        },
+        {
+          "type": "Away",
+          "ev": 0.7816,
+          "kelly": 0.0
+        }
+      ]
+    }
+  ],
+  "unmatched_betman": [
+    "후쿠오카 vs C오사카",
+    "G오사카 vs 나고야",
+    "우리은행 vs 삼성생명",
+    "IBK기업 vs 페퍼저축",
+    "한국가스 vs 서울삼성",
+    "페예노르 vs 고어헤드",
+    "버밍엄C vs 리즈U",
+    "헤이렌베 vs 즈볼러",
+    "텔스타 vs 트벤테",
+    "옥스퍼드 vs 선덜랜드"
+  ],
+  "pinnacle_teams": [
+    "Wolverhampton Wanderers vs Arsenal",
+    "Aston Villa vs Leeds United",
+    "Brentford vs Brighton and Hove Albion",
+    "Chelsea vs Burnley",
+    "West Ham United vs Bournemouth",
+    "Manchester City vs Newcastle United",
+    "Crystal Palace vs Wolverhampton Wanderers",
+    "Sunderland vs Fulham",
+    "Nottingham Forest vs Liverpool",
+    "Tottenham Hotspur vs Arsenal"
+  ],
+  "mapper_stats": {
+    "total_mappings": 229,
+    "kr_keys": 229,
+    "en_keys": 224
+  }
+}

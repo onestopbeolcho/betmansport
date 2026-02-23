@@ -1,0 +1,41 @@
+﻿============================================================
+  Deployed API Verification: https://us-central1-smart-proto-inv-2026.cloudfunctions.net/api
+============================================================
+
+[PASS] Root
+  URL: /
+  Status: 200
+  Body: {"message":"Welcome to Smart Proto Investor API"}
+
+[PASS] OpenAPI Docs
+  URL: /docs
+  Status: 200
+  Body:      <!DOCTYPE html>     <html>     <head>     <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">     <link rel="shortcut icon" href="https://
+
+[FAIL] Value Bets (Betman+Pinnacle)
+  URL: /api/bets
+  Error: The read operation timed out
+
+[PASS] Admin Betman Rounds
+  URL: /api/admin/betman/rounds
+  Status: 200
+  Body: []
+
+[PASS] Market Summary
+  URL: /api/market/summary
+  Status: 404
+  Body: {"detail":"Not Found"}
+
+[PASS] Prediction Leaderboard
+  URL: /api/prediction/leaderboard
+  Status: 200
+  Body: [{"rank":1,"user_id":"expert_kim","points":350,"accuracy":70.0,"tier":"Master"},{"rank":2,"user_id":"pro_lee","points":180,"accuracy":60.0,"tier":"Expert"},{"rank":3,"user_id":"newbie_park","points":2
+
+[PASS] Scheduler Status
+  URL: /api/scheduler/status
+  Status: 200
+  Body: {"api_key_configured":true,"cache_age_seconds":null,"requests_remaining":null,"requests_used":0,"target_sports":["soccer_epl","soccer_spain_la_liga","soccer_germany_bundesliga","soccer_italy_serie_a",
+
+============================================================
+  Results: 6 passed, 1 failed
+============================================================

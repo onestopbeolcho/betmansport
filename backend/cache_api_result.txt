@@ -1,0 +1,60 @@
+﻿Testing Cache API...
+URL: https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do
+
+Status: 200
+Content-Type: application/json;charset=UTF-8
+Length: 9345 bytes
+
+python : Traceback (mo
+st recent call last):
+위치 줄:1 문자:13
++ cd backend; python t
+est_cache_api.py 2>&1 
+| Out-File -Encoding u
+tf8 - ...
++             ~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Traceback    
+ (most recent call    
+ last)::String) [    ]
+, RemoteExceptio    n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+  File "C:\Smart_Proto
+_Investor_Plan\backend
+\test_cache_api.py", l
+ine 31, in <module>
+    print("\u2705 JSON
+ 파싱 성공!")
+    ~~~~~^^^^^^^^^^^^^
+^^^^^^^^^
+UnicodeEncodeError: 'c
+p949' codec can't enco
+de character '\u2705' 
+in position 0: illegal
+ multibyte sequence
+
+During handling of the
+ above exception, anot
+her exception occurred
+:
+
+Traceback (most recent
+ call last):
+  File "C:\Smart_Proto
+_Investor_Plan\backend
+\test_cache_api.py", l
+ine 49, in <module>
+    print(f"\u274c JSO
+N 파싱 실패: {e}")
+    ~~~~~^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+UnicodeEncodeError: 'c
+p949' codec can't enco
+de character '\u274c' 
+in position 0: illegal
+ multibyte sequence

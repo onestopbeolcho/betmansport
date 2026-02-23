@@ -1,0 +1,28 @@
+Testing URL: https://www.betman.co.kr/main/mainPage/gamebuy/buyableGameList.do
+Error fetching https://www.betman.co.kr/main/mainPage/gamebuy/buyableGameList.do: [WinError 10054] 현재 연결은 원격 호스트에 의해 강제로 끊겼습니다
+Testing URL: https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do
+Status: 200
+Content Type: text/html; charset=UTF-8
+Preview: 
+
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+
+<script type="text/javascript" class="init"></script>
+
+<!-- 라이브러리 영역  -->
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery-ui.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.bxsli
+--------------------------------------------------

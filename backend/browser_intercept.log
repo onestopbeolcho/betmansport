@@ -1,0 +1,40 @@
+2026-02-11 10:55:05,345 Navigating to game buy page...
+2026-02-11 10:55:05,630 >>> REQUEST: POST https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do
+2026-02-11 10:55:05,630     Content-Type: application/json; charset=UTF-8
+2026-02-11 10:55:05,630     Post data: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:05,631 >>> REQUEST: POST https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do
+2026-02-11 10:55:05,631     Content-Type: application/json; charset=UTF-8
+2026-02-11 10:55:05,631     Post data: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:05,662 <<< RESPONSE: 200 https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do (ct=application/json;charset=UTF-8)
+2026-02-11 10:55:05,692 <<< RESPONSE: 200 https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do (ct=application/json;charset=UTF-8)
+2026-02-11 10:55:05,694 >>> REQUEST: POST https://www.betman.co.kr/buyPsblGame/inqTodayBuyCount.do
+2026-02-11 10:55:05,695     Content-Type: application/json; charset=UTF-8
+2026-02-11 10:55:05,695     Post data: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:05,697     Proto games: 2
+2026-02-11 10:55:05,697     G101 gmTs=260018 state=None 
+2026-02-11 10:55:05,697     G102 gmTs=260531 state=None 
+2026-02-11 10:55:05,699     Proto games: 2
+2026-02-11 10:55:05,699     G101 gmTs=260018 state=2 발매 마감
+2026-02-11 10:55:05,699     G102 gmTs=260531 state=2 발매 마감
+2026-02-11 10:55:05,704 <<< RESPONSE: 200 https://www.betman.co.kr/buyPsblGame/inqTodayBuyCount.do (ct=application/json;charset=UTF-8)
+2026-02-11 10:55:06,270 Page loaded: 구매가능게임 < 게임구매 | BETMAN
+2026-02-11 10:55:09,275 
+=== Captured 3 API requests ===
+2026-02-11 10:55:09,275   [0] POST https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do
+2026-02-11 10:55:09,276       CT: application/json; charset=UTF-8
+2026-02-11 10:55:09,276       Body: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:09,276   [1] POST https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do
+2026-02-11 10:55:09,276       CT: application/json; charset=UTF-8
+2026-02-11 10:55:09,276       Body: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:09,276   [2] POST https://www.betman.co.kr/buyPsblGame/inqTodayBuyCount.do
+2026-02-11 10:55:09,276       CT: application/json; charset=UTF-8
+2026-02-11 10:55:09,276       Body: {"_sbmInfo":{"_sbmInfo":{"debugMode":"false"}}}
+2026-02-11 10:55:09,276 
+=== Captured 3 API responses ===
+2026-02-11 10:55:09,276   [0] 200 https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do ct=application/json;charset=UTF-8
+2026-02-11 10:55:09,277   [1] 200 https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do ct=application/json;charset=UTF-8
+2026-02-11 10:55:09,277   [2] 200 https://www.betman.co.kr/buyPsblGame/inqTodayBuyCount.do ct=application/json;charset=UTF-8
+2026-02-11 10:55:09,280 
+Game elements on page: 11
+2026-02-11 10:55:09,281 requestClient available: True
+2026-02-11 10:55:09,283 BUICommon available: True

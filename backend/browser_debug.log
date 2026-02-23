@@ -1,0 +1,29 @@
+2026-02-11 10:54:12,720 Visiting game buy page...
+2026-02-11 10:54:13,634 Title: 구매가능게임 < 게임구매 | BETMAN
+2026-02-11 10:54:13,635 URL: https://www.betman.co.kr/main/mainPage/gamebuy/buyableGameList.do
+2026-02-11 10:54:13,636 Cookies: ['CCN_VKEY', 'JSESSIONID', 'PCID', 'RC_RESOLUTION', 'RC_COLOR']
+2026-02-11 10:54:15,639 Calling discovery via fetch...
+2026-02-11 10:54:15,656 Response length: 2982
+2026-02-11 10:54:15,656 Response is NOT JSON
+2026-02-11 10:54:15,657 Body: 
+
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+
+<script type="text/javascript" class="init"></script>
+
+<!-- 라이브러리 영역  -->
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/js/jquery.bxslider.min.js"></script>
+<script type="text/javascript" sr
+2026-02-11 10:54:15,659 Saved HTML to betman_browser_discovery.html

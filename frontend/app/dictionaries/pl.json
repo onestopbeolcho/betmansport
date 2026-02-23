@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | Analiza sportowa AI",
+        "description": "Platforma analizy danych sportowych oparta na AI. Porównanie statystyk w czasie rzeczywistym, prognozowanie prawdopodobieństwa i optymalizacja kombinacji.",
+        "keywords": "analiza sportowa, prognoza AI, analiza danych, statystyki"
+    },
+    "nav": {
+        "home": "Strona główna",
+        "valueBet": "Value Bet",
+        "aiPredict": "Prognoza AI",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Kalkulator",
+        "portfolio": "Portfel",
+        "guide": "Poradnik",
+        "homeDesc": "Przegląd usługi",
+        "valueBetDesc": "Wykrywanie przeszacowanych danych",
+        "aiPredictDesc": "Analiza AI z 4 źródeł",
+        "multiComboDesc": "Symulator wielu zakładów",
+        "taxCalcDesc": "Kalkulator po podatkach",
+        "portfolioDesc": "Historia · Zyski",
+        "guideDesc": "Jak korzystać",
+        "login": "Zaloguj się",
+        "register": "Zarejestruj się",
+        "logout": "Wyloguj się",
+        "subscription": "Zarządzaj planem",
+        "language": "Język"
+    },
+    "hero": {
+        "badge": "Analiza AI w czasie rzeczywistym aktywna",
+        "titleLine1": "Analiza sportowa",
+        "titleLine2": "napędzana przez AI",
+        "subtitle": "Analiza statystyczna AI oparta na globalnych danych · Prognozowanie prawdopodobieństwa meczów · Optymalizacja kombinacji",
+        "ctaPrimary": "Rozpocznij analizę AI →",
+        "ctaSecondary": "Zobacz wszystkie mecze",
+        "statMatches": "Przeanalizowane mecze",
+        "statLeagues": "Objęte ligi",
+        "statUpdate": "Aktualizacja",
+        "statUpdateValue": "W czasie rzeczywistym"
+    },
+    "pricing": {
+        "title": "Zmaksymalizuj zyski dzięki",
+        "titleHighlight": "inteligentnej analizie",
+        "subtitle": "Nie przegap szans na analizę sportową opartą na danych.",
+        "free": {
+            "name": "Free",
+            "badge": "Próbna",
+            "price": "0 zł",
+            "period": "/mies.",
+            "description": "Podstawowe informacje o wartości",
+            "features": [
+                "3 analizy dziennie",
+                "Podstawowy kalkulator ROI"
+            ],
+            "cta": "Zacznij za darmo"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Popularny",
+            "price": "159 zł",
+            "period": "/mies.",
+            "description": "Dla poważnego generowania zysków",
+            "features": [
+                "Nieograniczone raporty AI",
+                "Powiadomienia w czasie rzeczywistym",
+                "Zaawansowane zarządzanie portfelem",
+                "Dogłębna analiza meczów"
+            ],
+            "cta": "Subskrybuj teraz"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "299 zł",
+            "period": "/mies.",
+            "description": "Opieka 1:1 dla profesjonalistów",
+            "features": [
+                "Wszystkie funkcje Pro",
+                "Ekskluzywny kanał Telegram",
+                "Priorytetowe wsparcie"
+            ],
+            "cta": "Skontaktuj się"
+        },
+        "currency": "PLN",
+        "currencySymbol": "zł"
+    },
+    "payment": {
+        "title": "Płatność za subskrypcję",
+        "selectedPlan": "Wybrany plan",
+        "period": "/mies.",
+        "badge": "Bezpieczna płatność przez PortOne · Karta / E-portfel / Przelew",
+        "agreeTerms": "Akceptuję powyższe warunki.",
+        "agreeAge": "Mam 19 lat lub więcej i rozumiem, że ta usługa jest narzędziem analizy statystycznej, a nie poradą inwestycyjną.",
+        "loginFirst": "Zaloguj się, aby zapłacić",
+        "processing": "Przetwarzanie płatności...",
+        "payButton": "Zapłać",
+        "note1": "Bezpieczna płatność przez PortOne · Obsługa kart i e-portfeli",
+        "note2": "30 dni dostępu od daty płatności · Anuluj w dowolnym momencie",
+        "otherPlans": "← Zobacz inne plany",
+        "termsLink": "Regulamin",
+        "privacyLink": "Polityka prywatności",
+        "refundLink": "Polityka zwrotów",
+        "disclaimerLink": "Ostrzeżenie o ryzyku",
+        "errorLogin": "Wymagane logowanie.",
+        "errorAgree": "Zaznacz wszystkie pola zgody.",
+        "errorGeneral": "Wystąpił błąd podczas płatności."
+    },
+    "footer": {
+        "services": "Usługi",
+        "valueBet": "Analiza Value Bet",
+        "aiPredict": "Prognoza AI",
+        "taxCalc": "Kalkulator podatkowy",
+        "plans": "Plany",
+        "info": "Informacje",
+        "userGuide": "Poradnik użytkownika",
+        "membership": "Info o członkostwie",
+        "legal": "Informacje prawne",
+        "terms": "Regulamin",
+        "privacy": "Polityka prywatności",
+        "refund": "Polityka zwrotów",
+        "disclaimer": "Ostrzeżenie o ryzyku",
+        "support": "Wsparcie",
+        "counseling": "Pomoc w uzależnieniu od hazardu: 1336",
+        "bizInfo": "Informacje o firmie",
+        "bizCompany": "Nazwa firmy",
+        "bizRep": "Przedstawiciel",
+        "bizRegNo": "Nr rejestracji",
+        "bizCommerceNo": "Nr licencji e-commerce",
+        "bizAddress": "Adres",
+        "bizPhone": "Telefon",
+        "bizEmail": "E-mail",
+        "footerNotice": "Ta usługa jest narzędziem analizy statystycznej i nie stanowi porady inwestycyjnej. Użytkownik ponosi pełną odpowiedzialność za straty wynikające z wyników analiz."
+    },
+    "common": {
+        "loading": "Ładowanie...",
+        "error": "Wystąpił błąd.",
+        "back": "Wstecz",
+        "close": "Zamknij",
+        "confirm": "Potwierdź",
+        "cancel": "Anuluj"
+    }
+}

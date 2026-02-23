@@ -1,0 +1,54 @@
+﻿??Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+??The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+System.Management.Automation.RemoteException
+> Build error occurred
+Error: Turbopack build failed with 2 errors:
+./app/[lang]/combinator/page.tsx:2:1
+Module not found: Can't resolve '../../combinator/page'
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mexport[39m { [36mdefault[39m } [36mfrom[39m [32m'../../combinator/page'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+Import traces:
+  Client Component Browser:
+    ./app/[lang]/combinator/page.tsx [Client Component Browser]
+    ./app/[lang]/combinator/page.tsx [Server Component]
+System.Management.Automation.RemoteException
+  Client Component SSR:
+    ./app/[lang]/combinator/page.tsx [Client Component SSR]
+    ./app/[lang]/combinator/page.tsx [Server Component]
+System.Management.Automation.RemoteException
+https://nextjs.org/docs/messages/module-not-found
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+./app/[lang]/tax-calculator/page.tsx:2:1
+Module not found: Can't resolve '../../tax-calculator/page'
+[0m [90m 1 |[39m [32m"use client"[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mexport[39m { [36mdefault[39m } [36mfrom[39m [32m'../../tax-calculator/page'[39m[33m;[39m
+ [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 3 |[39m[0m
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+Import traces:
+  Client Component Browser:
+    ./app/[lang]/tax-calculator/page.tsx [Client Component Browser]
+    ./app/[lang]/tax-calculator/page.tsx [Server Component]
+System.Management.Automation.RemoteException
+  Client Component SSR:
+    ./app/[lang]/tax-calculator/page.tsx [Client Component SSR]
+    ./app/[lang]/tax-calculator/page.tsx [Server Component]
+System.Management.Automation.RemoteException
+https://nextjs.org/docs/messages/module-not-found
+System.Management.Automation.RemoteException
+System.Management.Automation.RemoteException
+    at <unknown> (./app/[lang]/combinator/page.tsx:2:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+    at <unknown> (./app/[lang]/tax-calculator/page.tsx:2:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)

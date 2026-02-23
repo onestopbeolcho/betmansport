@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AI体育数据分析",
+        "description": "AI驱动的体育数据分析平台。实时统计对比、概率预测、组合优化。",
+        "keywords": "体育分析, AI预测, 数据分析, 统计分析"
+    },
+    "nav": {
+        "home": "首页",
+        "valueBet": "价值投注",
+        "aiPredict": "AI预测",
+        "multiCombo": "多重组合",
+        "taxCalc": "税费计算",
+        "portfolio": "投资组合",
+        "guide": "使用指南",
+        "homeDesc": "服务介绍",
+        "valueBetDesc": "高估数据检测",
+        "aiPredictDesc": "4源AI综合分析",
+        "multiComboDesc": "多注模拟器",
+        "taxCalcDesc": "税后计算器",
+        "portfolioDesc": "分析记录·收益",
+        "guideDesc": "使用方法",
+        "login": "登录",
+        "register": "注册",
+        "logout": "退出",
+        "subscription": "订阅管理",
+        "language": "语言"
+    },
+    "hero": {
+        "badge": "实时AI分析运行中",
+        "titleLine1": "AI驱动的",
+        "titleLine2": "体育数据分析",
+        "subtitle": "基于全球数据源的AI统计分析·赛事概率预测·组合优化",
+        "ctaPrimary": "开始AI分析 →",
+        "ctaSecondary": "查看所有赛事",
+        "statMatches": "已分析赛事",
+        "statLeagues": "覆盖联赛",
+        "statUpdate": "更新",
+        "statUpdateValue": "实时"
+    },
+    "pricing": {
+        "title": "最大化您的收益",
+        "titleHighlight": "智能分析",
+        "subtitle": "不要错过基于数据的精准体育分析机会。",
+        "free": {
+            "name": "Free",
+            "badge": "试用",
+            "price": "¥0",
+            "period": "/月",
+            "description": "基本价值洞察",
+            "features": [
+                "每日3场赛事分析",
+                "基础收益计算器"
+            ],
+            "cta": "免费开始"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "热门",
+            "price": "¥279",
+            "period": "/月",
+            "description": "专业收益创造方案",
+            "features": [
+                "无限AI分析报告",
+                "实时提醒服务",
+                "高级投资组合管理",
+                "单场赛事深度分析"
+            ],
+            "cta": "立即订阅"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "¥539",
+            "period": "/月",
+            "description": "专家级1对1服务",
+            "features": [
+                "Pro方案全部功能",
+                "专属Telegram频道",
+                "优先客户支持"
+            ],
+            "cta": "联系我们"
+        },
+        "currency": "CNY",
+        "currencySymbol": "¥"
+    },
+    "payment": {
+        "title": "订阅支付",
+        "selectedPlan": "已选方案",
+        "period": "/月",
+        "badge": "PortOne安全支付·银行卡/电子钱包/银行转账",
+        "agreeTerms": "我同意以上条款。",
+        "agreeAge": "我已满19岁，并理解本服务是统计分析工具，而非投资建议。",
+        "loginFirst": "登录后支付",
+        "processing": "支付处理中...",
+        "payButton": "立即支付",
+        "note1": "PortOne安全支付·支持银行卡和电子钱包",
+        "note2": "自付款日起30天有效·随时可取消",
+        "otherPlans": "← 查看其他方案",
+        "termsLink": "服务条款",
+        "privacyLink": "隐私政策",
+        "refundLink": "退款政策",
+        "disclaimerLink": "分析风险提示",
+        "errorLogin": "请先登录。",
+        "errorAgree": "请勾选所有同意项。",
+        "errorGeneral": "支付过程中发生错误。"
+    },
+    "footer": {
+        "services": "服务",
+        "valueBet": "价值投注分析",
+        "aiPredict": "AI预测",
+        "taxCalc": "税费计算器",
+        "plans": "方案",
+        "info": "信息",
+        "userGuide": "使用指南",
+        "membership": "会员信息",
+        "legal": "法律声明",
+        "terms": "服务条款",
+        "privacy": "隐私政策",
+        "refund": "退款政策",
+        "disclaimer": "分析风险提示",
+        "support": "客户支持",
+        "counseling": "赌博成瘾咨询热线: 1336",
+        "bizInfo": "企业信息",
+        "bizCompany": "公司名称",
+        "bizRep": "代表人",
+        "bizRegNo": "营业执照号",
+        "bizCommerceNo": "电商许可证号",
+        "bizAddress": "地址",
+        "bizPhone": "电话",
+        "bizEmail": "邮箱",
+        "footerNotice": "本服务为统计分析工具，不提供投资建议。因分析结果造成的损失由用户自行承担。"
+    },
+    "common": {
+        "loading": "加载中...",
+        "error": "发生错误。",
+        "back": "返回",
+        "close": "关闭",
+        "confirm": "确认",
+        "cancel": "取消"
+    }
+}

@@ -1,0 +1,113 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+
+<script type="text/javascript" class="init"></script>
+
+<!-- 라이브러리 영역  -->
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery-ui.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.bxslider.min.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.dataTables.min.origin.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.mCustomScrollbar.concat.min.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.ui.monthpicker.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jquery.history.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/jszip.min.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/contents.path.js" id="contentsPath"></script>
+
+
+<!-- 퍼블리싱팀 영역 -->
+<link href="//cdn.betman.co.kr/css/ui-common.css?ver=20260211" type="text/css" rel="stylesheet">
+
+<!-- 공통개발팀 영역 -->
+<script type="text/javascript" src="//cdn.betman.co.kr/js/requestClient.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/BUICommon.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/loading-common.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/code-common.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/serialize-common.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/grid-common.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/message-common.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/login.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/common.js"></script>
+
+<!-- 직접 호출 -->
+<script type="text/javascript" src="/js/ui-common.js?ver=20260211"></script>
+
+
+<!-- BET코치 영역 header 일괄 적용 여부 검토 --> 
+<link href="//cdn.betman.co.kr/js/betcoach/betcoach.style.css" type="text/css" rel="stylesheet">
+<script type="text/javascript" src="//cdn.betman.co.kr/js/betcoach/betcoach.js"></script> 
+<script type="text/javascript" src="//cdn.betman.co.kr/js/betcoach/betcoach.drawer.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/betcoach/betcoach.util.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/betcoach/betcoach.on.js"></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/betcoach/date-common.js"></script>
+
+</head>
+<body>
+	 <!-- type 제거 -->
+		<div class="docWrap">
+			
+
+
+<script type="text/javascript" src="//cdn.betman.co.kr/js/slip/slipUtils.js" ></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/makePCookie.js" ></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/clickEvent.js" ></script>
+<script type="text/javascript" src="//cdn.betman.co.kr/js/sessionUtil.js"></script>
+<style>
+	.headerTop .headState > [class*='stateLog'] .hState .name.state004:after {
+		content: ""; position: absolute; left: 11px; top: 8px; display: block; width: 12px; height: 12px;
+		background: url(//cdn.betman.co.kr/images/comm/gnb_pay_icon.png) no-repeat;
+	}
+	.headerTop .headState > [class*='stateLog'] .hState .name.state004 {
+		padding-left : 27px;
+	} 
+</style>
+
+	<div class="skipArea">
+		<ul>
+			<li><a href="#content">본문 바로가기</a></li>
+		    <li><a href="#nav">주 메뉴 바로가기</a></li>
+		    <li><a href="#footer">하단 푸터 바로가기</a></li>
+		</ul>
+	</div>
+	<div class="browserGuide" style="display: none;">
+		<div class="box">
+			<span class="msg">베트맨 홈페이지를 원활하게 이용하기 위해서 익스플로러 9 이상의 브라우저를 이용해 주시기 바랍니다.</span>
+			<a href="http://windows.microsoft.com/ko-kr/internet-explorer/download-ie" target="_blank" class="btGo" title="새창">최신버전 설치</a><!-- 2025 웹접근성 개선 -->
+			<span class="today">
+				<span class="checkBox">
+					<input type="checkbox" id="popNotice_today_11"><label class="txt" style="line-height:16px;" for="popNotice_today_11">오늘하루 그만보기</label>
+				</span>
+				<button class="btClose" onclick="browserGuide.hide();">최신부라우저설치 닫기</button>
+			</span>
+		</div>
+		<script>
+			var browserGuide = {
+				show:function(){
+// 					$(".browserGuide").show();
+					$(location).attr("href", "/main/mainPage/error/browserInfo.do" + ('' == 'Y' ? '?isIFR=Y' : ''));
+				},
+				hide:function(){
+					$(".browserGuide").hide();
+					$("#header").attr("tabindex","-1").focus();
+				}
+			}
+// 			$(document).ready(function(){
+				var agt = navigator.userAgent.toLowerCase();
+				var ieVersion9 = false;
+				if(agt.indexOf("msie") != -1){
+					

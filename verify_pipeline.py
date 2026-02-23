@@ -1,67 +1,101 @@
+"""
+Complete verification of Betman crawler data pipeline
+"""
+import httpx
+import json
 import sys
-import os
 
-# Ensure backend directory is in python path
-sys.path.append(os.path.join(os.getcwd(), 'backend'))
+BASE = "https://asia-northeast3-smart-proto-inv-2026.cloudfunctions.net/api"
+results = []
 
-from app.services.pinnacle_api import PinnacleService
-from app.services.crawler_betman import BetmanCrawler
-from app.services.team_mapper import TeamMapper
-from app.core.value_bet import ValueBetFinder
-from app.schemas.odds import OddsItem
+def log(msg):
+    print(msg)
+    results.append(msg)
 
-def run_pipeline():
-    print(">>> Starting Pipeline Verification...")
-    
-    # 1. Initialize Services
-    pin_service = PinnacleService()
-    betman_service = BetmanCrawler()
-    mapper = TeamMapper()
-    finder = ValueBetFinder(ev_threshold=1.05)
-    
-    # 2. Fetch Data (Mock)
-    print(">>> Fetching Odds...")
-    pin_odds_list = pin_service.fetch_odds()
-    betman_odds_list = betman_service.fetch_odds()
-    print(f"Fetched {len(pin_odds_list)} matches from Pinnacle")
-    print(f"Fetched {len(betman_odds_list)} matches from Betman")
-    
-    # 3. Match and Analyze
-    print("\n>>> Analyzing Matches...")
-    value_bets = []
-    
-    for pin_match in pin_odds_list:
-        # Map Team Names to Korean
-        kor_home = mapper.get_korean_name(pin_match.team_home)
-        kor_away = mapper.get_korean_name(pin_match.team_away)
-        
-        if not kor_home or not kor_away:
-            print(f"[SKIP] Unknown mapping for {pin_match.team_home} vs {pin_match.team_away}")
-            continue
-            
-        # Find matching game in Betman (Naive search)
-        target_match = None
-        for bet_match in betman_odds_list:
-            if bet_match.team_home == kor_home and bet_match.team_away == kor_away:
-                target_match = bet_match
-                break
-        
-        if target_match:
-            print(f"[MATCH] Found {pin_match.team_home} ({kor_home}) vs {pin_match.team_away} ({kor_away})")
-            
-            # Analyze
-            opportunities = finder.analyze_match(pin_match, target_match)
-            if opportunities:
-                for opp in opportunities:
-                    print(f"  !!! VALUE BET FOUND !!!")
-                    print(f"  Type: {opp.bet_type} | EV: {opp.expected_value} | Kelly: {opp.kelly_pct*100}%")
-                    print(f"  Details: {opp.dict()}")
-                    value_bets.extend(opportunities)
-        else:
-            print(f"[MISS] No Betman match for {kor_home} vs {kor_away}")
+log("=" * 60)
+log("Pipeline Verification")
+log("=" * 60)
 
-    # 4. Final Report
-    print(f"\n>>> Pipeline Complete. Found {len(value_bets)} value bets.")
+# Test 1: Manual crawl trigger
+log("\n[1] Manual crawl trigger...")
+try:
+    r = httpx.post(f"{BASE}/api/admin/betman/crawl", timeout=300)
+    log(f"  Status: {r.status_code}")
+    if r.status_code == 200:
+        data = r.json()
+        log(f"  Success: {data.get('success')}")
+        log(f"  Count: {data.get('count')}")
+        log(f"  Round: {data.get('round_id')}")
+        log(f"  Source: {data.get('source')}")
+        if data.get('matches'):
+            for m in data['matches'][:3]:
+                log(f"    {m['team_home']} vs {m['team_away']} W={m['home_odds']} D={m['draw_odds']} L={m['away_odds']}")
+    else:
+        log(f"  Body: {r.text[:300]}")
+except Exception as e:
+    log(f"  Error: {e}")
 
-if __name__ == "__main__":
-    run_pipeline()
+# Test 2: Saved rounds
+log("\n[2] Saved rounds in Firestore...")
+try:
+    r = httpx.get(f"{BASE}/api/admin/betman/rounds", timeout=60)
+    log(f"  Status: {r.status_code}")
+    if r.status_code == 200:
+        rounds = r.json()
+        log(f"  Rounds count: {len(rounds)}")
+        for rd in rounds[:5]:
+            log(f"    {rd}")
+    else:
+        log(f"  Body: {r.text[:200]}")
+except Exception as e:
+    log(f"  Error: {e}")
+
+# Test 3: Matches
+log("\n[3] Latest matches...")
+try:
+    r = httpx.get(f"{BASE}/api/admin/betman/matches", timeout=60)
+    log(f"  Status: {r.status_code}")
+    if r.status_code == 200:
+        data = r.json()
+        log(f"  Round: {data.get('round_id')}")
+        log(f"  Count: {data.get('count')}")
+        for m in data.get('matches', [])[:3]:
+            log(f"    {m.get('team_home')} vs {m.get('team_away')} W={m.get('home_odds')} D={m.get('draw_odds')} L={m.get('away_odds')}")
+    else:
+        log(f"  Body: {r.text[:200]}")
+except Exception as e:
+    log(f"  Error: {e}")
+
+# Test 4: Value bets
+log("\n[4] Value bets API...")
+try:
+    r = httpx.get(f"{BASE}/api/bets", timeout=120)
+    log(f"  Status: {r.status_code}")
+    if r.status_code == 200:
+        bets = r.json()
+        log(f"  Value bets: {len(bets)}")
+        for b in bets[:3]:
+            log(f"    {b}")
+    else:
+        log(f"  Body: {r.text[:200]}")
+except Exception as e:
+    log(f"  Error: {e}")
+
+# Test 5: Scheduler status
+log("\n[5] Scheduler status...")
+try:
+    r = httpx.get(f"{BASE}/api/scheduler/status", timeout=60)
+    log(f"  Status: {r.status_code}")
+    if r.status_code == 200:
+        log(f"  {r.json()}")
+    else:
+        log(f"  Body: {r.text[:200]}")
+except Exception as e:
+    log(f"  Error: {e}")
+
+log("\n" + "=" * 60)
+log("DONE")
+
+# Save results
+with open("pipeline_result.txt", "w", encoding="utf-8") as f:
+    f.write("\n".join(results))

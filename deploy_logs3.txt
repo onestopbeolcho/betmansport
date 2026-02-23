@@ -1,0 +1,15 @@
+﻿2026-02-11T14:19:05.299925Z ? api:   warnings.warn(message, UserWarning)
+2026-02-11T14:19:05.994639Z ? api: /layers/google.python.pip/pip/lib/python3.10/site-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.19) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+2026-02-11T14:19:05.994693Z ? api:   warnings.warn(message, FutureWarning)
+2026-02-11T14:19:06.623045Z ? api: /layers/google.python.pip/pip/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+2026-02-11T14:19:06.623063Z ? api: * 'orm_mode' has been renamed to 'from_attributes'
+2026-02-11T14:19:06.623074Z ? api:   warnings.warn(message, UserWarning)
+2026-02-11T14:19:06.643011Z ? api: /layers/google.python.pip/pip/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+2026-02-11T14:19:06.643031Z ? api: * 'orm_mode' has been renamed to 'from_attributes'
+2026-02-11T14:19:06.643040Z ? api:   warnings.warn(message, UserWarning)
+2026-02-11T14:19:06.649972Z ? api: /layers/google.python.pip/pip/lib/python3.10/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+2026-02-11T14:19:06.649991Z ? api: * 'orm_mode' has been renamed to 'from_attributes'
+2026-02-11T14:19:06.650Z ? api:   warnings.warn(message, UserWarning)
+2026-02-11T14:19:06.906182Z I api: Default STARTUP TCP probe succeeded after 1 attempt for container "worker" on port 8080.
+2026-02-11T14:22:13.109090Z E api: 
+2026-02-11T14:22:14.687750Z E api: 

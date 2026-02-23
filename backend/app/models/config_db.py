@@ -1,12 +1,19 @@
-from sqlalchemy import Column, Integer, String
-from app.db.base import Base
+from app.db.firestore import get_firestore_db
 
-class SystemConfigDB(Base):
-    __tablename__ = 'system_config'
+CONFIG_COLLECTION = "system_config"
+CONFIG_DOC_ID = "main_config"
 
-    id = Column(Integer, primary_key=True)
-    pinnacle_api_key = Column(String, default="")
-    betman_user_agent = Column(String, default="")
-    scrape_interval_minutes = Column(Integer, default=10)
-    
-    # Singleton pattern helper (usually we ensure only row ID=1 exists)
+async def get_system_config():
+    try:
+        db = get_firestore_db()
+        doc = db.collection(CONFIG_COLLECTION).document(CONFIG_DOC_ID).get()
+        if doc.exists:
+            return doc.to_dict()
+    except Exception:
+        pass
+    return {}
+
+async def update_system_config(data: dict):
+    db = get_firestore_db()
+    db.collection(CONFIG_COLLECTION).document(CONFIG_DOC_ID).set(data, merge=True)
+    return data

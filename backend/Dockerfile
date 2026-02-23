@@ -14,12 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . /app/
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
+# Cloud Run uses PORT env var (default 8080)
+ENV PORT=8080
 
-# Define environment variable
-# Use 0.0.0.0 for host to allow external access (important for Docker)
-ENV DATABASE_URL=postgresql+asyncpg://user:password@db/smartproto
-
-# Run app.py when the container launches
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run with Cloud Run's PORT
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

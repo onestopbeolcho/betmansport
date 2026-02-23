@@ -73,7 +73,6 @@ class ValueBetFinder:
                     pinnacle_odds=o_pin,
                     expected_value=round(ev, 4),
                     kelly_pct=kelly,
-                    kelly_pct=kelly,
                     max_tax_free_stake=calculate_tax_free_limit(o_kor),
                     timestamp="now" # In real app, use datetime.utcnow()
                 )

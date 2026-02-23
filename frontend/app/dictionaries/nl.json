@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AI Sportdata-analyse",
+        "description": "AI-aangedreven platform voor sportdata-analyse. Realtime statistische vergelijking, kansvoorspelling en combinatie-optimalisatie.",
+        "keywords": "sportanalyse, AI-voorspelling, data-analyse, statistieken"
+    },
+    "nav": {
+        "home": "Home",
+        "valueBet": "Value Bet",
+        "aiPredict": "AI Voorspelling",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Belastingcalculator",
+        "portfolio": "Portefeuille",
+        "guide": "Handleiding",
+        "homeDesc": "Service-overzicht",
+        "valueBetDesc": "Detectie van overgewaardeerde data",
+        "aiPredictDesc": "4-bronnen AI-analyse",
+        "multiComboDesc": "Multi-weddenschap simulator",
+        "taxCalcDesc": "Netto belastingcalculator",
+        "portfolioDesc": "Geschiedenis · Winst",
+        "guideDesc": "Gebruiksaanwijzing",
+        "login": "Inloggen",
+        "register": "Registreren",
+        "logout": "Uitloggen",
+        "subscription": "Abonnement beheren",
+        "language": "Taal"
+    },
+    "hero": {
+        "badge": "Realtime AI-analyse actief",
+        "titleLine1": "AI-aangedreven",
+        "titleLine2": "sportdata-analyse",
+        "subtitle": "AI-statistische analyse op basis van wereldwijde dataBronnen · Voorspelling wedstrijdkansen · Combinatie-optimalisatie",
+        "ctaPrimary": "Start AI-analyse →",
+        "ctaSecondary": "Alle wedstrijden bekijken",
+        "statMatches": "Geanalyseerde wedstrijden",
+        "statLeagues": "Gedekte competities",
+        "statUpdate": "Update",
+        "statUpdateValue": "Realtime"
+    },
+    "pricing": {
+        "title": "Maximaliseer uw winst met",
+        "titleHighlight": "slimme analyse",
+        "subtitle": "Mis geen datagestuurde sportanalyse-kansen.",
+        "free": {
+            "name": "Free",
+            "badge": "Proef",
+            "price": "€0",
+            "period": "/maand",
+            "description": "Basisinzichten",
+            "features": [
+                "3 dagelijkse analyses",
+                "Basis ROI-calculator"
+            ],
+            "cta": "Gratis starten"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Populair",
+            "price": "€36,99",
+            "period": "/maand",
+            "description": "Voor serieuze winstgeneratie",
+            "features": [
+                "Onbeperkte AI-rapporten",
+                "Realtime meldingen",
+                "Geavanceerd portefeuillebeheer",
+                "Diepgaande analyse per wedstrijd"
+            ],
+            "cta": "Nu abonneren"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "€69,99",
+            "period": "/maand",
+            "description": "1:1 begeleiding voor professionals",
+            "features": [
+                "Alle Pro-functies",
+                "Exclusief Telegram-kanaal",
+                "Prioritaire ondersteuning"
+            ],
+            "cta": "Contact opnemen"
+        },
+        "currency": "EUR",
+        "currencySymbol": "€"
+    },
+    "payment": {
+        "title": "Abonnementsbetaling",
+        "selectedPlan": "Geselecteerd plan",
+        "period": "/maand",
+        "badge": "Veilige betaling via PortOne · Kaart / E-wallet / Bankoverschrijving",
+        "agreeTerms": "Ik ga akkoord met bovenstaande voorwaarden.",
+        "agreeAge": "Ik ben 19 jaar of ouder en begrijp dat deze service een statistisch analysetool is, geen beleggingsadvies.",
+        "loginFirst": "Log in om te betalen",
+        "processing": "Betaling wordt verwerkt...",
+        "payButton": "Betalen",
+        "note1": "Veilige betaling via PortOne · Kaart en e-wallet ondersteund",
+        "note2": "30 dagen toegang vanaf betaaldatum · Op elk moment opzegbaar",
+        "otherPlans": "← Andere plannen bekijken",
+        "termsLink": "Gebruiksvoorwaarden",
+        "privacyLink": "Privacybeleid",
+        "refundLink": "Terugbetalingsbeleid",
+        "disclaimerLink": "Risicowaarschuwing",
+        "errorLogin": "Inloggen vereist.",
+        "errorAgree": "Vink alle akkoordvakjes aan.",
+        "errorGeneral": "Er is een fout opgetreden bij de betaling."
+    },
+    "footer": {
+        "services": "Diensten",
+        "valueBet": "Value Bet Analyse",
+        "aiPredict": "AI Voorspelling",
+        "taxCalc": "Belastingcalculator",
+        "plans": "Plannen",
+        "info": "Informatie",
+        "userGuide": "Gebruikershandleiding",
+        "membership": "Lidmaatschapsinfo",
+        "legal": "Juridisch",
+        "terms": "Gebruiksvoorwaarden",
+        "privacy": "Privacybeleid",
+        "refund": "Terugbetalingsbeleid",
+        "disclaimer": "Risicowaarschuwing",
+        "support": "Ondersteuning",
+        "counseling": "Hulplijn gokverslaving: 1336",
+        "bizInfo": "Bedrijfsinformatie",
+        "bizCompany": "Bedrijfsnaam",
+        "bizRep": "Vertegenwoordiger",
+        "bizRegNo": "KvK-nummer",
+        "bizCommerceNo": "E-commerce licentie",
+        "bizAddress": "Adres",
+        "bizPhone": "Telefoon",
+        "bizEmail": "E-mail",
+        "footerNotice": "Deze service is een statistisch analysetool en biedt geen beleggingsadvies. De gebruiker is zelf verantwoordelijk voor verliezen voortvloeiend uit analyseresultaten."
+    },
+    "common": {
+        "loading": "Laden...",
+        "error": "Er is een fout opgetreden.",
+        "back": "Terug",
+        "close": "Sluiten",
+        "confirm": "Bevestigen",
+        "cancel": "Annuleren"
+    }
+}

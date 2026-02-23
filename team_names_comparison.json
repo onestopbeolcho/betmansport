@@ -1,0 +1,470 @@
+{
+  "betman": {
+    "count": 57,
+    "teams": [
+      "AS로마",
+      "AT마드",
+      "A빌라",
+      "C오사카",
+      "F시타르",
+      "G오사카",
+      "OGC니스",
+      "RC셀타",
+      "RC스트라",
+      "U베를린",
+      "가시와",
+      "가와사키",
+      "고어헤드",
+      "나고야",
+      "나폴리",
+      "네이메헌",
+      "노리치C",
+      "뉴캐슬U",
+      "니가타",
+      "더비카운",
+      "도치기시",
+      "도쿄베르",
+      "도쿠시마",
+      "라요",
+      "라이프치",
+      "라치오",
+      "랑스",
+      "레반테",
+      "레버쿠젠",
+      "레스터C",
+      "레알마드",
+      "로리앙",
+      "르아브르",
+      "리버풀",
+      "리옹",
+      "리즈U",
+      "릴OSC",
+      "마르세유",
+      "마요르카",
+      "메스",
+      "묀헨글라",
+      "밀월",
+      "바이뮌헨",
+      "발렌시아",
+      "버밍엄C",
+      "베티스",
+      "볼로냐",
+      "볼프스부",
+      "브라이턴",
+      "브레다",
+      "브레멘",
+      "브레스투",
+      "블랙번",
+      "비야레알",
+      "빌바오",
+      "사수올로",
+      "사우샘프",
+      "선덜랜드",
+      "세비야",
+      "셰필드U",
+      "셰필드웬",
+      "소시에다",
+      "슈투트가",
+      "스완지C",
+      "스토크C",
+      "스파로테",
+      "아약스",
+      "아우크스",
+      "아키타",
+      "아탈란타",
+      "알라베스",
+      "알크마르",
+      "앙제SCO",
+      "에스파뇰",
+      "엑셀시오",
+      "엘라스",
+      "오비에도",
+      "오세르",
+      "옥스퍼드",
+      "왓포드",
+      "우디네세",
+      "웨스브로",
+      "위트레흐",
+      "유벤투스",
+      "인테르",
+      "장크트파",
+      "제노아",
+      "제프유나",
+      "즈볼러",
+      "코모1907",
+      "쾰른",
+      "퀸즈파크",
+      "크레모네",
+      "텔스타",
+      "토리노",
+      "툴루즈",
+      "트벤테",
+      "파르마",
+      "파리FC",
+      "페예노르",
+      "포츠머스",
+      "풀럼",
+      "프라이부",
+      "프랑크푸",
+      "프레스턴",
+      "피오렌티",
+      "하이덴하",
+      "함부르크",
+      "헤라클레",
+      "헤이렌베",
+      "헤타페",
+      "호펜하임",
+      "후쿠오카",
+      "흐로닝언"
+    ],
+    "matches": [
+      {
+        "home": "에스파뇰",
+        "away": "RC셀타",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "코모1907",
+        "away": "피오렌티",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "레버쿠젠",
+        "away": "장크트파",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "프랑크푸",
+        "away": "묀헨글라",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "브레멘",
+        "away": "바이뮌헨",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "호펜하임",
+        "away": "프라이부",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "함부르크",
+        "away": "U베를린",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "더비카운",
+        "away": "스완지C",
+        "league": "EFL챔",
+        "sport": "Soccer"
+      },
+      {
+        "home": "포츠머스",
+        "away": "셰필드U",
+        "league": "EFL챔",
+        "sport": "Soccer"
+      },
+      {
+        "home": "프레스턴",
+        "away": "왓포드",
+        "league": "EFL챔",
+        "sport": "Soccer"
+      },
+      {
+        "home": "퀸즈파크",
+        "away": "블랙번",
+        "league": "EFL챔",
+        "sport": "Soccer"
+      },
+      {
+        "home": "셰필드웬",
+        "away": "밀월",
+        "league": "EFL챔",
+        "sport": "Soccer"
+      },
+      {
+        "home": "노리치C",
+        "away": "웨스브로",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "사우샘프",
+        "away": "레스터C",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "헤타페",
+        "away": "비야레알",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "헤라클레",
+        "away": "브레다",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "마르세유",
+        "away": "RC스트라",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "라치오",
+        "away": "아탈란타",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "세비야",
+        "away": "알라베스",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "슈투트가",
+        "away": "쾰른",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "엑셀시오",
+        "away": "알크마르",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "A빌라",
+        "away": "뉴캐슬U",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "릴OSC",
+        "away": "브레스투",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "아약스",
+        "away": "F시타르",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "인테르",
+        "away": "유벤투스",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "레알마드",
+        "away": "소시에다",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "흐로닝언",
+        "away": "위트레흐",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "리버풀",
+        "away": "브라이턴",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "파리FC",
+        "away": "랑스",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "제프유나",
+        "away": "가와사키",
+        "league": "J1백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "가시와",
+        "away": "도쿄베르",
+        "league": "J1백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "도치기시",
+        "away": "아키타",
+        "league": "J2J3백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "도쿠시마",
+        "away": "니가타",
+        "league": "J2J3백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "후쿠오카",
+        "away": "C오사카",
+        "league": "J1백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "G오사카",
+        "away": "나고야",
+        "league": "J1백년",
+        "sport": "Soccer"
+      },
+      {
+        "home": "페예노르",
+        "away": "고어헤드",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "우디네세",
+        "away": "사수올로",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "버밍엄C",
+        "away": "리즈U",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "오비에도",
+        "away": "빌바오",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "헤이렌베",
+        "away": "즈볼러",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "텔스타",
+        "away": "트벤테",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "크레모네",
+        "away": "제노아",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "파르마",
+        "away": "엘라스",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "옥스퍼드",
+        "away": "선덜랜드",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "스토크C",
+        "away": "풀럼",
+        "league": "잉글FA컵",
+        "sport": "Soccer"
+      },
+      {
+        "home": "르아브르",
+        "away": "툴루즈",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "아우크스",
+        "away": "하이덴하",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "라요",
+        "away": "AT마드",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "스파로테",
+        "away": "네이메헌",
+        "league": "에레디비",
+        "sport": "Soccer"
+      },
+      {
+        "home": "로리앙",
+        "away": "앙제SCO",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "메스",
+        "away": "오세르",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "라이프치",
+        "away": "볼프스부",
+        "league": "분데스리",
+        "sport": "Soccer"
+      },
+      {
+        "home": "토리노",
+        "away": "볼로냐",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "레반테",
+        "away": "발렌시아",
+        "league": "라리가",
+        "sport": "Soccer"
+      },
+      {
+        "home": "나폴리",
+        "away": "AS로마",
+        "league": "세리에A",
+        "sport": "Soccer"
+      },
+      {
+        "home": "리옹",
+        "away": "OGC니스",
+        "league": "프리그1",
+        "sport": "Soccer"
+      },
+      {
+        "home": "마요르카",
+        "away": "베티스",
+        "league": "라리가",
+        "sport": "Soccer"
+      }
+    ]
+  },
+  "pinnacle": {
+    "count": 0,
+    "teams": [],
+    "matches": []
+  }
+}

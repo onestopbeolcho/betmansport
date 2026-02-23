@@ -1,0 +1,24 @@
+﻿python.exe : ERROR: (g
+cloud.logging.read) IN
+VALID_ARGUMENT: Unpars
+eable filter: syntax e
+rror at line 1, column
+ 108, token ':'
+위치 C:\Users\청솔\AppData
+\Local\Google\Cloud SD
+K\google-cloud-sdk\bin
+\gcloud.ps1:114 문자:3
++   & "$cloudsdk_pytho
+n" $run_args_array
++   ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (ERROR: (gc   
+ loud.... 108, tok    
+en ':':String) []    ,
+ RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 

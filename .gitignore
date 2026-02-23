@@ -22,3 +22,8 @@ build/
 backend/venv/
 backend/.env
 backend/test.db
+
+# Firebase service account key
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+

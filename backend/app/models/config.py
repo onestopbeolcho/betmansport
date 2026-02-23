@@ -7,6 +7,7 @@ CONFIG_FILE_PATH = "system_config.json"
 
 class SystemConfig(BaseModel):
     pinnacle_api_key: str = ""
+    gemini_api_key: str = ""
     betman_user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     scrape_interval_minutes: int = 10
     
@@ -14,6 +15,7 @@ class SystemConfig(BaseModel):
     def load(cls) -> 'SystemConfig':
         # Priority 1: Environment Variables
         env_key = os.getenv("PINNACLE_API_KEY")
+        env_gemini = os.getenv("GEMINI_API_KEY")
         
         # Priority 2: JSON File
         file_data = {}
@@ -28,6 +30,8 @@ class SystemConfig(BaseModel):
         config = cls(**file_data)
         if env_key:
             config.pinnacle_api_key = env_key
+        if env_gemini:
+            config.gemini_api_key = env_gemini
             
         return config
 

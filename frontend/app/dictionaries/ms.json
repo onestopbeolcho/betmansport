@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | Analisis Data Sukan AI",
+        "description": "Platform analisis data sukan dikuasakan AI. Perbandingan statistik masa nyata, ramalan kebarangkalian dan pengoptimuman gabungan.",
+        "keywords": "analisis sukan, ramalan AI, analisis data, statistik"
+    },
+    "nav": {
+        "home": "Utama",
+        "valueBet": "Value Bet",
+        "aiPredict": "Ramalan AI",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Kalkulator Cukai",
+        "portfolio": "Portfolio",
+        "guide": "Panduan",
+        "homeDesc": "Gambaran keseluruhan perkhidmatan",
+        "valueBetDesc": "Pengesanan data terlebih nilai",
+        "aiPredictDesc": "Analisis AI 4 sumber",
+        "multiComboDesc": "Simulator berbilang pertaruhan",
+        "taxCalcDesc": "Kalkulator selepas cukai",
+        "portfolioDesc": "Sejarah · Keuntungan",
+        "guideDesc": "Cara penggunaan",
+        "login": "Log Masuk",
+        "register": "Daftar",
+        "logout": "Log Keluar",
+        "subscription": "Urus Pelan",
+        "language": "Bahasa"
+    },
+    "hero": {
+        "badge": "Analisis AI masa nyata aktif",
+        "titleLine1": "Analisis sukan",
+        "titleLine2": "dikuasakan AI",
+        "subtitle": "Analisis statistik AI berdasarkan sumber data global · Ramalan kebarangkalian perlawanan · Pengoptimuman gabungan",
+        "ctaPrimary": "Mulakan Analisis AI →",
+        "ctaSecondary": "Lihat semua perlawanan",
+        "statMatches": "Perlawanan dianalisis",
+        "statLeagues": "Liga diliputi",
+        "statUpdate": "Kemas kini",
+        "statUpdateValue": "Masa nyata"
+    },
+    "pricing": {
+        "title": "Maksimumkan keuntungan anda dengan",
+        "titleHighlight": "analisis pintar",
+        "subtitle": "Jangan terlepas peluang analisis sukan berdasarkan data.",
+        "free": {
+            "name": "Free",
+            "badge": "Percubaan",
+            "price": "RM0",
+            "period": "/bulan",
+            "description": "Pandangan nilai asas",
+            "features": [
+                "3 analisis harian",
+                "Kalkulator ROI asas"
+            ],
+            "cta": "Mula percuma"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Popular",
+            "price": "RM179",
+            "period": "/bulan",
+            "description": "Untuk penjanaan keuntungan serius",
+            "features": [
+                "Laporan AI tanpa had",
+                "Pemberitahuan masa nyata",
+                "Pengurusan portfolio lanjutan",
+                "Analisis mendalam setiap perlawanan"
+            ],
+            "cta": "Langgan sekarang"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "RM349",
+            "period": "/bulan",
+            "description": "Sokongan 1:1 untuk profesional",
+            "features": [
+                "Semua ciri Pro",
+                "Saluran Telegram eksklusif",
+                "Sokongan keutamaan"
+            ],
+            "cta": "Hubungi kami"
+        },
+        "currency": "MYR",
+        "currencySymbol": "RM"
+    },
+    "payment": {
+        "title": "Bayaran langganan",
+        "selectedPlan": "Pelan dipilih",
+        "period": "/bulan",
+        "badge": "Bayaran selamat melalui PortOne · Kad / E-dompet / Pindahan bank",
+        "agreeTerms": "Saya bersetuju dengan syarat di atas.",
+        "agreeAge": "Saya berumur 19 tahun atau lebih dan memahami perkhidmatan ini adalah alat analisis statistik, bukan nasihat pelaburan.",
+        "loginFirst": "Log masuk untuk membayar",
+        "processing": "Memproses bayaran...",
+        "payButton": "Bayar",
+        "note1": "Bayaran selamat melalui PortOne · Menyokong kad dan e-dompet",
+        "note2": "Akses 30 hari dari tarikh bayaran · Batalkan bila-bila masa",
+        "otherPlans": "← Lihat pelan lain",
+        "termsLink": "Syarat perkhidmatan",
+        "privacyLink": "Dasar privasi",
+        "refundLink": "Dasar bayaran balik",
+        "disclaimerLink": "Amaran risiko",
+        "errorLogin": "Perlu log masuk.",
+        "errorAgree": "Sila tandakan semua kotak persetujuan.",
+        "errorGeneral": "Ralat berlaku semasa pembayaran."
+    },
+    "footer": {
+        "services": "Perkhidmatan",
+        "valueBet": "Analisis Value Bet",
+        "aiPredict": "Ramalan AI",
+        "taxCalc": "Kalkulator cukai",
+        "plans": "Pelan",
+        "info": "Maklumat",
+        "userGuide": "Panduan pengguna",
+        "membership": "Maklumat keahlian",
+        "legal": "Undang-undang",
+        "terms": "Syarat perkhidmatan",
+        "privacy": "Dasar privasi",
+        "refund": "Dasar bayaran balik",
+        "disclaimer": "Amaran risiko",
+        "support": "Sokongan",
+        "counseling": "Talian bantuan ketagihan judi: 1336",
+        "bizInfo": "Maklumat syarikat",
+        "bizCompany": "Nama syarikat",
+        "bizRep": "Wakil",
+        "bizRegNo": "No. pendaftaran perniagaan",
+        "bizCommerceNo": "Lesen e-dagang",
+        "bizAddress": "Alamat",
+        "bizPhone": "Telefon",
+        "bizEmail": "Emel",
+        "footerNotice": "Perkhidmatan ini adalah alat analisis statistik dan tidak menyediakan nasihat pelaburan. Pengguna bertanggungjawab sepenuhnya atas kerugian yang terhasil daripada hasil analisis."
+    },
+    "common": {
+        "loading": "Memuatkan...",
+        "error": "Ralat berlaku.",
+        "back": "Kembali",
+        "close": "Tutup",
+        "confirm": "Sahkan",
+        "cancel": "Batal"
+    }
+}

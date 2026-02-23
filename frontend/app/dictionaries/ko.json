@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AI 스포츠 데이터 분석",
+        "description": "빅데이터와 AI가 분석하는 스포츠 데이터 효율 플랫폼. 실시간 통계 비교, 확률 예측, 조합 분석.",
+        "keywords": "스포츠 분석, AI 예측, 데이터 분석, 프로토, 통계 분석"
+    },
+    "nav": {
+        "home": "홈",
+        "valueBet": "밸류벳",
+        "aiPredict": "AI예측",
+        "multiCombo": "멀티조합",
+        "taxCalc": "세금계산",
+        "portfolio": "내 포트폴리오",
+        "guide": "이용가이드",
+        "homeDesc": "서비스 소개",
+        "valueBetDesc": "고평가 데이터 탐지",
+        "aiPredictDesc": "4대 API 종합분석",
+        "multiComboDesc": "다폴더 시뮬레이터",
+        "taxCalcDesc": "당첨금 세후 계산",
+        "portfolioDesc": "분석 내역 · 수익",
+        "guideDesc": "사이트 사용법",
+        "login": "로그인",
+        "register": "회원가입",
+        "logout": "로그아웃",
+        "subscription": "구독 관리",
+        "language": "언어"
+    },
+    "hero": {
+        "badge": "실시간 AI 분석 가동 중",
+        "titleLine1": "AI가 분석하는",
+        "titleLine2": "스포츠 데이터",
+        "subtitle": "글로벌 데이터 소스 기반 AI 통계 분석 · 경기 확률 예측 · 조합 최적화",
+        "ctaPrimary": "AI 분석 시작 →",
+        "ctaSecondary": "전체 경기 보기",
+        "statMatches": "분석 경기",
+        "statLeagues": "지원 리그",
+        "statUpdate": "업데이트",
+        "statUpdateValue": "실시간"
+    },
+    "pricing": {
+        "title": "수익을 극대화하는",
+        "titleHighlight": "스마트 분석",
+        "subtitle": "데이터에 기반한 정확한 스포츠 분석 기회를 놓치지 마세요.",
+        "free": {
+            "name": "Free",
+            "badge": "체험판",
+            "price": "0원",
+            "period": "/월",
+            "description": "기본적인 가치 확인 가능",
+            "features": [
+                "일일 3개 종목 확인",
+                "기본 수익률 계산기"
+            ],
+            "cta": "무료로 시작하기"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "인기",
+            "price": "55,000원",
+            "period": "/월",
+            "description": "본격적인 수익 창출을 위한 플랜",
+            "features": [
+                "무제한 AI 분석 리포트",
+                "실시간 알림 서비스",
+                "고급 포트폴리오 관리",
+                "단일 경기 심층 분석"
+            ],
+            "cta": "지금 구독하기"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "105,000원",
+            "period": "/월",
+            "description": "전문가를 위한 1:1 케어",
+            "features": [
+                "Pro 플랜의 모든 기능",
+                "전용 텔레그램 채널",
+                "우선적 고객 지원"
+            ],
+            "cta": "문의하기"
+        },
+        "currency": "KRW",
+        "currencySymbol": "₩"
+    },
+    "payment": {
+        "title": "구독 결제",
+        "selectedPlan": "선택한 요금제",
+        "period": "/월",
+        "badge": "PortOne 보안 결제 · 카드 / 간편결제 / 계좌이체",
+        "agreeTerms": "에 동의합니다.",
+        "agreeAge": "만 19세 이상이며, 본 서비스가 투자 조언이 아닌 통계 분석 도구임을 이해합니다.",
+        "loginFirst": "로그인 후 결제하기",
+        "processing": "결제 처리 중...",
+        "payButton": "결제하기",
+        "note1": "PortOne 보안 결제 · 카드/간편결제 지원",
+        "note2": "결제일로부터 30일간 이용 가능 · 언제든 해지 가능",
+        "otherPlans": "← 다른 요금제 보기",
+        "termsLink": "이용약관",
+        "privacyLink": "개인정보처리방침",
+        "refundLink": "환불정책",
+        "disclaimerLink": "분석 위험 고지",
+        "errorLogin": "로그인이 필요합니다.",
+        "errorAgree": "모든 동의 항목을 체크해주세요.",
+        "errorGeneral": "결제 처리 중 오류가 발생했습니다."
+    },
+    "footer": {
+        "services": "서비스",
+        "valueBet": "밸류벳 분석",
+        "aiPredict": "AI 예측",
+        "taxCalc": "세금 계산기",
+        "plans": "요금제",
+        "info": "안내",
+        "userGuide": "이용 가이드",
+        "membership": "멤버십 안내",
+        "legal": "법적 고지",
+        "terms": "이용약관",
+        "privacy": "개인정보처리방침",
+        "refund": "환불정책",
+        "disclaimer": "분석 위험 고지",
+        "support": "고객 지원",
+        "counseling": "도박 중독 상담: 1336",
+        "bizInfo": "사업자 정보",
+        "bizCompany": "상호명",
+        "bizRep": "대표자",
+        "bizRegNo": "사업자등록번호",
+        "bizCommerceNo": "통신판매업번호",
+        "bizAddress": "사업장 소재지",
+        "bizPhone": "대표 전화번호",
+        "bizEmail": "이메일",
+        "footerNotice": "본 서비스는 통계 분석 도구이며 투자 조언을 제공하지 않습니다. 분석 결과에 따른 손실은 전적으로 이용자 본인의 책임입니다."
+    },
+    "common": {
+        "loading": "로딩 중...",
+        "error": "오류가 발생했습니다.",
+        "back": "뒤로",
+        "close": "닫기",
+        "confirm": "확인",
+        "cancel": "취소"
+    }
+}

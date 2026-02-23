@@ -1,0 +1,140 @@
+{
+    "metadata": {
+        "title": "Scorenix | AI Sports Data Analytics",
+        "description": "AI-powered sports data analytics platform. Real-time statistical comparison, probability prediction, and combination optimization.",
+        "keywords": "sports analytics, AI prediction, data analysis, statistics, smart betting"
+    },
+    "nav": {
+        "home": "Home",
+        "valueBet": "Value Bet",
+        "aiPredict": "AI Predict",
+        "multiCombo": "Multi-Combo",
+        "taxCalc": "Tax Calc",
+        "portfolio": "Portfolio",
+        "guide": "Guide",
+        "homeDesc": "Service Overview",
+        "valueBetDesc": "Overvalued Data Detection",
+        "aiPredictDesc": "4-Source AI Analysis",
+        "multiComboDesc": "Multi-Fold Simulator",
+        "taxCalcDesc": "After-Tax Calculator",
+        "portfolioDesc": "Analysis History · P&L",
+        "guideDesc": "How to Use",
+        "login": "Sign In",
+        "register": "Sign Up",
+        "logout": "Sign Out",
+        "subscription": "Manage Plan",
+        "language": "Language"
+    },
+    "hero": {
+        "badge": "Real-time AI Analysis Active",
+        "titleLine1": "AI-Powered",
+        "titleLine2": "Sports Analytics",
+        "subtitle": "Global data-driven AI statistical analysis · Match probability prediction · Combination optimization",
+        "ctaPrimary": "Start AI Analysis →",
+        "ctaSecondary": "View All Matches",
+        "statMatches": "Matches Analyzed",
+        "statLeagues": "Leagues Covered",
+        "statUpdate": "Updates",
+        "statUpdateValue": "Real-time"
+    },
+    "pricing": {
+        "title": "Maximize Your Returns with",
+        "titleHighlight": "Smart Analytics",
+        "subtitle": "Don't miss data-driven sports analysis opportunities.",
+        "free": {
+            "name": "Free",
+            "badge": "Trial",
+            "price": "$0",
+            "period": "/mo",
+            "description": "Basic value insights",
+            "features": [
+                "3 daily match analyses",
+                "Basic ROI calculator"
+            ],
+            "cta": "Start Free"
+        },
+        "pro": {
+            "name": "Pro Investor",
+            "badge": "Popular",
+            "price": "$39.99",
+            "period": "/mo",
+            "description": "For serious profit generation",
+            "features": [
+                "Unlimited AI analysis reports",
+                "Real-time alert service",
+                "Advanced portfolio management",
+                "Deep single-match analysis"
+            ],
+            "cta": "Subscribe Now"
+        },
+        "vip": {
+            "name": "VIP",
+            "price": "$74.99",
+            "period": "/mo",
+            "description": "1:1 expert care for professionals",
+            "features": [
+                "All Pro plan features",
+                "Exclusive Telegram channel",
+                "Priority customer support"
+            ],
+            "cta": "Contact Us"
+        },
+        "currency": "USD",
+        "currencySymbol": "$"
+    },
+    "payment": {
+        "title": "Subscribe",
+        "selectedPlan": "Selected Plan",
+        "period": "/mo",
+        "badge": "Secure Payment via PortOne · Card / E-wallet / Bank Transfer",
+        "agreeTerms": "I agree to the above.",
+        "agreeAge": "I am 19 years or older and understand that this service is a statistical analysis tool, not investment advice.",
+        "loginFirst": "Sign in to pay",
+        "processing": "Processing payment...",
+        "payButton": "Pay",
+        "note1": "Secure payment via PortOne · Card & e-wallet supported",
+        "note2": "30-day access from payment date · Cancel anytime",
+        "otherPlans": "← View other plans",
+        "termsLink": "Terms of Service",
+        "privacyLink": "Privacy Policy",
+        "refundLink": "Refund Policy",
+        "disclaimerLink": "Risk Disclaimer",
+        "errorLogin": "Sign in required.",
+        "errorAgree": "Please check all agreement boxes.",
+        "errorGeneral": "An error occurred during payment processing."
+    },
+    "footer": {
+        "services": "Services",
+        "valueBet": "Value Bet Analysis",
+        "aiPredict": "AI Prediction",
+        "taxCalc": "Tax Calculator",
+        "plans": "Plans",
+        "info": "Information",
+        "userGuide": "User Guide",
+        "membership": "Membership Info",
+        "legal": "Legal",
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy",
+        "refund": "Refund Policy",
+        "disclaimer": "Risk Disclaimer",
+        "support": "Support",
+        "counseling": "Gambling Addiction Helpline: 1336",
+        "bizInfo": "Business Information",
+        "bizCompany": "Company Name",
+        "bizRep": "Representative",
+        "bizRegNo": "Business Registration No.",
+        "bizCommerceNo": "E-Commerce License No.",
+        "bizAddress": "Address",
+        "bizPhone": "Phone",
+        "bizEmail": "Email",
+        "footerNotice": "This service is a statistical analysis tool and does not provide investment advice. Users are solely responsible for any losses resulting from analysis outcomes."
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred.",
+        "back": "Back",
+        "close": "Close",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}

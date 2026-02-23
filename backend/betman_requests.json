@@ -1,0 +1,402 @@
+[
+  {
+    "url": "https://www.betman.co.kr/main/mainPage/gamebuy/buyableGameList.do",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery-ui.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.bxslider.min.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.dataTables.min.origin.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.mCustomScrollbar.concat.min.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.ui.monthpicker.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jquery.history.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/dataTables.buttons.min.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/buttons.html5.min.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/jszip.min.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/contents.path.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-common.css?ver=20260212",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/requestClient.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/BUICommon.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/loading-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/code-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/serialize-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/grid-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/message-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/login.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/js/ui-common.js?ver=20260212",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/betcoach.style.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/betcoach.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/betcoach.drawer.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/betcoach.util.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/betcoach.on.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/betcoach/date-common.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/slip/slipUtils.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/makePCookie.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/clickEvent.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/js/sessionUtil.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/logo.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/jquery-ui.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/jquery.dataTables.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/jquery.mCustomScrollbar.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-layout.css?v=20260115",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-style.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-style_game.css?v=20251022",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-game.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-customer.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-service.css?v=20251120",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/dataTable.rewrite.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-gameguide.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-english.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/ui-healthiness.css",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/comm/logo_proto02.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/comm/logo_toto02.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/js/egovframework/com/cmm/popup.js",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/ico_sns_md_youtube.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/ico_sns_md_instagram.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/ico_sns_md_facebook.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/ico_sns_md_blog.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/logo_kspo.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/SpeedON_logo.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/logo_isms-p.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/logo_wa.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/images/logo_wla.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/Spinner-100px.gif",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/gnb_bg.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/main_bg.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/location_ico.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/guideBox_ico.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/game/game_banner_tip.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/btn_ico_20X20.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/footer_bg.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/font/NanumGothic-Bold.woff2",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/font/NanumGothic-Regular.woff2",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/css/font/NanumGothic-ExtraBold.woff2",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/aside_right_buy.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do",
+    "method": "POST",
+    "post_data": "{\"_sbmInfo\":{\"_sbmInfo\":{\"debugMode\":\"false\"}}}"
+  },
+  {
+    "url": "https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do",
+    "method": "POST",
+    "post_data": "{\"_sbmInfo\":{\"_sbmInfo\":{\"debugMode\":\"false\"}}}"
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/ico_game_pt.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/main_flag_1.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/ico_game_bk.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/sub/subPage/gamebuy/buyableGameListPop.do?",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/popup_bg.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://cdn.betman.co.kr/images/comm/table_ico_desc.png",
+    "method": "GET",
+    "post_data": null
+  },
+  {
+    "url": "https://www.betman.co.kr/buyPsblGame/inqTodayBuyCount.do",
+    "method": "POST",
+    "post_data": "{\"_sbmInfo\":{\"_sbmInfo\":{\"debugMode\":\"false\"}}}"
+  }
+]

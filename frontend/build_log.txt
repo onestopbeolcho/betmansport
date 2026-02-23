@@ -1,0 +1,107 @@
+﻿??Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+node.exe : ??The "middleware"
+ file convention is deprecate
+d. Please use "proxy" instead
+. Learn more: https://nextjs.
+org/docs/messages/middleware-
+to-proxy
+위치 C:\Program Files\nodejs\np
+x.ps1:29 문자:3
++   & $NODE_EXE $NPX_CLI_JS $
+args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo           
+   : NotSpecified: (??The "  
+  middlewa...leware-to-pro   
+ xy:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+  Creating an optimized production build ...
+??Compiled successfully in 5.0s
+  Running TypeScript ...
+Failed to compile.
+
+.next/types/validator.ts:364:
+31
+Type error: Type 'typeof impo
+rt("C:/Smart_Proto_Investor_P
+lan/frontend/app/[lang]/layou
+t")' does not satisfy the con
+straint 'LayoutConfig<"/[lang
+]">'.
+  Types of property 'default'
+ are incompatible.
+    Type '({ children, params
+, }: { children: ReactNode; p
+arams: Promise<{ lang: "ko" |
+ "en"; }>; }) => Promise<Elem
+ent>' is not assignable to ty
+pe 'ComponentType<LayoutProps
+<"/[lang]">> | ((props: Layou
+tProps<"/[lang]">) => void | 
+ReactNode | Promise<ReactNode
+> | Promise<...>)'.
+      Type '({ children, para
+ms, }: { children: ReactNode;
+ params: Promise<{ lang: "ko"
+ | "en"; }>; }) => Promise<El
+ement>' is not assignable to 
+type 'FunctionComponent<Layou
+tProps<"/[lang]">>'.
+        Types of parameters '
+__0' and 'props' are incompat
+ible.
+          Type 'LayoutProps<"
+/[lang]">' is not assignable 
+to type '{ children: ReactNod
+e; params: Promise<{ lang: "k
+o" | "en"; }>; }'.
+            Types of property
+ 'params' are incompatible.
+              Type 'Promise<{
+ lang: string; }>' is not ass
+ignable to type 'Promise<{ la
+ng: "ko" | "en"; }>'.
+                Type '{ lang:
+ string; }' is not assignable
+ to type '{ lang: "ko" | "en"
+; }'.
+                  Types of pr
+operty 'lang' are incompatibl
+e.
+                    Type 'str
+ing' is not assignable to typ
+e '"ko" | "en"'.
+
+[0m [90m 362 |[39m   type 
+__IsExpected[33m<[39m[33mS
+pecific[39m [36mextends[39
+m [33mLayoutConfig[39m[33m
+<[39m[32m"/[lang]"[39m[33
+m>>[39m [33m=[39m [33mSpe
+cific[39m
+ [90m 363 |[39m   [36mcons
+t[39m handler [33m=[39m {}
+ [36mas[39m [36mtypeof[39
+m [36mimport[39m([32m"../.
+./app/[lang]/layout.js"[39m)
+[31m[1m>[22m[39m[90m 364
+ |[39m   type __Check [33m=
+[39m __IsExpected[33m<[39m
+[36mtypeof[39m handler[33m
+>[39m
+ [90m     |[39m            
+                   [31m[1m^
+[22m[39m
+ [90m 365 |[39m   [90m// @
+ts-ignore[39m
+ [90m 366 |[39m   type __Un
+used [33m=[39m __Check
+ [90m 367 |[39m }[0m
+Next.js build worker exited w
+ith code: 1 and signal: null

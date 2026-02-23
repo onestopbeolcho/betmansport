@@ -1,0 +1,53 @@
+2026-02-11 10:56:41,688 [app.services.crawler_betman] INFO: Acquiring Betman session cookies...
+2026-02-11 10:56:41,978 [app.services.crawler_betman] INFO: Session established: status=200, cookies=['CCN_VKEY', 'JSESSIONID']
+2026-02-11 10:56:42,308 [app.services.crawler_betman] INFO: Discovery response: status=200, ct=application/json;charset=UTF-8, len=24594 (attempt 1)
+2026-02-11 10:56:42,309 [app.services.crawler_betman] INFO: Discovery OK: 정상 처리되었습니다.
+2026-02-11 10:56:42,309 [app.services.crawler_betman] INFO: Found 2 proto games
+2026-02-11 10:56:42,309 [app.services.crawler_betman] INFO: 📁 Closed G101 fallback: gmTs=260018 (발매 마감)
+2026-02-11 10:56:42,459 [app.services.crawler_betman] INFO: Odds API response: status=200, ct=application/json;charset=UTF-8, len=197555 (attempt 1)
+2026-02-11 10:56:42,463 [app.services.crawler_betman] INFO: ✅ Odds data: 34 columns, 202 rows
+2026-02-11 10:56:42,463 [app.services.crawler_betman] INFO: Parse result: 2 valid, skipped={'inactive': 194, 'handicap': 6, 'parse_error': 0, 'no_odds': 0}
+2026-02-11 10:56:42,465 [app.models.betman_db] INFO: Saved 2 Betman matches for round 260018
+2026-02-11 10:56:42,478 [app.models.betman_db] INFO: Updated match be073221: {'home_odds': 1.29}
+2026-02-11 10:56:42,487 [app.models.betman_db] INFO: Updated match be073221: {'home_odds': 1.19}
+2026-02-11 10:56:42,496 [app.models.betman_db] INFO: Added manual match 22dc73cb to round 260018
+2026-02-11 10:56:42,508 [app.models.betman_db] INFO: Deleted match 22dc73cb from round 260018
+2026-02-11 10:56:42,510 [app.services.crawler_betman] INFO: 🌐 Attempting browser-based crawl (Playwright)...
+2026-02-11 10:56:42,990 [app.services.crawler_betman_browser] INFO: Launching browser (headless=True)...
+2026-02-11 10:56:43,123 [app.services.crawler_betman_browser] INFO: Step 1: Visiting Betman main page for cookies...
+2026-02-11 10:56:44,916 [app.services.crawler_betman_browser] INFO: Cookies acquired: ['CCN_VKEY', 'JSESSIONID', 'PCID', 'RC_RESOLUTION', 'RC_COLOR']
+2026-02-11 10:56:44,917 [app.services.crawler_betman_browser] INFO: Step 2: Calling discovery API via browser...
+2026-02-11 10:56:44,936 [app.services.crawler_betman_browser] INFO: Discovery: status=200, ct=text/html; charset=UTF-8, len=2982
+2026-02-11 10:56:44,936 [app.services.crawler_betman_browser] ERROR: Discovery returned non-JSON (ct=text/html; charset=UTF-8)
+2026-02-11 10:56:44,936 [app.services.crawler_betman_browser] ERROR: Body snippet: 
+
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+
+<script type="text/javascript" class="init"></script>
+
+<!-- 라이브러리 영역  -->
+<script type="text/javascript" src=
+2026-02-11 10:56:44,991 [app.services.crawler_betman] WARNING: Browser crawl returned no data: Discovery returned non-JSON (ct=text/html; charset=UTF-8)
+2026-02-11 10:56:44,992 [app.services.crawler_betman] INFO: Acquiring Betman session cookies...
+2026-02-11 10:56:45,138 [app.services.crawler_betman] INFO: Session established: status=200, cookies=['CCN_VKEY', 'JSESSIONID']
+2026-02-11 10:56:45,462 [app.services.crawler_betman] INFO: Discovery response: status=200, ct=application/json;charset=UTF-8, len=24594 (attempt 1)
+2026-02-11 10:56:45,463 [app.services.crawler_betman] INFO: Discovery OK: 정상 처리되었습니다.
+2026-02-11 10:56:45,463 [app.services.crawler_betman] INFO: Found 2 proto games
+2026-02-11 10:56:45,463 [app.services.crawler_betman] INFO: 📁 Closed G101 fallback: gmTs=260018 (발매 마감)
+2026-02-11 10:56:45,463 [app.services.crawler_betman] INFO: 📌 Using round: gmId=G101, gmTs=260018
+2026-02-11 10:56:45,548 [app.services.crawler_betman] INFO: Odds API response: status=200, ct=application/json;charset=UTF-8, len=197555 (attempt 1)
+2026-02-11 10:56:45,550 [app.services.crawler_betman] INFO: ✅ Odds data: 34 columns, 202 rows
+2026-02-11 10:56:45,551 [app.services.crawler_betman] INFO: Parse result: 2 valid, skipped={'inactive': 194, 'handicap': 6, 'parse_error': 0, 'no_odds': 0}
+2026-02-11 10:56:45,551 [app.services.crawler_betman] INFO: 🔍 Parsed 2 matches from round 260018
+2026-02-11 10:56:45,553 [app.models.betman_db] INFO: Saved 2 Betman matches for round 260018
+2026-02-11 10:56:45,553 [app.services.crawler_betman] INFO: ✅ Betman HTTP: 2 items (round: 260018)

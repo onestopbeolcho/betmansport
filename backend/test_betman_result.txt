@@ -1,0 +1,7 @@
+--- Starting Betman Crawler Test ---
+--- Fetch Complete ---
+Total Items: 2
+Real Items: 2
+Mock Items: 0
+SUCCESS: Real data fetched!
+Sample: {"provider":"Betman","home_odds":2.3,"draw_odds":3.4,"away_odds":3.9,"team_home":"레알 마드리드","team_away":"바르셀로나","team_home_ko":null,"team_away_ko":null,"match_time":"2026-02-11T19:00:00Z","sport":"Soccer","league":"La Liga"}
