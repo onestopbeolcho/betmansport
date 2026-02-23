@@ -23,8 +23,8 @@ export default function ManualPage() {
                     <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08), rgba(139,92,246,0.08))', border: '1px solid rgba(0,212,255,0.15)' }}>
                         <h3 className="text-lg font-extrabold mb-3" style={{ color: 'var(--accent-primary)' }}>Scorenix란?</h3>
                         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            Scorenix는 해외 배당(Pinnacle 기준)과 국내 배당(배트맨/프로토)의 <strong className="text-white">가격 차이</strong>를 분석하여,
-                            통계적으로 유리한 구간(Value Bet)을 찾아주는 <strong className="text-white">데이터 기반 스포츠 투자 분석 플랫폼</strong>입니다.
+                            Scorenix는 글로벌 스포츠 배당 데이터를 비교·분석하여,
+                            통계적으로 유리한 구간(Value Bet)을 찾아주는 <strong className="text-white">AI 기반 스포츠 데이터 분석 플랫폼</strong>입니다.
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -35,13 +35,13 @@ export default function ManualPage() {
                         />
                         <FeatureCard
                             icon="🧮"
-                            title="세금 최적화"
-                            desc="배트맨 과세 기준(200만원/100배)을 실시간으로 계산하고, 비과세 조합을 추천합니다."
+                            title="켈리 기준 자금 관리"
+                            desc="수학적으로 최적의 배분 비율을 산출하여, 리스크를 최소화하면서 장기 수익을 극대화합니다."
                         />
                         <FeatureCard
                             icon="🤖"
                             title="AI 분석 리포트"
-                            desc="경기별 AI 분석 리포트를 제공하여, 데이터 기반의 합리적인 투자 결정을 돕습니다."
+                            desc="경기별 AI 분석 리포트를 제공하여, 데이터 기반의 합리적인 의사결정을 돕습니다."
                         />
                     </div>
                 </div>
@@ -132,7 +132,7 @@ export default function ManualPage() {
                         <ul className="mt-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">Bankroll</strong> = 총 투자 자산</span>
+                                <span><strong className="text-white">Bankroll</strong> = 총 자금</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
@@ -156,91 +156,38 @@ export default function ManualPage() {
             ),
         },
         {
-            id: 'tax',
-            icon: '🏛️',
-            title: '세금 안내',
+            id: 'data-sources',
+            icon: '🌐',
+            title: '데이터 소스',
             content: (
                 <div className="space-y-6">
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        배트맨(체육진흥투표권)의 적중금에 대한 과세 기준은 <strong className="text-white">소득세법 제21조</strong>에 의해 결정됩니다.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                            <div className="text-xs font-bold mb-2 px-2 py-0.5 rounded-full inline-block" style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>과세 조건 1</div>
-                            <h4 className="font-bold text-base mb-2" style={{ color: 'var(--text-primary)' }}>적중금 200만원 초과</h4>
-                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                적중금(투표금 × 배당률)이 <strong className="text-white">200만원을 초과</strong>하면
-                                기타소득세 <strong style={{ color: '#f87171' }}>22%</strong> (소득세 20% + 지방소득세 2%)가 원천징수됩니다.
-                            </p>
-                        </div>
-                        <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                            <div className="text-xs font-bold mb-2 px-2 py-0.5 rounded-full inline-block" style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171' }}>과세 조건 2</div>
-                            <h4 className="font-bold text-base mb-2" style={{ color: 'var(--text-primary)' }}>배당 100배 + 적중금 10만원 초과</h4>
-                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                배당률이 <strong className="text-white">100배를 초과</strong>하고, 적중금이 <strong className="text-white">10만원을 초과</strong>하면
-                                동일하게 <strong style={{ color: '#f87171' }}>22%</strong>가 원천징수됩니다.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="p-5 rounded-xl" style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.15)' }}>
-                        <h4 className="font-bold text-sm mb-3" style={{ color: 'var(--accent-primary)' }}>💡 절세 전략 (세금계산기 활용)</h4>
-                        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            <li className="flex items-start gap-2">
-                                <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>1.</span>
-                                <span>적중금이 200만원을 살짝 초과하면 → <strong className="text-white">경기 1개 제거</strong>로 비과세 구간 조정</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>2.</span>
-                                <span>고배당 조합 시 → <strong className="text-white">베팅 금액을 비과세 한도까지 줄이기</strong></span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>3.</span>
-                                <span>큰 금액 투자 시 → <strong className="text-white">여러 건으로 분할 구매</strong> (회차당 10만원 한도)</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            id: 'betman-rules',
-            icon: '⚽',
-            title: '배트맨 규정',
-            content: (
-                <div className="space-y-6">
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        배트맨(betman.co.kr)은 대한민국 유일의 합법 스포츠 토토 판매 사이트입니다. 주요 규정을 숙지해주세요.
+                        Scorenix는 글로벌 배당 데이터를 수집·분석하여 가장 정확한 확률을 제공합니다.
                     </p>
                     <div className="space-y-3">
                         <RuleItem
-                            title="축구 적용 시간"
-                            desc="배트맨 축구는 전반 + 후반 정규 시간(90분) 결과만 적용됩니다. 연장전, 승부차기 결과는 반영되지 않습니다."
-                            badge="중요"
-                            badgeColor="#f87171"
-                        />
-                        <RuleItem
-                            title="구매 한도"
-                            desc="1회차당 최대 100,000원까지 구매 가능합니다. 프로토 승부식은 최소 2경기부터 조합 가능합니다."
-                            badge="한도"
-                            badgeColor="#fbbf24"
-                        />
-                        <RuleItem
-                            title="배당률 범위"
-                            desc="배트맨 배당률은 1.01~999.99배 사이에서 설정됩니다. 프로토 승부식과 기록식의 배당 구조가 다릅니다."
-                            badge="배당"
+                            title="Pinnacle (Sharp Line)"
+                            desc="세계 최대 규모의 북메이커로, 약 2~3%의 낮은 마진을 통해 가장 효율적인 시장 가격을 형성합니다. 업계에서 '진짜 확률'의 기준으로 널리 인정됩니다."
+                            badge="기준선"
                             badgeColor="#60a5fa"
                         />
                         <RuleItem
-                            title="결과 확정"
-                            desc="경기 종료 후 공식 결과가 확정되면 배트맨에서 자동 정산됩니다. 이의신청은 결과 확정 후 7일 이내에 가능합니다."
-                            badge="정산"
+                            title="The Odds API"
+                            desc="글로벌 30+ 북메이커의 배당 데이터를 실시간으로 수집합니다. Pinnacle, bet365, DraftKings 등 주요 북메이커를 모두 커버합니다."
+                            badge="데이터"
                             badgeColor="#4ade80"
                         />
                         <RuleItem
-                            title="환급률"
-                            desc="스포츠토토의 환급률은 약 50~60%로 설정되어 있습니다. 이는 복권 환급률(약 50%)과 유사한 수준입니다."
-                            badge="환급"
+                            title="지원 스포츠"
+                            desc="축구(EPL, La Liga, Serie A, Bundesliga, K-League 등), 야구(MLB, KBO, NPB), 농구(NBA, KBL), 배구 등 주요 리그를 분석합니다."
+                            badge="종목"
                             badgeColor="#a78bfa"
+                        />
+                        <RuleItem
+                            title="데이터 갱신 주기"
+                            desc="배당 데이터는 주기적으로 갱신되며, 경기 시작 전까지 변동될 수 있습니다. 최종 베팅 전 공식 사이트에서 반드시 확인하세요."
+                            badge="갱신"
+                            badgeColor="#fbbf24"
                         />
                     </div>
                 </div>
@@ -255,28 +202,28 @@ export default function ManualPage() {
                     <div className="space-y-4">
                         <StepItem
                             step={1}
-                            title="배당 분석 확인"
-                            desc="'밸류벳' 페이지에서 해외 배당과 국내 배당의 차이를 확인합니다. EV(기대값) 5% 이상인 밸류벳을 찾으세요."
+                            title="밸류벳 탐색"
+                            desc="'밸류벳' 페이지에서 배당 효율을 비교합니다. 기대값(EV) 5% 이상인 경기를 자동으로 필터링합니다."
                         />
                         <StepItem
                             step={2}
-                            title="경기 선택"
-                            desc="'AI예측' 페이지에서 원하는 경기의 배당을 클릭하여 장바구니에 담습니다. AI 분석 리포트와 배당 이력 차트도 확인할 수 있습니다."
+                            title="AI 분석 확인"
+                            desc="'AI예측' 페이지에서 경기별 상세 분석, 배당 이력 차트, AI 리포트를 확인하세요."
                         />
                         <StepItem
                             step={3}
-                            title="세금 시뮬레이션"
-                            desc="'세금계산' 페이지에서 장바구니의 조합에 대한 예상 세금을 확인합니다. 비과세 조합으로 최적화할 수 있습니다."
+                            title="경기 선택 & 조합"
+                            desc="분석이 완료된 경기를 장바구니에 담고, 켈리 기준에 따른 최적 배분을 확인합니다."
                         />
                         <StepItem
                             step={4}
-                            title="조합 저장 & 베팅"
-                            desc="최종 결정한 조합을 '내 포트폴리오'에 저장합니다. 배트맨 사이트에서 동일하게 구매하세요."
+                            title="포트폴리오 저장"
+                            desc="최종 결정한 조합을 '내 포트폴리오'에 저장하여 체계적으로 관리합니다."
                         />
                         <StepItem
                             step={5}
-                            title="결과 추적"
-                            desc="경기 종료 후 '내 포트폴리오'에서 결과와 수익률을 확인합니다. 포트폴리오 전체 성과를 관리하세요."
+                            title="성과 추적"
+                            desc="경기 종료 후 결과와 수익률을 확인합니다. 누적 성과를 분석하여 전략을 개선하세요."
                         />
                     </div>
                 </div>
@@ -290,7 +237,7 @@ export default function ManualPage() {
                 <div className="space-y-4">
                     <FaqItem
                         q="이 서비스는 도박 사이트인가요?"
-                        a="아닙니다. Scorenix는 데이터 분석 플랫폼입니다. 실제 베팅은 대한민국 합법 사이트인 배트맨(betman.co.kr)에서만 진행됩니다. 저희는 분석 정보만 제공합니다."
+                        a="아닙니다. Scorenix는 스포츠 데이터 분석 플랫폼입니다. 배당 데이터를 통계적으로 비교·분석하여 정보를 제공할 뿐, 직접 베팅을 중개하거나 대행하지 않습니다."
                     />
                     <FaqItem
                         q="Pinnacle 배당은 왜 기준으로 사용하나요?"
@@ -298,15 +245,15 @@ export default function ManualPage() {
                     />
                     <FaqItem
                         q="밸류벳이면 무조건 이기나요?"
-                        a="아닙니다. 밸류벳은 '장기적'으로 기대값이 양수인 베팅을 의미합니다. 단일 경기에서는 당연히 질 수 있으며, 최소 수백 건 이상의 샘플에서 효과가 나타납니다. 그래서 켈리 기준법으로 자금 관리가 필수적입니다."
+                        a="아닙니다. 밸류벳은 '장기적'으로 기대값이 양수인 구간을 의미합니다. 단일 경기에서는 당연히 빗나갈 수 있으며, 최소 수백 건 이상의 샘플에서 효과가 나타납니다. 그래서 켈리 기준법으로 자금 관리가 필수적입니다."
                     />
                     <FaqItem
-                        q="프로토 vs 토토 차이가 뭔가요?"
-                        a="프로토 승부식은 2경기 이상을 조합하여 배당을 곱한 결합 베팅이고, 토토는 고정배당으로 진행됩니다. Scorenix는 프로토 승부식 분석에 최적화되어 있습니다."
+                        q="어떤 스포츠/리그를 지원하나요?"
+                        a="축구(EPL, La Liga, Serie A, Bundesliga, K-League 등), 야구(MLB, KBO, NPB), 농구(NBA, KBL), 배구 등 주요 글로벌 리그를 커버합니다. 지원 리그는 계속 확대 중입니다."
                     />
                     <FaqItem
                         q="배당 데이터는 실시간인가요?"
-                        a="해외 배당(Pinnacle)은 The Odds API를 통해 주기적으로 갱신됩니다. 배트맨 배당은 배트맨 공식 데이터를 기반으로 수집됩니다. 배당은 경기 시작 전까지 수시로 변동될 수 있으니, 최종 구매 전 배트맨에서 직접 확인해주세요."
+                        a="The Odds API를 통해 글로벌 30+ 북메이커의 배당이 주기적으로 갱신됩니다. 배당은 경기 시작 전까지 변동될 수 있으므로, 최종 결정 전 반드시 확인하세요."
                     />
                 </div>
             ),
@@ -326,19 +273,19 @@ export default function ManualPage() {
                     <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            본 서비스의 분석 결과는 참고 자료이며, 투자의 최종 결정과 책임은 사용자 본인에게 있습니다.
+                            본 서비스의 분석 결과는 참고 자료이며, 최종 결정과 책임은 사용자 본인에게 있습니다.
                         </li>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            스포츠 토토는 만 19세 이상만 구매 가능하며, 체육진흥투표권 발행 등에 관한 법률에 의해 규제됩니다.
+                            각 국가의 법률과 규정을 준수하여 이용해 주시기 바랍니다.
                         </li>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            도박 중독이 의심되면 한국도박문제관리센터(☎ 1336)에 상담하시기 바랍니다.
+                            과도한 베팅은 중독을 유발할 수 있습니다. 책임감 있는 이용을 권장합니다.
                         </li>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            배당 데이터의 정확성은 보장되지 않으며, 최종 배당은 배트맨 공식 사이트에서 확인해야 합니다.
+                            배당 데이터의 정확성은 보장되지 않으며, 최종 배당은 공식 사이트에서 직접 확인해야 합니다.
                         </li>
                     </ul>
                 </div>
