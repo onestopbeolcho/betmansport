@@ -1,6 +1,8 @@
 
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
+import { i18n } from '../lib/i18n-config';
 
 interface OddsItem {
     provider: string;
@@ -36,6 +38,10 @@ const SPORT_TABS = [
 ];
 
 export default function MatchVoting() {
+    const pathname = usePathname();
+    const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
+    const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
+
     const [matches, setMatches] = useState<OddsItem[]>([]);
     const [stats, setStats] = useState<Record<string, VoteStats>>({});
     const [loading, setLoading] = useState(true);
@@ -150,10 +156,21 @@ export default function MatchVoting() {
     return (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* Section Header */}
-            <div className="flex items-center space-x-3 mb-6">
-                <span className="w-1 h-6 rounded-full bg-gradient-to-b from-[var(--accent-primary)] to-[var(--accent-secondary)]"></span>
-                <h2 className="text-xl font-extrabold text-white">오늘의 승부 예측</h2>
-                <span className="text-xs text-[var(--text-muted)]">투표하고 결과를 확인하세요</span>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                    <span className="w-1 h-6 rounded-full bg-gradient-to-b from-[var(--accent-primary)] to-[var(--accent-secondary)]"></span>
+                    <h2 className="text-xl font-extrabold text-white">오늘의 승부 예측</h2>
+                    <span className="text-xs text-[var(--text-muted)] hidden sm:inline">투표하고 결과를 확인하세요</span>
+                </div>
+                <a
+                    href={`/${currentLang}/market`}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-[rgba(0,212,255,0.08)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)] hover:bg-[rgba(0,212,255,0.15)] hover:border-[rgba(0,212,255,0.4)]"
+                >
+                    🔮 승부 예측 전체 보기
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
             </div>
 
             {/* Sport Tabs */}
