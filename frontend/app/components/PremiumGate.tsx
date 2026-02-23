@@ -1,7 +1,8 @@
 "use client";
 import React from 'react';
-import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
+import { i18n, type Locale } from '../lib/i18n-config';
 
 interface PremiumGateProps {
     /** Content to show (will be blurred for free users) */
@@ -32,6 +33,9 @@ export default function PremiumGate({
     showTeaser = true,
 }: PremiumGateProps) {
     const { user } = useAuth();
+    const pathname = usePathname();
+    const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
+    const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
     // Determine if user has access
     const userTier = user?.tier || 'free';
@@ -79,16 +83,16 @@ export default function PremiumGate({
                         </span> 멤버십 이상에서 이용 가능합니다.
                     </p>
 
-                    <Link href="/pricing">
+                    <a href={`/${currentLang}/pricing`}>
                         <button className="btn-primary w-full py-3 text-sm font-bold rounded-xl">
                             💎 멤버십 업그레이드
                         </button>
-                    </Link>
+                    </a>
 
                     {!user && (
-                        <Link href="/login" className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition">
+                        <a href={`/${currentLang}/login`} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition">
                             이미 멤버십이 있으신가요? 로그인
-                        </Link>
+                        </a>
                     )}
                 </div>
             </div>

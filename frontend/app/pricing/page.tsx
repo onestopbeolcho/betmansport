@@ -1,10 +1,17 @@
 "use client";
 import React from 'react';
-import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import DeadlineBanner from '../components/DeadlineBanner';
+import { useAuth } from '../context/AuthContext';
+import { usePathname } from 'next/navigation';
+import { i18n } from '../lib/i18n-config';
 
 export default function PricingPage() {
+    const { user } = useAuth();
+    const pathname = usePathname();
+    const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
+    const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
+
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
             <DeadlineBanner />
@@ -37,10 +44,17 @@ export default function PricingPage() {
                                 <li className="flex"><span className="mr-3" style={{ color: 'var(--accent-primary)' }}>✓</span>기본 수익률 계산기</li>
                             </ul>
                         </div>
-                        <Link href="/register" className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
-                            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
-                            무료로 시작하기
-                        </Link>
+                        {user ? (
+                            <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
+                                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+                                ✓ 현재 이용 중
+                            </span>
+                        ) : (
+                            <a href={`/${currentLang}/register`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
+                                style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
+                                무료로 시작하기
+                            </a>
+                        )}
                     </div>
 
                     {/* Pro Plan */}
@@ -63,9 +77,9 @@ export default function PricingPage() {
                                 <li className="flex"><span className="mr-3" style={{ color: 'var(--accent-primary)' }}>✓</span>단일 경기 심층 분석</li>
                             </ul>
                         </div>
-                        <Link href="/payment/request?plan=pro" className="btn-primary mt-8 block w-full py-3 text-sm font-semibold text-center">
+                        <a href={`/${currentLang}/payment/request?plan=pro`} className="btn-primary mt-8 block w-full py-3 text-sm font-semibold text-center">
                             지금 구독하기
-                        </Link>
+                        </a>
                     </div>
 
                     {/* VIP Plan */}
@@ -83,10 +97,10 @@ export default function PricingPage() {
                                 <li className="flex"><span className="mr-3" style={{ color: 'var(--accent-secondary)' }}>✓</span>우선적 고객 지원</li>
                             </ul>
                         </div>
-                        <Link href="/payment/request?plan=vip" className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
+                        <a href={`/${currentLang}/payment/request?plan=vip`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
                             style={{ background: 'rgba(139,92,246,0.1)', color: 'var(--accent-secondary)', border: '1px solid rgba(139,92,246,0.3)' }}>
                             문의하기
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </main>

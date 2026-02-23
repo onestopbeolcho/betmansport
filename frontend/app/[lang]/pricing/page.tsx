@@ -1,14 +1,15 @@
 "use client";
 import React from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import DeadlineBanner from '../../components/DeadlineBanner';
 import { useDictionary } from '../../context/DictionaryContext';
+import { useAuth } from '../../context/AuthContext';
 import { i18n } from '../../lib/i18n-config';
 
 export default function PricingPage() {
     const pathname = usePathname();
+    const { user } = useAuth();
     const currentLang = i18n.locales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
     let dict;
@@ -53,10 +54,17 @@ export default function PricingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <Link href={`/${currentLang}/register`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
-                            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
-                            {t.free?.cta || '무료로 시작하기'}
-                        </Link>
+                        {user ? (
+                            <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
+                                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
+                                ✓ {t.free?.currentPlan || '현재 이용 중'}
+                            </span>
+                        ) : (
+                            <a href={`/${currentLang}/register`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
+                                style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
+                                {t.free?.cta || '무료로 시작하기'}
+                            </a>
+                        )}
                     </div>
 
                     {/* Pro Plan */}
@@ -78,9 +86,9 @@ export default function PricingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <Link href={`/${currentLang}/payment/request?plan=pro`} className="btn-primary mt-8 block w-full py-3 text-sm font-semibold text-center">
+                        <a href={`/${currentLang}/payment/request?plan=pro`} className="btn-primary mt-8 block w-full py-3 text-sm font-semibold text-center">
                             {t.pro?.cta || '지금 구독하기'}
-                        </Link>
+                        </a>
                     </div>
 
                     {/* VIP Plan */}
@@ -98,10 +106,10 @@ export default function PricingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <Link href={`/${currentLang}/payment/request?plan=vip`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
+                        <a href={`/${currentLang}/payment/request?plan=vip`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
                             style={{ background: 'rgba(139,92,246,0.1)', color: 'var(--accent-secondary)', border: '1px solid rgba(139,92,246,0.3)' }}>
                             {t.vip?.cta || '문의하기'}
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </main>
