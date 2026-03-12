@@ -27,3 +27,7 @@ backend/test.db
 serviceAccountKey.json
 *-firebase-adminsdk-*.json
 
+# API keys / secrets config
+system_config.json
+backend/system_config.json
+
