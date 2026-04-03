@@ -13,6 +13,10 @@
 - GCP 프로젝트 ID: `smart-proto-inv-2026`
 - 리전: `asia-northeast3`
 
+### 소스 코드 버전 관리 및 백업
+- 현재 프로젝트는 GitHub 저장소(`https://github.com/onestopbeolcho/betmansport`)에 연결되어 있습니다.
+- 모든 주요 변경이나 위험한 작업 이후에는 반드시 `git add, commit, push`를 수행하여 안전하게 백업 및 롤백 포인트를 마련하세요.
+
 ### 프론트엔드 API 연결
 - `NEXT_PUBLIC_API_URL`은 `https://scorenix-backend-n5dv44kdaa-du.a.run.app`입니다.
 - 이 값은 **절대 변경하지 마세요**.

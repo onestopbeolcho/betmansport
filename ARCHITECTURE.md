@@ -386,3 +386,11 @@ PowerShell에서 사용:
 $env:PATH += ";C:\Users\청솔\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin"
 gcloud --version
 ```
+
+---
+
+## 16. 버전 관리 및 클라우드 백업 (GitHub)
+
+- **원격 저장소**: `https://github.com/onestopbeolcho/betmansport.git`
+- **배경**: AI 에이전트의 치명적 코드 덮어쓰기나 로컬 스토리지 장애로부터 프로젝트 전체 자산을 보호하기 위함입니다.
+- **기본 방침**: 대규모 기능 업데이트나 인프라, `AGENTS.md` 등의 규칙 변경 시 **작업 종료 전 반드시 GitHub로 코드를 푸시(push)**하여 복구 지점을 확보해야 합니다.

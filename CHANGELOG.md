@@ -1,6 +1,13 @@
 # Changelog
 
-## v0.2.0 - Performance & Portfolio Update (Current)
+## v0.3.0 - AI Infrastructure Standardization & Git Backup
+
+### 🛡️ System Protection & Documentation
+- **AI Guidelines Base**: Created strict rule sets in `AGENTS.md` and `ARCHITECTURE.md` to prevent deployment mistargeting and database overrides by AI agents.
+- **GitHub Synchronization**: Established disaster recovery by committing and pushing the entire project state to the remote repository (`onestopbeolcho/betmansport`).
+- **Workflow Automation**: Built secure, script-based deployment workflows to reduce manual errors (e.g., `/deploy-backend`).
+
+## v0.2.0 - Performance & Portfolio Update (Previous)
 
 ### 🚀 Performance Optimization
 - **Server-Side Caching**: Implemented a database-backed caching layer (`MarketCache` table) for Pinnacle Odds API.
