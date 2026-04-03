@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useEffect, useState } from 'react';
+import { useDictionarySafe } from '../context/DictionaryContext';
 
 interface LeaderboardItem {
     rank: number;
@@ -13,10 +14,14 @@ interface LeaderboardItem {
 export default function Leaderboard() {
     const [users, setUsers] = useState<LeaderboardItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const dict = useDictionarySafe();
+    const tl = dict?.leaderboard || {};
+    const tc = dict?.common || {};
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     const fetchLeaderboard = async () => {
         try {
-            const res = await fetch('/api/prediction/leaderboard');
+            const res = await fetch(`${API}/api/prediction/leaderboard`);
             if (res.ok) setUsers(await res.json());
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -35,27 +40,27 @@ export default function Leaderboard() {
 
     return (
         <div className="glass-card overflow-hidden">
-            <div className="p-5 border-b border-[var(--border-subtle)] flex justify-between items-center" style={{ background: 'var(--bg-elevated)' }}>
+            <div data-tour="tour-leaderboard" className="p-5 border-b border-[var(--border-subtle)] flex justify-between items-center" style={{ background: 'var(--bg-elevated)' }}>
                 <h3 className="font-bold text-base text-white flex items-center gap-2">
-                    <span>🏆</span> 분석가 랭킹
+                    <span>🏆</span> {tl.title || 'Analyst Ranking'}
                 </h3>
-                <span className="badge">실시간</span>
+                <span className="badge">{tc.statUpdateValue || 'Real-time'}</span>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead>
                         <tr className="text-[11px] text-[var(--text-muted)] uppercase border-b border-[var(--border-subtle)]">
-                            <th className="px-5 py-3 w-16 text-center">순위</th>
-                            <th className="px-5 py-3">분석가</th>
-                            <th className="px-5 py-3 text-center">등급</th>
-                            <th className="px-5 py-3 text-center">적중률</th>
+                            <th className="px-5 py-3 w-16 text-center">{tl.rank || 'Rank'}</th>
+                            <th className="px-5 py-3">{tl.user || 'User'}</th>
+                            <th className="px-5 py-3 text-center">Tier</th>
+                            <th className="px-5 py-3 text-center">{tl.accuracy || 'Accuracy'}</th>
                             <th className="px-5 py-3 text-center">XP</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-subtle)]">
                         {loading ? (
-                            <tr><td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">랭킹 로딩 중...</td></tr>
+                            <tr><td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">{tc.loading || 'Loading...'}</td></tr>
                         ) : users.map((user) => (
                             <tr key={user.user_id} className="hover:bg-white/[0.02] transition-all">
                                 <td className="px-5 py-3 text-center font-bold text-[var(--text-muted)]">
@@ -73,7 +78,7 @@ export default function Leaderboard() {
                 </table>
             </div>
             <div className="p-3 text-center text-[10px] text-[var(--text-muted)] border-t border-[var(--border-subtle)]">
-                * Master 등급에 도전하세요!
+                * {tl.challenge || 'Challenge for Master rank!'}
             </div>
         </div>
     );

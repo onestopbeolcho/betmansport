@@ -1,8 +1,9 @@
-# 📖 PortOne (포트원) V2 결제 연동 가이드
+# 📖 PortOne (포트원) V2 + KG이니시스 결제 연동 가이드
 
-> **작성일**: 2026-02-22  
+> **작성일**: 2026-02-22 (KG이니시스 업데이트: 2026-02-25)  
 > **프로젝트**: Smart Proto Investor (Scorenix)  
-> **연동 상태**: ✅ 프론트엔드 + 백엔드 기본 연동 완료
+> **연동 상태**: ✅ 프론트엔드 + 백엔드 기본 연동 완료  
+> **PG사**: KG이니시스 (PortOne V2 경유)
 
 ---
 
@@ -632,11 +633,22 @@ curl -H "Authorization: PortOne YOUR_API_SECRET" \
 ### 환경변수 현재 상태
 
 ```
-✅ NEXT_PUBLIC_PORTONE_STORE_ID    → .env.local 설정 필요
-✅ NEXT_PUBLIC_PORTONE_CHANNEL_KEY → .env.local 설정 필요
-✅ PORTONE_API_SECRET              → Cloud Run 환경변수 설정 필요
+✅ NEXT_PUBLIC_PORTONE_STORE_ID    → .env.local 설정 완료
+✅ NEXT_PUBLIC_PORTONE_CHANNEL_KEY → .env.local 설정 완료
+✅ PORTONE_API_SECRET              → .env 설정 완료 (테스트키)
+✅ KG_INICIS_INIAPI_IV             → .env / .env.local 설정 완료
+✅ KG_INICIS_INILITE_KEY           → .env / .env.local 설정 완료
 ❌ PORTONE_WEBHOOK_SECRET          → 미설정 (웹훅 시그니처 검증용)
 ```
+
+### KG이니시스 연동 키 정보
+
+| 키 | 용도 | 설정 위치 |
+|---|---|---|
+| INIAPI IV | KG이니시스 API 암호화 IV | `frontend/.env.local`, `backend/.env` |
+| INILite Key | KG이니시스 INILite 결제모듈 암호화 키 | `frontend/.env.local`, `backend/.env` |
+
+> ⚠️ **운영 전환 시**: PortOne 콘솔에서 KG이니시스 채널의 MID/SignKey를 실 운영 키로 변경하고, `PORTONE_API_SECRET`을 운영 키로 교체해야 합니다.
 
 ---
 

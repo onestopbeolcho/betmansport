@@ -1,0 +1,128 @@
+"use client";
+
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import VipComboPanel from "../components/VipComboPanel";
+import DroppingOddsRadar from "../components/DroppingOddsRadar";
+import { useAuth } from "../context/AuthContext";
+
+export default function VipLoungePage() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const isVip = user?.tier === "vip";
+
+  return (
+    <div className="min-h-screen bg-black text-gray-100 flex flex-col font-inter selection:bg-amber-500/30">
+      <Navbar />
+      
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header section */}
+        <div className="mb-10 text-center relative">
+          <div className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-900/40 to-yellow-900/40 border border-amber-500/30 px-6 py-2 rounded-full mb-6 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-amber-500/10 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <span className="text-amber-500">👑</span>
+            <span className="text-amber-400 font-bold uppercase tracking-widest text-sm">Exclusive Access</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl font-black font-outfit tracking-tight mb-4">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-600">VIP</span>
+            <span className="text-white ml-4">Analysis Lounge</span>
+          </h1>
+          
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+            Advanced AI portfolio optimization and real-time market movement detection.
+          </p>
+        </div>
+
+        {/* Content Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Main Column - Recommendations & Radar */}
+          <div className="lg:col-span-8 space-y-8">
+            <VipComboPanel />
+            <DroppingOddsRadar />
+          </div>
+
+          {/* Sidebar - Alert Settings */}
+          <div className="lg:col-span-4">
+            <div className={`rounded-2xl border border-gray-800 bg-gray-900 p-6 sticky top-24 ${!isVip ? 'relative overflow-hidden' : ''}`}>
+              {!isVip && (
+                <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/60 flex flex-col items-center justify-center p-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mb-3">
+                    <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z" />
+                    </svg>
+                  </div>
+                  <h4 className="font-bold text-white">VIP Status Required</h4>
+                </div>
+              )}
+              
+              <h3 className="text-xl font-bold font-outfit text-white mb-6 flex items-center gap-2">
+                <span className="text-amber-400">🔔</span> Smart Alerts
+              </h3>
+              
+              <div className="space-y-6">
+                {/* Starting Lineups */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold text-white">Starting Lineups</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" disabled={!isVip} defaultChecked={isVip} />
+                      <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-400">Get notified 60m before kickoff when official lineups drop.</p>
+                </div>
+
+                {/* Custom Rules */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                  <h4 className="font-bold text-white mb-3 text-sm">Custom Radar Rules</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300">EV &gt; 15%</span>
+                      <span className="text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Active</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300">Odds Drop &gt; 10%</span>
+                      <span className="text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Active</span>
+                    </div>
+                    <button disabled={!isVip} className="w-full mt-2 py-2 border border-dashed border-gray-600 rounded-lg text-gray-400 text-sm hover:text-white hover:border-gray-400 transition-colors">
+                      + Add New Rule
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dedicated Support */}
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-4 border border-gray-700">
+                  <div className="flex items-start gap-3">
+                    <div className="text-amber-400 mt-1">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm mb-1">Priority 1:1 Support</h4>
+                      <p className="text-xs text-gray-400">Direct line to our quantitative analysts.</p>
+                      <button disabled={!isVip} className="mt-2 text-amber-400 text-xs font-bold hover:underline">Contact Analyst →</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+}

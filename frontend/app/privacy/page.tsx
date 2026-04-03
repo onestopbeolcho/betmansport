@@ -11,44 +11,44 @@ export default function PrivacyPage() {
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-grow">
                 <h1 className="text-3xl font-extrabold mb-8" style={{ color: 'var(--text-primary)' }}>
-                    개인정보처리방침
+                    Privacy Policy
                 </h1>
 
                 <div className="space-y-8 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
 
                     <section>
                         <p>
-                            Scorenix (이하 "회사")는 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고
-                            이와 관련한 고충을 신속하고 원활하게 처리할 수 있도록 다음과 같이 개인정보처리방침을 수립·공개합니다.
+                            Scorenix (hereinafter "Company") establishes and discloses the following Privacy Policy in accordance with the Personal Information Protection Act
+                            to protect users' personal information and handle related grievances promptly and smoothly.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>1. 수집하는 개인정보 항목</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>1. Personal Information Collected</h2>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                                 <thead>
                                     <tr style={{ background: 'var(--bg-elevated)' }}>
-                                        <th className="p-3 rounded-tl-lg font-semibold" style={{ color: 'var(--text-primary)' }}>구분</th>
-                                        <th className="p-3 font-semibold" style={{ color: 'var(--text-primary)' }}>항목</th>
-                                        <th className="p-3 rounded-tr-lg font-semibold" style={{ color: 'var(--text-primary)' }}>수집 목적</th>
+                                        <th className="p-3 rounded-tl-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Category</th>
+                                        <th className="p-3 font-semibold" style={{ color: 'var(--text-primary)' }}>Items</th>
+                                        <th className="p-3 rounded-tr-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Purpose</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td className="p-3">필수</td>
-                                        <td className="p-3">이메일, 비밀번호(암호화), 닉네임</td>
-                                        <td className="p-3">회원 식별 및 서비스 제공</td>
+                                        <td className="p-3">Required</td>
+                                        <td className="p-3">Email, password (encrypted), nickname</td>
+                                        <td className="p-3">User identification and service provision</td>
                                     </tr>
                                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td className="p-3">자동 수집</td>
-                                        <td className="p-3">IP 주소, 브라우저 정보, 접속 일시</td>
-                                        <td className="p-3">서비스 안정성 확보, 부정 이용 방지</td>
+                                        <td className="p-3">Auto-collected</td>
+                                        <td className="p-3">IP address, browser info, access time</td>
+                                        <td className="p-3">Service stability and fraud prevention</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-3">결제 시</td>
-                                        <td className="p-3">결제 수단 정보 (PG사 보관)</td>
-                                        <td className="p-3">유료 서비스 결제 처리</td>
+                                        <td className="p-3">Payment</td>
+                                        <td className="p-3">Payment method info (stored by PG provider)</td>
+                                        <td className="p-3">Processing paid service payments</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -56,72 +56,72 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>2. 개인정보의 처리 및 보유 기간</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>2. Retention and Processing Period</h2>
                         <ul className="list-disc list-inside space-y-2">
-                            <li><strong>회원 정보:</strong> 회원 탈퇴 시까지 (탈퇴 후 즉시 파기)</li>
-                            <li><strong>결제 기록:</strong> 전자상거래법에 따라 5년간 보존</li>
-                            <li><strong>접속 로그:</strong> 통신비밀보호법에 따라 3개월간 보존</li>
-                            <li><strong>서비스 이용 기록:</strong> 서비스 개선 목적으로 1년간 보존 (비식별화 처리)</li>
+                            <li><strong>Account info:</strong> Until account deletion (destroyed immediately upon withdrawal)</li>
+                            <li><strong>Payment records:</strong> Retained for 5 years per E-Commerce Act</li>
+                            <li><strong>Access logs:</strong> Retained for 3 months per Communications Privacy Act</li>
+                            <li><strong>Service usage records:</strong> Retained for 1 year for service improvement (de-identified)</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>3. 개인정보의 제3자 제공</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>3. Third-Party Disclosure</h2>
                         <p>
-                            회사는 원칙적으로 이용자의 개인정보를 제3자에게 제공하지 않습니다.
-                            다만, 다음의 경우에는 예외로 합니다:
+                            The Company does not, as a rule, provide users' personal information to third parties.
+                            However, exceptions are made in the following cases:
                         </p>
                         <ul className="list-disc list-inside space-y-2 mt-2">
-                            <li>이용자가 사전에 동의한 경우</li>
-                            <li>법령에 의하여 요구되는 경우</li>
-                            <li>결제 처리를 위해 PG사(토스페이먼츠)에 필요 최소 정보 전달</li>
+                            <li>When the user has given prior consent</li>
+                            <li>When required by law</li>
+                            <li>When minimum necessary information is transmitted to PG provider (TossPayments) for payment processing</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>4. 개인정보의 안전성 확보 조치</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>4. Security Measures</h2>
                         <ul className="list-disc list-inside space-y-2">
-                            <li>비밀번호 암호화 (bcrypt 해싱)</li>
-                            <li>전송 데이터 암호화 (HTTPS/TLS)</li>
-                            <li>접근 권한 관리 및 제한</li>
-                            <li>개인정보 처리 시스템 접근 기록 보관</li>
+                            <li>Password encryption (bcrypt hashing)</li>
+                            <li>Data transmission encryption (HTTPS/TLS)</li>
+                            <li>Access control and restrictions</li>
+                            <li>Access logs for personal information processing systems</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>5. 이용자의 권리·의무</h2>
-                        <p>이용자는 언제든지 다음과 같은 권리를 행사할 수 있습니다:</p>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>5. User Rights</h2>
+                        <p>Users may exercise the following rights at any time:</p>
                         <ul className="list-disc list-inside space-y-2 mt-2">
-                            <li>개인정보 열람 요구</li>
-                            <li>오류 등에 대한 정정 요구</li>
-                            <li>삭제 요구</li>
-                            <li>처리 정지 요구</li>
+                            <li>Request to access personal information</li>
+                            <li>Request correction of errors</li>
+                            <li>Request deletion</li>
+                            <li>Request suspension of processing</li>
                         </ul>
                         <p className="mt-2">
-                            위 요청은 서비스 내 마이페이지 또는 이메일(support@smartproto.kr)을 통해 가능합니다.
+                            These requests can be made through My Page or via email (support@smartproto.kr).
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>6. 쿠키의 사용</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>6. Use of Cookies</h2>
                         <p>
-                            회사는 이용자의 접속 빈도나 방문 시간 등을 분석하기 위해 쿠키(Cookie)를 사용합니다.
-                            이용자는 브라우저 설정을 통해 쿠키 수집을 거부할 수 있으며, 이 경우 일부 서비스 이용이 제한될 수 있습니다.
+                            The Company uses cookies to analyze visit frequency and access patterns.
+                            Users may refuse cookie collection through browser settings, though some services may be limited in this case.
                         </p>
                     </section>
 
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>7. 개인정보 보호책임자</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>7. Privacy Officer</h2>
                         <div className="p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-                            <p><strong>개인정보 보호책임자</strong></p>
-                            <p className="mt-1">이메일: privacy@smartproto.kr</p>
-                            <p>개인정보 관련 문의, 열람·정정·삭제 요청 등은 위 이메일로 연락주시기 바랍니다.</p>
+                            <p><strong>Privacy Officer</strong></p>
+                            <p className="mt-1">Email: privacy@smartproto.kr</p>
+                            <p>For inquiries, access, correction, or deletion requests regarding personal information, please contact the email above.</p>
                         </div>
                     </section>
 
                     {/* GDPR 조항 (글로벌 대비) */}
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>8. 해외 이용자 (For International Users)</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>8. International Users</h2>
                         <div className="p-4 rounded-xl" style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.2)' }}>
                             <p className="font-semibold mb-2" style={{ color: 'var(--accent-primary)' }}>🌍 GDPR / International Privacy</p>
                             <p>
@@ -142,9 +142,9 @@ export default function PrivacyPage() {
                     </section>
 
                     <section className="pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                        <p><strong>부칙</strong></p>
-                        <p className="mt-2">본 개인정보처리방침은 2026년 2월 18일부터 시행합니다.</p>
-                        <p className="mt-1" style={{ color: 'var(--text-muted)' }}>최종 수정일: 2026년 2월 18일</p>
+                        <p><strong>Supplementary Provisions</strong></p>
+                        <p className="mt-2">This Privacy Policy shall be effective from February 18, 2026.</p>
+                        <p className="mt-1" style={{ color: 'var(--text-muted)' }}>Last updated: February 18, 2026</p>
                     </section>
                 </div>
             </main>

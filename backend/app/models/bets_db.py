@@ -12,6 +12,18 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
+def _safe_doc_id(raw: str) -> str:
+    """Sanitize a string for use as a Firestore document ID.
+    Firestore doc IDs must not contain '/', be empty, or be '.' / '..'."""
+    if not raw or not raw.strip():
+        return "_empty_"
+    safe = raw.replace("/", "-").replace("\\", "-")
+    if safe in (".", ".."):
+        safe = f"_{safe}_"
+    return safe
+
+
 # Firestore Collection Names
 MARKET_CACHE_COLLECTION = "market_cache"
 BETTING_SLIPS_COLLECTION = "betting_slips"
@@ -61,6 +73,40 @@ async def set_market_cache(key: str, data: str):
             logger.warning(f"Market cache write failed: {e}")
 
 
+async def save_stats_cache(cache_key: str, data_dict: dict):
+    """순위/부상/H2H 등 통계 데이터를 Firestore에 캐싱."""
+    db = _get_firestore()
+    if not db:
+        return
+    try:
+        serialized = json.dumps(data_dict, ensure_ascii=False, default=str)
+        doc_ref = db.collection(MARKET_CACHE_COLLECTION).document(cache_key)
+        doc_ref.set({
+            "data": serialized,
+            "updated_at": datetime.datetime.utcnow()
+        })
+        logger.info(f"✅ Stats cache saved: {cache_key}")
+    except Exception as e:
+        logger.warning(f"Stats cache save failed ({cache_key}): {e}")
+
+
+async def load_stats_cache(cache_key: str) -> dict:
+    """Firestore에서 통계 캐시 데이터 복원."""
+    db = _get_firestore()
+    if not db:
+        return {}
+    try:
+        doc = db.collection(MARKET_CACHE_COLLECTION).document(cache_key).get()
+        if doc.exists:
+            raw = doc.to_dict().get("data", "{}")
+            result = json.loads(raw)
+            logger.info(f"✅ Stats cache loaded: {cache_key}")
+            return result
+    except Exception as e:
+        logger.warning(f"Stats cache load failed ({cache_key}): {e}")
+    return {}
+
+
 # ─────────────────────────────────────────────
 # ODDS HISTORY (Local JSON fallback)
 # ─────────────────────────────────────────────
@@ -85,7 +131,7 @@ def _save_local_history(data: dict):
 
 async def save_odds_snapshot(team_home: str, team_away: str, home_odds: float, draw_odds: float, away_odds: float, league: str = ""):
     """Save a single odds snapshot for a match."""
-    match_key = f"{team_home}_{team_away}"
+    match_key = _safe_doc_id(f"{team_home}_{team_away}")
     now = datetime.datetime.utcnow()
 
     db = _get_firestore()
@@ -121,7 +167,7 @@ async def save_odds_snapshots_batch(items: list):
             batch = db.batch()
             count = 0
             for item in items:
-                match_key = f"{item['team_home']}_{item['team_away']}"
+                match_key = _safe_doc_id(f"{item['team_home']}_{item['team_away']}")
                 snap_ref = db.collection(ODDS_HISTORY_COLLECTION).document(match_key).collection("snapshots").document()
                 batch.set(snap_ref, {
                     "home_odds": item["home_odds"], "draw_odds": item["draw_odds"], "away_odds": item["away_odds"],
@@ -156,7 +202,7 @@ async def save_odds_snapshots_batch(items: list):
 
 async def get_odds_history(team_home: str, team_away: str, limit: int = 20) -> list:
     """Get the last N odds snapshots for a match."""
-    match_key = f"{team_home}_{team_away}"
+    match_key = _safe_doc_id(f"{team_home}_{team_away}")
 
     db = _get_firestore()
     if db:

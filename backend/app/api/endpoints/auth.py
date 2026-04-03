@@ -19,6 +19,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     nickname: str = ""
+    full_name: str = ""
+    phone: str = ""
 
 
 class Token(BaseModel):
@@ -31,6 +33,11 @@ class UserInfo(BaseModel):
     email: str
     nickname: str
     role: str
+    tier: str = "free"
+    subscription_plan: str = ""
+    subscription_expires_at: str = ""
+    full_name: str = ""
+    phone: str = ""
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -64,7 +71,9 @@ async def register(user_in: UserCreate):
         "email": user_in.email,
         "hashed_password": security.get_password_hash(user_in.password),
         "nickname": user_in.nickname or user_in.email.split("@")[0],
-        "role": "free"
+        "role": "free",
+        "full_name": user_in.full_name,
+        "phone": user_in.phone,
     }
 
     new_user = await create_user(user_data)
@@ -95,6 +104,11 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         email=current_user["email"],
         nickname=current_user.get("nickname", current_user["email"].split("@")[0]),
         role=current_user.get("role", "free"),
+        tier=current_user.get("tier", "free"),
+        subscription_plan=current_user.get("subscription_plan", "") or "",
+        subscription_expires_at=current_user.get("subscription_expires_at", "") or "",
+        full_name=current_user.get("full_name", ""),
+        phone=current_user.get("phone", ""),
     )
 
 
@@ -105,7 +119,7 @@ class GoogleAuthRequest(BaseModel):
 @router.post("/google", response_model=Token)
 async def google_login(req: GoogleAuthRequest):
     """
-    Verify Firebase ID Token from Google Sign-In.
+    Verify Firebase ID Token from Google/Phone Sign-In.
     If user doesn't exist → create new account.
     Returns JWT access token (same as email/password flow).
     """
@@ -115,25 +129,37 @@ async def google_login(req: GoogleAuthRequest):
         decoded = firebase_auth.verify_id_token(req.id_token)
     except Exception as e:
         logger.error(f"Firebase token verification failed: {e}")
-        raise HTTPException(status_code=401, detail="유효하지 않은 Google 인증입니다.")
+        raise HTTPException(status_code=401, detail="유효하지 않은 인증입니다.")
 
     email = decoded.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="이메일 정보가 없습니다.")
+    phone = decoded.get("phone_number")
+    firebase_uid = decoded.get("uid", "")
+    sign_in_provider = decoded.get("firebase", {}).get("sign_in_provider", "")
+
+    # For phone auth users without email, create a placeholder email
+    if not email and phone:
+        email = f"phone_{phone.replace('+', '')}@scorenix.phone"
+    elif not email:
+        raise HTTPException(status_code=400, detail="이메일 또는 전화번호 정보가 없습니다.")
 
     # Find or create user
     user = await get_user_by_email(email)
     if not user:
+        nickname = decoded.get("name", "")
+        if not nickname:
+            nickname = phone if phone else email.split("@")[0]
         user_data = {
             "email": email,
-            "hashed_password": "",  # Google-only users have no password
-            "nickname": decoded.get("name", email.split("@")[0]),
+            "hashed_password": "",  # Social/phone users have no password
+            "nickname": nickname,
             "role": "free",
-            "auth_provider": "google",
-            "firebase_uid": decoded.get("uid", ""),
+            "auth_provider": "phone" if sign_in_provider == "phone" else "google",
+            "firebase_uid": firebase_uid,
         }
+        if phone:
+            user_data["phone"] = phone
         user = await create_user(user_data)
-        logger.info(f"New Google user created: {email}")
+        logger.info(f"New {user_data['auth_provider']} user created: {email}")
 
     return {
         "access_token": security.create_access_token(user["id"]),

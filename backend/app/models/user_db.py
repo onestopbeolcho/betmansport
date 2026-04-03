@@ -163,6 +163,42 @@ async def get_user_payments(user_id: str):
     return []
 
 
+async def get_payment_by_portone_id(portone_payment_id: str):
+    """포트원 paymentId로 결제 기록 조회 (중복 방지용)"""
+    if _is_firestore_available():
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            docs = db.collection(PAYMENTS_COLLECTION).where(
+                "portone_payment_id", "==", portone_payment_id
+            ).limit(1).stream()
+            for doc in docs:
+                return {**doc.to_dict(), "id": doc.id}
+        except Exception:
+            pass
+    return None
+
+
+async def get_user_by_payment_id(portone_payment_id: str):
+    """포트원 paymentId로 해당 결제를 한 유저 조회 (취소 처리용)"""
+    if _is_firestore_available():
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            # payments 컬렉션에서 해당 결제 찾기
+            docs = db.collection(PAYMENTS_COLLECTION).where(
+                "portone_payment_id", "==", portone_payment_id
+            ).limit(1).stream()
+            for doc in docs:
+                payment = doc.to_dict()
+                user_id = payment.get("user_id")
+                if user_id:
+                    return await get_user_by_id(user_id)
+        except Exception:
+            pass
+    return None
+
+
 # --- Portfolio Helpers ---
 async def add_portfolio_item(item_data: dict):
     if _is_firestore_available():

@@ -3,19 +3,20 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface SystemConfig {
-    pinnacle_api_key: string;
+    api_football_key: string;
     betman_user_agent: string;
     scrape_interval_minutes: number;
 }
 
 export default function AdminPage() {
     const [config, setConfig] = useState<SystemConfig>({
-        pinnacle_api_key: '',
+        api_football_key: '',
         betman_user_agent: '',
         scrape_interval_minutes: 10,
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     // Notification state
     const [notifType, setNotifType] = useState('marketing');
@@ -24,7 +25,7 @@ export default function AdminPage() {
     const [notifResult, setNotifResult] = useState('');
 
     useEffect(() => {
-        fetch('/api/admin/config')
+        fetch(`${API}/api/admin/config`)
             .then(res => {
                 if (!res.ok) throw new Error('Failed to load config');
                 return res.json();
@@ -46,7 +47,7 @@ export default function AdminPage() {
         setLoading(true);
         setMessage('');
         try {
-            const res = await fetch('/api/admin/config', {
+            const res = await fetch(`${API}/api/admin/config`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
@@ -54,9 +55,9 @@ export default function AdminPage() {
 
             if (!res.ok) throw new Error('Failed to save config');
 
-            setMessage('설정이 성공적으로 저장되었습니다!');
+            setMessage('Settings saved successfully!');
         } catch (err) {
-            setMessage('설정 저장에 실패했습니다.');
+            setMessage('Failed to save settings.');
             console.error(err);
         } finally {
             setLoading(false);
@@ -83,13 +84,13 @@ export default function AdminPage() {
             });
             const data = await res.json();
             if (data.success) {
-                setNotifResult(`✅ 발송 완료! (전송: ${data.sent || 0}, 스킵: ${data.skipped || 0})`);
+                setNotifResult(`✅ Sent! (Delivered: ${data.sent || 0}, Skipped: ${data.skipped || 0})`);
                 setNotifBody('');
             } else {
-                setNotifResult('❌ 발송 실패');
+                setNotifResult('❌ Failed to send');
             }
         } catch (err) {
-            setNotifResult('❌ 발송 중 오류 발생');
+            setNotifResult('❌ Error occurred while sending');
             console.error(err);
         }
         setNotifSending(false);
@@ -102,11 +103,11 @@ export default function AdminPage() {
     };
 
     const notifTypes = [
-        { value: 'value_bet', label: '🎯 밸류벳 발견' },
-        { value: 'daily_pick', label: '⭐ 오늘의 추천' },
-        { value: 'odds_change', label: '📈 배당 변동' },
-        { value: 'result', label: '🏆 적중 결과' },
-        { value: 'marketing', label: '📢 소식/이벤트' },
+        { value: 'value_bet', label: '🎯 Value Opportunity Found' },
+        { value: 'daily_pick', label: '⭐ Daily Pick' },
+        { value: 'odds_change', label: '📈 Odds Change' },
+        { value: 'result', label: '🏆 Match Result' },
+        { value: 'marketing', label: '📢 News/Event' },
     ];
 
     return (
@@ -114,17 +115,17 @@ export default function AdminPage() {
             <div className="max-w-2xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h1 className="text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
-                        <span className="gradient-text">⚙️ 관리자 설정</span>
+                        <span className="gradient-text">⚙️ Admin Settings</span>
                     </h1>
                     <Link href="/" className="text-sm font-medium" style={{ color: 'var(--accent-primary)' }}>
-                        ← 홈으로
+                        ← Home
                     </Link>
                 </div>
 
                 <div className="glass-card p-6">
                     {message && (
                         <div className="p-4 mb-4 rounded-xl text-sm font-medium"
-                            style={message.includes('성공')
+                            style={message.includes('success')
                                 ? { background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }
                                 : { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
                             }>
@@ -135,22 +136,22 @@ export default function AdminPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                Odds API 키
+                                API-Football Key
                             </label>
                             <input
                                 type="password"
-                                name="pinnacle_api_key"
-                                value={config.pinnacle_api_key}
+                                name="api_football_key"
+                                value={config.api_football_key}
                                 onChange={handleChange}
                                 className="w-full px-4 py-3 rounded-xl text-sm transition"
                                 style={inputStyle}
-                                placeholder="API Key를 입력하세요"
+                                placeholder="Enter API Key"
                             />
                         </div>
 
                         <div>
                             <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                배트맨 User-Agent (크롤링용)
+                                Betman User-Agent (for scraping)
                             </label>
                             <input
                                 type="text"
@@ -164,7 +165,7 @@ export default function AdminPage() {
 
                         <div>
                             <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                데이터 수집 주기 (분)
+                                Data Scrape Interval (min)
                             </label>
                             <input
                                 type="number"
@@ -183,7 +184,7 @@ export default function AdminPage() {
                             disabled={loading}
                             className="btn-primary w-full py-3 text-sm font-bold disabled:opacity-50"
                         >
-                            {loading ? '저장 중...' : '설정 저장'}
+                            {loading ? 'Saving...' : 'Save Settings'}
                         </button>
                     </form>
                 </div>
@@ -191,13 +192,13 @@ export default function AdminPage() {
                 {/* 🔔 Push 알림 발송 */}
                 <div className="glass-card p-6 mt-6">
                     <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-                        🔔 Push 알림 발송
+                        🔔 Push Notifications
                     </h2>
 
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                알림 유형
+                                Notification Type
                             </label>
                             <select
                                 value={notifType}
@@ -213,14 +214,14 @@ export default function AdminPage() {
 
                         <div>
                             <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                알림 내용
+                                Notification Content
                             </label>
                             <textarea
                                 value={notifBody}
                                 onChange={(e) => setNotifBody(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl text-sm resize-none"
                                 style={{ ...inputStyle, minHeight: '80px' }}
-                                placeholder="알림 메시지를 입력하세요"
+                                placeholder="Enter notification message"
                             />
                         </div>
 
@@ -240,7 +241,7 @@ export default function AdminPage() {
                             className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-50"
                             style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}
                         >
-                            {notifSending ? '발송 중...' : '📤 전체 사용자에게 발송'}
+                            {notifSending ? 'Sending...' : '📤 Send to All Users'}
                         </button>
                     </div>
                 </div>

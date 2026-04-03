@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { usePathname } from 'next/navigation';
+import { useDictionarySafe } from '../context/DictionaryContext';
 
 interface Message {
     id: number;
@@ -13,16 +14,31 @@ interface Message {
 
 export default function AiAnalystWidget() {
     const pathname = usePathname();
+    const dict = useDictionarySafe();
+    const t = dict?.mypage || {} as any;
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { id: 1, role: 'assistant', content: "안녕하세요! 스포츠 분석 AI입니다. 경기나 팀 이름을 말씀해 주세요." }
+        { id: 1, role: 'assistant', content: t.aiWidgetGreeting || "Hello! I'm the Sports Analysis AI. Please tell me a match or team name." }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     // Hide on mypage — inline AI prompt is embedded there instead
     const isMyPage = pathname.includes('/mypage');
+
+    // Update greeting when dictionary loads
+    useEffect(() => {
+        if (t.aiWidgetGreeting) {
+            setMessages(prev => {
+                if (prev.length === 1 && prev[0].id === 1) {
+                    return [{ ...prev[0], content: t.aiWidgetGreeting }];
+                }
+                return prev;
+            });
+        }
+    }, [t.aiWidgetGreeting]);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -38,7 +54,7 @@ export default function AiAnalystWidget() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/analysis/ask', {
+            const res = await fetch(`${API}/api/analysis/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: userMsg.content }),
@@ -47,7 +63,7 @@ export default function AiAnalystWidget() {
             const data = await res.json();
             setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.response }]);
         } catch {
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: "오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }]);
+            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: t.aiWidgetError || "An error occurred. Please try again later." }]);
         } finally { setLoading(false); }
     };
 
@@ -63,7 +79,7 @@ export default function AiAnalystWidget() {
                     }}
                 >
                     <span className="text-xl">🤖</span>
-                    <span className="font-bold text-sm text-white pr-1">AI 분석</span>
+                    <span className="font-bold text-sm text-white pr-1">{t.aiWidgetBtn || 'AI Analysis'}</span>
                 </button>
             )}
 
@@ -76,8 +92,8 @@ export default function AiAnalystWidget() {
                                 <span className="text-lg">🤖</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm text-white">AI Match Analyst</h3>
-                                <p className="text-[10px] text-[var(--text-muted)]">실시간 배당 기반 분석</p>
+                                <h3 className="font-bold text-sm text-white">{t.aiWidgetTitle || 'AI 경기 분석가'}</h3>
+                                <p className="text-[10px] text-[var(--text-muted)]">{t.aiWidgetSubtitle || '실시간 데이터 기반 분석'}</p>
                             </div>
                         </div>
                         <button onClick={() => setIsOpen(false)} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-white hover:bg-white/10 transition-all">✕</button>
@@ -117,7 +133,7 @@ export default function AiAnalystWidget() {
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="분석할 팀이나 경기..."
+                                placeholder={t.aiWidgetPlaceholder || "Team or match to analyze..."}
                                 className="flex-1 bg-white/[0.04] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[var(--accent-primary)] text-white placeholder:text-[var(--text-muted)] transition-colors"
                                 disabled={loading}
                             />
@@ -133,7 +149,7 @@ export default function AiAnalystWidget() {
                             </button>
                         </div>
                         <div className="text-center mt-1.5">
-                            <span className="text-[9px] text-[var(--text-muted)] opacity-50">AI 분석은 참고용입니다</span>
+                            <span className="text-[9px] text-[var(--text-muted)] opacity-50">{t.aiWidgetDisclaimer || 'AI analysis is for reference only'}</span>
                         </div>
                     </form>
                 </div>

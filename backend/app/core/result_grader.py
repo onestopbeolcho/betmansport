@@ -1,7 +1,7 @@
 """
 Result Grader — 경기 결과 자동 정산 엔진
 
-The Odds API scores 엔드포인트로 결과를 가져오고,
+API-Football fixtures 엔드포인트로 결과를 가져오고,
 배트맨(Betman) 정산 규정에 따라 베팅을 판정합니다.
 
 배트맨 규정:
@@ -21,30 +21,23 @@ logger = logging.getLogger(__name__)
 class ResultGrader:
     """
     Grades betting portfolio items against actual game results.
-    Fetches scores from The Odds API v4 and applies Betman-specific rules.
+    Fetches scores from API-Football fixtures and applies Betman-specific rules.
     """
 
     def __init__(self):
-        self.api_key = os.getenv("PINNACLE_API_KEY", "")
-        self.base_url = "https://api.the-odds-api.com/v4"
-        self.target_sports = [
-            "soccer_epl", "soccer_spain_la_liga", "soccer_germany_bundesliga",
-            "soccer_italy_serie_a", "soccer_france_ligue_one", "soccer_uefa_champs_league",
-            "basketball_nba", "basketball_euroleague",
-            "baseball_mlb",
-            "icehockey_nhl",
-        ]
+        # API key: API_FOOTBALL_KEY 우선, PINNACLE_API_KEY 폴백 (하위호환)
+        self.api_key = os.getenv("API_FOOTBALL_KEY") or os.getenv("PINNACLE_API_KEY", "")
         self._scores_cache: Dict[str, dict] = {}
         self._cache_time: Optional[datetime] = None
         self._cache_ttl = 300  # 5 minutes
 
     # ──────────────────────────────────────────────
-    # 1. Fetch scores from The Odds API
+    # 1. Fetch scores from API-Football
     # ──────────────────────────────────────────────
     async def fetch_all_scores(self, days_from: int = 3) -> List[dict]:
         """
-        Fetch completed game scores from The Odds API.
-        Returns raw event list with scores.
+        Fetch completed game scores from API-Football.
+        Returns list of result dicts with scores.
         """
         if not self.api_key:
             logger.warning("No API key configured, cannot fetch scores")
@@ -56,38 +49,35 @@ class ResultGrader:
             logger.info(f"Serving {len(self._scores_cache)} scores from cache")
             return list(self._scores_cache.values())
 
+        # API-Football에서 경기 결과 조회
+        try:
+            from app.services.football_stats_service import FootballStatsService
+            fs = FootballStatsService()
+            finished = await fs.fetch_finished_fixtures(days_back=days_from)
+        except Exception as e:
+            logger.error(f"Failed to fetch finished fixtures: {e}")
+            return list(self._scores_cache.values())
+
+        # 결과를 캐시에 저장 (The Odds API 호환 형식으로 변환)
         all_scores = []
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            for sport in self.target_sports:
-                url = f"{self.base_url}/sports/{sport}/scores"
-                params = {
-                    "apiKey": self.api_key,
-                    "daysFrom": days_from,
-                }
-                try:
-                    resp = await client.get(url, params=params)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        all_scores.extend(data)
-                        logger.info(f"  {sport}: {len(data)} score events")
-                    elif resp.status_code == 401:
-                        logger.error("❌ API key invalid")
-                        break
-                    elif resp.status_code == 429:
-                        logger.warning("⚠️ Rate limited, stopping")
-                        break
-                except httpx.TimeoutException:
-                    logger.warning(f"Timeout fetching scores for {sport}")
-                except Exception as e:
-                    logger.error(f"Error fetching scores for {sport}: {e}")
-
-        # Update cache
         self._scores_cache = {}
-        for event in all_scores:
-            key = self._make_match_key(event.get("home_team", ""), event.get("away_team", ""))
+        for fix in finished:
+            key = self._make_match_key(fix.get("home_team", ""), fix.get("away_team", ""))
+            # API-Football 결과를 기존 파서와 호환되는 형식으로 변환
+            event = {
+                "home_team": fix.get("home_team", ""),
+                "away_team": fix.get("away_team", ""),
+                "home_score": fix.get("fulltime_home", fix.get("home_score", 0)),
+                "away_score": fix.get("fulltime_away", fix.get("away_score", 0)),
+                "completed": True,
+                "status": fix.get("status", "Finished"),
+                "sport_key": fix.get("sport_key", "soccer"),
+                "commence_time": fix.get("commence_time", ""),
+            }
             self._scores_cache[key] = event
-        self._cache_time = datetime.utcnow()
+            all_scores.append(event)
 
+        self._cache_time = datetime.utcnow()
         logger.info(f"📊 Total scores fetched: {len(all_scores)}")
         return all_scores
 
@@ -125,20 +115,35 @@ class ResultGrader:
 
     def _parse_scores(self, event: dict) -> Optional[Dict]:
         """
-        Parse The Odds API score response into usable format.
-        
-        The Odds API score format:
-        {
-            "scores": [
-                {"name": "Team A", "score": "2"},
-                {"name": "Team B", "score": "1"}
-            ],
-            "completed": true/false
-        }
+        Parse score event into usable format.
+        Supports API-Football format (primary) and legacy The Odds API format.
         """
+        # API-Football 형식 (직접 home_score/away_score 필드)
+        if "home_score" in event:
+            home_team = event.get("home_team", "")
+            away_team = event.get("away_team", "")
+            home_score = event.get("home_score", 0)
+            away_score = event.get("away_score", 0)
+            completed = event.get("completed", True)
+            sport_key = event.get("sport_key", "soccer")
+            status = "Finished" if completed else "InProgress"
+            sport = self._detect_sport(sport_key)
+
+            return {
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_score,
+                "away_score": away_score,
+                "status": status,
+                "sport": sport,
+                "sport_key": sport_key,
+                "commence_time": event.get("commence_time"),
+            }
+
+        # 레거시 The Odds API 형식 (scores 배열)
         scores = event.get("scores")
         completed = event.get("completed", False)
-        
+
         if not scores:
             return None
 
@@ -146,7 +151,6 @@ class ResultGrader:
         away_team = event.get("away_team", "")
         sport_key = event.get("sport_key", "")
 
-        # Map team names to scores
         home_score = 0
         away_score = 0
         for s in scores:
@@ -163,8 +167,6 @@ class ResultGrader:
                 away_score = score_int
 
         status = "Finished" if completed else "InProgress"
-
-        # Detect sport type
         sport = self._detect_sport(sport_key)
 
         return {
@@ -228,15 +230,14 @@ class ResultGrader:
     def _determine_result(self, home_score: int, away_score: int, sport: str) -> str:
         """
         Apply Betman-specific rules to determine match result.
-        
+
         배트맨 규정:
         - 축구: 90분 결과만 (연장전 제외) → 무승부 가능
         - 야구: 연장 포함 최종 결과 (무승부 없음, 특수 규칙 제외)
         - 농구: 연장 포함 최종 결과 (무승부 없음)
         - 아이스하키: 연장 포함 최종 결과 (무승부 없음)
-        
-        Note: The Odds API already returns regulation-time scores for soccer
-        and final scores (including OT) for other sports by default.
+
+        Note: API-Football returns fulltime scores (90min) for soccer.
         """
         if "soccer" in sport:
             # Soccer: 90-minute result (draw possible)

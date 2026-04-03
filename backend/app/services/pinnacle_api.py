@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 class PinnacleService(BaseOddsProvider):
     def __init__(self):
         super().__init__("Pinnacle")
-        # Auto-load API key from environment
-        self.api_key: Optional[str] = os.getenv("PINNACLE_API_KEY")
-        self.base_url = "https://api.the-odds-api.com/v4"
+        # API key: API_FOOTBALL_KEY 우선, PINNACLE_API_KEY 폴백 (하위호환)
+        self.api_key: Optional[str] = os.getenv("API_FOOTBALL_KEY") or os.getenv("PINNACLE_API_KEY")
         self._cache = []
         self._last_fetch_time = 0.0
         self._cache_duration = 300  # 5 minutes
@@ -26,28 +25,53 @@ class PinnacleService(BaseOddsProvider):
         # Rate limiting
         self._requests_remaining: Optional[int] = None
         self._requests_used: int = 0
-        # Multi-sport leagues
-        self.target_sports = [
-            # Soccer
-            "soccer_epl",
-            "soccer_spain_la_liga",
-            "soccer_germany_bundesliga",
-            "soccer_italy_serie_a",
-            "soccer_france_ligue_one",
-            "soccer_uefa_champs_league",
-            # Basketball
-            "basketball_nba",
-            "basketball_euroleague",
-            # Baseball
-            "baseball_mlb",
-            # Ice Hockey
-            "icehockey_nhl",
-        ]
+        # 지원 리그 (API-Football league IDs) — football_stats_service.LEAGUE_MAP과 동기화
+        self.target_leagues = {
+            # ─── 유럽 빅 5 ───
+            "soccer_epl": 39,
+            "soccer_spain_la_liga": 140,
+            "soccer_germany_bundesliga": 78,
+            "soccer_italy_serie_a": 135,
+            "soccer_france_ligue_one": 61,
+            # ─── 유럽 기타 1부 ───
+            "soccer_netherlands_eredivisie": 88,
+            "soccer_portugal_liga": 94,
+            "soccer_belgium_pro_league": 144,
+            "soccer_turkey_super_lig": 203,
+            "soccer_scotland_premiership": 179,
+            "soccer_switzerland_super_league": 207,
+            "soccer_austria_bundesliga": 218,
+            "soccer_denmark_superliga": 119,
+            "soccer_norway_eliteserien": 103,
+            "soccer_sweden_allsvenskan": 113,
+            "soccer_greece_super_league": 197,
+            "soccer_czech_first_league": 345,
+            "soccer_poland_ekstraklasa": 106,
+            "soccer_croatia_hnl": 210,
+            "soccer_serbia_superliga": 286,
+            # ─── 대회 ───
+            "soccer_uefa_champs_league": 2,
+            "soccer_uefa_europa_league": 3,
+            # ─── 아시아 ───
+            "soccer_korea_kleague": 292,
+            "soccer_japan_jleague": 98,
+            "soccer_china_super_league": 169,
+            "soccer_australia_aleague": 188,
+            "soccer_saudi_pro_league": 307,
+            "soccer_india_super_league": 323,
+            # ─── 아메리카 ───
+            "soccer_usa_mls": 253,
+            "soccer_brazil_serie_a": 71,
+            "soccer_mexico_liga_mx": 262,
+            "soccer_argentina_liga": 128,
+            # ─── 아프리카 ───
+            "soccer_egypt_premier_league": 233,
+        }
 
         if self.api_key:
-            logger.info(f"✅ Odds API Key loaded (len={len(self.api_key)})")
+            logger.info(f"✅ API-Football Key loaded for odds (len={len(self.api_key)})")
         else:
-            logger.warning("⚠️ No PINNACLE_API_KEY found — will use mock data")
+            logger.warning("⚠️ No API_FOOTBALL_KEY/PINNACLE_API_KEY found — will use mock data")
 
     def set_api_key(self, api_key: str):
         self.api_key = api_key
@@ -77,7 +101,7 @@ class PinnacleService(BaseOddsProvider):
                 logger.info("Serving from Firestore cache")
                 try:
                     data = json.loads(cached_data["data"])
-                    parsed = self._parse_the_odds_api_response(data)
+                    parsed = self._parse_firestore_cache_odds(data)
                     # Populate in-memory cache for next request
                     self._cache = parsed
                     self._last_fetch_time = time.time()
@@ -93,27 +117,31 @@ class PinnacleService(BaseOddsProvider):
 
     async def refresh_odds(self) -> List[OddsItem]:
         """
-        스케줄러 전용 — The Odds API에서 최신 배당을 가져와 Firestore에 저장.
+        스케줄러 전용 — API-Football에서 최신 배당을 가져와 Firestore에 저장.
         이 메서드만 외부 API를 호출합니다.
-        토큰 소모: ~10 (리그 10개)
         """
         if not self.api_key or self.api_key.strip() == "":
             logger.warning("No API Key configured. Cannot refresh odds.")
             return []
 
         cache_key = "odds_snapshot"
-        logger.info("🔄 [Scheduler] Refreshing odds from The Odds API...")
+        logger.info("🔄 [Scheduler] Refreshing odds from API-Football...")
 
         try:
-            raw_data = await self._fetch_raw_odds_data()
-            if raw_data:
-                parsed = self._parse_the_odds_api_response(raw_data)
+            # API-Football에서 배당 수집
+            from app.services.football_stats_service import FootballStatsService
+            fs = FootballStatsService()
+            raw_odds = await fs.fetch_all_odds()
+
+            if raw_odds:
+                # API-Football 데이터를 OddsItem으로 파싱
+                parsed = self._parse_api_football_odds(raw_odds)
                 # Update in-memory cache
                 self._cache = parsed
                 self._last_fetch_time = time.time()
                 # Save to Firestore for persistence across cold starts
                 try:
-                    await set_market_cache(cache_key, json.dumps(raw_data))
+                    await set_market_cache(cache_key, json.dumps(raw_odds))
                     logger.info("✅ Saved to Firestore cache")
                 except Exception as e:
                     logger.warning(f"Firestore cache save failed: {e}")
@@ -135,127 +163,118 @@ class PinnacleService(BaseOddsProvider):
                     logger.info(f"📊 Saved {len(snapshot_items)} odds history snapshots")
                 except Exception as e:
                     logger.warning(f"History snapshot save failed (non-critical): {e}")
-                logger.info(f"✅ [Scheduler] Refreshed {len(parsed)} odds from API")
+                logger.info(f"✅ [Scheduler] Refreshed {len(parsed)} odds from API-Football")
                 return parsed
         except Exception as e:
-            logger.error(f"❌ [Scheduler] API Refresh Error: {e}")
+            logger.error(f"❌ [Scheduler] API-Football Refresh Error: {e}")
             traceback.print_exc()
 
         return []
 
-
-    async def _fetch_raw_odds_data(self) -> List[Dict]:
-        all_odds = []
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            for sport in self.target_sports:
-                # Rate limit protection
-                if self._requests_remaining is not None and self._requests_remaining <= 5:
-                    logger.warning(f"Rate limit near ({self._requests_remaining} remaining). Stopping.")
-                    break
-
-                url = f"{self.base_url}/sports/{sport}/odds"
-                params = {
-                    "apiKey": self.api_key,
-                    "regions": "eu",
-                    "markets": "h2h",
-                    "oddsFormat": "decimal",
-                    "bookmakers": "pinnacle,bet365,williamhill,unibet"
-                }
-                try:
-                    resp = await client.get(url, params=params)
-                    self._requests_used += 1
-
-                    # Track rate limits from response headers
-                    remaining = resp.headers.get("x-requests-remaining")
-                    if remaining:
-                        self._requests_remaining = int(remaining)
-                        logger.info(f"API quota: {remaining} requests remaining")
-
-                    if resp.status_code == 401:
-                        logger.error("❌ API Key is invalid (401 Unauthorized)")
-                        break
-                    elif resp.status_code == 429:
-                        logger.error("❌ Rate limit exceeded (429)")
-                        break
-                    elif resp.status_code != 200:
-                        logger.warning(f"Failed to fetch {sport}: HTTP {resp.status_code}")
-                        continue
-
-                    data = resp.json()
-                    logger.info(f"  {sport}: {len(data)} events")
-                    all_odds.extend(data)
-                except httpx.TimeoutException:
-                    logger.warning(f"Timeout fetching {sport}")
-                except Exception as e:
-                    logger.error(f"Error fetching {sport}: {e}")
-
-        logger.info(f"Total raw events fetched: {len(all_odds)}")
-        return all_odds
-
-    def _parse_the_odds_api_response(self, data: List[Dict]) -> List[OddsItem]:
+    def _parse_api_football_odds(self, raw_odds: List[Dict]) -> List[OddsItem]:
+        """API-Football fetch_all_odds() 결과를 OddsItem으로 변환"""
         items = []
-        for event in data:
-            home_team = event.get("home_team")
-            away_team = event.get("away_team")
-            commence_time = event.get("commence_time")
+        for o in raw_odds:
+            home_team = o.get("home_team", "")
+            away_team = o.get("away_team", "")
+            if not home_team or not away_team:
+                continue
 
             home_ko = self.team_mapper.get_korean_name(home_team)
             away_ko = self.team_mapper.get_korean_name(away_team)
 
-            bookmakers = event.get("bookmakers", [])
-            pinnacle_or_other = next((b for b in bookmakers if b["key"] == "pinnacle"), None)
-            if not pinnacle_or_other and bookmakers:
-                pinnacle_or_other = bookmakers[0]
+            bookmaker = o.get("bookmaker", "Pinnacle")
+            provider_name = f"Pinnacle" if "pinnacle" in bookmaker.lower() else f"Pinnacle ({bookmaker})"
 
-            if not pinnacle_or_other:
-                continue
+            items.append(OddsItem(
+                provider=provider_name,
+                sport=o.get("sport", "Soccer"),
+                league=o.get("league", "Unknown"),
+                team_home=home_team,
+                team_away=away_team,
+                team_home_ko=home_ko,
+                team_away_ko=away_ko,
+                home_odds=o.get("home_odds", 0.0),
+                draw_odds=o.get("draw_odds", 0.0),
+                away_odds=o.get("away_odds", 0.0),
+                match_time=o.get("match_time", ""),
+            ))
+        return items
 
-            provider_name = "Pinnacle" if pinnacle_or_other['key'] == 'pinnacle' else f"Pinnacle ({pinnacle_or_other['title']})"
+    def _parse_firestore_cache_odds(self, data: List[Dict]) -> List[OddsItem]:
+        """
+        Firestore 캐시에서 읽은 API-Football 형식 배당 데이터 파싱.
+        (기존 The Odds API 형식도 하위 호환)
+        """
+        items = []
+        for o in data:
+            # API-Football 형식 (home_team 키 존재)
+            if "home_team" in o:
+                home_team = o.get("home_team", "")
+                away_team = o.get("away_team", "")
+                if not home_team or not away_team:
+                    continue
 
-            markets = pinnacle_or_other.get("markets", [])
-            h2h = next((m for m in markets if m["key"] == "h2h"), None)
-            if not h2h:
-                continue
+                home_ko = self.team_mapper.get_korean_name(home_team)
+                away_ko = self.team_mapper.get_korean_name(away_team)
 
-            outcomes = h2h.get("outcomes", [])
-            home_odds, draw_odds, away_odds = 0.0, 0.0, 0.0
+                bookmaker = o.get("bookmaker", "Pinnacle")
+                provider_name = f"Pinnacle" if "pinnacle" in bookmaker.lower() else f"Pinnacle ({bookmaker})"
 
-            for out in outcomes:
-                name = out["name"]
-                price = out["price"]
-                if name == home_team:
-                    home_odds = price
-                elif name == away_team:
-                    away_odds = price
-                elif name == "Draw":
-                    draw_odds = price
-
-            sport_key = event.get("sport_key", "").lower()
-            if "soccer" in sport_key:
-                sport_name = "Soccer"
-            elif "baseball" in sport_key:
-                sport_name = "Baseball"
-            elif "basketball" in sport_key:
-                sport_name = "Basketball"
-            elif "icehockey" in sport_key:
-                sport_name = "IceHockey"
-            else:
-                sport_name = event.get("sport_title", "Other")
-
-            if home_odds > 0 and away_odds > 0:
                 items.append(OddsItem(
                     provider=provider_name,
-                    sport=sport_name,
-                    league=event.get("sport_title", "Unknown"),
+                    sport=o.get("sport", "Soccer"),
+                    league=o.get("league", "Unknown"),
                     team_home=home_team,
                     team_away=away_team,
                     team_home_ko=home_ko,
                     team_away_ko=away_ko,
-                    home_odds=home_odds,
-                    draw_odds=draw_odds,
-                    away_odds=away_odds,
-                    match_time=commence_time
+                    home_odds=o.get("home_odds", 0.0),
+                    draw_odds=o.get("draw_odds", 0.0),
+                    away_odds=o.get("away_odds", 0.0),
+                    match_time=o.get("match_time", ""),
                 ))
+            # 레거시 The Odds API 형식 (home_team 키 없이 bookmakers 배열)
+            elif "bookmakers" in o:
+                home_team = o.get("home_team", "")
+                away_team = o.get("away_team", "")
+                home_ko = self.team_mapper.get_korean_name(home_team)
+                away_ko = self.team_mapper.get_korean_name(away_team)
+                bookmakers = o.get("bookmakers", [])
+                pinnacle_or_other = next((b for b in bookmakers if b["key"] == "pinnacle"), None)
+                if not pinnacle_or_other and bookmakers:
+                    pinnacle_or_other = bookmakers[0]
+                if not pinnacle_or_other:
+                    continue
+                markets = pinnacle_or_other.get("markets", [])
+                h2h = next((m for m in markets if m["key"] == "h2h"), None)
+                if not h2h:
+                    continue
+                outcomes = h2h.get("outcomes", [])
+                home_odds, draw_odds, away_odds = 0.0, 0.0, 0.0
+                for out in outcomes:
+                    name = out["name"]
+                    price = out["price"]
+                    if name == home_team:
+                        home_odds = price
+                    elif name == away_team:
+                        away_odds = price
+                    elif name == "Draw":
+                        draw_odds = price
+                if home_odds > 0 and away_odds > 0:
+                    items.append(OddsItem(
+                        provider="Pinnacle",
+                        sport="Soccer",
+                        league=o.get("sport_title", "Unknown"),
+                        team_home=home_team,
+                        team_away=away_team,
+                        team_home_ko=home_ko,
+                        team_away_ko=away_ko,
+                        home_odds=home_odds,
+                        draw_odds=draw_odds,
+                        away_odds=away_odds,
+                        match_time=o.get("commence_time", ""),
+                    ))
         return items
 
     def _get_mock_data(self) -> List[OddsItem]:
@@ -330,8 +349,115 @@ class PinnacleService(BaseOddsProvider):
         ]
 
     def get_cached_odds(self) -> List[OddsItem]:
-        """캐시된 배당 데이터 반환 (AI Predictor용)"""
-        return self._cache if self._cache else []
+        """캐시된 배당 데이터 반환 (AI Predictor + MatchVoting 용)"""
+        if self._cache:
+            return self._cache
+        # Cold start: Firestore 캐시에서 읽기 시도 (동기 호출)
+        try:
+            import asyncio
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # 이미 이벤트루프가 실행 중이면 fetch_odds를 사용하도록
+                # _warmup_cache에서 미리 로드되었어야 함
+                pass
+            else:
+                result = loop.run_until_complete(self.fetch_odds())
+                if result:
+                    return result
+        except Exception as e:
+            logger.warning(f"Cold-start Firestore cache read failed: {e}")
+        # 최종 폴백: Mock 데이터로라도 경기 표시
+        return self._get_mock_data()
+
+    # ─── 참고용 The Odds API (무료 500건/월) ───
+    _ref_odds_cache: List[OddsItem] = []
+
+    async def fetch_reference_odds(self, sports: List[str] = None) -> List[OddsItem]:
+        """
+        The Odds API 무료 플랜(500건/월)에서 배당 참고 데이터 수집.
+        주의: 월 500건 한도이므로 수동 호출 or 1일 1회만 사용.
+        주력 배당은 API-Football, 이것은 교차 검증용.
+        """
+        ref_key = os.getenv("ODDS_API_KEY") or os.getenv("PINNACLE_API_KEY", "")
+        if not ref_key:
+            logger.info("No ODDS_API_KEY — skipping reference odds")
+            return []
+
+        base_url = "https://api.the-odds-api.com/v4"
+        target = sports or [
+            "soccer_epl", "soccer_spain_la_liga", "soccer_germany_bundesliga",
+            "soccer_italy_serie_a", "soccer_france_ligue_one",
+        ]
+
+        items = []
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            for sport in target:
+                url = f"{base_url}/sports/{sport}/odds"
+                params = {
+                    "apiKey": ref_key,
+                    "regions": "eu",
+                    "markets": "h2h",
+                    "oddsFormat": "decimal",
+                    "bookmakers": "pinnacle,bet365",
+                }
+                try:
+                    resp = await client.get(url, params=params)
+                    remaining = resp.headers.get("x-requests-remaining")
+                    if remaining:
+                        logger.info(f"  📌 Odds API ref quota: {remaining} remaining")
+
+                    if resp.status_code == 401:
+                        logger.error("❌ Odds API ref key invalid")
+                        break
+                    if resp.status_code == 429:
+                        logger.warning("⚠️ Odds API ref rate limit")
+                        break
+                    if resp.status_code != 200:
+                        continue
+
+                    data = resp.json()
+                    for event in data:
+                        home_team = event.get("home_team", "")
+                        away_team = event.get("away_team", "")
+                        bookmakers = event.get("bookmakers", [])
+                        for bk in bookmakers:
+                            markets = bk.get("markets", [])
+                            h2h = next((m for m in markets if m["key"] == "h2h"), None)
+                            if not h2h:
+                                continue
+                            home_odds = draw_odds = away_odds = 0.0
+                            for o in h2h.get("outcomes", []):
+                                if o["name"] == home_team:
+                                    home_odds = o["price"]
+                                elif o["name"] == away_team:
+                                    away_odds = o["price"]
+                                elif o["name"] == "Draw":
+                                    draw_odds = o["price"]
+                            if home_odds > 0 and away_odds > 0:
+                                items.append(OddsItem(
+                                    provider=f"Ref:{bk.get('title', bk.get('key', 'Unknown'))}",
+                                    sport="Soccer",
+                                    league=event.get("sport_title", ""),
+                                    team_home=home_team,
+                                    team_away=away_team,
+                                    team_home_ko=self.team_mapper.get_korean_name(home_team),
+                                    team_away_ko=self.team_mapper.get_korean_name(away_team),
+                                    home_odds=home_odds,
+                                    draw_odds=draw_odds,
+                                    away_odds=away_odds,
+                                    match_time=event.get("commence_time", ""),
+                                ))
+                    logger.info(f"  📌 {sport}: {len(data)} ref events")
+                except Exception as e:
+                    logger.warning(f"Odds API ref error ({sport}): {e}")
+
+        self._ref_odds_cache = items
+        logger.info(f"📌 Reference odds: {len(items)} total from The Odds API free tier")
+        return items
+
+    def get_reference_odds_cache(self) -> List[OddsItem]:
+        """참고용 The Odds API 캐시 반환"""
+        return self._ref_odds_cache
 
 pinnacle_service = PinnacleService()
 

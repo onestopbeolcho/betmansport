@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { i18n } from '../lib/i18n-config';
+import { useDictionarySafe } from '../context/DictionaryContext';
 
 interface OddsItem {
     provider: string;
@@ -29,18 +30,23 @@ interface VoteStats {
     away_pct: number;
 }
 
-const SPORT_TABS = [
-    { key: 'all', label: '전체', icon: '🏆' },
-    { key: 'Soccer', label: '축구', icon: '⚽' },
-    { key: 'Basketball', label: '농구', icon: '🏀' },
-    { key: 'Baseball', label: '야구', icon: '⚾' },
-    { key: 'IceHockey', label: '하키', icon: '🏒' },
+// Sport tabs will use translated labels from dictionary
+const SPORT_TAB_KEYS = [
+    { key: 'all', labelKey: 'filterAll', icon: '🏆' },
+    { key: 'Soccer', labelKey: 'soccer', icon: '⚽' },
+    { key: 'Basketball', labelKey: 'basketball', icon: '🏀' },
+    { key: 'Baseball', labelKey: 'baseball', icon: '⚾' },
+    { key: 'IceHockey', labelKey: 'hockey', icon: '🏒' },
 ];
 
 export default function MatchVoting() {
     const pathname = usePathname();
+    const dict = useDictionarySafe();
+    const tv = dict?.matchVoting || {};
+    const tc = dict?.common || {};
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     const [matches, setMatches] = useState<OddsItem[]>([]);
     const [stats, setStats] = useState<Record<string, VoteStats>>({});
@@ -62,7 +68,7 @@ export default function MatchVoting() {
 
     const fetchMatches = async () => {
         try {
-            const res = await fetch('/api/market/pinnacle');
+            const res = await fetch(`${API}/api/market/pinnacle`);
             if (res.ok) {
                 const data = await res.json();
                 setMatches(data);
@@ -70,7 +76,7 @@ export default function MatchVoting() {
                 for (const match of firstBatch) {
                     const matchId = `${match.team_home}_${match.team_away}`;
                     try {
-                        const statsRes = await fetch(`/api/prediction/vote-stats/${encodeURIComponent(matchId)}`);
+                        const statsRes = await fetch(`${API}/api/prediction/vote-stats/${encodeURIComponent(matchId)}`);
                         if (statsRes.ok) {
                             const s = await statsRes.json();
                             if (s.total_votes > 0) {
@@ -115,7 +121,7 @@ export default function MatchVoting() {
 
     const handleVote = async (matchId: string, selection: string, odds: number) => {
         if (votedMatches[matchId]) {
-            alert(`이미 이 경기에 "${getSelectionLabel(votedMatches[matchId])}" 으로 투표했습니다.`);
+            alert(`Already voted "${getSelectionLabel(votedMatches[matchId])}" for this match.`);
             return;
         }
         try {
@@ -123,7 +129,7 @@ export default function MatchVoting() {
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            const res = await fetch('/api/prediction/submit', {
+            const res = await fetch(`${API}/api/prediction/submit`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({ match_id: matchId, user_id: token ? undefined : userId, selection, odds })
@@ -131,7 +137,7 @@ export default function MatchVoting() {
 
             if (res.ok) {
                 try {
-                    const statsRes = await fetch(`/api/prediction/vote-stats/${encodeURIComponent(matchId)}`);
+                    const statsRes = await fetch(`${API}/api/prediction/vote-stats/${encodeURIComponent(matchId)}`);
                     if (statsRes.ok) {
                         const updatedStats: VoteStats = await statsRes.json();
                         setStats(prev => ({ ...prev, [matchId]: updatedStats }));
@@ -140,15 +146,15 @@ export default function MatchVoting() {
                 setVotedMatches(prev => ({ ...prev, [matchId]: selection }));
             } else {
                 const err = await res.json();
-                alert(`투표 실패: ${err.detail}`);
+                alert(`${tv.voteFail || 'Vote failed'}: ${err.detail}`);
             }
         } catch (err) { console.error(err); }
     };
 
     const getSelectionLabel = (sel: string) => {
-        if (sel === 'Home') return '홈 승';
-        if (sel === 'Draw') return '무승부';
-        return '원정 승';
+        if (sel === 'Home') return tv.homeWin || 'Home';
+        if (sel === 'Draw') return tv.draw || 'Draw';
+        return tv.awayWin || 'Away';
     };
 
     const hasDraw = (sport?: string) => sport === 'Soccer' || !sport;
@@ -156,17 +162,17 @@ export default function MatchVoting() {
     return (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* Section Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div data-tour="tour-match-voting" className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
                     <span className="w-1 h-6 rounded-full bg-gradient-to-b from-[var(--accent-primary)] to-[var(--accent-secondary)]"></span>
-                    <h2 className="text-xl font-extrabold text-white">오늘의 승부 예측</h2>
-                    <span className="text-xs text-[var(--text-muted)] hidden sm:inline">투표하고 결과를 확인하세요</span>
+                    <h2 className="text-xl font-extrabold text-white">{tv.title || 'Today\'s Match Predictions'}</h2>
+                    <span className="text-xs text-[var(--text-muted)] hidden sm:inline">{tv.subtitle || 'Vote and check results'}</span>
                 </div>
                 <a
                     href={`/${currentLang}/market`}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all bg-[rgba(0,212,255,0.08)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)] hover:bg-[rgba(0,212,255,0.15)] hover:border-[rgba(0,212,255,0.4)]"
                 >
-                    🔮 승부 예측 전체 보기
+                    🔮 {tv.viewAll || 'View All →'}
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
@@ -175,22 +181,23 @@ export default function MatchVoting() {
 
             {/* Sport Tabs */}
             <div className="flex flex-wrap gap-2 mb-6">
-                {SPORT_TABS.map(tab => {
+                {SPORT_TAB_KEYS.map(tab => {
                     const count = sportCounts[tab.key] || 0;
                     const isActive = activeSport === tab.key;
                     if (tab.key !== 'all' && count === 0) return null;
+                    const label = tab.labelKey === 'filterAll' ? (tv.filterAll || tc.filterAll || 'All') : (tc[tab.labelKey] || tab.labelKey);
                     return (
                         <button
                             key={tab.key}
                             onClick={() => { setActiveSport(tab.key); setExpandedLeague(null); }}
                             className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all ${isActive
-                                ? 'bg-[rgba(0,212,255,0.1)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.3)]'
-                                : 'bg-white/[0.04] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:text-white hover:border-[var(--border-default)]'
+                                ? 'bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.4)] shadow-[0_0_12px_rgba(0,212,255,0.15)]'
+                                : 'bg-[#141420] text-[var(--text-secondary)] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(255,255,255,0.15)] hover:bg-[#1a1a28]'
                                 }`}
                         >
                             <span>{tab.icon}</span>
-                            <span>{tab.label}</span>
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${isActive ? 'bg-[rgba(0,212,255,0.15)]' : 'bg-white/5'}`}>{count}</span>
+                            <span>{label}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded-md font-mono ${isActive ? 'bg-[rgba(0,212,255,0.2)] text-[var(--accent-primary)]' : 'bg-[rgba(255,255,255,0.06)] text-[var(--text-muted)]'}`}>{count}</span>
                         </button>
                     );
                 })}
@@ -200,33 +207,34 @@ export default function MatchVoting() {
             {loading ? (
                 <div className="text-center py-10 text-[var(--text-muted)]">
                     <div className="animate-spin inline-block w-6 h-6 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-2"></div>
-                    <p className="text-sm">경기 정보를 불러오는 중...</p>
+                    <p className="text-sm">{tc.loading || 'Loading...'}</p>
                 </div>
             ) : filteredMatches.length === 0 ? (
-                <div className="text-center py-10 text-[var(--text-muted)] glass-card">현재 예정된 경기가 없습니다.</div>
+                <div className="text-center py-10 text-[var(--text-muted)] glass-card">{tv.noMatches || 'No matches scheduled for today.'}</div>
             ) : (
                 <div className="space-y-4">
                     {Object.entries(groupedByLeague).map(([league, leagueMatches]) => {
                         const isExpanded = expandedLeague === null || expandedLeague === league;
                         return (
-                            <div key={league} className="glass-card overflow-hidden">
+                            <div key={league} className="rounded-xl overflow-hidden" style={{ background: '#0d0d16', border: '1px solid rgba(255,255,255,0.08)' }}>
                                 {/* League Header */}
                                 <button
                                     onClick={() => setExpandedLeague(expandedLeague === league ? null : league)}
-                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-all"
-                                    style={{ background: 'var(--bg-elevated)' }}
+                                    className="w-full flex items-center justify-between px-4 py-3.5 transition-all hover:brightness-110"
+                                    style={{ background: 'linear-gradient(135deg, #141428 0%, #111120 100%)', borderBottom: isExpanded ? '1px solid rgba(0,212,255,0.12)' : 'none' }}
                                 >
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-sm font-bold text-white/70">{league}</span>
-                                        <span className="badge">{leagueMatches.length}</span>
+                                    <div className="flex items-center space-x-2.5">
+                                        <span className="w-1 h-5 rounded-full" style={{ background: 'linear-gradient(180deg, #00d4ff, #8b5cf6)' }}></span>
+                                        <span className="text-sm font-bold text-white">{league}</span>
+                                        <span className="text-[11px] font-mono px-2 py-0.5 rounded-md" style={{ background: 'rgba(0,212,255,0.1)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.15)' }}>{leagueMatches.length}</span>
                                     </div>
-                                    <svg className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </button>
 
                                 {isExpanded && (
-                                    <div className="divide-y divide-[var(--border-subtle)]">
+                                    <div>
                                         {leagueMatches.map((match, idx) => {
                                             const matchId = `${match.team_home}_${match.team_away}`;
                                             const stat = stats[matchId] || { home_pct: 0, draw_pct: 0, away_pct: 0, total_votes: 0 };
@@ -236,60 +244,81 @@ export default function MatchVoting() {
                                             const showDraw = hasDraw(match.sport);
 
                                             return (
-                                                <div key={idx} className="px-4 py-4 hover:bg-white/[0.02] transition-all">
+                                                <div key={idx}
+                                                    className="px-4 py-5 transition-all hover:bg-[rgba(255,255,255,0.02)]"
+                                                    style={{ borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}
+                                                >
                                                     {/* Meta */}
                                                     <div className="flex justify-between items-center mb-3">
-                                                        <span className="text-[10px] text-[var(--text-secondary)]">{matchDate.toLocaleString('ko-KR')}</span>
-                                                        <span className="text-[10px] text-[var(--text-secondary)]">{stat.total_votes}명 참여</span>
+                                                        <span className="text-[11px] text-[var(--text-muted)] flex items-center gap-1">
+                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                            {matchDate.toLocaleString(currentLang === 'ko' ? 'ko-KR' : 'en-US')}
+                                                        </span>
+                                                        <span className="text-[11px] px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)' }}>{stat.total_votes} {tv.voted || 'votes'}</span>
                                                     </div>
 
                                                     {/* Teams */}
-                                                    <div className="flex justify-between items-center mb-4">
+                                                    <div className="flex justify-between items-center mb-4 py-2 px-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
                                                         <div className="text-center flex-1">
-                                                            <div className="text-sm font-bold text-white">{match.team_home_ko || match.team_home}</div>
-                                                            <div className="text-xs mt-0.5 font-mono" style={{ color: '#66d9ff' }}>{match.home_odds}</div>
+                                                            <div className="text-[15px] font-bold text-white">{match.team_home_ko || match.team_home}</div>
+                                                            <div className="text-sm mt-1 font-mono font-bold" style={{ color: '#00d4ff' }}>{match.home_odds}</div>
                                                         </div>
-                                                        <div className="text-white/50 font-light text-sm px-4">VS</div>
+                                                        <div className="px-4 py-1.5 rounded-full text-xs font-bold" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>VS</div>
                                                         <div className="text-center flex-1">
-                                                            <div className="text-sm font-bold text-white">{match.team_away_ko || match.team_away}</div>
-                                                            <div className="text-xs mt-0.5 font-mono" style={{ color: '#b89dfa' }}>{match.away_odds}</div>
+                                                            <div className="text-[15px] font-bold text-white">{match.team_away_ko || match.team_away}</div>
+                                                            <div className="text-sm mt-1 font-mono font-bold" style={{ color: '#b89dfa' }}>{match.away_odds}</div>
                                                         </div>
                                                     </div>
 
                                                     {/* Vote Progress */}
                                                     {hasVotes && (
-                                                        <div className="mb-3 flex h-4 rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-                                                            <div style={{ width: `${stat.home_pct}%` }} className="bg-[var(--accent-primary)]/60 flex items-center justify-center transition-all duration-700">
-                                                                {stat.home_pct > 15 && <span className="text-white text-[9px] font-bold">{stat.home_pct}%</span>}
+                                                        <div className="mb-3 flex h-5 rounded-lg overflow-hidden" style={{ background: '#0a0a12' }}>
+                                                            <div style={{ width: `${stat.home_pct}%`, background: 'rgba(0,212,255,0.5)' }} className="flex items-center justify-center transition-all duration-700">
+                                                                {stat.home_pct > 15 && <span className="text-white text-[10px] font-bold">{stat.home_pct}%</span>}
                                                             </div>
                                                             {showDraw && (
-                                                                <div style={{ width: `${stat.draw_pct}%` }} className="bg-white/15 flex items-center justify-center transition-all duration-700">
-                                                                    {stat.draw_pct > 15 && <span className="text-white/60 text-[9px] font-bold">{stat.draw_pct}%</span>}
+                                                                <div style={{ width: `${stat.draw_pct}%`, background: 'rgba(255,255,255,0.12)' }} className="flex items-center justify-center transition-all duration-700">
+                                                                    {stat.draw_pct > 15 && <span className="text-white/70 text-[10px] font-bold">{stat.draw_pct}%</span>}
                                                                 </div>
                                                             )}
-                                                            <div style={{ width: `${stat.away_pct}%` }} className="bg-[var(--accent-secondary)]/60 flex items-center justify-center transition-all duration-700">
-                                                                {stat.away_pct > 15 && <span className="text-white text-[9px] font-bold">{stat.away_pct}%</span>}
+                                                            <div style={{ width: `${stat.away_pct}%`, background: 'rgba(139,92,246,0.5)' }} className="flex items-center justify-center transition-all duration-700">
+                                                                {stat.away_pct > 15 && <span className="text-white text-[10px] font-bold">{stat.away_pct}%</span>}
                                                             </div>
                                                         </div>
                                                     )}
 
                                                     {/* Vote Buttons */}
                                                     {voted ? (
-                                                        <div className="text-center py-2 rounded-lg border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)]">
-                                                            <span className="text-[var(--accent-primary)] font-bold text-xs">✅ &quot;{getSelectionLabel(voted)}&quot; 투표 완료</span>
+                                                        <div className="text-center py-2.5 rounded-lg" style={{ border: '1px solid rgba(0,212,255,0.25)', background: 'rgba(0,212,255,0.06)' }}>
+                                                            <span className="text-[var(--accent-primary)] font-bold text-xs">✅ {getSelectionLabel(voted)} {tv.voted || 'Voted'}</span>
                                                         </div>
                                                     ) : (
-                                                        <div className={`grid gap-2 ${showDraw ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                                                            <button onClick={() => handleVote(matchId, 'Home', match.home_odds)} className="py-2 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(0,212,255,0.08)] hover:border-[rgba(0,212,255,0.3)] text-xs font-bold text-white/80 transition-all active:scale-95">
-                                                                홈 승
+                                                        <div className={`grid gap-2.5 ${showDraw ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                                            <button onClick={() => handleVote(matchId, 'Home', match.home_odds)}
+                                                                className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95 hover:shadow-[0_0_12px_rgba(0,212,255,0.2)]"
+                                                                style={{ minHeight: '48px', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.18)', color: '#66d9ff' }}
+                                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.35)'; }}
+                                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.18)'; }}
+                                                            >
+                                                                {tv.homeWin || 'Home'}
                                                             </button>
                                                             {showDraw && (
-                                                                <button onClick={() => handleVote(matchId, 'Draw', match.draw_odds)} className="py-2 rounded-lg border border-[var(--border-subtle)] hover:bg-white/5 hover:border-[var(--border-default)] text-xs font-bold text-white/80 transition-all active:scale-95">
-                                                                    무승부
+                                                                <button onClick={() => handleVote(matchId, 'Draw', match.draw_odds)}
+                                                                    className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95"
+                                                                    style={{ minHeight: '48px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                                                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+                                                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                                                                >
+                                                                    {tv.draw || 'Draw'}
                                                                 </button>
                                                             )}
-                                                            <button onClick={() => handleVote(matchId, 'Away', match.away_odds)} className="py-2 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(139,92,246,0.08)] hover:border-[rgba(139,92,246,0.3)] text-xs font-bold text-white/80 transition-all active:scale-95">
-                                                                원정 승
+                                                            <button onClick={() => handleVote(matchId, 'Away', match.away_odds)}
+                                                                className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95 hover:shadow-[0_0_12px_rgba(139,92,246,0.2)]"
+                                                                style={{ minHeight: '48px', background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.18)', color: '#b89dfa' }}
+                                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'; }}
+                                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.06)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.18)'; }}
+                                                            >
+                                                                {tv.awayWin || 'Away'}
                                                             </button>
                                                         </div>
                                                     )}

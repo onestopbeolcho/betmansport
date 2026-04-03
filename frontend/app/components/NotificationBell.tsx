@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useDictionarySafe } from '../context/DictionaryContext';
 import {
     requestNotificationPermission,
     saveFCMToken,
@@ -18,6 +19,8 @@ interface ToastNotification {
 
 export default function NotificationBell() {
     const { user } = useAuth();
+    const dict = useDictionarySafe();
+    const tc = dict?.dictionary?.common;
     const [permission, setPermission] = useState<NotificationPermission>('default');
     const [notifications, setNotifications] = useState<ToastNotification[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -100,10 +103,10 @@ export default function NotificationBell() {
 
     const formatTime = (ts: number) => {
         const diff = Math.floor((Date.now() - ts) / 1000);
-        if (diff < 60) return '방금';
-        if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
-        return `${Math.floor(diff / 86400)}일 전`;
+        if (diff < 60) return tc?.justNow || 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}${tc?.minAgo || 'm ago'}`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}${tc?.hourAgo || 'h ago'}`;
+        return `${Math.floor(diff / 86400)}${tc?.dayAgo || 'd ago'}`;
     };
 
     if (!supported) return null;
@@ -123,7 +126,7 @@ export default function NotificationBell() {
                     disabled={loading}
                     className="relative p-2 rounded-lg transition-all duration-200 hover:bg-white/5"
                     style={{ color: 'var(--text-secondary)' }}
-                    title={permission === 'granted' ? '알림' : '알림 켜기'}
+                    title={permission === 'granted' ? (tc?.notifications || 'Notifications') : (tc?.enableNotifications || 'Enable Notifications')}
                 >
                     {/* Bell Icon */}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -161,14 +164,14 @@ export default function NotificationBell() {
                         }}>
                         {/* Header */}
                         <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>알림</span>
+                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{tc?.notifications || 'Notifications'}</span>
                             {notifications.length > 0 && (
                                 <button
                                     onClick={clearNotifications}
                                     className="text-xs transition-colors hover:text-white"
                                     style={{ color: 'var(--text-muted)' }}
                                 >
-                                    모두 지우기
+                                    {tc?.clearAll || 'Clear all'}
                                 </button>
                             )}
                         </div>
@@ -178,8 +181,8 @@ export default function NotificationBell() {
                             {notifications.length === 0 ? (
                                 <div className="py-10 text-center">
                                     <div className="text-3xl mb-2">🔔</div>
-                                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>새로운 알림이 없습니다</p>
-                                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>밸류벳 발견 시 알려드릴게요!</p>
+                                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{tc?.noNewNotifications || 'No new notifications'}</p>
+                                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{tc?.notifyOnValueBet || 'We\'ll notify you when value opportunities are found!'}</p>
                                 </div>
                             ) : (
                                 notifications.map((notif) => (

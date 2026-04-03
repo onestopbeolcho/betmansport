@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 async def get_all_pinnacle_odds():
     """
     Return all cached Pinnacle odds without filtering.
+    Cold start 시 Firestore 캐시 → Mock 데이터 순으로 폴백.
     """
+    # fetch_odds: 인메모리 캐시 → Firestore 캐시 → Mock 순서로 탐색
     return await pinnacle_service.fetch_odds()
 
 

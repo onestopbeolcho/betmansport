@@ -1,6 +1,58 @@
 from typing import List, Dict, Optional
 from app.core.calculator import calculate_kelly_percentage, calculate_tax_free_limit
 from app.schemas.odds import OddsItem, ValueBetOpportunity
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+async def get_todays_value_bets() -> List[Dict]:
+    """
+    오늘의 밸류벳 리스트를 가져온다.
+    
+    Firestore의 최근 분석 결과 또는 실시간 분석을 통해 가져옴.
+    Returns: List of value bet dicts with match_name, efficiency, odds, etc.
+    """
+    try:
+        from app.db.firestore import get_firestore_db
+        from datetime import datetime, timedelta
+        
+        db = get_firestore_db()
+        
+        # 오늘 날짜의 밸류벳 가져오기
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        docs = db.collection("value_picks") \
+            .where("created_at", ">=", today.isoformat()) \
+            .order_by("created_at") \
+            .stream()
+        
+        results = []
+        for doc in docs:
+            data = doc.to_dict()
+            # efficiency = (EV - 1) * 100
+            ev = data.get("expected_value", 0)
+            efficiency = round((ev - 1) * 100, 1) if ev > 0 else 0
+            
+            results.append({
+                "id": doc.id,
+                "match_name": data.get("match_name", ""),
+                "bet_type": data.get("bet_type", ""),
+                "domestic_odds": data.get("domestic_odds", 0),
+                "pinnacle_odds": data.get("pinnacle_odds", 0),
+                "true_probability": data.get("true_probability", 0),
+                "expected_value": ev,
+                "efficiency": efficiency,
+                "kelly_pct": data.get("kelly_pct", 0),
+                "sport": data.get("sport", ""),
+                "league": data.get("league", ""),
+            })
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch today's value bets: {e}")
+        return []
 
 
 class ValueBetFinder:

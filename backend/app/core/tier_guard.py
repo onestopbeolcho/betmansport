@@ -9,7 +9,7 @@ from app.core.deps import require_current_user
 from app.models.user_db import get_user_by_id
 from datetime import datetime
 
-TIER_ORDER = {"free": 0, "basic": 1, "pro": 2, "premium": 3}
+TIER_ORDER = {"free": 0, "basic": 1, "pro": 2, "vip": 3, "premium": 3}
 
 
 async def _get_user_tier(user_id: str) -> str:

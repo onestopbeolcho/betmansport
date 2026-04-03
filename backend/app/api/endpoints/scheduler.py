@@ -187,7 +187,7 @@ async def auto_settle_results(background_tasks: BackgroundTasks):
 
 @router.get("/status")
 async def get_scheduler_status():
-    """Get current status of all data sources, scheduler, and settlement."""
+    """Get current status of all data sources, scheduler, settlement, and ML."""
     # Try to get last scheduled run from Firestore
     last_scheduled_run = None
     try:
@@ -201,6 +201,17 @@ async def get_scheduler_status():
                 "result": data.get("result"),
                 "trigger": data.get("trigger", "unknown"),
             }
+    except Exception:
+        pass
+
+    # ML model status
+    ml_status = {"engine": "fallback", "model_loaded": False}
+    try:
+        from app.core.ml_predictor import ml_predictor
+        ml_status = {
+            "engine": "lightgbm" if ml_predictor.is_ml_ready else "fallback",
+            "model_loaded": ml_predictor.is_ml_ready,
+        }
     except Exception:
         pass
 
@@ -222,6 +233,411 @@ async def get_scheduler_status():
             "manual_last_result": _settle_last_result,
             "scheduled_last_run": last_scheduled_run,
         },
+        "ml_engine": ml_status,
     }
 
 
+# ─── Phase 3: Nightly Self-Learning Pipeline ───
+
+_nightly_last_run: Optional[str] = None
+_nightly_last_result: Optional[dict] = None
+_nightly_running: bool = False
+
+
+@router.post("/nightly_retrain")
+async def trigger_nightly_retrain(background_tasks: BackgroundTasks):
+    """
+    Nightly self-learning pipeline (매일 새벽 03:00 KST).
+    Cloud Scheduler: 0 18 * * * UTC (= 03:00 KST)
+    Step 1: 어제 경기 결과 수집 → 예측과 비교
+    Step 2: Loss 계산 → 오답 분석
+    Step 3: LightGBM Incremental Retraining
+    """
+    global _nightly_running, _nightly_last_run, _nightly_last_result
+
+    if _nightly_running:
+        return {"status": "Already running", "last_run": _nightly_last_run}
+
+    async def run_pipeline():
+        global _nightly_running, _nightly_last_run, _nightly_last_result
+        _nightly_running = True
+        try:
+            from app.services.self_learning import self_learning_pipeline
+            result = await self_learning_pipeline.run_nightly()
+            _nightly_last_run = datetime.now(timezone.utc).isoformat()
+            _nightly_last_result = result
+
+            # Reload ML model in predictor after retraining
+            if result.get("model_updated"):
+                try:
+                    from app.core.ml_predictor import ml_predictor
+                    ml_predictor.reload_model()
+                    logger.info("✅ ML model reloaded after nightly retraining")
+                except Exception as e:
+                    logger.warning(f"Model reload after retrain failed: {e}")
+
+            # Generate VIP error note report via Gemini
+            error_note = result.get("error_note")
+            if error_note and error_note.get("big_misses"):
+                try:
+                    from app.services.gemini_service import generate_error_note_report
+                    report = await generate_error_note_report(error_note)
+                    if report:
+                        # Save to Firestore for frontend
+                        from app.db.firestore import get_firestore_db
+                        db = get_firestore_db()
+                        db.collection("vip_alerts").document(
+                            f"error_note_{error_note['date']}"
+                        ).set({
+                            "type": "error_note",
+                            "date": error_note["date"],
+                            "report_markdown": report,
+                            "accuracy_pct": error_note["summary"]["accuracy_pct"],
+                            "created_at": datetime.now(timezone.utc),
+                        })
+                        logger.info("✅ VIP error note report saved to Firestore")
+                except Exception as e:
+                    logger.warning(f"Error note report generation failed: {e}")
+
+            logger.info(f"✅ Nightly pipeline complete: {result}")
+        except Exception as e:
+            logger.error(f"Nightly pipeline failed: {e}")
+            _nightly_last_result = {"status": "error", "error": str(e)}
+        finally:
+            _nightly_running = False
+
+    background_tasks.add_task(run_pipeline)
+    return {
+        "status": "Nightly retraining started",
+        "schedule": "Daily 03:00 KST (Cloud Scheduler)",
+        "last_run": _nightly_last_run,
+    }
+
+
+@router.get("/ml_status")
+async def get_ml_status():
+    """Get ML model status and recent prediction accuracy."""
+    from app.core.ml_predictor import ml_predictor
+    from app.services import bigquery_service as bq_svc
+
+    accuracy = await bq_svc.get_prediction_accuracy(days=30)
+
+    return {
+        "engine": "lightgbm" if ml_predictor.is_ml_ready else "fallback",
+        "model_loaded": ml_predictor.is_ml_ready,
+        "feature_importance": ml_predictor.get_feature_importance(),
+        "accuracy_30d": accuracy,
+        "nightly_pipeline": {
+            "last_run": _nightly_last_run,
+            "last_result": _nightly_last_result,
+            "currently_running": _nightly_running,
+        },
+    }
+
+
+@router.post("/reload_model")
+async def reload_ml_model():
+    """Force reload the ML model from GCS/local storage."""
+    from app.core.ml_predictor import ml_predictor
+    success = ml_predictor.reload_model()
+    return {
+        "status": "reloaded" if success else "fallback",
+        "ml_ready": success,
+    }
+
+
+# ─── Historical Data Backfill ───
+
+_backfill_running: bool = False
+_backfill_result: Optional[dict] = None
+
+
+@router.post("/backfill_historical")
+async def trigger_backfill(background_tasks: BackgroundTasks):
+    """
+    과거 시즌 경기 결과 + 배당률을 BigQuery에 소급 수집.
+    API-Football 무료 100건/일 → 리그 수에 따라 여러 회 실행.
+    """
+    global _backfill_running, _backfill_result
+
+    if _backfill_running:
+        return {"status": "Already running", "last_result": _backfill_result}
+
+    async def run_backfill():
+        global _backfill_running, _backfill_result
+        _backfill_running = True
+        try:
+            from app.services.backfill import backfill_engine
+            result = await backfill_engine.run_full_backfill(
+                seasons=[2022, 2023, 2024],  # API-Football free tier: 2022-2024
+                leagues=None,  # all leagues
+            )
+            _backfill_result = result
+            logger.info(f"✅ Backfill complete: {result.get('total_matches_collected', 0)} matches")
+        except Exception as e:
+            logger.error(f"Backfill failed: {e}")
+            _backfill_result = {"status": "error", "error": str(e)}
+        finally:
+            _backfill_running = False
+
+    background_tasks.add_task(run_backfill)
+    return {
+        "status": "Backfill started (2022-2024 seasons, all leagues)",
+        "note": "API-Football free tier: 100 req/day. May need multiple runs.",
+    }
+
+
+@router.get("/backfill_status")
+async def get_backfill_status():
+    """Get current backfill status."""
+    return {
+        "running": _backfill_running,
+        "last_result": _backfill_result,
+    }
+
+
+@router.post("/initial_train")
+async def trigger_initial_training():
+    """
+    BigQuery에 적재된 과거 데이터로 LightGBM 첫 학습 실행.
+    backfill_historical 완료 후 실행.
+    NOTE: 동기 실행 — Cloud Run background task는 HTTP 응답 후 kill됨.
+    """
+    try:
+        import numpy as np
+        import lightgbm as lgb
+        from sklearn.preprocessing import LabelEncoder
+        from app.services import bigquery_service as bq
+        from app.services.feature_store import get_feature_names
+        from app.core.model_store import save_model
+
+        logger.info("🎓 Starting initial ML model training...")
+
+        # 1. Load all completed matches from BigQuery (no odds needed)
+        sql = f"""
+        SELECT match_id, home_team, away_team, league, season,
+               result, home_score, away_score, match_date, venue, round
+        FROM `{bq.PROJECT_ID}.{bq.DATASET_ID}.matches_raw`
+        WHERE result IS NOT NULL
+          AND result != ''
+          AND result IN ('HOME', 'AWAY', 'DRAW')
+        ORDER BY match_date ASC
+        """
+        data = await bq.query(sql)
+        if not data or len(data) < 50:
+            logger.warning(f"Insufficient training data: {len(data) if data else 0} rows (need 50+)")
+            return {"status": "error", "error": f"Insufficient data: {len(data) if data else 0} rows"}
+
+        logger.info(f"  📊 Loaded {len(data)} matches from BigQuery")
+
+        # 2. Build team stats lookups from the data itself
+        from collections import defaultdict
+        team_matches = defaultdict(list)
+
+        for row in data:
+            home = row["home_team"]
+            away = row["away_team"]
+            date = row.get("match_date", "")
+            hs = int(row.get("home_score", 0) or 0)
+            as_ = int(row.get("away_score", 0) or 0)
+            result = row["result"]
+
+            team_matches[home].append({
+                "date": date, "result": result, "is_home": True,
+                "goals_for": hs, "goals_against": as_, "opponent": away,
+            })
+            team_matches[away].append({
+                "date": date,
+                "result": "AWAY" if result == "HOME" else ("HOME" if result == "AWAY" else "DRAW"),
+                "is_home": False,
+                "goals_for": as_, "goals_against": hs, "opponent": home,
+            })
+
+        # 3. Build feature vectors using match history
+        feature_names = get_feature_names()
+        X_list = []
+        y_list = []
+        skipped = 0
+
+        for i, row in enumerate(data):
+            home = row["home_team"]
+            away = row["away_team"]
+
+            # Get matches before this one for both teams
+            home_prev = [m for m in team_matches[home] if m["date"] < row.get("match_date", "")][-10:]
+            away_prev = [m for m in team_matches[away] if m["date"] < row.get("match_date", "")][-10:]
+
+            # Need at least 3 previous matches for each team
+            if len(home_prev) < 3 or len(away_prev) < 3:
+                skipped += 1
+                continue
+
+            # Compute features from match history
+            features = {}
+
+            # Win rates (last 5)
+            h5 = home_prev[-5:]
+            a5 = away_prev[-5:]
+            features["home_win_rate_last5"] = sum(1 for m in h5 if m["result"] == "HOME") / max(len(h5), 1)
+            features["away_win_rate_last5"] = sum(1 for m in a5 if m["result"] == "HOME") / max(len(a5), 1)
+            features["home_draw_rate_last5"] = sum(1 for m in h5 if m["result"] == "DRAW") / max(len(h5), 1)
+            features["away_draw_rate_last5"] = sum(1 for m in a5 if m["result"] == "DRAW") / max(len(a5), 1)
+
+            # Rest days (simplified)
+            features["home_rest_days"] = 3.0
+            features["away_rest_days"] = 3.0
+
+            # H2H
+            h2h_matches = [m for m in home_prev if m["opponent"] == away]
+            if h2h_matches:
+                features["h2h_home_win_rate"] = sum(1 for m in h2h_matches if m["result"] == "HOME") / len(h2h_matches)
+                features["h2h_draw_rate"] = sum(1 for m in h2h_matches if m["result"] == "DRAW") / len(h2h_matches)
+                features["h2h_total_matches"] = float(len(h2h_matches))
+            else:
+                features["h2h_home_win_rate"] = 0.5
+                features["h2h_draw_rate"] = 0.2
+                features["h2h_total_matches"] = 0.0
+
+            # Rank (use win rate as proxy)
+            features["home_rank"] = 10.0
+            features["away_rank"] = 10.0
+            features["rank_diff"] = 0.0
+
+            # Goals averages
+            features["home_goals_for_avg"] = sum(m["goals_for"] for m in home_prev[-5:]) / max(len(home_prev[-5:]), 1)
+            features["home_goals_against_avg"] = sum(m["goals_against"] for m in home_prev[-5:]) / max(len(home_prev[-5:]), 1)
+            features["away_goals_for_avg"] = sum(m["goals_for"] for m in away_prev[-5:]) / max(len(away_prev[-5:]), 1)
+            features["away_goals_against_avg"] = sum(m["goals_against"] for m in away_prev[-5:]) / max(len(away_prev[-5:]), 1)
+
+            # Venue performance
+            home_at_home = [m for m in home_prev if m["is_home"]]
+            away_at_away = [m for m in away_prev if not m["is_home"]]
+            features["home_team_home_win_rate"] = sum(1 for m in home_at_home if m["result"] == "HOME") / max(len(home_at_home), 1)
+            features["away_team_away_win_rate"] = sum(1 for m in away_at_away if m["result"] == "HOME") / max(len(away_at_away), 1)
+
+            # Points
+            features["home_points"] = float(sum(3 if m["result"] == "HOME" else (1 if m["result"] == "DRAW" else 0) for m in home_prev))
+            features["away_points"] = float(sum(3 if m["result"] == "HOME" else (1 if m["result"] == "DRAW" else 0) for m in away_prev))
+            features["points_diff"] = features["home_points"] - features["away_points"]
+
+            # Odds (none available, use neutral)
+            features["implied_prob_home"] = 0.4
+            features["implied_prob_draw"] = 0.25
+            features["implied_prob_away"] = 0.35
+            features["odds_margin"] = 0.05
+
+            # Injuries (none available)
+            features["missing_key_players_home"] = 0.0
+            features["missing_key_players_away"] = 0.0
+            features["injury_diff"] = 0.0
+
+            # Stage 1: 골득실 차이
+            gf_h = features.get("home_goals_for_avg", 1.2)
+            ga_h = features.get("home_goals_against_avg", 1.2)
+            gf_a = features.get("away_goals_for_avg", 1.2)
+            ga_a = features.get("away_goals_against_avg", 1.2)
+            features["goal_diff_home"] = gf_h - ga_h
+            features["goal_diff_away"] = gf_a - ga_a
+            features["goal_diff_gap"] = (gf_h - ga_h) - (gf_a - ga_a)
+
+            # Stage 1: API 외부 예측 (과거 데이터 없으므로 중립값)
+            features["api_pred_home"] = 0.33
+            features["api_pred_draw"] = 0.33
+            features["api_pred_away"] = 0.33
+
+            # Stage 1: 리그별 홈 어드밴티지
+            league_key = row.get("league", "")
+            LEAGUE_HOME_ADV = {
+                "soccer_epl": 1.05, "soccer_spain_la_liga": 1.12,
+                "soccer_germany_bundesliga": 1.08, "soccer_italy_serie_a": 1.10,
+                "soccer_france_ligue_one": 1.06, "soccer_turkey_super_lig": 1.25,
+                "soccer_korea_kleague": 1.06, "soccer_japan_jleague": 1.02,
+                "soccer_usa_mls": 1.08, "soccer_brazil_serie_a": 1.15,
+            }
+            features["league_home_adv"] = LEAGUE_HOME_ADV.get(league_key, 1.05)
+
+            # Stage 2: 모멘텀 (폼 가속도)
+            features["momentum_home"] = features.get("home_win_rate_last5", 0.5) - 0.5
+            features["momentum_away"] = features.get("away_win_rate_last5", 0.5) - 0.5
+
+            # Stage 2: H2H 최근성 점수
+            import math
+            h2h_wr = features.get("h2h_home_win_rate", 0.5)
+            h2h_total = features.get("h2h_total_matches", 0)
+            recency_conf = min(math.log(h2h_total + 1) / math.log(11), 1.0)
+            features["h2h_recency_score"] = h2h_wr * recency_conf
+
+            # Stage 2: 부상 품질 점수
+            features["injury_quality_home"] = features.get("missing_key_players_home", 0) * 7.0
+            features["injury_quality_away"] = features.get("missing_key_players_away", 0) * 7.0
+
+            # Build row in correct order
+            X_row = [features.get(f, 0.0) for f in feature_names]
+            X_list.append(X_row)
+            y_list.append(row["result"])
+
+        logger.info(f"  Built features for {len(X_list)} matches (skipped {skipped} with insufficient history)")
+
+        if len(X_list) < 50:
+            logger.warning(f"Too few training samples: {len(X_list)}")
+            return {"status": "error", "error": f"Too few samples: {len(X_list)}"}
+
+        X = np.array(X_list, dtype=np.float32)
+        le = LabelEncoder()
+        y = le.fit_transform(y_list)
+
+        logger.info(f"  Feature matrix: {X.shape}, Classes: {le.classes_}")
+        logger.info(f"  Class distribution: {dict(zip(le.classes_, [int((y==i).sum()) for i in range(len(le.classes_))]))}")
+
+        # 4. Train LightGBM
+        train_data = lgb.Dataset(X, label=y, feature_name=feature_names)
+        params = {
+            "objective": "multiclass",
+            "num_class": 3,
+            "metric": "multi_logloss",
+            "learning_rate": 0.05,
+            "num_leaves": 31,
+            "max_depth": 6,
+            "min_child_samples": 5,
+            "feature_fraction": 0.8,
+            "bagging_fraction": 0.8,
+            "bagging_freq": 5,
+            "verbose": -1,
+        }
+
+        model = lgb.train(params, train_data, num_boost_round=200)
+        logger.info("  ✅ LightGBM model trained successfully")
+
+        # 5. Save model
+        version = "initial_v1"
+        path = save_model(model, "lightgbm_predictor", version)
+        logger.info(f"  ✅ Model saved: {path}")
+
+        # 6. Log feature importances
+        importances = {
+            name: float(imp)
+            for name, imp in zip(feature_names, model.feature_importance())
+        }
+        top_features = sorted(importances.items(), key=lambda x: x[1], reverse=True)[:5]
+        logger.info(f"  🔑 Top features: {top_features}")
+
+        try:
+            await bq.log_feature_importance(f"v{version}", importances, {})
+        except Exception as e:
+            logger.warning(f"Feature importance logging failed: {e}")
+
+        # 7. Reload in predictor
+        from app.core.ml_predictor import ml_predictor
+        ml_predictor.reload_model()
+        logger.info(f"  ✅ ML predictor reloaded. is_ml_ready={ml_predictor.is_ml_ready}")
+
+    except Exception as e:
+        logger.error(f"❌ Initial training failed: {e}", exc_info=True)
+        return {"status": "error", "error": str(e)}
+
+    return {
+        "status": "Training completed successfully",
+        "matches_used": len(X_list),
+        "model_path": path,
+        "ml_ready": ml_predictor.is_ml_ready,
+    }

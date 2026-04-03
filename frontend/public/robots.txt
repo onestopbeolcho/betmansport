@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://scorenix.com/sitemap.xml
+
+# Disallow admin and API
+Disallow: /admin
+Disallow: /api/

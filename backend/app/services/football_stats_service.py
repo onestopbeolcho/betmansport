@@ -1,29 +1,68 @@
 """
-API-Football 연동 서비스
-- 팀 통계, H2H 상대전적, 부상/결장, AI Predictions
-- 무료 100건/일 → 하루 1회 배치 수집
+API-Football 연동 서비스 (Ultra Plan)
+- 배당 수집, 팀 통계, H2H 상대전적, 부상/결장, AI Predictions, 라이브
+- Ultra 75,000건/일 — The Odds API 통합 대체
 - Docs: https://www.api-football.com/documentation-v3
 """
 import httpx
 import logging
 import os
 from typing import List, Dict, Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from app.schemas.predictions import TeamStats, H2HRecord, InjuryInfo
 
 logger = logging.getLogger(__name__)
 
-# API-Football league IDs
+# API-Football league IDs — 각국 1부 리그 + 주요 대회
 LEAGUE_MAP = {
-    "soccer_epl": 39,
-    "soccer_spain_la_liga": 140,
-    "soccer_germany_bundesliga": 78,
-    "soccer_italy_serie_a": 135,
-    "soccer_france_ligue_one": 61,
-    "soccer_uefa_champs_league": 2,
+    # ─── 유럽 빅 5 ───
+    "soccer_epl": 39,                       # 🏴 England — Premier League
+    "soccer_spain_la_liga": 140,            # 🇪🇸 Spain — La Liga
+    "soccer_germany_bundesliga": 78,        # 🇩🇪 Germany — Bundesliga
+    "soccer_italy_serie_a": 135,            # 🇮🇹 Italy — Serie A
+    "soccer_france_ligue_one": 61,          # 🇫🇷 France — Ligue 1
+    # ─── 유럽 기타 1부 ───
+    "soccer_netherlands_eredivisie": 88,    # 🇳🇱 Netherlands — Eredivisie
+    "soccer_portugal_liga": 94,             # 🇵🇹 Portugal — Liga Portugal
+    "soccer_belgium_pro_league": 144,       # 🇧🇪 Belgium — Pro League
+    "soccer_turkey_super_lig": 203,         # 🇹🇷 Turkey — Süper Lig
+    "soccer_scotland_premiership": 179,     # 🏴 Scotland — Premiership
+    "soccer_switzerland_super_league": 207, # 🇨🇭 Switzerland — Super League
+    "soccer_austria_bundesliga": 218,       # 🇦🇹 Austria — Bundesliga
+    "soccer_denmark_superliga": 119,        # 🇩🇰 Denmark — Superliga
+    "soccer_norway_eliteserien": 103,       # 🇳🇴 Norway — Eliteserien
+    "soccer_sweden_allsvenskan": 113,       # 🇸🇪 Sweden — Allsvenskan
+    "soccer_greece_super_league": 197,      # 🇬🇷 Greece — Super League
+    "soccer_czech_first_league": 345,       # 🇨🇿 Czech — First League
+    "soccer_poland_ekstraklasa": 106,       # 🇵🇱 Poland — Ekstraklasa
+    "soccer_croatia_hnl": 210,              # 🇭🇷 Croatia — HNL
+    "soccer_serbia_superliga": 286,         # 🇷🇸 Serbia — SuperLiga
+    # ─── 대회 ───
+    "soccer_uefa_champs_league": 2,         # 🇪🇺 Champions League
+    "soccer_uefa_europa_league": 3,         # 🇪🇺 Europa League
+    # ─── 아시아 ───
+    "soccer_korea_kleague": 292,            # 🇰🇷 Korea — K League 1
+    "soccer_japan_jleague": 98,             # 🇯🇵 Japan — J1 League
+    "soccer_china_super_league": 169,       # 🇨🇳 China — Super League
+    "soccer_australia_aleague": 188,        # 🇦🇺 Australia — A-League
+    "soccer_saudi_pro_league": 307,         # 🇸🇦 Saudi Arabia — Pro League
+    "soccer_india_super_league": 323,       # 🇮🇳 India — Super League
+    # ─── 아메리카 ───
+    "soccer_usa_mls": 253,                  # 🇺🇸 USA — MLS
+    "soccer_brazil_serie_a": 71,            # 🇧🇷 Brazil — Brasileirão Série A
+    "soccer_mexico_liga_mx": 262,           # 🇲🇽 Mexico — Liga MX
+    "soccer_argentina_liga": 128,           # 🇦🇷 Argentina — Liga Profesional
+    # ─── 아프리카 ───
+    "soccer_egypt_premier_league": 233,     # 🇪🇬 Egypt — Premier League
 }
 
 CURRENT_SEASON = 2025  # 2025-2026 시즌
+
+# Pinnacle bookmaker ID in API-Football = 4
+PINNACLE_BOOKMAKER_ID = 4
+# Bet365 bookmaker ID = 6 (fallback)
+BET365_BOOKMAKER_ID = 6
+
 
 
 class FootballStatsService:
@@ -31,9 +70,13 @@ class FootballStatsService:
         self.api_key = os.getenv("API_FOOTBALL_KEY", "")
         self.base_url = "https://v3.football.api-sports.io"
         self._daily_requests = 0
-        self._daily_limit = 100
+        self._daily_limit = 75000  # Ultra plan
         self._cache: Dict[str, any] = {}
         self._last_fetch: Optional[str] = None
+        # team_name → team_id 매핑 캐시 (standings에서 수집)
+        self._team_id_map: Dict[str, int] = {}
+        # H2H 캐시: "teamA_vs_teamB" → H2HRecord
+        self._h2h_cache: Dict[str, dict] = {}
 
         if self.api_key:
             logger.info("✅ API-Football key loaded")
@@ -101,8 +144,14 @@ class FootballStatsService:
                 home_stats = entry.get("home", {})
                 away_stats = entry.get("away", {})
 
+                team_name = team.get("name", "")
+                team_id = team.get("id")
+                # team_name → team_id 맵핑 저장
+                if team_name and team_id:
+                    self._team_id_map[team_name.lower()] = team_id
+
                 items.append(TeamStats(
-                    team_name=team.get("name", ""),
+                    team_name=team_name,
                     league=league_key,
                     season=str(CURRENT_SEASON),
                     rank=entry.get("rank", 0),
@@ -369,21 +418,39 @@ class FootballStatsService:
         return None
 
     # ─── Batch Collection (일괄 수집) ───
+    def find_team_id(self, team_name: str) -> Optional[int]:
+        """캐시된 team_id_map에서 팀 ID 검색 (API 호출 없음)"""
+        name_lower = team_name.lower()
+        # 정확한 매칭
+        if name_lower in self._team_id_map:
+            return self._team_id_map[name_lower]
+        # 부분 매칭
+        for cached_name, team_id in self._team_id_map.items():
+            if name_lower in cached_name or cached_name in name_lower:
+                return team_id
+        return None
+
+    def get_h2h_cache(self) -> Dict[str, dict]:
+        """캐시된 H2H 상대전적 반환"""
+        return self._h2h_cache
+
     async def collect_all(self) -> Dict:
         """하루 1회 전체 데이터 수집 (100건 한도 최적화)"""
         if not self.api_key:
             logger.info("⏭️ API-Football skipped (no key)")
-            return {"standings": {}, "injuries": {}, "predictions": []}
+            return {"standings": {}, "injuries": {}, "predictions": [], "h2h": {}}
 
-        result = {"standings": {}, "injuries": {}, "predictions": []}
+        result = {"standings": {}, "injuries": {}, "predictions": [], "h2h": {}}
         self._daily_requests = 0  # Reset daily counter
 
         # 1. Standings for top leagues (6 requests)
+        #    → team_id_map도 자동으로 채워짐
         for league_key in LEAGUE_MAP:
             standings = await self.fetch_standings(league_key)
             if standings:
                 result["standings"][league_key] = [s.model_dump() for s in standings]
             logger.info(f"  📊 {league_key}: {len(standings)} teams")
+        logger.info(f"  🗂️ Team ID map: {len(self._team_id_map)} teams cached")
 
         # 2. Injuries for top leagues (6 requests)
         for league_key in LEAGUE_MAP:
@@ -392,27 +459,49 @@ class FootballStatsService:
                 result["injuries"][league_key] = [i.model_dump() for i in injuries]
             logger.info(f"  🏥 {league_key}: {len(injuries)} injuries")
 
-        # 3. Upcoming fixtures + predictions (save remaining quota)
-        #    ~6 leagues × 5 fixtures × 1 prediction = ~36 requests
+        # 3. Upcoming fixtures + predictions + H2H
         remaining = self._daily_limit - self._daily_requests
-        predictions_budget = max(0, remaining - 10)  # Keep 10 buffer
+        # H2H 예산: 최대 50건 (42개 리그 대응)
+        h2h_budget = min(50, max(0, remaining - 100))
+        predictions_budget = max(0, remaining - h2h_budget - 50)
         pred_count = 0
+        h2h_count = 0
+        h2h_seen = set()  # 중복 방지
 
         for league_key in LEAGUE_MAP:
-            if pred_count >= predictions_budget:
+            if pred_count >= predictions_budget and h2h_count >= h2h_budget:
                 break
-            fixtures = await self.fetch_upcoming_fixtures(league_key, next_count=5)
+            fixtures = await self.fetch_upcoming_fixtures(league_key, next_count=8)
             for fix in fixtures:
-                if pred_count >= predictions_budget:
-                    break
-                pred = await self.fetch_prediction(fix["fixture_id"])
-                if pred:
-                    pred["league"] = league_key
-                    pred["fixture_id"] = fix["fixture_id"]
-                    pred["date"] = fix["date"]
-                    result["predictions"].append(pred)
-                    pred_count += 1
+                # Predictions
+                if pred_count < predictions_budget:
+                    pred = await self.fetch_prediction(fix["fixture_id"])
+                    if pred:
+                        pred["league"] = league_key
+                        pred["fixture_id"] = fix["fixture_id"]
+                        pred["date"] = fix["date"]
+                        result["predictions"].append(pred)
+                        pred_count += 1
 
+                # H2H (home_id/away_id가 fixture에서 이미 제공됨)
+                home_id = fix.get("home_id")
+                away_id = fix.get("away_id")
+                h2h_key = f"{fix['home']}_vs_{fix['away']}"
+                if (h2h_count < h2h_budget and
+                    home_id and away_id and
+                    h2h_key not in h2h_seen):
+                    h2h_record = await self.fetch_h2h(home_id, away_id, last=10)
+                    if h2h_record:
+                        # 팀 이름으로도 접근 가능하도록 저장
+                        h2h_data = h2h_record.model_dump()
+                        h2h_data["home_team"] = fix["home"]
+                        h2h_data["away_team"] = fix["away"]
+                        self._h2h_cache[h2h_key] = h2h_data
+                        result["h2h"][h2h_key] = h2h_data
+                        h2h_count += 1
+                    h2h_seen.add(h2h_key)
+
+        logger.info(f"  🤝 H2H: {h2h_count} matchups collected")
         self._last_fetch = datetime.now(timezone.utc).isoformat()
         self._cache = result
         logger.info(f"✅ API-Football collection complete: {self._daily_requests} requests used")
@@ -515,3 +604,172 @@ class FootballStatsService:
     def get_cached(self) -> Dict:
         """캐시된 데이터 반환"""
         return self._cache
+
+    # ─── Odds (배당 수집 — The Odds API 대체) ───
+    _odds_cache: List = []
+    _odds_cache_time: Optional[datetime] = None
+    _odds_cache_ttl: int = 300  # 5분 캐시
+
+    async def fetch_odds_for_league(self, league_id: int, season: int = CURRENT_SEASON) -> List[Dict]:
+        """
+        특정 리그의 다가오는 경기 배당을 API-Football /odds 엔드포인트에서 수집.
+        bookmaker: Pinnacle(4) 우선, 없으면 bet365(6) fallback.
+        """
+        data = await self._get("odds", {
+            "league": league_id,
+            "season": season,
+            "bookmaker": PINNACLE_BOOKMAKER_ID,
+        })
+        if not data or not data.get("response"):
+            # Pinnacle 없으면 bet365 시도
+            data = await self._get("odds", {
+                "league": league_id,
+                "season": season,
+                "bookmaker": BET365_BOOKMAKER_ID,
+            })
+        if not data:
+            return []
+
+        results = []
+        for item in data.get("response", []):
+            fixture = item.get("fixture", {})
+            fixture_id = fixture.get("id")
+            fixture_date = fixture.get("date", "")
+            league_info = item.get("league", {})
+
+            for bookie in item.get("bookmakers", []):
+                bookie_name = bookie.get("name", "")
+                for bet in bookie.get("bets", []):
+                    # "Match Winner" = h2h (1X2)
+                    if bet.get("name") != "Match Winner":
+                        continue
+                    home_odds = 0.0
+                    draw_odds = 0.0
+                    away_odds = 0.0
+                    for val in bet.get("values", []):
+                        v = val.get("value", "")
+                        odd = float(val.get("odd", 0))
+                        if v == "Home":
+                            home_odds = odd
+                        elif v == "Draw":
+                            draw_odds = odd
+                        elif v == "Away":
+                            away_odds = odd
+
+                    if home_odds > 0 and away_odds > 0:
+                        results.append({
+                            "fixture_id": fixture_id,
+                            "home_odds": home_odds,
+                            "draw_odds": draw_odds,
+                            "away_odds": away_odds,
+                            "bookmaker": bookie_name,
+                            "match_time": fixture_date,
+                            "league_name": league_info.get("name", ""),
+                            "league_country": league_info.get("country", ""),
+                        })
+                    break  # 첫 번째 Match Winner만
+                break  # 첫 번째 bookie만
+        return results
+
+    async def fetch_all_odds(self) -> List[Dict]:
+        """
+        전체 리그 배당 수집 — PinnacleService.refresh_odds() 대체.
+        API-Football /odds 엔드포인트 + /fixtures로 팀 이름 매핑.
+        """
+        all_odds = []
+
+        for league_key, league_id in LEAGUE_MAP.items():
+            # 먼저 다가오는 경기 목록 조회 (팀 이름 확보)
+            fixtures_data = await self._get("fixtures", {
+                "league": league_id,
+                "season": CURRENT_SEASON,
+                "next": 15,
+            })
+            if not fixtures_data:
+                continue
+
+            # fixture_id → 팀 이름 매핑
+            fixture_teams = {}
+            for fix in fixtures_data.get("response", []):
+                fid = fix.get("fixture", {}).get("id")
+                home = fix.get("teams", {}).get("home", {})
+                away = fix.get("teams", {}).get("away", {})
+                fixture_teams[fid] = {
+                    "home": home.get("name", ""),
+                    "away": away.get("name", ""),
+                    "date": fix.get("fixture", {}).get("date", ""),
+                }
+
+            # 배당 수집
+            odds_list = await self.fetch_odds_for_league(league_id)
+            for o in odds_list:
+                fid = o.get("fixture_id")
+                teams = fixture_teams.get(fid, {})
+                if teams:
+                    o["home_team"] = teams.get("home", "")
+                    o["away_team"] = teams.get("away", "")
+                    if not o.get("match_time"):
+                        o["match_time"] = teams.get("date", "")
+                    o["sport"] = "Soccer"
+                    o["league"] = o.get("league_name", league_key)
+                    all_odds.append(o)
+
+            logger.info(f"  🎰 {league_key}: {len(odds_list)} odds")
+
+        self._odds_cache = all_odds
+        self._odds_cache_time = datetime.now(timezone.utc)
+        logger.info(f"✅ Total odds collected: {len(all_odds)}")
+        return all_odds
+
+    def get_odds_cache(self) -> List[Dict]:
+        """캐시된 배당 데이터 반환"""
+        return self._odds_cache
+
+    # ─── Finished Fixtures (경기 결과 — The Odds API scores 대체) ───
+
+    async def fetch_finished_fixtures(self, days_back: int = 3) -> List[Dict]:
+        """
+        최근 N일간 완료된 경기 결과 조회 — ResultGrader 대체용.
+        API-Football /fixtures?status=FT 사용.
+        """
+        date_from = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        date_to = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        all_results = []
+        for league_key, league_id in LEAGUE_MAP.items():
+            data = await self._get("fixtures", {
+                "league": league_id,
+                "season": CURRENT_SEASON,
+                "from": date_from,
+                "to": date_to,
+                "status": "FT-AET-PEN",  # Finished, After Extra Time, Penalties
+            })
+            if not data:
+                continue
+
+            for fix in data.get("response", []):
+                fixture = fix.get("fixture", {})
+                teams = fix.get("teams", {})
+                goals = fix.get("goals", {})
+                score = fix.get("score", {})
+                league = fix.get("league", {})
+
+                result = {
+                    "fixture_id": fixture.get("id"),
+                    "home_team": teams.get("home", {}).get("name", ""),
+                    "away_team": teams.get("away", {}).get("name", ""),
+                    "home_score": goals.get("home", 0) or 0,
+                    "away_score": goals.get("away", 0) or 0,
+                    "status": "Finished",
+                    "sport": "soccer",
+                    "sport_key": f"soccer_{league.get('country', '').lower()}",
+                    "commence_time": fixture.get("date", ""),
+                    "league_name": league.get("name", ""),
+                    # 정규시간 스코어 (축구 배당 정산용)
+                    "fulltime_home": score.get("fulltime", {}).get("home", 0) or 0,
+                    "fulltime_away": score.get("fulltime", {}).get("away", 0) or 0,
+                }
+                all_results.append(result)
+
+        logger.info(f"📊 Finished fixtures ({days_back}d): {len(all_results)} results")
+        return all_results

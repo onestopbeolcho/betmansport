@@ -26,7 +26,7 @@ const OddsHistoryChart: React.FC<Props> = ({ data }) => {
     if (!data || data.length < 2) {
         return (
             <div className="flex items-center justify-center h-32 text-sm" style={{ color: 'var(--text-muted)' }}>
-                데이터가 충분하지 않습니다 (최소 2개 시점 필요)
+                Insufficient data (minimum 2 data points needed)
             </div>
         );
     }
@@ -38,7 +38,7 @@ const OddsHistoryChart: React.FC<Props> = ({ data }) => {
 
     return (
         <div className="w-full h-64 p-3 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-xs font-bold mb-2 pl-2" style={{ color: 'var(--text-muted)' }}>배당 흐름 (최근순)</h3>
+            <h3 className="text-xs font-bold mb-2 pl-2" style={{ color: 'var(--text-muted)' }}>데이터 흐름 (최근)</h3>
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formattedData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -70,7 +70,7 @@ const OddsHistoryChart: React.FC<Props> = ({ data }) => {
                     <Line
                         type="monotone"
                         dataKey="home_odds"
-                        name="홈승"
+                        name="Home"
                         stroke="#00d4ff"
                         strokeWidth={2}
                         dot={{ r: 2, fill: '#00d4ff' }}
@@ -79,7 +79,7 @@ const OddsHistoryChart: React.FC<Props> = ({ data }) => {
                     <Line
                         type="monotone"
                         dataKey="draw_odds"
-                        name="무승부"
+                        name="Draw"
                         stroke="rgba(255,255,255,0.4)"
                         strokeWidth={2}
                         dot={{ r: 2 }}
@@ -87,7 +87,7 @@ const OddsHistoryChart: React.FC<Props> = ({ data }) => {
                     <Line
                         type="monotone"
                         dataKey="away_odds"
-                        name="원정승"
+                        name="Away"
                         stroke="#8b5cf6"
                         strokeWidth={2}
                         dot={{ r: 2, fill: '#8b5cf6' }}

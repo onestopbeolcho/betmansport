@@ -12,11 +12,11 @@ import * as PortOne from '@portone/browser-sdk/v2';
 const PLANS: Record<string, Record<string, { name: string; price: number; features: string[] }>> = {
     ko: {
         pro: { name: "Pro Investor", price: 55000, features: ["무제한 AI 분석 리포트", "실시간 알림 서비스", "고급 포트폴리오 관리", "단일 경기 심층 분석"] },
-        vip: { name: "VIP", price: 105000, features: ["Pro 플랜의 모든 기능", "전용 텔레그램 채널", "우선적 고객 지원", "1:1 프리미엄 리포트"] },
+        vip: { name: "VIP Elite", price: 105000, features: ["Pro 플랜의 모든 기능", "AI 심층 리포트 PDF", "데이터 변동 즉시 알림", "AI 자동 조합 최적화"] },
     },
     en: {
         pro: { name: "Pro Investor", price: 3999, features: ["Unlimited AI analysis reports", "Real-time alert service", "Advanced portfolio management", "Deep single-match analysis"] },
-        vip: { name: "VIP", price: 7499, features: ["All Pro plan features", "Exclusive Telegram channel", "Priority customer support", "1:1 premium report"] },
+        vip: { name: "VIP Elite", price: 7499, features: ["All Pro plan features", "AI Deep Analysis Report PDF", "Odds Shift Instant Alerts", "AI Auto Combo Optimizer"] },
     },
 };
 
@@ -53,8 +53,32 @@ function PaymentRequestContent() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [buyerName, setBuyerName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [agreedTerms, setAgreedTerms] = useState(false);
     const [agreedAge, setAgreedAge] = useState(false);
+
+    // 로그인된 사용자 정보 자동 입력
+    React.useEffect(() => {
+        if (user) {
+            if (user.full_name && !buyerName) setBuyerName(user.full_name);
+            if (user.phone && !phoneNumber) {
+                const digits = user.phone.replace(/\D/g, '');
+                if (digits.length >= 10) {
+                    setPhoneNumber(`${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`);
+                }
+            }
+        }
+    }, [user]);
+
+    const formatPhone = (value: string) => {
+        const digits = value.replace(/\D/g, '').slice(0, 11);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+        return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    };
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    const isPhoneValid = phoneDigits.length === 10 || phoneDigits.length === 11;
 
     const formatPrice = (amount: number) => {
         if (currency === 'USD') return `$${(amount / 100).toFixed(2)}`;
@@ -63,6 +87,8 @@ function PaymentRequestContent() {
 
     const handleCheckout = async () => {
         if (!user) { setError(t.errorLogin || '로그인이 필요합니다.'); return; }
+        if (!buyerName.trim()) { setError('구매자명을 입력해주세요.'); return; }
+        if (!isPhoneValid) { setError('휴대폰 번호를 정확히 입력해주세요.'); return; }
         if (!agreedTerms || !agreedAge) { setError(t.errorAgree || '모든 동의 항목을 체크해주세요.'); return; }
 
         setLoading(true); setError('');
@@ -78,7 +104,11 @@ function PaymentRequestContent() {
                 totalAmount: plan.price,
                 currency: currency === 'USD' ? 'CURRENCY_USD' : 'CURRENCY_KRW',
                 payMethod: 'CARD',
-                customer: { email: user.email || undefined },
+                customer: {
+                    fullName: buyerName.trim() || undefined,
+                    email: user.email || undefined,
+                    phoneNumber: phoneDigits || undefined,
+                },
                 redirectUrl: `${window.location.origin}/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}`,
             });
 
@@ -139,7 +169,43 @@ function PaymentRequestContent() {
                             <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                             <line x1="1" y1="10" x2="23" y2="10" />
                         </svg>
-                        {t.badge || 'PortOne 보안 결제 · 카드 / 간편결제 / 계좌이체'}
+                        {t.badge || 'KG이니시스 보안 결제 · 카드 / 간편결제 / 계좌이체'}
+                    </div>
+
+                    {/* ── 구매자 정보 (KG이니시스 필수) ── */}
+                    <div className="space-y-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>구매자 정보 (필수)</p>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                                👤 구매자명 <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={buyerName}
+                                onChange={(e) => setBuyerName(e.target.value)}
+                                placeholder="홍길동"
+                                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                                style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                                📱 휴대폰 번호 <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <input
+                                type="tel"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(formatPhone(e.target.value))}
+                                placeholder="010-0000-0000"
+                                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                                style={{
+                                    background: 'var(--bg-elevated)',
+                                    color: 'var(--text-primary)',
+                                    border: `1px solid ${phoneNumber && !isPhoneValid ? '#ef4444' : 'var(--border-subtle)'}`,
+                                }}
+                            />
+                        </div>
+                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>KG이니시스 보안 결제를 위해 필수 입력 항목입니다.</p>
                     </div>
 
                     <div className="space-y-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -155,7 +221,7 @@ function PaymentRequestContent() {
                         <label className="flex items-start gap-3 cursor-pointer">
                             <input type="checkbox" checked={agreedAge} onChange={(e) => setAgreedAge(e.target.checked)} className="mt-0.5 accent-[var(--accent-primary)]" />
                             <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                {t.agreeAge || '만 19세 이상이며, 본 서비스가 투자 조언이 아닌 통계 분석 도구임을 이해합니다.'}
+                                {t.agreeAge || '만 19세 이상이며, 본 서비스가 데이터 분석 도구임을 이해합니다.'}
                             </span>
                         </label>
                     </div>
@@ -167,12 +233,12 @@ function PaymentRequestContent() {
                     )}
 
                     {!user ? (
-                        <Link href={`/${currentLang}/login`} className="block w-full py-3 text-sm font-bold text-center rounded-xl transition"
+                        <Link href={`/${currentLang}/login?redirect=${encodeURIComponent(pathname + '?' + searchParams.toString())}`} className="block w-full py-3 text-sm font-bold text-center rounded-xl transition"
                             style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
                             {t.loginFirst || '로그인 후 결제하기'}
                         </Link>
                     ) : (
-                        <button onClick={handleCheckout} disabled={loading || !agreedTerms || !agreedAge}
+                        <button onClick={handleCheckout} disabled={loading || !buyerName.trim() || !isPhoneValid || !agreedTerms || !agreedAge}
                             className="btn-primary w-full py-3.5 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                             {loading ? (
                                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.processing || '결제 처리 중...'}</>

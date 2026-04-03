@@ -3,6 +3,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { i18n, type Locale } from '../lib/i18n-config';
+import { useDictionarySafe } from '../context/DictionaryContext';
 
 interface PremiumGateProps {
     /** Content to show (will be blurred for free users) */
@@ -28,12 +29,14 @@ interface PremiumGateProps {
  */
 export default function PremiumGate({
     children,
-    featureName = "프리미엄 기능",
+    featureName = "Premium Feature",
     requiredTier = "pro",
     showTeaser = true,
 }: PremiumGateProps) {
     const { user } = useAuth();
     const pathname = usePathname();
+    const dict = useDictionarySafe();
+    const tp = dict?.premiumGate || {};
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
@@ -78,20 +81,20 @@ export default function PremiumGate({
 
                     <h3 className="text-base font-extrabold text-white">{featureName}</h3>
                     <p className="text-xs text-[var(--text-muted)] leading-relaxed">
-                        이 기능은 <span className="text-[var(--accent-primary)] font-bold">
+                        {tp.description || 'This feature is'} <span className="text-[var(--accent-primary)] font-bold">
                             {requiredTier === 'pro' ? 'Pro Investor' : 'VIP'}
-                        </span> 멤버십 이상에서 이용 가능합니다.
+                        </span> {tp.memberOnly || 'available for members and above.'}
                     </p>
 
                     <a href={`/${currentLang}/pricing`}>
                         <button className="btn-primary w-full py-3 text-sm font-bold rounded-xl">
-                            💎 멤버십 업그레이드
+                            💎 {tp.upgrade || 'Upgrade Membership'}
                         </button>
                     </a>
 
                     {!user && (
                         <a href={`/${currentLang}/login`} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-primary)] transition">
-                            이미 멤버십이 있으신가요? 로그인
+                            {tp.alreadyMember || 'Already a member?'} {dict?.auth?.loginLink || 'Sign In'}
                         </a>
                     )}
                 </div>

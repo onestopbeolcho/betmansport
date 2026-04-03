@@ -131,27 +131,27 @@ export default function NotificationSettings() {
     return (
         <div className="card-glass rounded-2xl p-6">
             <h2 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                🔔 알림 설정
+                🔔 Notification Settings
             </h2>
             <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-                밸류벳 발견 시 실시간 알림을 받으세요
+                Get real-time alerts when value opportunities are found
             </p>
 
             {/* Permission Status */}
             {!supported ? (
                 <div className="rounded-xl p-4 mb-6" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    <p className="text-sm font-medium text-red-400">⚠️ 이 브라우저는 Push 알림을 지원하지 않습니다</p>
-                    <p className="text-xs mt-1 text-red-400/60">Chrome, Firefox, Edge 브라우저를 사용해 주세요</p>
+                    <p className="text-sm font-medium text-red-400">⚠️ This browser does not support push notifications</p>
+                    <p className="text-xs mt-1 text-red-400/60">Please use Chrome, Firefox, or Edge</p>
                 </div>
             ) : permission !== 'granted' ? (
                 <div className="rounded-xl p-4 mb-6" style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.15)' }}>
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium" style={{ color: 'var(--accent-primary)' }}>
-                                알림이 비활성화 상태입니다
+                                Notifications are disabled
                             </p>
                             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                                알림을 켜면 밸류벳 발견 시 즉시 알려드립니다
+                                Turn on to get notified instantly when value opportunities are found
                             </p>
                         </div>
                         <button
@@ -159,14 +159,14 @@ export default function NotificationSettings() {
                             className="px-4 py-2 rounded-lg text-sm font-bold text-white transition-all hover:scale-105"
                             style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}
                         >
-                            알림 켜기
+                            Enable Notifications
                         </button>
                     </div>
                 </div>
             ) : (
                 <div className="rounded-xl p-3 mb-6 flex items-center gap-2" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
                     <span className="text-green-400">✅</span>
-                    <p className="text-sm text-green-400 font-medium">알림이 활성화되어 있습니다</p>
+                    <p className="text-sm text-green-400 font-medium">Notifications are enabled</p>
                 </div>
             )}
 
@@ -175,24 +175,24 @@ export default function NotificationSettings() {
                 <div>
                     <NotificationSettingItem
                         icon="🎯"
-                        label="밸류벳 발견 알림"
-                        description="EV 5% 이상의 가치 베팅이 발견되면 즉시 알림"
+                        label="Value Alerts"
+                        description="Instant alert when EV 5%+ value opportunities are found"
                         checked={prefs.valueBetAlert}
                         onChange={(v) => updatePref('valueBetAlert', v)}
                         tier={user.tier}
                     />
                     <NotificationSettingItem
                         icon="⭐"
-                        label="오늘의 추천 Pick"
-                        description="매일 엄선된 추천 픽이 발행되면 알림"
+                        label="Daily Recommended Pick"
+                        description="Get notified when curated daily picks are published"
                         checked={prefs.dailyPick}
                         onChange={(v) => updatePref('dailyPick', v)}
                         tier={user.tier}
                     />
                     <NotificationSettingItem
                         icon="📈"
-                        label="배당 급변동 알림"
-                        description="관심 경기의 배당이 크게 변동되면 알림"
+                        label="데이터 변동 알림"
+                        description="추적 중인 경기의 데이터가 크게 변동되면 알림을 받습니다"
                         checked={prefs.oddsChange}
                         onChange={(v) => updatePref('oddsChange', v)}
                         pro
@@ -200,16 +200,16 @@ export default function NotificationSettings() {
                     />
                     <NotificationSettingItem
                         icon="🏆"
-                        label="적중 결과 알림"
-                        description="추천 픽의 경기 결과가 나오면 알림"
+                        label="Result Alerts"
+                        description="Notified when match results for recommended picks are in"
                         checked={prefs.resultAlert}
                         onChange={(v) => updatePref('resultAlert', v)}
                         tier={user.tier}
                     />
                     <NotificationSettingItem
                         icon="📢"
-                        label="소식 및 업데이트"
-                        description="새로운 기능, 이벤트 등 서비스 소식"
+                        label="News & Updates"
+                        description="New features, events, and service announcements"
                         checked={prefs.marketingAlert}
                         onChange={(v) => updatePref('marketingAlert', v)}
                         tier={user.tier}
@@ -226,11 +226,11 @@ export default function NotificationSettings() {
                         className="px-6 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 disabled:opacity-50"
                         style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}
                     >
-                        {saving ? '저장 중...' : '설정 저장'}
+                        {saving ? 'Saving...' : 'Save Settings'}
                     </button>
                     {saved && (
                         <span className="text-sm text-green-400 font-medium animate-fade-up">
-                            ✅ 저장 완료!
+                            ✅ Saved!
                         </span>
                     )}
                 </div>

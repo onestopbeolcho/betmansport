@@ -287,3 +287,30 @@ async def get_my_predictions(
     except Exception as e:
         logger.warning(f"Firestore my-predictions failed: {e}")
         return []
+
+
+@router.post("/settle-now")
+async def trigger_settlement():
+    """수동으로 정산 실행 (관리자용)."""
+    try:
+        from app.services.settlement import auto_settle_predictions
+        result = await auto_settle_predictions()
+        return {"status": "ok", **result}
+    except Exception as e:
+        logger.error(f"Manual settlement failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/match-result/{match_id}")
+async def get_match_result_endpoint(match_id: str):
+    """경기 결과 조회."""
+    try:
+        from app.models.prediction_db import get_match_result
+        result = await get_match_result(match_id)
+        if result:
+            return result
+        return {"match_id": match_id, "status": "NOT_SETTLED"}
+    except Exception as e:
+        logger.warning(f"Match result lookup failed: {e}")
+        return {"match_id": match_id, "status": "ERROR"}
+

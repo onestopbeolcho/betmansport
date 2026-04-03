@@ -95,8 +95,8 @@ export async function saveFCMToken(userId: string, token: string): Promise<void>
  */
 export interface NotificationPreferences {
     valueBetAlert: boolean;     // 밸류벳 발견 알림
-    dailyPick: boolean;         // 오늘의 추천 알림
-    oddsChange: boolean;        // 배당 급변동 알림
+    dailyPick: boolean;         // 오늘의 핵심 분석 알림
+    oddsChange: boolean;        // 데이터 급변동 알림
     resultAlert: boolean;       // 적중 결과 알림
     marketingAlert: boolean;    // 마케팅 알림
 }

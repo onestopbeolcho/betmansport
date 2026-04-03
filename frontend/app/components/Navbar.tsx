@@ -31,11 +31,13 @@ export default function Navbar() {
 
     const navLinks = [
         { href: `/${currentLang}`, label: t.home || "홈", icon: "⚡", desc: t.homeDesc || "서비스 소개" },
-        { href: `/${currentLang}/bets`, label: t.valueBet || "밸류벳", icon: "📊", desc: t.valueBetDesc || "고평가 데이터 탐지" },
-        { href: `/${currentLang}/market`, label: t.matchPredict || "승부예측", icon: "🔮", desc: t.matchPredictDesc || "AI 경기 결과 예측" },
-        { href: `/${currentLang}/market`, label: t.aiPredict || "AI분석", icon: "🧠", desc: t.aiPredictDesc || "4대 API 종합분석" },
-        { href: `/${currentLang}/mypage`, label: t.portfolio || "내 포트폴리오", icon: "💼", desc: t.portfolioDesc || "분석 내역 · 수익" },
-        { href: `/${currentLang}/manual`, label: t.guide || "이용가이드", icon: "📖", desc: t.guideDesc || "사이트 사용법" },
+        { href: `/${currentLang}/bets`, label: t.valueBet || "밸류 분석", icon: "📊", desc: t.valueBetDesc || "고평가 데이터 탐지" },
+        { href: `/${currentLang}/market`, label: t.matchPredict || "예측", icon: "🗳️", desc: t.matchPredictDesc || "경기 예측 투표" },
+        { href: `/${currentLang}/analysis`, label: t.aiPredict || "AI 분석", icon: "🧠", desc: t.aiPredictDesc || "AI 포트폴리오 분석" },
+        { href: `/${currentLang}/accuracy`, label: t.accuracy || "적중률", icon: "🎯", desc: t.accuracyDesc || "AI 분석 정확도" },
+        { href: `/${currentLang}/mypage`, label: t.portfolio || "포트폴리오", icon: "💼", desc: t.portfolioDesc || "분석 기록 · 수익률" },
+        { href: `/${currentLang}/vip`, label: "VIP", icon: "👑", desc: t.vipDesc || "프리미엄 VIP 기능" },
+        { href: `/${currentLang}/manual`, label: t.guide || "이용안내", icon: "📖", desc: t.guideDesc || "사용 방법" },
     ];
 
     const switchLocale = (newLang: string) => {
@@ -80,7 +82,7 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="glass-heavy sticky top-0 z-50 border-b border-[var(--glass-border)]">
+        <nav data-tour="tour-nav" className="glass-heavy sticky top-0 z-50 border-b border-[var(--glass-border)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
                 <div className="flex items-center space-x-8">
                     <a href={`/${currentLang}`} className="flex items-center space-x-2 group">
@@ -105,8 +107,8 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    {/* 🌐 Language Selector */}
-                    <div className="relative" ref={langRef}>
+                    {/* 🌐 Language Selector — 임시 비활성화 (PG 승인 후 복구) */}
+                    <div className="relative hidden" ref={langRef}>
                         <button
                             onClick={() => setLangOpen(!langOpen)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.08] border border-[var(--border-subtle)] hover:border-[var(--border-accent)] transition-all"
@@ -172,10 +174,10 @@ export default function Navbar() {
                                         </div>
                                         <div className="py-1">
                                             <a href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
-                                                <span className="text-base">💼</span> {t.portfolio || '내 포트폴리오'}
+                                                <span className="text-base">💼</span> {t.portfolio || 'Portfolio'}
                                             </a>
                                             <a href={`/${currentLang}/pricing`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
-                                                <span className="text-base">💎</span> {t.subscription || '구독 관리'}
+                                                <span className="text-base">💎</span> {t.subscription || 'Manage Plan'}
                                             </a>
                                         </div>
                                         <div className="border-t border-[var(--border-subtle)] py-1">
@@ -183,7 +185,7 @@ export default function Navbar() {
                                                 onClick={() => { logout(); setProfileOpen(false); }}
                                                 className="w-full flex items-center gap-2 text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-all"
                                             >
-                                                <span className="text-base">🚪</span> {t.logout || '로그아웃'}
+                                                <span className="text-base">🚪</span> {t.logout || 'Sign Out'}
                                             </button>
                                         </div>
                                     </div>
@@ -192,10 +194,10 @@ export default function Navbar() {
                         ) : (
                             <div className="hidden sm:flex items-center space-x-2">
                                 <a href={`/${currentLang}/login`} className="btn-ghost text-sm !py-1.5 !px-4">
-                                    {t.login || '로그인'}
+                                    {t.login || 'Sign In'}
                                 </a>
                                 <a href={`/${currentLang}/register`} className="btn-primary text-sm !py-1.5 !px-4">
-                                    {t.register || '회원가입'}
+                                    {t.register || 'Sign Up'}
                                 </a>
                             </div>
                         )
@@ -228,8 +230,8 @@ export default function Navbar() {
                             </a>
                         ))}
 
-                        {/* Mobile Language Switcher */}
-                        <div className="pt-2 border-t border-[var(--border-subtle)]">
+                        {/* Mobile Language Switcher — 임시 비활성화 (PG 승인 후 복구) */}
+                        <div className="pt-2 border-t border-[var(--border-subtle)] hidden">
                             <div className="grid grid-cols-3 gap-1.5 px-4 py-2">
                                 {i18n.locales.map((code) => {
                                     const lang = languageNames[code];
@@ -266,16 +268,16 @@ export default function Navbar() {
                                         onClick={() => { logout(); setMobileOpen(false); }}
                                         className="w-full text-left px-4 py-3 text-sm font-bold text-red-400 rounded-xl hover:bg-red-500/10 transition-all flex items-center gap-2"
                                     >
-                                        🚪 {t.logout || '로그아웃'}
+                                        🚪 {t.logout || 'Sign Out'}
                                     </button>
                                 </>
                             ) : (
                                 <div className="space-y-2 pb-2">
                                     <a href={`/${currentLang}/login`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl border border-[var(--border-default)] text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setMobileOpen(false)}>
-                                        {t.login || '로그인'}
+                                        {t.login || 'Sign In'}
                                     </a>
                                     <a href={`/${currentLang}/register`} className="block px-4 py-3 text-sm font-bold text-center rounded-xl btn-primary" onClick={() => setMobileOpen(false)}>
-                                        {t.register || '회원가입'}
+                                        {t.register || 'Sign Up'}
                                     </a>
                                 </div>
                             )}

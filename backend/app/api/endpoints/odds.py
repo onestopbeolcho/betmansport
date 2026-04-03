@@ -82,10 +82,10 @@ async def get_all_bets():
     Betman 매칭 경기는 국내/해외 비교, 나머지는 Pinnacle 배당만 표시.
     """
     try:
-        # 1. Pinnacle (항상 가능)
+        # 1. Pinnacle (인메모리 → Firestore → Mock 순서로 탐색)
         pinnacle_data = await pinnacle_service.fetch_odds()
         if not pinnacle_data:
-            logger.warning("No Pinnacle data")
+            logger.warning("No Pinnacle data even after fetch_odds fallback")
             return []
 
         # 2. Betman 데이터

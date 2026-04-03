@@ -1,10 +1,13 @@
 
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useDictionarySafe } from '../context/DictionaryContext';
 
 export default function DeadlineBanner() {
     const [timeLeft, setTimeLeft] = useState('');
     const [isVisible, setIsVisible] = useState(true);
+    const dict = useDictionarySafe();
+    const td = dict?.deadline || {};
 
     useEffect(() => {
         const updateTimer = () => {
@@ -38,7 +41,7 @@ export default function DeadlineBanner() {
             <div className="absolute inset-0 animate-gradient"
                 style={{ background: 'linear-gradient(90deg, rgba(0,212,255,0.06) 0%, rgba(139,92,246,0.06) 50%, rgba(0,212,255,0.06) 100%)', backgroundSize: '200% 100%' }} />
             <div className="relative max-w-7xl mx-auto px-4 py-2 flex items-center justify-center text-xs gap-2">
-                <span className="text-[var(--text-muted)]">⏱ 이번 매치데이 마감까지</span>
+                <span className="text-[var(--text-muted)]">⏱ {td.ending || 'Matchday ends in'}</span>
                 <span className="text-[var(--accent-primary)] font-bold font-mono tracking-wider">{timeLeft}</span>
                 <button
                     onClick={() => setIsVisible(false)}

@@ -269,7 +269,34 @@ TEAM_MAP_KR_TO_EN: Dict[str, str] = {
     "LA클리퍼": "Los Angeles Clippers",
     "휴스로킷": "Houston Rockets",
     "애틀호크": "Atlanta Hawks",
+
+    # ═══ K리그 1 ═══
+    "전북현대": "Jeonbuk Hyundai Motors",
+    "울산현대": "Ulsan Hyundai",
+    "포항스틸": "Pohang Steelers",
+    "대구FC": "Daegu FC",
+    "인천유나": "Incheon United",
+    "수원FC": "Suwon FC",
+    "수삼성": "Suwon Samsung Bluewings",
+    "제주유나": "Jeju United",
+    "강원FC": "Gangwon FC",
+    "광주FC": "Gwangju FC",
+    "서울FC": "FC Seoul",
+    "김천상무": "Gimcheon Sangmu",
+
+    # ═══ MLS ═══
+    "LAG": "LA Galaxy",
+    "LAFC": "Los Angeles FC",
+    "인터마이": "Inter Miami CF",
+    "뉴욕시FC": "New York City FC",
+    "뉴욕RB": "New York Red Bulls",
+    "시애틀": "Seattle Sounders FC",
+    "포틀랜드": "Portland Timbers",
+    "애틀유나": "Atlanta United FC",
+    "토론토FC": "Toronto FC",
+    "내쉬빌SC": "Nashville SC",
 }
+
 
 # ─────────────────────────────────────────────
 # Build reverse index (English → Korean)

@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState, Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import DeadlineBanner from '../../components/DeadlineBanner';
+import { i18n } from '../../lib/i18n-config';
 
 export default function PaymentSuccessPage() {
     return (
@@ -19,8 +19,11 @@ export default function PaymentSuccessPage() {
 
 function SuccessContent() {
     const searchParams = useSearchParams();
+    const pathname = usePathname();
     const sessionId = searchParams.get('session_id');
     const [show, setShow] = useState(false);
+    const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
+    const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
     useEffect(() => {
         setTimeout(() => setShow(true), 100);
@@ -47,43 +50,43 @@ function SuccessContent() {
                     </div>
 
                     <h1 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-                        결제가 완료되었습니다!
+                        Payment Successful!
                     </h1>
 
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        프리미엄 멤버십이 활성화되었습니다.
-                        <br />지금부터 모든 프리미엄 기능을 이용하실 수 있습니다.
+                        Your premium membership has been activated.
+                        <br />You now have access to all premium features.
                     </p>
 
                     {/* Quick Links */}
                     <div className="grid grid-cols-2 gap-3 pt-4">
-                        <Link href="/bets"
+                        <a href={`/${currentLang}/bets`}
                             className="p-3 rounded-xl text-xs font-bold text-center transition-all hover:scale-[1.02]"
                             style={{
                                 background: 'rgba(0,212,255,0.1)',
                                 color: 'var(--accent-primary)',
                                 border: '1px solid rgba(0,212,255,0.2)',
                             }}>
-                            📊 밸류벳 분석
-                        </Link>
-                        <Link href="/market"
+                            📊 Value Analysis
+                        </a>
+                        <a href={`/${currentLang}/market`}
                             className="p-3 rounded-xl text-xs font-bold text-center transition-all hover:scale-[1.02]"
                             style={{
                                 background: 'rgba(139,92,246,0.1)',
                                 color: 'var(--accent-secondary)',
                                 border: '1px solid rgba(139,92,246,0.2)',
                             }}>
-                            🧠 AI 예측
-                        </Link>
+                            🧠 AI Predictions
+                        </a>
                     </div>
 
-                    <Link href="/mypage" className="btn-primary block w-full py-3 text-sm font-bold text-center">
-                        내 구독 관리 →
-                    </Link>
+                    <a href={`/${currentLang}/mypage`} className="btn-primary block w-full py-3 text-sm font-bold text-center">
+                        Manage My Subscription →
+                    </a>
 
                     {sessionId && (
                         <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                            결제 ID: {sessionId.slice(0, 20)}...
+                            Payment ID: {sessionId.slice(0, 20)}...
                         </p>
                     )}
                 </div>

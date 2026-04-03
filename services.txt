@@ -1,0 +1,6 @@
+﻿NAME                    URL                                                     LAST_TRANSITION_TIME
+api                     https://api-n5dv44kdaa-du.a.run.app                     2026-04-02T03:55:08.987308Z
+auto-settle-scheduled   https://auto-settle-scheduled-n5dv44kdaa-du.a.run.app   2026-03-23T15:02:31.656111Z
+odds-collect-scheduled  https://odds-collect-scheduled-n5dv44kdaa-du.a.run.app  2026-03-23T15:01:53.518101Z
+scorenix-backend        https://scorenix-backend-n5dv44kdaa-du.a.run.app        2026-04-01T14:57:25.837403Z
+smart-proto-backend     https://smart-proto-backend-n5dv44kdaa-du.a.run.app     2026-03-18T09:51:55.517543Z

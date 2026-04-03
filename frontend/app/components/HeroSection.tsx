@@ -1,7 +1,7 @@
 
 "use client";
 import React from 'react';
-import Link from 'next/link';
+
 import { useDictionary } from '../context/DictionaryContext';
 import { i18n } from '../lib/i18n-config';
 import { usePathname } from 'next/navigation';
@@ -32,31 +32,31 @@ export default function HeroSection() {
             </div>
 
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-                <div className="text-center">
+                <div className="text-center" data-tour="tour-hero">
                     {/* Badge */}
                     <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-[var(--border-accent)] bg-[rgba(0,212,255,0.06)] text-xs text-[var(--accent-primary)] mb-8 animate-fade-up">
                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] mr-2 animate-pulse" />
-                        {t.badge || '실시간 AI 분석 가동 중'}
+                        {t.badge || 'Real-time AI Analysis Active'}
                     </div>
 
                     {/* Title */}
                     <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-tight mb-6 animate-fade-up" style={{ animationDelay: '80ms' }}>
-                        {t.titleLine1 || 'AI가 분석하는'}<br />
-                        <span className="gradient-text-glow">{t.titleLine2 || '스포츠 데이터'}</span>
+                        {t.titleLine1 || 'AI-Powered'}<br />
+                        <span className="gradient-text-glow">{t.titleLine2 || 'Sports Analytics'}</span>
                     </h1>
 
                     <p className="text-base sm:text-lg text-[var(--text-secondary)] max-w-2xl mx-auto mb-10 animate-fade-up" style={{ animationDelay: '160ms' }}>
-                        {t.subtitle || '글로벌 데이터 소스 기반 AI 통계 분석 · 경기 확률 예측 · 조합 최적화'}
+                        {t.subtitle || 'AI statistical analysis based on global data sources · Match probability prediction · Combo optimization'}
                     </p>
 
                     {/* CTA */}
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up" style={{ animationDelay: '240ms' }}>
-                        <Link href={`/${currentLang}/bets`} className="btn-primary text-base px-8 py-3.5 animate-pulse-glow">
-                            {t.ctaPrimary || 'AI 분석 시작 →'}
-                        </Link>
-                        <Link href={`/${currentLang}/market`} className="btn-ghost text-base px-8 py-3.5">
-                            {t.ctaSecondary || '전체 경기 보기'}
-                        </Link>
+                        <a href={`/${currentLang}/bets`} data-tour="tour-cta-bets" className="btn-primary text-base px-8 py-3.5 animate-pulse-glow">
+                            {t.ctaPrimary || 'Start AI Analysis →'}
+                        </a>
+                        <a href={`/${currentLang}/market`} className="btn-ghost text-base px-8 py-3.5">
+                            {t.ctaSecondary || 'View All Matches'}
+                        </a>
                     </div>
 
                     {/* Stats */}

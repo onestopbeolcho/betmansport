@@ -1,0 +1,23 @@
+{
+    "name": "Scorenix — AI Sports Data Analytics",
+    "short_name": "Scorenix",
+    "description": "AI-powered sports data analytics & match prediction platform",
+    "start_url": "/ko",
+    "display": "standalone",
+    "background_color": "#06060a",
+    "theme_color": "#00d4ff",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "64x64",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

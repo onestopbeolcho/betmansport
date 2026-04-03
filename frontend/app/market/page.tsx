@@ -3,7 +3,12 @@ import React, { useEffect, useState, useMemo } from 'react';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
 import OddsHistoryChart from '../components/OddsHistoryChart'; // Import Chart
+import ProAnalysisPanel from '../components/ProAnalysisPanel';
 import { useCart, CartItem } from '../../context/CartContext';
+import OnboardingTour, { TourRestartButton } from '../components/OnboardingTour';
+import { marketTourSteps } from '../lib/tourSteps';
+import { useDictionarySafe } from '../context/DictionaryContext';
+import { useAuth } from '../context/AuthContext';
 
 interface OddsItem {
     provider: string;
@@ -64,6 +69,7 @@ interface MatchDetail {
 }
 
 interface LiveScore {
+    match_id?: number;
     fixture_id: number;
     status: string;
     status_long: string;
@@ -74,7 +80,8 @@ interface LiveScore {
     away_goals: number;
     halftime: { home: number; away: number };
     league_name: string;
-    events: { time: number; type: string; detail: string; player: string; team: string }[];
+    source?: string;
+    events: { time: number | string; type: string; detail: string; player: string; team: string }[];
 }
 
 // 팀 이름 매칭 (약어/언어 차이 해결)
@@ -97,11 +104,16 @@ function matchTeamName(oddsName: string, liveName: string): boolean {
 }
 
 export default function MarketPage() {
+    const dict = useDictionarySafe();
+    const tm = (dict as any)?.market || {} as Record<string, string>;
+    const tc = (dict as any)?.common || {} as Record<string, string>;
+    const { user } = useAuth();
     const [odds, setOdds] = useState<OddsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const { addToCart, cartItems } = useCart();
     const [aiPredictions, setAiPredictions] = useState<Record<string, AIPrediction>>({});
+    const [tourForceStart, setTourForceStart] = useState(false);
 
     const [selectedSport, setSelectedSport] = useState<string>('ALL');
 
@@ -113,7 +125,7 @@ export default function MarketPage() {
     // Dynamic sport tabs with icons & counts
     const sportTabs = useMemo(() => {
         const iconMap: Record<string, string> = { SOCCER: '⚽', BASKETBALL: '🏀', BASEBALL: '⚾', ICEHOCKEY: '🏒' };
-        const labelMap: Record<string, string> = { SOCCER: '축구', BASKETBALL: '농구', BASEBALL: '야구', ICEHOCKEY: '하키' };
+        const labelMap: Record<string, string> = { SOCCER: tc.soccer || 'Soccer', BASKETBALL: tc.basketball || 'Basketball', BASEBALL: tc.baseball || 'Baseball', ICEHOCKEY: tc.hockey || 'Hockey' };
         const counts: Record<string, number> = {};
         odds.forEach(item => {
             const key = item.sport.toUpperCase();
@@ -164,6 +176,7 @@ export default function MarketPage() {
     // Vote state
     const [voteStats, setVoteStats] = useState<Record<string, { home_pct: number; draw_pct: number; away_pct: number; total_votes: number }>>({});
     const [votedMatches, setVotedMatches] = useState<Record<string, string>>({});
+    const [matchResults, setMatchResults] = useState<Record<string, { status: string; score?: string }>>({});
     const [userId] = useState(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('sp_user_id');
@@ -178,7 +191,7 @@ export default function MarketPage() {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
     const fetchOdds = async () => {
-        setLoading(true);
+        if (odds.length === 0) setLoading(true);
         setError('');
         try {
             const res = await fetch(`${API_BASE_URL}/api/market/pinnacle`);
@@ -186,7 +199,7 @@ export default function MarketPage() {
             const data = await res.json();
             setOdds(data);
         } catch (err) {
-            setError('시장 데이터를 불러오는데 실패했습니다.');
+            setError(tm.errorFetch || 'Failed to load market data.');
             console.error(err);
         } finally {
             setLoading(false);
@@ -257,7 +270,7 @@ export default function MarketPage() {
 
     const handleVote = async (matchId: string, selection: string, odds: number) => {
         if (votedMatches[matchId]) {
-            alert(`이미 이 경기에 투표했습니다.`);
+            alert(tm.alreadyVoted || 'Already voted for this match.');
             return;
         }
         try {
@@ -279,10 +292,34 @@ export default function MarketPage() {
                 }
             } else {
                 const err = await res.json();
-                alert(`투표 실패: ${err.detail || '오류'}`);
+                alert(`${tm.voteFail || 'Vote failed'}: ${err.detail || tc.error || 'Error'}`);
             }
         } catch { console.error('Vote failed'); }
     };
+
+    // 정산 결과 조회 (투표한 경기들의 WON/LOST/PENDING 상태)
+    useEffect(() => {
+        const fetchResults = async () => {
+            const headers: Record<string, string> = {};
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/prediction/my-predictions`, { headers });
+                if (res.ok) {
+                    const preds = await res.json();
+                    const results: Record<string, { status: string; score?: string }> = {};
+                    const voted: Record<string, string> = {};
+                    for (const p of preds) {
+                        voted[p.match_id] = p.selection;
+                        results[p.match_id] = { status: p.status || 'PENDING' };
+                    }
+                    setVotedMatches(prev => ({ ...prev, ...voted }));
+                    setMatchResults(prev => ({ ...prev, ...results }));
+                }
+            } catch { /* ignore */ }
+        };
+        fetchResults();
+    }, [API_BASE_URL]);
 
     const formatTime = (isoString: string) => {
         try {
@@ -320,8 +357,8 @@ export default function MarketPage() {
     useEffect(() => {
         fetchOdds();
         fetchLiveScores();
-        // 60초마다 라이브 스코어 폴링
-        const liveInterval = setInterval(fetchLiveScores, 60000);
+        // 30초마다 라이브 스코어 폴링 (Live-Score-Api 600 req/hr 여유)
+        const liveInterval = setInterval(fetchLiveScores, 30000);
         return () => clearInterval(liveInterval);
     }, []);
 
@@ -331,28 +368,143 @@ export default function MarketPage() {
             <Navbar />
 
             <main className="flex-grow max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-6 w-full pb-32">
-                <div className="flex flex-col md:flex-row justify-between items-end mb-4 border-b border-white/10 pb-3 gap-4">
-                    <div>
-                        <h2 className="text-xl font-bold flex items-center" style={{ color: 'var(--text-primary)' }}>
-                            <span className="w-2 h-6 rounded-sm mr-2" style={{ background: 'var(--accent-primary)' }}></span>
-                            전체 경기 분석
-                        </h2>
-                        <p className="text-sm mt-1 ml-4 flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                            해외 4대 데이터 소스 AI 종합 분석
-                            {liveCount > 0 && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#ef4444' }} />
-                                    {liveCount}경기 진행중
-                                </span>
-                            )}
-                        </p>
-                    </div>
+                {/* ── Hero Description Banner ── */}
+                <div data-tour="tour-market-intro" className="relative overflow-hidden rounded-2xl mb-6" style={{
+                    background: 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(139,92,246,0.08) 50%, rgba(255,107,53,0.06) 100%)',
+                    border: '1px solid rgba(0,212,255,0.15)',
+                }}>
+                    {/* Glow Effects */}
+                    <div style={{
+                        position: 'absolute', top: '-40%', left: '-10%', width: '300px', height: '300px',
+                        background: 'radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%)',
+                        pointerEvents: 'none',
+                    }} />
+                    <div style={{
+                        position: 'absolute', bottom: '-40%', right: '-5%', width: '250px', height: '250px',
+                        background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)',
+                        pointerEvents: 'none',
+                    }} />
 
-                    {/* Data Source Branding Banner */}
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="relative px-5 py-5 sm:px-8 sm:py-6">
+                        {/* Top Row: Title + Live Badge */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl" style={{
+                                background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(139,92,246,0.2))',
+                                border: '1px solid rgba(0,212,255,0.3)',
+                                boxShadow: '0 0 20px rgba(0,212,255,0.1)',
+                            }}>
+                                <span className="text-xl">🗳️</span>
+                            </div>
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                    {tm.heroTitle || 'Prediction Vote'}
+                                    <span className="ml-2 text-sm font-bold px-2 py-0.5 rounded-full" style={{
+                                        background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(139,92,246,0.15))',
+                                        color: 'var(--accent-primary)',
+                                        border: '1px solid rgba(0,212,255,0.25)',
+                                    }}>Prediction League</span>
+                                </h1>
+                                <p className="text-sm mt-0.5 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                                    {tm.heroDesc || 'Predict match results with AI data and boost your accuracy'}
+                                    {liveCount > 0 && (
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                                            <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#ef4444' }} />
+                                            {liveCount} {tm.matchesLive || 'LIVE'}
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Steps Guide */}
+                        <div data-tour="tour-market-steps" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                            {[
+                                {
+                                    step: '01',
+                                    icon: '⚽',
+                                    title: tm.stepSelect || 'Select Match',
+                                    desc: tm.stepSelectDesc || 'Check live matches from various leagues',
+                                    color: '#00d4ff',
+                                },
+                                {
+                                    step: '02',
+                                    icon: '🎯',
+                                    title: tm.stepPredict || 'Predict Result',
+                                    desc: tm.stepPredictDesc || 'Vote Home/Draw/Away with AI analysis',
+                                    color: '#8b5cf6',
+                                },
+                                {
+                                    step: '03',
+                                    icon: '🏆',
+                                    title: tm.stepSettle || 'Auto Settle',
+                                    desc: tm.stepSettleDesc || 'Automatically settled after match, check accuracy',
+                                    color: '#ff6b35',
+                                },
+                            ].map((s, i) => (
+                                <div key={i} className="flex items-start gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.02)',
+                                        border: '1px solid rgba(255,255,255,0.06)',
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.background = `${s.color}0a`;
+                                        e.currentTarget.style.borderColor = `${s.color}25`;
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-lg"
+                                        style={{ background: `${s.color}15`, border: `1px solid ${s.color}30` }}>
+                                        {s.icon}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[9px] font-black tracking-widest px-1.5 py-0.5 rounded" style={{ color: s.color, background: `${s.color}10` }}>STEP {s.step}</span>
+                                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{s.title}</span>
+                                        </div>
+                                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{s.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Bottom Stats Row */}
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#00d4ff' }} />
+                                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{tm.liveOdds || 'Live Odds'}</span>
+                                <span className="text-[11px] font-bold" style={{ color: '#00d4ff' }}>{odds.length} {tm.matches || 'matches'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#8b5cf6' }} />
+                                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{tm.aiAnalysis || 'AI Analysis'}</span>
+                                <span className="text-[11px] font-bold" style={{ color: '#8b5cf6' }}>{Object.keys(aiPredictions).length} {tm.matches || 'matches'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#35c759' }} />
+                                <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{tm.autoSettle || 'Auto Settle'}</span>
+                                <span className="text-[11px] font-bold" style={{ color: '#35c759' }}>{tm.settleInterval || 'every 30 min'}</span>
+                            </div>
+                            <div className="ml-auto flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full" style={{
+                                background: 'rgba(53,199,89,0.08)', border: '1px solid rgba(53,199,89,0.2)', color: '#35c759',
+                            }}>
+                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#35c759' }} />
+                                {tm.heroBadge || 'Free Entry'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap justify-between items-center mb-4 border-b border-white/10 pb-3 gap-3">
+                    {/* Data Source Branding Banner - hidden on mobile */}
+                    <div className="hidden sm:flex items-center gap-3 flex-wrap">
                         {[
-                            { name: 'The Odds API', icon: '📊', color: '#00d4ff' },
                             { name: 'API-Football', icon: '⚽', color: '#35c759' },
+                            { name: 'Pinnacle Odds', icon: '📊', color: '#00d4ff' },
                             { name: 'football-data.org', icon: '📈', color: '#fbbf24' },
                             { name: 'API-Basketball', icon: '🏀', color: '#ff6b35' },
                         ].map((src, i) => (
@@ -373,11 +525,11 @@ export default function MarketPage() {
                                 color: 'var(--accent-primary)',
                                 border: '1px solid rgba(0,212,255,0.3)',
                             }}>
-                            🧠 AI 종합분석
+                            🧠 {tm.aiComprehensive || 'AI Analysis'}
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div data-tour="tour-market-sports" className="flex flex-wrap gap-2">
                         <button
                             onClick={() => { setSelectedSport('ALL'); setCollapsedLeagues({}); }}
                             className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${selectedSport === 'ALL'
@@ -389,7 +541,7 @@ export default function MarketPage() {
                                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)' }
                             }
                         >
-                            🏆 전체 <span className="ml-0.5 opacity-70">{odds.length}</span>
+                            🏆 {tm.filterAll || 'All'} <span className="ml-0.5 opacity-70">{odds.length}</span>
                         </button>
                         {sportTabs.map(tab => (
                             <button
@@ -415,7 +567,7 @@ export default function MarketPage() {
                             className="px-3 py-1.5 text-xs rounded-full flex items-center ml-1 border border-white/10 hover:border-white/20 transition"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
                         >
-                            {loading ? '로딩 중...' : '🔄 새로고침'}
+                            {loading ? (tc.loading || 'Loading...') : `🔄 ${tm.refresh || 'Refresh'}`}
                         </button>
                     </div>
                 </div>
@@ -426,27 +578,268 @@ export default function MarketPage() {
                     </div>
                 )}
 
-                {/* Odds Table */}
-                <div className="overflow-hidden rounded-lg border" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                {/* ═══ MOBILE CARD VIEW ═══ */}
+                <div className="md:hidden space-y-2">
+                    {loading && odds.length === 0 ? (
+                        <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+                            <div className="animate-spin inline-block w-6 h-6 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-2" />
+                            <p className="text-sm">{tc.loading || 'Loading...'}</p>
+                        </div>
+                    ) : filteredOdds.length === 0 ? (
+                        <div className="text-center py-12" style={{ color: 'var(--text-muted)' }}>
+                            <p className="text-sm">{odds.length === 0 ? (tm.noMatches || 'No matches to display.') : (tm.noSportMatches || 'No matches for this sport.')}</p>
+                        </div>
+                    ) : (
+                        groupedByLeague.map((group) => (
+                            <div key={group.league}>
+                                {/* League Header */}
+                                <button
+                                    onClick={() => toggleLeague(group.league)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg mb-1 transition-colors"
+                                    style={{ background: 'rgba(0,212,255,0.04)' }}
+                                >
+                                    <span className="text-[10px] transition-transform" style={{ color: 'var(--text-muted)', display: 'inline-block', transform: collapsedLeagues[group.league] ? 'rotate(-90deg)' : 'rotate(0deg)' }}>▼</span>
+                                    <span className="text-xs font-bold" style={{ color: 'var(--accent-primary)' }}>{group.league}</span>
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)' }}>{group.items.length}</span>
+                                </button>
+
+                                {!collapsedLeagues[group.league] && group.items.map((item, itemIdx) => {
+                                    const isFirstItem = (groupedByLeague[0]?.league === group.league && itemIdx === 0);
+                                    const matchId = `${item.team_home}_${item.team_away}`;
+                                    const pred = aiPredictions[matchId];
+                                    const live = findLiveScore(item);
+                                    const voted = votedMatches[matchId];
+                                    const result = matchResults[matchId];
+                                    const stat = voteStats[matchId];
+
+                                    return (
+                                        <div key={item.globalIdx} data-tour={isFirstItem ? 'tour-market-match' : undefined} className="rounded-xl border mb-2 overflow-hidden transition-all"
+                                            style={{ background: 'var(--bg-surface)', borderColor: expandedRow === item.globalIdx ? 'rgba(0,212,255,0.3)' : 'var(--border-subtle)' }}
+                                        >
+                                            {/* Card Header: Time + AI + Live */}
+                                            <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                                <div className="flex items-center gap-2">
+                                                    {live ? (
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#ef4444' }} />
+                                                            <span className="text-[10px] font-bold" style={{ color: '#ef4444' }}>LIVE {live.elapsed}&apos;</span>
+                                                            <span className="text-sm font-black ml-1" style={{ color: 'var(--text-primary)' }}>{live.home_goals} - {live.away_goals}</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{formatTime(item.match_time)}</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    {pred && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{
+                                                            color: pred.confidence >= 65 ? '#ff6b35' : pred.confidence >= 50 ? '#fbbf24' : 'var(--text-muted)',
+                                                            background: pred.confidence >= 65 ? 'rgba(255,107,53,0.15)' : pred.confidence >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)',
+                                                        }}>
+                                                            {pred.confidence >= 65 ? '🔥' : '⭐'} {pred.confidence.toFixed(0)}%
+                                                        </span>
+                                                    )}
+                                                    {result && (
+                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{
+                                                            background: result.status === 'WON' ? 'rgba(34,197,94,0.15)' : result.status === 'LOST' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)',
+                                                            color: result.status === 'WON' ? '#22c55e' : result.status === 'LOST' ? '#ef4444' : 'var(--text-muted)',
+                                                        }}>
+                                                            {result.status === 'WON' ? `✅ ${tm.hit || 'Hit'}` : result.status === 'LOST' ? `❌ ${tm.miss || 'Miss'}` : `⏳ ${tm.pending || 'Pending'}`}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Teams Row */}
+                                            <div className="px-3 py-3" onClick={() => handleRowClick(item.globalIdx, item.team_home, item.team_away)}>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex-1 text-center">
+                                                        <div className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                                                            {item.team_home_ko || item.team_home}
+                                                        </div>
+                                                        {item.team_home_ko && (
+                                                            <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{item.team_home}</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="px-3 text-xs font-light" style={{ color: 'var(--text-muted)' }}>VS</div>
+                                                    <div className="flex-1 text-center">
+                                                        <div className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                                                            {item.team_away_ko || item.team_away}
+                                                        </div>
+                                                        {item.team_away_ko && (
+                                                            <div className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{item.team_away}</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Vote Stats Bar */}
+                                            {stat && stat.total_votes > 0 && (
+                                                <div className="px-3 pb-2">
+                                                    <div className="flex justify-between text-[9px] mb-1" style={{ color: 'var(--text-muted)' }}>
+                                                        <span>{tm.homeWin || 'Home'} {stat.home_pct?.toFixed(0) || 0}%</span>
+                                                        {stat.draw_pct != null && <span>{tm.draw || 'Draw'} {stat.draw_pct.toFixed(0)}%</span>}
+                                                        <span>{tm.awayWin || 'Away'} {stat.away_pct?.toFixed(0) || 0}%</span>
+                                                    </div>
+                                                    <div className="flex h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+                                                        <div style={{ width: `${stat.home_pct || 0}%`, background: 'rgba(0,212,255,0.6)' }} className="transition-all" />
+                                                        {stat.draw_pct != null && <div style={{ width: `${stat.draw_pct}%`, background: 'rgba(255,255,255,0.12)' }} className="transition-all" />}
+                                                        <div style={{ width: `${stat.away_pct || 0}%`, background: 'rgba(139,92,246,0.6)' }} className="transition-all" />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Odds Buttons - Big Touch Targets */}
+                                            <div data-tour={isFirstItem ? 'tour-market-odds' : undefined} className="grid grid-cols-3 gap-1.5 px-3 pb-3">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        addToCart({
+                                                            id: `${item.team_home}_${item.team_away}_Home`,
+                                                            match_name: `${item.team_home} vs ${item.team_away}`,
+                                                            selection: 'Home',
+                                                            odds: item.home_odds,
+                                                            team_home: item.team_home_ko || item.team_home,
+                                                            team_away: item.team_away_ko || item.team_away,
+                                                            time: formatTime(item.match_time)
+                                                        });
+                                                    }}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`) ? 'ring-1 ring-[var(--accent-primary)]' : ''}`}
+                                                    style={{
+                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`) ? 'rgba(0,212,255,0.12)' : 'var(--bg-card)',
+                                                        border: '1px solid var(--border-subtle)',
+                                                    }}
+                                                >
+                                                    <div className="text-[10px] mb-0.5" style={{ color: 'var(--text-muted)' }}>{tm.homeWin || 'H'}</div>
+                                                    <div className="text-base font-bold" style={{ color: 'var(--odds-home)' }}>{item.home_odds.toFixed(2)}</div>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (item.draw_odds > 0) {
+                                                            addToCart({
+                                                                id: `${item.team_home}_${item.team_away}_Draw`,
+                                                                match_name: `${item.team_home} vs ${item.team_away}`,
+                                                                selection: 'Draw',
+                                                                odds: item.draw_odds,
+                                                                team_home: item.team_home_ko || item.team_home,
+                                                                team_away: item.team_away_ko || item.team_away,
+                                                                time: formatTime(item.match_time)
+                                                            });
+                                                        }
+                                                    }}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`) ? 'ring-1 ring-white/30' : ''}`}
+                                                    style={{
+                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`) ? 'rgba(255,255,255,0.08)' : 'var(--bg-card)',
+                                                        border: '1px solid var(--border-subtle)',
+                                                        opacity: item.draw_odds > 0 ? 1 : 0.3,
+                                                    }}
+                                                    disabled={item.draw_odds <= 0}
+                                                >
+                                                    <div className="text-[10px] mb-0.5" style={{ color: 'var(--text-muted)' }}>{tm.draw || 'D'}</div>
+                                                    <div className="text-base font-bold" style={{ color: 'var(--text-secondary)' }}>{item.draw_odds > 0 ? item.draw_odds.toFixed(2) : '—'}</div>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        addToCart({
+                                                            id: `${item.team_home}_${item.team_away}_Away`,
+                                                            match_name: `${item.team_home} vs ${item.team_away}`,
+                                                            selection: 'Away',
+                                                            odds: item.away_odds,
+                                                            team_home: item.team_home_ko || item.team_home,
+                                                            team_away: item.team_away_ko || item.team_away,
+                                                            time: formatTime(item.match_time)
+                                                        });
+                                                    }}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`) ? 'ring-1 ring-[var(--accent-secondary)]' : ''}`}
+                                                    style={{
+                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`) ? 'rgba(139,92,246,0.12)' : 'var(--bg-card)',
+                                                        border: '1px solid var(--border-subtle)',
+                                                    }}
+                                                >
+                                                    <div className="text-[10px] mb-0.5" style={{ color: 'var(--text-muted)' }}>{tm.awayWin || 'A'}</div>
+                                                    <div className="text-base font-bold" style={{ color: 'var(--odds-away)' }}>{item.away_odds.toFixed(2)}</div>
+                                                </button>
+                                            </div>
+
+                                            {/* Voted indicator */}
+                                            {voted && (
+                                                <div className="px-3 pb-2">
+                                                    <div className="text-center py-1.5 rounded-lg text-[11px] font-bold" style={{ background: 'rgba(0,212,255,0.06)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.15)' }}>
+                                                        ✅ &quot;{voted === 'Home' ? (tm.homeWin || 'Home') : voted === 'Draw' ? (tm.draw || 'Draw') : (tm.awayWin || 'Away')}&quot; {tm.voted || 'Voted'}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Expand indicator */}
+                                            <button
+                                                onClick={() => handleRowClick(item.globalIdx, item.team_home, item.team_away)}
+                                                className="w-full py-1.5 text-center text-[10px] font-bold transition-colors"
+                                                style={{ color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--border-subtle)' }}
+                                            >
+                                                {expandedRow === item.globalIdx ? `▲ ${tm.collapse || 'Collapse'}` : `▼ ${tm.expandAI || 'AI Analysis · Details'}`}
+                                            </button>
+
+                                            {/* Expanded Detail (same as desktop) */}
+                                            {expandedRow === item.globalIdx && (
+                                                <div style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border-subtle)' }}>
+                                                    <div className="flex border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                                                        {[
+                                                            { key: 'ai', icon: '🧠', label: 'AI' },
+                                                            { key: 'standings', icon: '📊', label: tm.tabStandings || 'Standings' },
+                                                            { key: 'recent', icon: '⚽', label: tm.tabRecent || 'Recent' },
+                                                            { key: 'lineups', icon: '👕', label: tm.tabLineups || 'Lineups' },
+                                                        ].map(tab => (
+                                                            <button
+                                                                key={tab.key}
+                                                                onClick={(e) => { e.stopPropagation(); setActiveDetailTab(tab.key); }}
+                                                                className="flex-1 py-2.5 text-[11px] font-bold transition-all relative"
+                                                                style={{
+                                                                    color: activeDetailTab === tab.key ? 'var(--accent-primary)' : 'var(--text-muted)',
+                                                                    background: activeDetailTab === tab.key ? 'rgba(0,212,255,0.05)' : 'transparent',
+                                                                }}
+                                                            >
+                                                                <span>{tab.icon} {tab.label}</span>
+                                                                {activeDetailTab === tab.key && (
+                                                                    <div className="absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full" style={{ background: 'var(--accent-primary)' }} />
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    <div className="p-3 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+                                                        {tm.desktopOptimized || 'Detailed analysis is optimized for desktop. Please check on PC.'}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* ═══ DESKTOP TABLE VIEW ═══ */}
+                <div className="hidden md:block overflow-hidden rounded-lg border" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-center text-sm">
                             <thead className="uppercase text-xs font-semibold tracking-wider border-b" style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', borderColor: 'var(--border-subtle)' }}>
                                 <tr>
                                     <th className="py-3 px-2 w-20">AI</th>
-                                    <th className="py-3 px-2 w-24">시간/리그</th>
-                                    <th className="py-3 px-4 text-right w-1/3">홈팀 (Home)</th>
-                                    <th className="py-3 px-2 w-20">승</th>
-                                    <th className="py-3 px-2 w-20">무</th>
-                                    <th className="py-3 px-2 w-20">패</th>
-                                    <th className="py-3 px-4 text-left w-1/3">원정팀 (Away)</th>
+                                    <th className="py-3 px-2 w-24">{tm.timeLeague || 'Time/League'}</th>
+                                    <th className="py-3 px-4 text-right w-1/3">{tm.homeWin || 'Home'} (Home)</th>
+                                    <th className="py-3 px-2 w-20">{tm.homeWin || 'H'}</th>
+                                    <th className="py-3 px-2 w-20">{tm.draw || 'D'}</th>
+                                    <th className="py-3 px-2 w-20">{tm.awayWin || 'A'}</th>
+                                    <th className="py-3 px-4 text-left w-1/3">{tm.awayWin || 'Away'} (Away)</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#2a2a32]">
                                 {loading && odds.length === 0 ? (
-                                    <tr><td colSpan={7} className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>데이터를 불러오는 중입니다...</td></tr>
+                                    <tr><td colSpan={7} className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>{tc.loading || 'Loading...'}</td></tr>
                                 ) : filteredOdds.length === 0 ? (
                                     <tr><td colSpan={7} className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>
-                                        {odds.length === 0 ? "표시할 경기가 없습니다." : "해당 종목의 경기가 없습니다."}
+                                        {odds.length === 0 ? (tm.noMatches || 'No matches to display.') : (tm.noSportMatches || 'No matches for this sport.')}
                                     </td></tr>
                                 ) : (
                                     groupedByLeague.map((group) => (
@@ -491,7 +884,7 @@ export default function MarketPage() {
                                                             let badgeBg = 'rgba(255,255,255,0.05)';
                                                             if (conf >= 65) { badge = '🔥'; badgeColor = '#ff6b35'; badgeBg = 'rgba(255,107,53,0.15)'; }
                                                             else if (conf >= 50) { badge = '⭐'; badgeColor = '#fbbf24'; badgeBg = 'rgba(251,191,36,0.12)'; }
-                                                            const recLabel = pred.recommendation === 'HOME' ? '홈' : pred.recommendation === 'AWAY' ? '원정' : '무';
+                                                            const recLabel = pred.recommendation === 'HOME' ? (tm.homeWin || 'Home') : pred.recommendation === 'AWAY' ? (tm.awayWin || 'Away') : (tm.draw || 'Draw');
                                                             return (
                                                                 <td className="py-3 px-1 text-center">
                                                                     <div className="flex flex-col items-center gap-0.5">
@@ -517,6 +910,18 @@ export default function MarketPage() {
                                                                                 {live.home_goals} - {live.away_goals}
                                                                             </span>
                                                                             <span className="text-[10px] font-bold" style={{ color: 'var(--accent-primary)' }}>{statusLabel}</span>
+                                                                            {live.events && live.events.length > 0 && (() => {
+                                                                                const recentEvents = live.events.slice(-3);
+                                                                                return (
+                                                                                    <div className="flex gap-0.5 mt-0.5">
+                                                                                        {recentEvents.map((ev, idx) => (
+                                                                                            <span key={idx} className="text-[9px]" title={`${ev.player} (${ev.time}')`}>
+                                                                                                {ev.type === 'Goal' ? '⚽' : ev.detail === 'Yellow Card' ? '🟨' : ev.detail === 'Red Card' ? '🟥' : ''}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
                                                                         </div>
                                                                     );
                                                                 }
@@ -632,10 +1037,10 @@ export default function MarketPage() {
                                                                 {/* Tab Navigation */}
                                                                 <div className="flex border-b" style={{ borderColor: 'var(--border-subtle)' }}>
                                                                     {[
-                                                                        { key: 'ai', icon: '🧠', label: 'AI분석' },
-                                                                        { key: 'standings', icon: '📊', label: '순위·폼' },
-                                                                        { key: 'recent', icon: '⚽', label: '최근경기' },
-                                                                        { key: 'lineups', icon: '👕', label: '라인업' },
+                                                                        { key: 'ai', icon: '🧠', label: tm.tabAI || 'AI Analysis' },
+                                                                        { key: 'standings', icon: '📊', label: tm.tabStandingsForm || 'Standings·Form' },
+                                                                        { key: 'recent', icon: '⚽', label: tm.tabRecentMatches || 'Recent Matches' },
+                                                                        { key: 'lineups', icon: '👕', label: tm.tabLineups || 'Lineups' },
                                                                     ].map(tab => (
                                                                         <button
                                                                             key={tab.key}
@@ -659,30 +1064,30 @@ export default function MarketPage() {
                                                                     {activeDetailTab === 'ai' && (
                                                                         <div>
                                                                             {historyLoading ? (
-                                                                                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>데이터 불러오는 중...</div>
+                                                                                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>{tc.loading || 'Loading...'}</div>
                                                                             ) : historyData.length >= 2 ? (
                                                                                 <OddsHistoryChart data={historyData} />
                                                                             ) : (
-                                                                                /* 배당 차트 데이터 없을 때 → 현재 배당률 비교 카드 */
+                                                                                /* 데이터 차트 데이터 없을 때 → 현재 데이터 지표 비교 카드 */
                                                                                 <div className="rounded-xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-                                                                                    <h3 className="text-xs font-bold mb-3 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>📊 현재 배당률 분석</h3>
+                                                                                    <h3 className="text-xs font-bold mb-3 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>📊 {tm.oddsAnalysis || 'Current Odds Analysis'}</h3>
                                                                                     <div className="grid grid-cols-3 gap-3">
                                                                                         <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)' }}>
-                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>홈승</div>
+                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>{tm.homeWin || 'Home'}</div>
                                                                                             <div className="text-lg font-bold" style={{ color: '#00d4ff' }}>{item.home_odds?.toFixed(2) || '-'}</div>
                                                                                             <div className="text-[10px] mt-1 font-medium" style={{ color: 'rgba(0,212,255,0.7)' }}>
                                                                                                 {item.home_odds > 0 ? `${((1 / item.home_odds) / ((1 / item.home_odds) + (1 / (item.draw_odds || 999)) + (1 / item.away_odds)) * 100).toFixed(0)}%` : '-'}
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
-                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>무승부</div>
+                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>{tm.draw || 'Draw'}</div>
                                                                                             <div className="text-lg font-bold" style={{ color: 'var(--text-secondary)' }}>{item.draw_odds?.toFixed(2) || '-'}</div>
                                                                                             <div className="text-[10px] mt-1 font-medium" style={{ color: 'var(--text-muted)' }}>
                                                                                                 {item.draw_odds > 0 ? `${((1 / item.draw_odds) / ((1 / item.home_odds) + (1 / item.draw_odds) + (1 / item.away_odds)) * 100).toFixed(0)}%` : '-'}
                                                                                             </div>
                                                                                         </div>
                                                                                         <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>원정승</div>
+                                                                                            <div className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>{tm.awayWin || 'Away'}</div>
                                                                                             <div className="text-lg font-bold" style={{ color: '#8b5cf6' }}>{item.away_odds?.toFixed(2) || '-'}</div>
                                                                                             <div className="text-[10px] mt-1 font-medium" style={{ color: 'rgba(139,92,246,0.7)' }}>
                                                                                                 {item.away_odds > 0 ? `${((1 / item.away_odds) / ((1 / item.home_odds) + (1 / (item.draw_odds || 999)) + (1 / item.away_odds)) * 100).toFixed(0)}%` : '-'}
@@ -695,32 +1100,32 @@ export default function MarketPage() {
                                                                                 const matchId = `${item.team_home}_${item.team_away}`;
                                                                                 const pred = aiPredictions[matchId];
 
-                                                                                // pred가 없으면 배당률 기반 즉석 분석 생성
+                                                                                // pred가 없으면 데이터 지표 기반 즉석 분석 생성
                                                                                 if (!pred) {
                                                                                     const h = item.home_odds > 0 ? 1 / item.home_odds : 0;
                                                                                     const d = item.draw_odds > 0 ? 1 / item.draw_odds : 0;
                                                                                     const a = item.away_odds > 0 ? 1 / item.away_odds : 0;
                                                                                     const total = h + d + a;
-                                                                                    if (total <= 0) return <div className="text-center py-6 text-[var(--text-muted)] text-sm">배당 데이터가 없습니다.</div>;
+                                                                                    if (total <= 0) return <div className="text-center py-6 text-[var(--text-muted)] text-sm">{tm.noOddsData || 'No odds data available.'}</div>;
 
                                                                                     const homePct = (h / total) * 100;
                                                                                     const drawPct = (d / total) * 100;
                                                                                     const awayPct = (a / total) * 100;
                                                                                     const maxPct = Math.max(homePct, drawPct, awayPct);
                                                                                     const rec = homePct === maxPct ? 'HOME' : awayPct === maxPct ? 'AWAY' : 'DRAW';
-                                                                                    const recLabel = rec === 'HOME' ? `${item.team_home_ko || item.team_home} 승` : rec === 'AWAY' ? `${item.team_away_ko || item.team_away} 승` : '무승부';
+                                                                                    const recLabel = rec === 'HOME' ? `${item.team_home_ko || item.team_home} ${tm.win || 'Win'}` : rec === 'AWAY' ? `${item.team_away_ko || item.team_away} ${tm.win || 'Win'}` : (tm.draw || 'Draw');
 
                                                                                     return (
                                                                                         <div className="mt-4 surface-card p-4">
                                                                                             <div className="flex items-center justify-between mb-3">
-                                                                                                <span className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5">📈 배당률 기반 분석 (Odds-Implied)</span>
+                                                                                                <span className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5">📈 {tm.oddsImplied || 'Odds-Implied Analysis'}</span>
                                                                                                 <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(0,212,255,0.1)', color: '#00d4ff' }}>
                                                                                                     {recLabel} {maxPct.toFixed(0)}%
                                                                                                 </span>
                                                                                             </div>
                                                                                             <div className="mb-3">
                                                                                                 <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                                                                                                    <span>홈 {homePct.toFixed(0)}%</span><span>무 {drawPct.toFixed(0)}%</span><span>원정 {awayPct.toFixed(0)}%</span>
+                                                                                                    <span>{tm.homeWin || 'Home'} {homePct.toFixed(0)}%</span><span>{tm.draw || 'Draw'} {drawPct.toFixed(0)}%</span><span>{tm.awayWin || 'Away'} {awayPct.toFixed(0)}%</span>
                                                                                                 </div>
                                                                                                 <div className="flex h-3 rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
                                                                                                     <div style={{ width: `${homePct}%`, background: 'rgba(0,212,255,0.6)' }} className="transition-all duration-700" />
@@ -730,77 +1135,35 @@ export default function MarketPage() {
                                                                                             </div>
                                                                                             <div className="grid grid-cols-2 gap-2 mb-2">
                                                                                                 <div className="rounded-lg p-2 text-[10px]" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}>
-                                                                                                    <div className="font-bold mb-0.5" style={{ color: 'var(--accent-primary)' }}>배당률 내재 확률</div>
-                                                                                                    <div style={{ color: 'var(--text-secondary)' }}>홈 {homePct.toFixed(0)}% / 무 {drawPct.toFixed(0)}% / 원정 {awayPct.toFixed(0)}%</div>
+                                                                                                    <div className="font-bold mb-0.5" style={{ color: 'var(--accent-primary)' }}>{tm.impliedProb || 'Implied Probability'}</div>
+                                                                                                    <div style={{ color: 'var(--text-secondary)' }}>{tm.homeWin || 'Home'} {homePct.toFixed(0)}% / {tm.draw || 'D'} {drawPct.toFixed(0)}% / {tm.awayWin || 'Away'} {awayPct.toFixed(0)}%</div>
                                                                                                 </div>
                                                                                                 <div className="rounded-lg p-2 text-[10px]" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}>
-                                                                                                    <div className="font-bold mb-0.5" style={{ color: 'var(--accent-primary)' }}>마진율</div>
-                                                                                                    <div style={{ color: 'var(--text-secondary)' }}>북메이커 마진 {((total - 1) * 100).toFixed(1)}%</div>
+                                                                                                    <div className="font-bold mb-0.5" style={{ color: 'var(--accent-primary)' }}>{tm.margin || 'Margin'}</div>
+                                                                                                    <div style={{ color: 'var(--text-secondary)' }}>{tm.bookmakerMargin || 'Bookmaker Margin'} {((total - 1) * 100).toFixed(1)}%</div>
                                                                                                 </div>
                                                                                             </div>
                                                                                             <div className="text-[9px] p-2 rounded-lg" style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)', color: 'var(--text-muted)' }}>
-                                                                                                💡 서버에서 순위·폼·부상 데이터가 수집되면 6-Factor AI 분석으로 자동 업그레이드됩니다.
+                                                                                                💡 {tm.autoUpgradeNotice || 'When standings, form, and injury data is collected from the server, it will be automatically upgraded to 6-Factor AI analysis.'}
                                                                                             </div>
                                                                                             <div className="mt-3 pt-2 flex flex-wrap gap-1.5 items-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                                                                                                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>분석 소스:</span>
-                                                                                                <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,212,255,0.1)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.25)' }}>The Odds API</span>
+                                                                                                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{tm.analysisSources || 'Analysis Sources'}:</span>
+                                                                                                <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'rgba(53,199,89,0.1)', color: '#35c759', border: '1px solid rgba(53,199,89,0.25)' }}>API-Football</span>
                                                                                             </div>
                                                                                         </div>
                                                                                     );
                                                                                 }
 
-                                                                                // pred가 있을 때 → 기존 6-factor 풀 분석 표시
+                                                                                // pred가 있을 때 → Pro 분석 패널
                                                                                 return (
-                                                                                    <div className="mt-4 surface-card p-4">
-                                                                                        <div className="flex items-center justify-between mb-3">
-                                                                                            <span className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5">🧠 AI 분석 리포트</span>
-                                                                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: pred.confidence >= 65 ? 'rgba(255,107,53,0.15)' : pred.confidence >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)', color: pred.confidence >= 65 ? '#ff6b35' : pred.confidence >= 50 ? '#fbbf24' : 'var(--text-muted)' }}>
-                                                                                                {pred.confidence >= 65 ? '🔥 강력추천' : pred.confidence >= 50 ? '⭐ 추천' : '➖ 보통'} {pred.confidence.toFixed(0)}%
-                                                                                            </span>
-                                                                                        </div>
-                                                                                        <div className="mb-3">
-                                                                                            <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                                                                                                <span>홈 {pred.home_win_prob.toFixed(0)}%</span><span>무 {pred.draw_prob.toFixed(0)}%</span><span>원정 {pred.away_win_prob.toFixed(0)}%</span>
-                                                                                            </div>
-                                                                                            <div className="flex h-3 rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-                                                                                                <div style={{ width: `${pred.home_win_prob}%`, background: 'rgba(0,212,255,0.6)' }} className="transition-all duration-700" />
-                                                                                                <div style={{ width: `${pred.draw_prob}%`, background: 'rgba(255,255,255,0.12)' }} className="transition-all duration-700" />
-                                                                                                <div style={{ width: `${pred.away_win_prob}%`, background: 'rgba(139,92,246,0.6)' }} className="transition-all duration-700" />
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        {/* API-Football 외부 예측 비교 */}
-                                                                                        {pred.api_prediction_pct && (
-                                                                                            <div className="mb-3 p-2 rounded-lg" style={{ background: 'rgba(53,199,89,0.05)', border: '1px solid rgba(53,199,89,0.15)' }}>
-                                                                                                <div className="flex items-center justify-between">
-                                                                                                    <span className="text-[10px] font-bold" style={{ color: '#35c759' }}>⚽ API-Football 예측</span>
-                                                                                                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                                                                                                        홈 {pred.api_prediction_pct.home}% / 무 {pred.api_prediction_pct.draw}% / 원정 {pred.api_prediction_pct.away}%
-                                                                                                    </span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        )}
-                                                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                                                                                            {pred.factors.map((f: { name: string; weight: number; score: number; detail: string }, i: number) => (
-                                                                                                <div key={i} className="rounded-lg p-2 text-[10px]" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}>
-                                                                                                    <div className="font-bold mb-0.5" style={{ color: 'var(--accent-primary)' }}>{f.name}</div>
-                                                                                                    <div style={{ color: 'var(--text-secondary)' }}>{f.detail}</div>
-                                                                                                </div>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                        {(pred.injuries_home.length > 0 || pred.injuries_away.length > 0) && (
-                                                                                            <div className="text-[10px] mt-1 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                                                                                                <span className="font-bold" style={{ color: '#f87171' }}>🏥 부상/결장:</span>
-                                                                                                {pred.injuries_home.length > 0 && <span style={{ color: 'var(--text-muted)' }}> 홈: {pred.injuries_home.join(', ')}</span>}
-                                                                                                {pred.injuries_away.length > 0 && <span style={{ color: 'var(--text-muted)' }}> 원정: {pred.injuries_away.join(', ')}</span>}
-                                                                                            </div>
-                                                                                        )}
-                                                                                        <div className="mt-3 pt-2 flex flex-wrap gap-1.5 items-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                                                                                            <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>분석 소스:</span>
-                                                                                            {[{ name: 'The Odds API', c: '#00d4ff' }, { name: 'API-Football', c: '#35c759' }, { name: 'football-data.org', c: '#fbbf24' }].map((s, i) => (
-                                                                                                <span key={i} className="text-[8px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${s.c}10`, color: s.c, border: `1px solid ${s.c}25` }}>{s.name}</span>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    </div>
+                                                                                    <ProAnalysisPanel
+                                                                                        prediction={pred}
+                                                                                        injuries={matchDetail?.injuries}
+                                                                                        homeTeam={item.team_home_ko || item.team_home}
+                                                                                        awayTeam={item.team_away_ko || item.team_away}
+                                                                                        historyData={historyData}
+                                                                                        userTier={user?.tier || 'free'}
+                                                                                    />
                                                                                 );
                                                                             })()}
 
@@ -813,8 +1176,8 @@ export default function MarketPage() {
                                                                                 return (
                                                                                     <div className="mt-4 surface-card p-4">
                                                                                         <div className="flex items-center justify-between mb-3">
-                                                                                            <span className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5">🗳️ 승부 예측</span>
-                                                                                            <span className="text-[10px] text-[var(--text-muted)]">{stat.total_votes}명 참여</span>
+                                                                                            <span className="text-xs font-bold text-[var(--accent-primary)] flex items-center gap-1.5">🗳️ {tm.predictionVote || 'Prediction Vote'}</span>
+                                                                                            <span className="text-[10px] text-[var(--text-muted)]">{stat.total_votes} {tm.participants || 'votes'}</span>
                                                                                         </div>
                                                                                         {hasVotes && (
                                                                                             <div className="mb-3 flex h-5 rounded-lg overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
@@ -836,14 +1199,34 @@ export default function MarketPage() {
                                                                                             </div>
                                                                                         )}
                                                                                         {voted ? (
-                                                                                            <div className="text-center py-2 rounded-lg border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)]">
-                                                                                                <span className="text-[var(--accent-primary)] font-bold text-xs">✅ "{voted === 'Home' ? '홈승' : voted === 'Draw' ? '무승부' : '원정승'}" 투표 완료</span>
-                                                                                            </div>
+                                                                                            (() => {
+                                                                                                const result = matchResults[matchId];
+                                                                                                const selLabel = voted === 'Home' ? (tm.homeWin || 'Home') : voted === 'Draw' ? (tm.draw || 'Draw') : (tm.awayWin || 'Away');
+                                                                                                if (result?.status === 'WON') {
+                                                                                                    return (
+                                                                                                        <div className="text-center py-2 rounded-lg border border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.1)]">
+                                                                                                            <span className="text-green-400 font-bold text-xs">🎉 {tm.hitResult || 'Hit!'} &quot;{selLabel}&quot; +10P</span>
+                                                                                                        </div>
+                                                                                                    );
+                                                                                                } else if (result?.status === 'LOST') {
+                                                                                                    return (
+                                                                                                        <div className="text-center py-2 rounded-lg border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)]">
+                                                                                                            <span className="text-red-400 font-bold text-xs">❌ {tm.missResult || 'Miss'} &quot;{selLabel}&quot; +1P</span>
+                                                                                                        </div>
+                                                                                                    );
+                                                                                                } else {
+                                                                                                    return (
+                                                                                                        <div className="text-center py-2 rounded-lg border border-[rgba(0,212,255,0.2)] bg-[rgba(0,212,255,0.05)]">
+                                                                                                            <span className="text-[var(--accent-primary)] font-bold text-xs">⏳ &quot;{selLabel}&quot; {tm.pendingResult || 'Awaiting result'}</span>
+                                                                                                        </div>
+                                                                                                    );
+                                                                                                }
+                                                                                            })()
                                                                                         ) : (
                                                                                             <div className="grid grid-cols-3 gap-2">
-                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Home', item.home_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(0,212,255,0.08)] hover:border-[rgba(0,212,255,0.3)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">홈 승</button>
-                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Draw', item.draw_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-white/5 hover:border-[var(--border-default)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">무승부</button>
-                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Away', item.away_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(139,92,246,0.08)] hover:border-[rgba(139,92,246,0.3)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">원정 승</button>
+                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Home', item.home_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(0,212,255,0.08)] hover:border-[rgba(0,212,255,0.3)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">{tm.homeWin || 'Home'}</button>
+                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Draw', item.draw_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-white/5 hover:border-[var(--border-default)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">{tm.draw || 'Draw'}</button>
+                                                                                                <button onClick={(e) => { e.stopPropagation(); handleVote(matchId, 'Away', item.away_odds); }} className="py-2.5 rounded-lg border border-[var(--border-subtle)] hover:bg-[rgba(139,92,246,0.08)] hover:border-[rgba(139,92,246,0.3)] text-xs font-bold text-[var(--text-secondary)] transition-all active:scale-95">{tm.awayWin || 'Away'}</button>
                                                                                             </div>
                                                                                         )}
                                                                                     </div>
@@ -857,14 +1240,14 @@ export default function MarketPage() {
                                                                         <div>
                                                                             {matchDetailLoading ? (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                                                                                    <div className="animate-pulse">📊 순위 정보 불러오는 중...</div>
+                                                                                    <div className="animate-pulse">📊 {tm.loadingStandings || 'Loading standings...'}</div>
                                                                                 </div>
                                                                             ) : matchDetail?.standings?.home || matchDetail?.standings?.away ? (
                                                                                 <div className="space-y-4">
-                                                                                    <div className="text-xs font-bold mb-3" style={{ color: 'var(--accent-primary)' }}>📊 리그 순위 비교</div>
+                                                                                    <div className="text-xs font-bold mb-3" style={{ color: 'var(--accent-primary)' }}>📊 {tm.leagueStandings || 'League Standings Comparison'}</div>
                                                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                                        {[{ label: '홈', team: item.team_home_ko || item.team_home, data: matchDetail?.standings?.home, color: '#00d4ff' },
-                                                                                        { label: '원정', team: item.team_away_ko || item.team_away, data: matchDetail?.standings?.away, color: '#8b5cf6' }].map((side, si) => (
+                                                                                        {[{ label: tm.homeWin || 'Home', team: item.team_home_ko || item.team_home, data: matchDetail?.standings?.home, color: '#00d4ff' },
+                                                                                        { label: tm.awayWin || 'Away', team: item.team_away_ko || item.team_away, data: matchDetail?.standings?.away, color: '#8b5cf6' }].map((side, si) => (
                                                                                             <div key={si} className="rounded-xl p-3" style={{ background: 'var(--bg-primary)', border: `1px solid ${side.color}20` }}>
                                                                                                 <div className="flex items-center justify-between mb-2">
                                                                                                     <span className="text-xs font-bold" style={{ color: side.color }}>{side.label} {side.team}</span>
@@ -874,40 +1257,40 @@ export default function MarketPage() {
                                                                                                     <div>
                                                                                                         <div className="grid grid-cols-4 gap-1 text-center text-[10px] mb-2">
                                                                                                             <div className="rounded p-1" style={{ background: 'var(--bg-card)' }}>
-                                                                                                                <div style={{ color: 'var(--text-muted)' }}>경기</div>
+                                                                                                                <div style={{ color: 'var(--text-muted)' }}>{tm.played || 'P'}</div>
                                                                                                                 <div className="font-bold" style={{ color: 'var(--text-primary)' }}>{side.data.played}</div>
                                                                                                             </div>
                                                                                                             <div className="rounded p-1" style={{ background: 'var(--bg-card)' }}>
-                                                                                                                <div style={{ color: 'var(--text-muted)' }}>승</div>
+                                                                                                                <div style={{ color: 'var(--text-muted)' }}>{tm.wins || 'W'}</div>
                                                                                                                 <div className="font-bold" style={{ color: '#35c759' }}>{side.data.wins}</div>
                                                                                                             </div>
                                                                                                             <div className="rounded p-1" style={{ background: 'var(--bg-card)' }}>
-                                                                                                                <div style={{ color: 'var(--text-muted)' }}>무</div>
+                                                                                                                <div style={{ color: 'var(--text-muted)' }}>{tm.draws || 'D'}</div>
                                                                                                                 <div className="font-bold" style={{ color: 'var(--text-secondary)' }}>{side.data.draws}</div>
                                                                                                             </div>
                                                                                                             <div className="rounded p-1" style={{ background: 'var(--bg-card)' }}>
-                                                                                                                <div style={{ color: 'var(--text-muted)' }}>패</div>
+                                                                                                                <div style={{ color: 'var(--text-muted)' }}>{tm.losses || 'L'}</div>
                                                                                                                 <div className="font-bold" style={{ color: '#ef4444' }}>{side.data.losses}</div>
                                                                                                             </div>
                                                                                                         </div>
                                                                                                         <div className="flex items-center justify-between text-[10px] mb-1">
-                                                                                                            <span style={{ color: 'var(--text-muted)' }}>득실: {side.data.goals_for}-{side.data.goals_against} ({side.data.goal_diff > 0 ? '+' : ''}{side.data.goal_diff})</span>
-                                                                                                            <span className="font-bold" style={{ color: side.color }}>승점 {side.data.points}</span>
+                                                                                                            <span style={{ color: 'var(--text-muted)' }}>{tm.goalDiff || 'GD'}: {side.data.goals_for}-{side.data.goals_against} ({side.data.goal_diff > 0 ? '+' : ''}{side.data.goal_diff})</span>
+                                                                                                            <span className="font-bold" style={{ color: side.color }}>{tm.points || 'Points'} {side.data.points}</span>
                                                                                                         </div>
                                                                                                         {side.data.form && (
                                                                                                             <div className="flex items-center gap-1 mt-2">
-                                                                                                                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>최근:</span>
+                                                                                                                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{tm.recent || 'Recent'}:</span>
                                                                                                                 {side.data.form.split('').map((r: string, ri: number) => (
                                                                                                                     <span key={ri} className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                                                                                                                         style={{ background: r === 'W' ? '#35c759' : r === 'D' ? '#fbbf24' : '#ef4444' }}>
-                                                                                                                        {r === 'W' ? '승' : r === 'D' ? '무' : '패'}
+                                                                                                                        {r === 'W' ? (tm.wins || 'W') : r === 'D' ? (tm.draws || 'D') : (tm.losses || 'L')}
                                                                                                                     </span>
                                                                                                                 ))}
                                                                                                             </div>
                                                                                                         )}
                                                                                                     </div>
                                                                                                 ) : (
-                                                                                                    <div className="text-[10px] py-2" style={{ color: 'var(--text-muted)' }}>순위 데이터 없음</div>
+                                                                                                    <div className="text-[10px] py-2" style={{ color: 'var(--text-muted)' }}>{tm.noStandingsData || 'No standings data'}</div>
                                                                                                 )}
                                                                                             </div>
                                                                                         ))}
@@ -915,19 +1298,19 @@ export default function MarketPage() {
                                                                                     {/* Injuries section */}
                                                                                     {matchDetail && (matchDetail.injuries.home.length > 0 || matchDetail.injuries.away.length > 0) && (
                                                                                         <div className="mt-3 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                                                                                            <div className="text-xs font-bold mb-2" style={{ color: '#f87171' }}>🏥 부상/결장</div>
+                                                                                            <div className="text-xs font-bold mb-2" style={{ color: '#f87171' }}>🏥 {tm.injuries || 'Injuries/Absent'}</div>
                                                                                             <div className="grid grid-cols-2 gap-2 text-[10px]">
                                                                                                 <div>
-                                                                                                    <div className="font-bold mb-1" style={{ color: '#00d4ff' }}>홈</div>
+                                                                                                    <div className="font-bold mb-1" style={{ color: '#00d4ff' }}>{tm.homeWin || 'Home'}</div>
                                                                                                     {matchDetail.injuries.home.length > 0 ? matchDetail.injuries.home.map((inj, ii) => (
                                                                                                         <div key={ii} style={{ color: 'var(--text-muted)' }}>{inj.player_name} ({inj.reason})</div>
-                                                                                                    )) : <div style={{ color: 'var(--text-muted)' }}>없음</div>}
+                                                                                                    )) : <div style={{ color: 'var(--text-muted)' }}>{tm.none || 'None'}</div>}
                                                                                                 </div>
                                                                                                 <div>
-                                                                                                    <div className="font-bold mb-1" style={{ color: '#8b5cf6' }}>원정</div>
+                                                                                                    <div className="font-bold mb-1" style={{ color: '#8b5cf6' }}>{tm.awayWin || 'Away'}</div>
                                                                                                     {matchDetail.injuries.away.length > 0 ? matchDetail.injuries.away.map((inj, ii) => (
                                                                                                         <div key={ii} style={{ color: 'var(--text-muted)' }}>{inj.player_name} ({inj.reason})</div>
-                                                                                                    )) : <div style={{ color: 'var(--text-muted)' }}>없음</div>}
+                                                                                                    )) : <div style={{ color: 'var(--text-muted)' }}>{tm.none || 'None'}</div>}
                                                                                                 </div>
                                                                                             </div>
                                                                                         </div>
@@ -936,8 +1319,8 @@ export default function MarketPage() {
                                                                             ) : (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
                                                                                     <div className="text-2xl mb-2">📊</div>
-                                                                                    <div className="text-sm">순위 데이터가 없습니다</div>
-                                                                                    <div className="text-xs mt-1">데이터 수집이 필요합니다 (AI예측 → 데이터 수집)</div>
+                                                                                    <div className="text-sm">{tm.noStandingsData || 'No standings data'}</div>
+                                                                                    <div className="text-xs mt-1">{tm.dataCollectionNeeded || 'Data collection is needed (AI Prediction → Data Collection)'}</div>
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -948,16 +1331,16 @@ export default function MarketPage() {
                                                                         <div>
                                                                             {matchDetailLoading ? (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                                                                                    <div className="animate-pulse">⚽ 최근 경기 불러오는 중...</div>
+                                                                                    <div className="animate-pulse">⚽ {tm.loadingRecent || 'Loading recent matches...'}</div>
                                                                                 </div>
                                                                             ) : (matchDetail?.recent_matches?.home?.length || 0) > 0 || (matchDetail?.recent_matches?.away?.length || 0) > 0 ? (
                                                                                 <div className="space-y-4">
-                                                                                    {[{ label: '홈', team: item.team_home_ko || item.team_home, matches: matchDetail?.recent_matches?.home || [], color: '#00d4ff' },
-                                                                                    { label: '원정', team: item.team_away_ko || item.team_away, matches: matchDetail?.recent_matches?.away || [], color: '#8b5cf6' }].map((side, si) => (
+                                                                                    {[{ label: tm.homeWin || 'Home', team: item.team_home_ko || item.team_home, matches: matchDetail?.recent_matches?.home || [], color: '#00d4ff' },
+                                                                                    { label: tm.awayWin || 'Away', team: item.team_away_ko || item.team_away, matches: matchDetail?.recent_matches?.away || [], color: '#8b5cf6' }].map((side, si) => (
                                                                                         <div key={si}>
                                                                                             <div className="text-xs font-bold mb-2 flex items-center gap-1.5">
                                                                                                 <span style={{ color: side.color }}>{side.label}</span>
-                                                                                                <span style={{ color: 'var(--text-primary)' }}>{side.team} 최근 {side.matches.length}경기</span>
+                                                                                                <span style={{ color: 'var(--text-primary)' }}>{side.team} {tm.recentCount || 'last'} {side.matches.length} {tm.matches || 'matches'}</span>
                                                                                             </div>
                                                                                             {side.matches.length > 0 ? (
                                                                                                 <div className="space-y-1">
@@ -979,7 +1362,7 @@ export default function MarketPage() {
                                                                                                     })}
                                                                                                 </div>
                                                                                             ) : (
-                                                                                                <div className="text-[11px] py-2" style={{ color: 'var(--text-muted)' }}>최근 경기 데이터 없음</div>
+                                                                                                <div className="text-[11px] py-2" style={{ color: 'var(--text-muted)' }}>{tm.noRecentData || 'No recent match data'}</div>
                                                                                             )}
                                                                                         </div>
                                                                                     ))}
@@ -987,8 +1370,8 @@ export default function MarketPage() {
                                                                             ) : (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
                                                                                     <div className="text-2xl mb-2">⚽</div>
-                                                                                    <div className="text-sm">최근 경기 데이터가 없습니다</div>
-                                                                                    <div className="text-xs mt-1">API 데이터 수집이 필요합니다</div>
+                                                                                    <div className="text-sm">{tm.noRecentData || 'No recent match data'}</div>
+                                                                                    <div className="text-xs mt-1">{tm.apiDataNeeded || 'API data collection is needed'}</div>
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -999,7 +1382,7 @@ export default function MarketPage() {
                                                                         <div>
                                                                             {matchDetailLoading ? (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                                                                                    <div className="animate-pulse">👕 라인업 불러오는 중...</div>
+                                                                                    <div className="animate-pulse">👕 {tm.loadingLineups || 'Loading lineups...'}</div>
                                                                                 </div>
                                                                             ) : matchDetail?.lineups ? (
                                                                                 <div className="space-y-4">
@@ -1009,10 +1392,10 @@ export default function MarketPage() {
                                                                                                 <span className="text-xs font-bold" style={{ color: li === 0 ? '#00d4ff' : '#8b5cf6' }}>{teamName}</span>
                                                                                                 <div className="flex items-center gap-2">
                                                                                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)' }}>⚙ {lineup.formation}</span>
-                                                                                                    {lineup.coach && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>감독: {lineup.coach}</span>}
+                                                                                                    {lineup.coach && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{tm.coach || 'Coach'}: {lineup.coach}</span>}
                                                                                                 </div>
                                                                                             </div>
-                                                                                            <div className="text-[10px] font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>선발 XI</div>
+                                                                                            <div className="text-[10px] font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>{tm.startingXI || 'Starting XI'}</div>
                                                                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 mb-3">
                                                                                                 {lineup.starters.map((p, pi) => (
                                                                                                     <div key={pi} className="flex items-center gap-1.5 px-2 py-1 rounded" style={{ background: 'var(--bg-card)' }}>
@@ -1024,7 +1407,7 @@ export default function MarketPage() {
                                                                                             </div>
                                                                                             {lineup.substitutes.length > 0 && (
                                                                                                 <div>
-                                                                                                    <div className="text-[10px] font-bold mb-1" style={{ color: 'var(--text-muted)' }}>후보</div>
+                                                                                                    <div className="text-[10px] font-bold mb-1" style={{ color: 'var(--text-muted)' }}>{tm.substitutes || 'Substitutes'}</div>
                                                                                                     <div className="flex flex-wrap gap-1">
                                                                                                         {lineup.substitutes.slice(0, 7).map((p, pi) => (
                                                                                                             <span key={pi} className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-card)', color: 'var(--text-muted)' }}>#{p.number} {p.name}</span>
@@ -1038,8 +1421,8 @@ export default function MarketPage() {
                                                                             ) : (
                                                                                 <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
                                                                                     <div className="text-2xl mb-2">👕</div>
-                                                                                    <div className="text-sm">라인업이 아직 발표되지 않았습니다</div>
-                                                                                    <div className="text-xs mt-1">보통 경기 시작 1시간 전에 공개됩니다</div>
+                                                                                    <div className="text-sm">{tm.noLineupsYet || 'Lineups have not been announced yet'}</div>
+                                                                                    <div className="text-xs mt-1">{tm.lineupsAvailable || 'Usually available 1 hour before kickoff'}</div>
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -1058,6 +1441,24 @@ export default function MarketPage() {
                     </div>
                 </div>
             </main>
+
+            {/* Tour Restart FAB */}
+            <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
+                <TourRestartButton
+                    tourId="market"
+                    onRestart={() => setTourForceStart(true)}
+                    label={tm.guideTour || 'Guide Tour'}
+                />
+            </div>
+
+            <OnboardingTour
+                steps={marketTourSteps}
+                tourId="market"
+                delay={1500}
+                forceStart={tourForceStart}
+                onComplete={() => setTourForceStart(false)}
+                onSkip={() => setTourForceStart(false)}
+            />
         </div>
     );
 }
