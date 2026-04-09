@@ -38,7 +38,10 @@ export default function VipLoungePage() {
           </h1>
           
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Advanced AI portfolio optimization and real-time market movement detection.
+            AI 기반 심층 데이터 패턴 분석과 실시간 시장 지표 변동 감지 서비스
+          </p>
+          <p className="text-xs text-gray-500 mt-3 max-w-lg mx-auto">
+            ⚠️ 본 서비스의 모든 데이터는 통계 연구 목적이며, 도박 및 투자를 유도·권유하지 않습니다.
           </p>
         </div>
 
@@ -87,11 +90,11 @@ export default function VipLoungePage() {
                   <h4 className="font-bold text-white mb-3 text-sm">Custom Radar Rules</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-300">EV &gt; 15%</span>
+                      <span className="text-gray-300">효율 지표 &gt; 15%</span>
                       <span className="text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Active</span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-300">Odds Drop &gt; 10%</span>
+                      <span className="text-gray-300">지표 변동 &gt; 10%</span>
                       <span className="text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Active</span>
                     </div>
                     <button disabled={!isVip} className="w-full mt-2 py-2 border border-dashed border-gray-600 rounded-lg text-gray-400 text-sm hover:text-white hover:border-gray-400 transition-colors">

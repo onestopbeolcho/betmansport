@@ -187,7 +187,7 @@ class BufferService:
 
             # 이미지 첨부
             if image_url:
-                post_input["media"] = [{"photo": image_url}]
+                post_input["assets"] = {"images": [{"url": image_url}]}
                 logger.info(f"📸 Attaching image to channel {ch_id}: {image_url[:80]}...")
 
             variables = {"input": post_input}

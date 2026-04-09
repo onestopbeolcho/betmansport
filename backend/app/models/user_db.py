@@ -225,3 +225,39 @@ async def get_user_portfolio(user_id: str):
         except Exception:
             pass
     return []
+
+
+# --- Admin Helpers ---
+async def get_all_users(limit: int = 100):
+    if _is_firestore_available():
+        try:
+            from app.db.firestore import get_firestore_db
+            from google.cloud import firestore
+            db = get_firestore_db()
+            docs = db.collection(USERS_COLLECTION).order_by("created_at", direction=firestore.Query.DESCENDING).limit(limit).stream()
+            return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+        except Exception:
+            pass
+    
+    # Local fallback
+    users = _load_local_users()
+    # sort by created_at desc if possible
+    try:
+        users.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    except Exception:
+        pass
+    return users[:limit]
+
+
+async def get_all_payments(limit: int = 100):
+    if _is_firestore_available():
+        try:
+            from app.db.firestore import get_firestore_db
+            from google.cloud import firestore
+            db = get_firestore_db()
+            docs = db.collection(PAYMENTS_COLLECTION).order_by("created_at", direction=firestore.Query.DESCENDING).limit(limit).stream()
+            return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+        except Exception:
+            pass
+    return []
+

@@ -418,7 +418,7 @@ export default function InsightsPage() {
                                         <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                                             <h3 className="text-sm font-bold text-white mb-1 flex items-center">
                                                 <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #00d4ff, #8b5cf6)' }} />
-                                                🎯 신뢰도별 실제 적중률
+                                                🎯 신뢰도별 실제 예측 정확도
                                             </h3>
                                             <p className="text-[10px] text-white/30 mb-4">AI가 "자신 있다"고 할수록 정말 잘 맞추는가?</p>
                                             {insights.by_confidence && insights.by_confidence.length > 0 ? (
@@ -434,7 +434,7 @@ export default function InsightsPage() {
                                         <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                                             <h3 className="text-sm font-bold text-white mb-1 flex items-center">
                                                 <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #10b981, #f59e0b)' }} />
-                                                📊 데이터 구간별 적중률
+                                                📊 데이터 구간별 예측 정확도
                                             </h3>
                                             <p className="text-[10px] text-white/30 mb-4">어떤 데이터 범위에서 AI 분석이 가장 정확한가?</p>
                                             {insights.by_odds_range && insights.by_odds_range.length > 0 ? (
@@ -459,11 +459,11 @@ export default function InsightsPage() {
 
                             {/* ━━━ LEAGUE TAB ━━━ */}
                             {activeTab === 'league' && (
-                                <PremiumGate featureName="리그별 적중률" requiredTier="pro">
+                                <PremiumGate featureName="리그별 예측 정확도" requiredTier="pro">
                                     <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                                         <h3 className="text-sm font-bold text-white mb-1 flex items-center">
                                             <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
-                                            🏟️ 리그별 AI 적중률
+                                            🏟️ 리그별 AI 예측 정확도
                                         </h3>
                                         <p className="text-[10px] text-white/30 mb-4">AI 모델이 가장 정확한 리그 vs 가장 약한 리그</p>
                                         {insights.by_league && insights.by_league.length > 0 ? (
@@ -479,11 +479,11 @@ export default function InsightsPage() {
                                                 <div className="text-xs text-white/60">
                                                     AI 모델은 <strong style={{ color: '#10b981' }}>
                                                         {LEAGUE_NAMES[insights.by_league[0]?.league] || insights.by_league[0]?.league}
-                                                    </strong>에서 가장 높은 적중률 ({insights.by_league[0]?.accuracy_pct}%)을 기록하고 있습니다.
+                                                    </strong>에서 가장 높은 예측 정확도 ({insights.by_league[0]?.accuracy_pct}%)을 기록하고 있습니다.
                                                     {insights.by_league.length > 1 && (
                                                         <> 반면, <strong style={{ color: '#f59e0b' }}>
                                                             {LEAGUE_NAMES[insights.by_league[insights.by_league.length - 1]?.league] || insights.by_league[insights.by_league.length - 1]?.league}
-                                                        </strong>의 적중률은 {insights.by_league[insights.by_league.length - 1]?.accuracy_pct}%로 개선이 필요합니다.</>
+                                                        </strong>의 예측 정확도은 {insights.by_league[insights.by_league.length - 1]?.accuracy_pct}%로 개선이 필요합니다.</>
                                                     )}
                                                 </div>
                                             </div>
@@ -580,11 +580,11 @@ export default function InsightsPage() {
 
                             {/* ━━━ TREND TAB ━━━ */}
                             {activeTab === 'trend' && (
-                                <PremiumGate featureName="적중률 트렌드" requiredTier="pro">
+                                <PremiumGate featureName="예측 정확도 트렌드" requiredTier="pro">
                                     <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                                         <h3 className="text-sm font-bold text-white mb-1 flex items-center">
                                             <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #00d4ff, #8b5cf6)' }} />
-                                            📈 주간 적중률 트렌드
+                                            📈 주간 예측 정확도 트렌드
                                         </h3>
                                         <p className="text-[10px] text-white/30 mb-4">자가 학습(Self-Learning)으로 AI가 매주 개선되고 있는가?</p>
                                         <div className="w-full overflow-x-auto">

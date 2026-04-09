@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
+import PageHeader from '../components/PageHeader';
 import PremiumGate from '../components/PremiumGate';
 import { useCart } from '../../context/CartContext';
 import OnboardingTour, { TourRestartButton } from '../components/OnboardingTour';
@@ -65,8 +66,8 @@ const formatTime = (iso: string) => {
 };
 
 const getConfidenceLevel = (confidence: number) => {
-    if (confidence >= 85) return { label: '강력 추천', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', glow: 'rgba(239,68,68,0.4)', icon: '🔴' };
-    if (confidence >= 70) return { label: '추천', color: '#10b981', bg: 'rgba(16,185,129,0.12)', glow: 'rgba(16,185,129,0.3)', icon: '🟢' };
+    if (confidence >= 85) return { label: '강력 시그널', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', glow: 'rgba(239,68,68,0.4)', icon: '🔴' };
+    if (confidence >= 70) return { label: '양호', color: '#10b981', bg: 'rgba(16,185,129,0.12)', glow: 'rgba(16,185,129,0.3)', icon: '🟢' };
     if (confidence >= 55) return { label: '참고', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', glow: 'rgba(59,130,246,0.3)', icon: '🔵' };
     return { label: '중립', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', glow: 'rgba(107,114,128,0.2)', icon: '⚪' };
 };
@@ -180,7 +181,7 @@ export default function BetsPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch(`${API_BASE_URL}/api/bets`);
+            const res = await fetch(`${API_BASE_URL}/api/bets`, { cache: 'no-store' });
             if (!res.ok) throw new Error('Failed to fetch');
             setMatches(await res.json());
         } catch { setError(tb.errorFetch || '데이터 로딩 실패'); }
@@ -191,7 +192,7 @@ export default function BetsPage() {
     const fetchAIPredictions = async () => {
         setAiLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/ai/predictions`);
+            const res = await fetch(`${API_BASE_URL}/api/ai/predictions`, { cache: 'no-store' });
             if (!res.ok) throw new Error('Failed to fetch AI predictions');
             const data: AIResponse = await res.json();
             setAiPredictions(data.predictions || []);
@@ -347,6 +348,11 @@ export default function BetsPage() {
                 <Navbar />
 
                 <main className="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 w-full">
+                    <PageHeader 
+                        title="데이터 추세 분석 (Value Analytics)" 
+                        description="해외 주요 스프레드 시장의 흐름과 통계적 괴리를 추적합니다. 머신러닝 알고리즘이 산출한 통계적 확률과 현재 시장의 지표 차이를 비교하여 수학적으로 유리한 분석 모델을 탐색하고 저장해 보세요." 
+                        icon="📊" 
+                    />
 
                     {/* ━━━ AI ENGINE HERO ━━━ */}
                     <div data-tour="tour-bets-intro" className="relative overflow-hidden rounded-2xl mb-6" style={{
@@ -368,7 +374,7 @@ export default function BetsPage() {
                                         <span className="text-xl">🧠</span>
                                     </div>
                                     <div>
-                                        <h1 className="text-lg sm:text-xl font-black text-white">{tb.aiEngine || 'AI Prediction Engine'}</h1>
+                                        <h1 className="text-lg sm:text-xl font-black text-white">{tb.aiEngine || 'AI Simulation Engine'}</h1>
                                         <div className="flex items-center space-x-2 mt-0.5">
                                             {isMLEngine ? (
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -378,7 +384,7 @@ export default function BetsPage() {
                                             ) : (
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                                     style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
-                                                    {tb.aiEngine || 'AI 예측 엔진'}
+                                                    {tb.aiEngine || 'AI 시뮬레이션 엔진'}
                                                 </span>
                                             )}
                                             <span className="text-[10px] text-white/30">28 Features · {tc.realtime || 'Live'}</span>
@@ -417,6 +423,10 @@ export default function BetsPage() {
                                 <span className="w-1 h-1 rounded-full bg-white/20" />
                                 <span>Data: {dataSources.join(' · ') || 'Loading...'}</span>
                             </div>
+                            {/* Compliance disclaimer */}
+                            <div className="mt-3 text-[10px] text-white/20 leading-relaxed border-t border-white/5 pt-2">
+                                ⚠️ 본 페이지의 모든 수치와 시뮬레이션 결과는 과거 통계를 기반으로 한 학술적 연구 목적의 데이터이며, 어떠한 형태의 도박이나 투자 행위를 유도·권유하지 않습니다.
+                            </div>
                         </div>
                     </div>
 
@@ -425,7 +435,7 @@ export default function BetsPage() {
                         <div className="mb-6">
                             <h2 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-3 flex items-center">
                                 <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
-                                🔥 {tb.topPick || '오늘의 AI TOP PICK'}
+                                🔥 {tb.topPick || '오늘의 AI 분석 하이라이트'}
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {topPicks.map((pick, i) => {
@@ -444,7 +454,7 @@ export default function BetsPage() {
                                             {i === 0 && (
                                                 <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
                                                     style={{ background: level.color, color: 'white' }}>
-                                                    #1 PICK
+                                                    #1 Focus
                                                 </div>
                                             )}
                                             <div className="p-4">
@@ -522,7 +532,7 @@ export default function BetsPage() {
                                 onClick={() => setViewMode('ai')}
                                 className={`px-4 py-2 text-xs font-bold transition-all ${viewMode === 'ai' ? 'text-white' : 'text-white/30 hover:text-white/50'}`}
                                 style={viewMode === 'ai' ? { background: 'rgba(0,212,255,0.15)', color: '#00d4ff' } : {}}>
-                                🧠 {tb.aiPrediction || 'AI 예측'}
+                                🧠 {tb.aiPrediction || 'AI 시뮬레이션'}
                             </button>
                             <button
                                 onClick={() => setViewMode('odds')}
@@ -548,14 +558,14 @@ export default function BetsPage() {
                             {aiLoading && aiPredictions.length === 0 ? (
                                 <div className="py-20 text-center text-white/40">
                                     <div className="animate-spin inline-block w-10 h-10 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-4" />
-                                    <p className="text-sm">{tb.aiAnalyzing || 'AI 예측 분석 중...'}</p>
-                                    <p className="text-[10px] text-white/20 mt-1">{tb.aiAnalyzingDetail || 'LightGBM 모델이 각 경기를 분석하고 있습니다'}</p>
+                                    <p className="text-sm">{tb.aiAnalyzing || 'AI 시뮬레이션 분석 중...'}</p>
+                                    <p className="text-[10px] text-white/20 mt-1">{tb.aiAnalyzingDetail || 'LightGBM 모델이 각 경기 데이터를 시뮬레이션하고 있습니다'}</p>
                                 </div>
                             ) : sportFilteredPredictions.length === 0 ? (
                                 <div className="py-20 text-center text-white/30 rounded-2xl" style={{ background: 'var(--bg-card)' }}>
                                     <div className="text-4xl mb-3">🧠</div>
                                     <p>{tb.noMatches || '분석 가능한 경기가 없습니다'}</p>
-                                    <p className="text-xs text-white/20 mt-1">{tb.noMatchesDetail || '경기 데이터가 수집되면 자동으로 AI 예측이 시작됩니다'}</p>
+                                    <p className="text-xs text-white/20 mt-1">{tb.noMatchesDetail || '경기 데이터가 수집되면 자동으로 AI 시뮬레이션이 시작됩니다'}</p>
                                 </div>
                             ) : (
                                 <div data-tour="tour-bets-table" className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -612,13 +622,13 @@ export default function BetsPage() {
                                                             <div className={`text-base font-bold ${pred.recommendation === 'HOME' ? 'text-white' : 'text-white/60'}`}>
                                                                 {home}
                                                                 {pred.recommendation === 'HOME' && (
-                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Pick</span>
+                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                             </div>
                                                             <div className={`text-sm mt-0.5 ${pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/40'}`}>
                                                                 vs {away}
                                                                 {pred.recommendation === 'AWAY' && (
-                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Pick</span>
+                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -671,11 +681,11 @@ export default function BetsPage() {
 
                                                     <div className="flex items-center justify-between mt-3">
                                                         <div className="flex items-center space-x-3">
-                                                            {/* EV badge */}
+                                                            {/* Efficiency index badge */}
                                                             {ev !== 0 && (
                                                                 <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${ev > 0 ? 'text-green-400' : 'text-red-400'}`}
                                                                     style={{ background: ev > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)' }}>
-                                                                    EV {ev > 0 ? '+' : ''}{ev.toFixed(1)}%
+                                                                    효율 {ev > 0 ? '+' : ''}{ev.toFixed(1)}%
                                                                 </span>
                                                             )}
                                                             {/* Odds badge if available */}
@@ -856,8 +866,8 @@ export default function BetsPage() {
                         </div>
                     )}
 
-                    <div className="mt-2 text-[10px] text-white/15 text-right px-2">
-                        {tb.disclaimer || 'AI 예측은 과거 데이터를 기반으로 하며, 결과를 보장하지 않습니다.'}
+                    <div className="mt-2 text-[10px] text-white/20 text-right px-2">
+                        {tb.disclaimer || '본 시뮬레이션은 과거 통계 데이터를 기반으로 한 연구 목적의 결과이며, 실제 경기 결과를 보장하지 않습니다. 도박 및 투자 목적의 활용을 금합니다.'}
                     </div>
                 </main>
 
@@ -903,7 +913,7 @@ export default function BetsPage() {
 
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <span className="text-xs text-white/40">{tb.totalOdds || '총 배당률'}</span>
+                                    <span className="text-xs text-white/40">{tb.totalOdds || '총 조합 배율'}</span>
                                     <span className="text-lg font-black ml-2 font-mono gradient-text">{comboOdds.toFixed(2)}</span>
                                     <span className="text-xs text-white/30 ml-3">
                                         {selectedBets.size}개 경기 조합

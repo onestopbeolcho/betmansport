@@ -40,6 +40,7 @@ LEAGUE_MAP = {
     # ─── 대회 ───
     "soccer_uefa_champs_league": 2,         # 🇪🇺 Champions League
     "soccer_uefa_europa_league": 3,         # 🇪🇺 Europa League
+    "soccer_uefa_europa_conference_league": 848, # 🇪🇺 Europa Conference League
     # ─── 아시아 ───
     "soccer_korea_kleague": 292,            # 🇰🇷 Korea — K League 1
     "soccer_japan_jleague": 98,             # 🇯🇵 Japan — J1 League

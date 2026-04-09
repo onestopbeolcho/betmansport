@@ -309,14 +309,19 @@ export default function AnalysisPage() {
                             </div>
 
                             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
-                                AI 경기 분석<br />
+                                프리미엄 데이터 분석<br />
                                 <span className="gradient-text-glow">딥 인사이트</span>
                             </h1>
 
-                            <p className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto mb-8 animate-fade-up" style={{ animationDelay: '160ms' }}>
-                                LightGBM 머신러닝 모델이 28개 특성을 분석하여<br className="hidden sm:block" />
-                                각 경기별 실시간 승률과 AI 추천을 제공합니다
-                            </p>
+                            <div className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto mb-8 animate-fade-up space-y-2" style={{ animationDelay: '160ms' }}>
+                                <p>
+                                    전 세계 주요 스포츠 데이터를 수집·가공하는 전문 머신러닝 엔진이<br className="hidden sm:block" />
+                                    최대 28개의 세부 특성을 다각적으로 수치화하여 순수 통계 지표를 제공합니다.
+                                </p>
+                                <p className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                    * 제공되는 모든 지표는 알고리즘 산출 결과물로서 통계 연구 목적으로만 활용되며, 어떠한 경우에도 사행성 배팅 결정을 권하거나 보장하지 않습니다.
+                                </p>
+                            </div>
 
                             {/* Quick stats */}
                             <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '240ms' }}>
@@ -714,7 +719,7 @@ export default function AnalysisPage() {
                                     <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,212,255,0.12)', color: '#00d4ff' }}>NEW</span>
                                     <span className="text-sm font-bold text-white">📈 AI 성과 백테스트 인사이트</span>
                                 </div>
-                                <p className="text-xs text-white/40 mt-1">과거 데이터에 AI 모델을 소급 적용 — 리그별 적중률, 약점 패턴, 주간 트렌드를 확인하세요</p>
+                                <p className="text-xs text-white/40 mt-1">과거 데이터에 AI 모델을 소급 적용 — 리그별 예측 정확도, 약점 패턴, 주간 트렌드를 확인하세요</p>
                             </div>
                             <div className="text-white/30 group-hover:text-white/60 transition-colors text-lg">→</div>
                         </div>

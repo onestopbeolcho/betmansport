@@ -138,7 +138,7 @@ async def get_ai_predictions():
                     league=odds.league or "",
                     sport=odds.sport or "Soccer",
                     match_time=odds.match_time,
-                    confidence=round(best / 100, 2),
+                    confidence=round(best, 1),
                     recommendation=rec,
                     home_win_prob=h_pct,
                     draw_prob=d_pct,

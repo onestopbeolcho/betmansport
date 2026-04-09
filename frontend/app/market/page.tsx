@@ -387,57 +387,60 @@ export default function MarketPage() {
 
                     <div className="relative px-5 py-5 sm:px-8 sm:py-6">
                         {/* Top Row: Title + Live Badge */}
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl" style={{
+                        <div className="flex items-start gap-4 mb-3">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-xl flex-shrink-0 mt-1" style={{
                                 background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(139,92,246,0.2))',
                                 border: '1px solid rgba(0,212,255,0.3)',
                                 boxShadow: '0 0 20px rgba(0,212,255,0.1)',
                             }}>
-                                <span className="text-xl">🗳️</span>
+                                <span className="text-2xl">📊</span>
                             </div>
-                            <div>
-                                <h1 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                                    {tm.heroTitle || 'Prediction Vote'}
-                                    <span className="ml-2 text-sm font-bold px-2 py-0.5 rounded-full" style={{
+                            <div className="flex-1">
+                                <h1 className="text-xl sm:text-2xl font-black tracking-tight flex flex-wrap items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                                    AI 기반 경기 시뮬레이션
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap" style={{
                                         background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(139,92,246,0.15))',
                                         color: 'var(--accent-primary)',
                                         border: '1px solid rgba(0,212,255,0.25)',
-                                    }}>Prediction League</span>
-                                </h1>
-                                <p className="text-sm mt-0.5 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                                    {tm.heroDesc || 'Predict match results with AI data and boost your accuracy'}
+                                    }}>데이터 분석 연구소</span>
                                     {liveCount > 0 && (
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
                                             <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#ef4444' }} />
-                                            {liveCount} {tm.matchesLive || 'LIVE'}
+                                            {liveCount} LIVE
                                         </span>
                                     )}
-                                </p>
+                                </h1>
+                                <div className="mt-2 text-sm space-y-1.5" style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                                    <p>스포어닉스의 정교한 데이터 모델을 활용하여 다가오는 경기의 객관적인 흐름을 파악하고, 나만의 스포츠 분석 능력을 안전하게 테스트해보세요.</p>
+                                    <p className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                                        * 본 메뉴는 순수 데이터 통계 및 시뮬레이션 연구 목적이며, 어떠한 형태의 사행성 게임이나 금전적 배팅을 유도·권장하지 않습니다.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
                         {/* Steps Guide */}
-                        <div data-tour="tour-market-steps" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                        <div data-tour="tour-market-steps" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
                             {[
                                 {
                                     step: '01',
-                                    icon: '⚽',
-                                    title: tm.stepSelect || 'Select Match',
-                                    desc: tm.stepSelectDesc || 'Check live matches from various leagues',
+                                    icon: '🔍',
+                                    title: '데이터 탐색',
+                                    desc: '전 세계 다양한 리그의 신뢰도 높은 데이터를 실시간으로 확인합니다',
                                     color: '#00d4ff',
                                 },
                                 {
                                     step: '02',
-                                    icon: '🎯',
-                                    title: tm.stepPredict || 'Predict Result',
-                                    desc: tm.stepPredictDesc || 'Vote Home/Draw/Away with AI analysis',
+                                    icon: '🧠',
+                                    title: '모의 시뮬레이션',
+                                    desc: '제공된 AI 분석지표를 바탕으로 예상 경기 결과를 시나리오별로 예측해 봅니다',
                                     color: '#8b5cf6',
                                 },
                                 {
                                     step: '03',
-                                    icon: '🏆',
-                                    title: tm.stepSettle || 'Auto Settle',
-                                    desc: tm.stepSettleDesc || 'Automatically settled after match, check accuracy',
+                                    icon: '📈',
+                                    title: '정확도 검증',
+                                    desc: '경기 종료 후 실제 데이터와 나의 예측 모델을 비교하여 분석 능력을 평가합니다',
                                     color: '#ff6b35',
                                 },
                             ].map((s, i) => (

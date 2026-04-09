@@ -102,12 +102,20 @@ async def publish_sns_content(req: PublishRequest = PublishRequest()):
 
     try:
         # 콘텐츠 생성
-        predictions = _predictions_cache
-        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
-        posts = await generate_sns_content(pred_dicts)
-
-        if not posts:
+        from app.api.endpoints import ai_predictions as ai_pred_module
+        
+        if not ai_pred_module._predictions_cache:
+            logger.info("Predictions cache is empty. Forcing prediction generation...")
+            await ai_pred_module.get_ai_predictions()
+            
+        predictions = ai_pred_module._predictions_cache
+        
+        if not predictions:
             raise HTTPException(status_code=404, detail="No predictions available for publishing")
+            
+        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
+        from app.services.gemini_service import generate_sns_content
+        posts = await generate_sns_content(pred_dicts)
 
         # 발행 대상 선택
         if req.post_index is not None:

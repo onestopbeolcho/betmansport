@@ -52,6 +52,7 @@ class PinnacleService(BaseOddsProvider):
             # ─── 대회 ───
             "soccer_uefa_champs_league": 2,
             "soccer_uefa_europa_league": 3,
+            "soccer_uefa_europa_conference_league": 848,
             # ─── 아시아 ───
             "soccer_korea_kleague": 292,
             "soccer_japan_jleague": 98,

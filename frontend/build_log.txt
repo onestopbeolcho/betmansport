@@ -1,107 +1,239 @@
-﻿??Next.js 16.1.6 (Turbopack)
+﻿
+> frontend@0.1.0 build
+> next build && node scripts/generate-seo.mjs && node scripts/post-to-buffer.mjs
+
+node.exe : ??Specified "rew
+rites" will not automatical
+ly work with "output: expor
+t". See more info here: htt
+ps://nextjs.org/docs/messag
+es/export-no-custom-routes
+위치 C:\Program Files\nodejs\
+npm.ps1:29 문자:3
++   & $NODE_EXE $NPM_CLI_JS
+ $args
++   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (??S  
+  pecified "re...o-custo   
+ m-routes:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+??Next.js 16.1.6 (Turbopack)
 - Environments: .env.local
 
-node.exe : ??The "middleware"
- file convention is deprecate
-d. Please use "proxy" instead
-. Learn more: https://nextjs.
-org/docs/messages/middleware-
-to-proxy
-위치 C:\Program Files\nodejs\np
-x.ps1:29 문자:3
-+   & $NODE_EXE $NPX_CLI_JS $
-args
-+   ~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~
-    + CategoryInfo           
-   : NotSpecified: (??The "  
-  middlewa...leware-to-pro   
- xy:String) [], RemoteExc    
-eption
-    + FullyQualifiedErrorId  
-   : NativeCommandError
- 
+??The "middleware" file con
+vention is deprecated. Plea
+se use "proxy" instead. Lea
+rn more: https://nextjs.org
+/docs/messages/middleware-t
+o-proxy
   Creating an optimized production build ...
-??Compiled successfully in 5.0s
+??Specified "rewrites" will
+ not automatically work wit
+h "output: export". See mor
+e info here: https://nextjs
+.org/docs/messages/export-n
+o-custom-routes
+??Compiled successfully in 7.2s
   Running TypeScript ...
-Failed to compile.
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/1016) ...
+  Generating static pages using 11 workers (254/1016) 
+  Generating static pages using 11 workers (508/1016) 
+  Generating static pages using 11 workers (762/1016) 
+??Generating static pages using 11 workers (1016/1016) in 7.8s
+  Finalizing page optimization ...
+??rewrites, redirects, and 
+headers are not applied whe
+n exporting your applicatio
+n, detected (rewrites). See
+ more info here: https://ne
+xtjs.org/docs/messages/expo
+rt-no-custom-routes
+??Statically exporting a Ne
+xt.js application via `next
+ export` disables API route
+s and middleware.
+This command is meant for s
+tatic-only hosts, and is no
+t necessary to make your ap
+plication static.
+Pages in your application w
+ithout server-side data dep
+endencies will be automatic
+ally statically exported by
+ `next build`, including pa
+ges powered by `getStaticPr
+ops`.
+Learn more: https://nextjs.
+org/docs/messages/api-route
+s-static-export
 
-.next/types/validator.ts:364:
-31
-Type error: Type 'typeof impo
-rt("C:/Smart_Proto_Investor_P
-lan/frontend/app/[lang]/layou
-t")' does not satisfy the con
-straint 'LayoutConfig<"/[lang
-]">'.
-  Types of property 'default'
- are incompatible.
-    Type '({ children, params
-, }: { children: ReactNode; p
-arams: Promise<{ lang: "ko" |
- "en"; }>; }) => Promise<Elem
-ent>' is not assignable to ty
-pe 'ComponentType<LayoutProps
-<"/[lang]">> | ((props: Layou
-tProps<"/[lang]">) => void | 
-ReactNode | Promise<ReactNode
-> | Promise<...>)'.
-      Type '({ children, para
-ms, }: { children: ReactNode;
- params: Promise<{ lang: "ko"
- | "en"; }>; }) => Promise<El
-ement>' is not assignable to 
-type 'FunctionComponent<Layou
-tProps<"/[lang]">>'.
-        Types of parameters '
-__0' and 'props' are incompat
-ible.
-          Type 'LayoutProps<"
-/[lang]">' is not assignable 
-to type '{ children: ReactNod
-e; params: Promise<{ lang: "k
-o" | "en"; }>; }'.
-            Types of property
- 'params' are incompatible.
-              Type 'Promise<{
- lang: string; }>' is not ass
-ignable to type 'Promise<{ la
-ng: "ko" | "en"; }>'.
-                Type '{ lang:
- string; }' is not assignable
- to type '{ lang: "ko" | "en"
-; }'.
-                  Types of pr
-operty 'lang' are incompatibl
-e.
-                    Type 'str
-ing' is not assignable to typ
-e '"ko" | "en"'.
+Route (app)
+????/
+????/_not-found
+????/[lang]
+????/ko
+????/en
+????/ja
+????[+18 more paths]
+????/[lang]/analysis
+????/ko/analysis
+????/en/analysis
+????/ja/analysis
+????[+18 more paths]
+????/[lang]/bets
+????/ko/bets
+????/en/bets
+????/ja/bets
+????[+18 more paths]
+????/[lang]/bets/view
+????/ko/bets/view
+????/en/bets/view
+????/ja/bets/view
+????[+18 more paths]
+????/[lang]/disclaimer
+????/ko/disclaimer
+????/en/disclaimer
+????/ja/disclaimer
+????[+18 more paths]
+????/[lang]/login
+????/ko/login
+????/en/login
+????/ja/login
+????[+18 more paths]
+????/[lang]/manual
+????/ko/manual
+????/en/manual
+????/ja/manual
+????[+18 more paths]
+????/[lang]/market
+????/ko/market
+????/en/market
+????/ja/market
+????[+18 more paths]
+????/[lang]/mypage
+????/ko/mypage
+????/en/mypage
+????/ja/mypage
+????[+18 more paths]
+????/[lang]/payment/complete
+????/ko/payment/complete
+????/en/payment/complete
+????/ja/payment/complete
+????[+18 more paths]
+????/[lang]/payment/request
+????/ko/payment/request
+????/en/payment/request
+????/ja/payment/request
+????[+18 more paths]
+????/[lang]/payment/success
+????/ko/payment/success
+????/en/payment/success
+????/ja/payment/success
+????[+18 more paths]
+????/[lang]/predictions/[match_id]
+????/ko/predictions/Casa Pia_Benfica
+????/ko/predictions/Juventus_Genoa
+????/ko/predictions/Arsenal_Bournemouth
+????[+501 more paths]
+????/[lang]/pricing
+????/ko/pricing
+????/en/pricing
+????/ja/pricing
+????[+18 more paths]
+????/[lang]/privacy
+????/ko/privacy
+????/en/privacy
+????/ja/privacy
+????[+18 more paths]
+????/[lang]/refund
+????/ko/refund
+????/en/refund
+????/ja/refund
+????[+18 more paths]
+????/[lang]/register
+????/ko/register
+????/en/register
+????/ja/register
+????[+18 more paths]
+????/[lang]/standings
+????/ko/standings
+????/en/standings
+????/ja/standings
+????[+18 more paths]
+????/[lang]/terms
+????/ko/terms
+????/en/terms
+????/ja/terms
+????[+18 more paths]
+????/[lang]/vip
+????/ko/vip
+????/en/vip
+????/ja/vip
+????[+18 more paths]
+????/[lang]/vip/alerts
+????/ko/vip/alerts
+????/en/vip/alerts
+????/ja/vip/alerts
+????[+18 more paths]
+????/[lang]/vip/combo
+????/ko/vip/combo
+????/en/vip/combo
+????/ja/vip/combo
+????[+18 more paths]
+????/[lang]/vip/portfolio
+????/ko/vip/portfolio
+????/en/vip/portfolio
+????/ja/vip/portfolio
+????[+18 more paths]
+????/accuracy
+????/admin
+????/analysis
+????/analysis/insights
+????/bets
+????/bets/view
+????/disclaimer
+????/login
+????/manual
+????/market
+????/mypage
+????/payment/request
+????/payment/success
+????/predictions/[match_id]
+????/predictions/Casa%20Pia_Benfica
+????/predictions/Juventus_Genoa
+????/predictions/Arsenal_Bournemouth
+????[+21 more paths]
+????/pricing
+????/privacy
+????/refund
+????/register
+????/terms
+????/vip
+????/vip/alerts
+????/vip/combo
+????/vip/portfolio
 
-[0m [90m 362 |[39m   type 
-__IsExpected[33m<[39m[33mS
-pecific[39m [36mextends[39
-m [33mLayoutConfig[39m[33m
-<[39m[32m"/[lang]"[39m[33
-m>>[39m [33m=[39m [33mSpe
-cific[39m
- [90m 363 |[39m   [36mcons
-t[39m handler [33m=[39m {}
- [36mas[39m [36mtypeof[39
-m [36mimport[39m([32m"../.
-./app/[lang]/layout.js"[39m)
-[31m[1m>[22m[39m[90m 364
- |[39m   type __Check [33m=
-[39m __IsExpected[33m<[39m
-[36mtypeof[39m handler[33m
->[39m
- [90m     |[39m            
-                   [31m[1m^
-[22m[39m
- [90m 365 |[39m   [90m// @
-ts-ignore[39m
- [90m 366 |[39m   type __Un
-used [33m=[39m __Check
- [90m 367 |[39m }[0m
-Next.js build worker exited w
-ith code: 1 and signal: null
+
+? Proxy (Middleware)
+
+?? (Static)  prerendered as static content
+?? (SSG)     prerendered as static HTML (uses generateStaticParams)
+
+?뵩 SEO ?섏씠吏 ?앹꽦 ?쒖옉...
+?뱤 0媛?寃쎄린 ?곗씠???섏떊
+??0媛?寃쎄린 遺꾩꽍 HTML ?섏씠吏 ?앹꽦
+?뱥 sitemap.xml ?앹꽦 (8 URLs)
+?쨼 robots.txt ?앹꽦
+
+?럦 SEO ?뚯씪 ?앹꽦 ?꾨즺!
+?벑 Buffer SNS ?ъ뒪???쒖옉...
+
+?좑툘  BUFFER_ACCESS_TOKEN 誘몄꽕????Buffer ?ъ뒪??嫄대꼫?
+   ?섍꼍蹂?섎? 異붽??댁＜?몄슂: BUFFER_ACCESS_TOKEN=your_token
+

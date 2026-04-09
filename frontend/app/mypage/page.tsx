@@ -46,10 +46,10 @@ export default function MyPage() {
     const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     const QUICK_PROMPTS = [
-        { label: t.qpValueBet || 'Value Picks', icon: '🎯', query: t.qpValueBetQuery || 'Recommend matches with the biggest value gaps today' },
-        { label: t.qpRiskAnalysis || 'Risk Analysis', icon: '⚡', query: t.qpRiskQuery || 'Analyze the most stable analysis strategy right now' },
-        { label: t.qpHighWinRate || 'High Win Rate', icon: '📊', query: t.qpHighWinQuery || 'What are the highest win probability matches today?' },
-        { label: t.qpComboOptimizer || 'Combo Optimizer', icon: '🧮', query: t.qpComboQuery || "Recommend the optimal combination from today's matches" },
+        { label: t.qpValueBet || '데이터 괴리 탐색', icon: '📊', query: t.qpValueBetQuery || 'Show matches with the biggest statistical gaps today' },
+        { label: t.qpRiskAnalysis || '안정성 분석', icon: '⚡', query: t.qpRiskQuery || 'Analyze the most consistent statistical patterns right now' },
+        { label: t.qpHighWinRate || '높은 상관도', icon: '📈', query: t.qpHighWinQuery || 'What are the highest correlation matches today?' },
+        { label: t.qpComboOptimizer || '조합 시뮬레이터', icon: '🧮', query: t.qpComboQuery || "Simulate the optimal data combination from today's matches" },
     ];
 
     // Slips state
@@ -172,10 +172,10 @@ export default function MyPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-                                {t.pageTitle || 'AI Portfolio'}
+                                {t.pageTitle || 'AI 분석 대시보드'}
                             </h1>
                             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                                {user?.email?.split('@')[0] || 'Guest'}{t.pageSubtitle || "'s Personal AI Analysis Dashboard"}
+                                {user?.email?.split('@')[0] || 'Guest'}{t.pageSubtitle || '님의 개인 AI 데이터 분석 대시보드'}
                             </p>
                         </div>
                     </div>
@@ -185,7 +185,7 @@ export default function MyPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                     {[
                         {
-                            label: t.statAnalyses || "Today's Analyses",
+                            label: t.statAnalyses || '오늘의 분석',
                             value: totalAnalyses,
                             icon: '🧠',
                             gradient: 'from-[#00d4ff]/20 to-[#00d4ff]/5',
@@ -193,15 +193,15 @@ export default function MyPage() {
                             color: '#00d4ff',
                         },
                         {
-                            label: t.statHitRate || 'AI Hit Rate',
+                            label: t.statHitRate || 'AI 정확도',
                             value: `${hitRate}%`,
-                            icon: '🎯',
+                            icon: '📊',
                             gradient: 'from-[#4ade80]/20 to-[#4ade80]/5',
                             border: 'border-[rgba(74,222,128,0.2)]',
                             color: '#4ade80',
                         },
                         {
-                            label: t.statCombos || 'Saved Combos',
+                            label: t.statCombos || '저장된 시뮬레이션',
                             value: totalSlips,
                             icon: '📋',
                             gradient: 'from-[#8b5cf6]/20 to-[#8b5cf6]/5',
@@ -209,9 +209,9 @@ export default function MyPage() {
                             color: '#8b5cf6',
                         },
                         {
-                            label: t.statWonLost || 'Won / Lost',
+                            label: t.statWonLost || '적중 / 미적중',
                             value: `${wonSlips} / ${lostSlips}`,
-                            icon: '📊',
+                            icon: '📈',
                             gradient: 'from-[#f59e0b]/20 to-[#f59e0b]/5',
                             border: 'border-[rgba(245,158,11,0.2)]',
                             color: '#f59e0b',
@@ -360,7 +360,7 @@ export default function MyPage() {
                         </div>
                         <div className="text-center mt-2">
                             <span className="text-[9px]" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
-                                {t.chatDisclaimer || 'Pinnacle + Betman real-time odds based · Gemini AI analysis · Results are for reference only'}
+                                {t.chatDisclaimer || '글로벌 스포츠 데이터 기반 · Gemini AI 분석 · 본 결과는 통계 연구 목적이며 도박/투자를 권유하지 않습니다'}
                             </span>
                         </div>
                     </form>
@@ -376,7 +376,7 @@ export default function MyPage() {
                         <div className="flex items-center gap-3">
                             <span className="text-lg">📋</span>
                             <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                                {t.savedCombosTitle || 'Saved Combos & Analysis History'}
+                                {t.savedCombosTitle || '저장된 시뮬레이션 및 분석 기록'}
                             </span>
                             <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                                 style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)' }}>
@@ -404,7 +404,7 @@ export default function MyPage() {
                                     <div className="text-3xl mb-2 opacity-30">📊</div>
                                     <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>{t.noCombos || 'No saved combos yet.'}</p>
                                     <a href={`/${currentLang}/bets`} className="btn-primary text-xs px-4 py-2 inline-block rounded-lg">
-                                        {t.goToAnalysis || 'Go to Odds Analysis →'}
+                                        {t.goToAnalysis || '데이터 분석 바로가기 →'}
                                     </a>
                                 </div>
                             ) : (
@@ -425,7 +425,7 @@ export default function MyPage() {
                                                             slip.status === 'lost' ? 'bg-[rgba(239,68,68,0.15)] text-[#f87171]' :
                                                                 'bg-white/5 text-[var(--text-muted)]'
                                                         }`}>
-                                                        {slip.status === 'active' ? (t.statusActive || 'Active') : slip.status === 'won' ? (t.statusWon || 'Won') : slip.status === 'lost' ? (t.statusLost || 'Lost') : slip.status}
+                                                        {slip.status === 'active' ? (t.statusActive || '진행중') : slip.status === 'won' ? (t.statusWon || '적중') : slip.status === 'lost' ? (t.statusLost || '미적중') : slip.status}
                                                     </span>
                                                 </div>
                                             </div>

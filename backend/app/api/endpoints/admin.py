@@ -241,3 +241,30 @@ async def betman_add_match(match: BetmanMatchCreate, round_id: Optional[str] = N
         "message": "경기 추가 완료",
         "match": result,
     }
+
+
+# ─────────────────────────────────────────────
+# 회원 관리 & 결제 내역 (Users & Payments)
+# ─────────────────────────────────────────────
+
+@router.get("/users")
+async def get_users_list(limit: int = 100, admin_id: str = Depends(require_admin)):
+    """가입된 전체 회원 목록 조회"""
+    from app.models.user_db import get_all_users
+    users = await get_all_users(limit=limit)
+    return {
+        "count": len(users),
+        "users": users
+    }
+
+
+@router.get("/payments")
+async def get_payments_list(limit: int = 100, admin_id: str = Depends(require_admin)):
+    """전체 결제 내역 목록 조회"""
+    from app.models.user_db import get_all_payments
+    payments = await get_all_payments(limit=limit)
+    return {
+        "count": len(payments),
+        "payments": payments
+    }
+
