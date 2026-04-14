@@ -1,0 +1,32 @@
+{
+  "match_id": "Casa Pia_Benfica",
+  "team_home": "Casa Pia",
+  "team_away": "Benfica",
+  "team_home_ko": null,
+  "team_away_ko": "벤피카",
+  "league": "Primeira Liga",
+  "sport": "Soccer",
+  "match_time": "2026-04-06T19:45:00+00:00",
+  "confidence": 0.77,
+  "recommendation": "AWAY",
+  "home_win_prob": 6.2,
+  "draw_prob": 16.7,
+  "away_win_prob": 77.1,
+  "factors": [
+    {
+      "name": "배당률 내재 확률",
+      "weight": 100,
+      "score": 77.1,
+      "detail": "홈 6.2% / 무 16.7% / 원정 77.1%"
+    }
+  ],
+  "home_rank": 0,
+  "away_rank": 0,
+  "home_form": "",
+  "away_form": "",
+  "h2h_summary": "",
+  "injuries_home": [],
+  "injuries_away": [],
+  "api_prediction": null,
+  "api_prediction_pct": null
+}

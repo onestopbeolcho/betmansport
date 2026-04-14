@@ -41,12 +41,30 @@ def _create_match_card(match_data: Dict, width: int = 1080, height: int = 1080) 
     img = Image.new("RGB", (width, height), color=(15, 15, 25))
     draw = ImageDraw.Draw(img)
 
-    # 폰트 설정 (시스템 기본 사용)
+    # 폰트 설정 (시스템 기본 사용 또는 동적 다운로드)
+    font_path_regular = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+    font_path_bold = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+
+    if not os.path.exists(font_path_regular):
+        import urllib.request
+        logger.info("Downloading NanumGothic font dynamically...")
+        tmp_font = "/tmp/NanumGothic.ttf"
+        if not os.path.exists(tmp_font):
+            try:
+                url = "https://raw.githubusercontent.com/google/fonts/main/ofl/nanumgothic/NanumGothic-Bold.ttf"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req) as response, open(tmp_font, 'wb') as out_file:
+                    out_file.write(response.read())
+            except Exception as e:
+                logger.error(f"Failed to download font: {e}")
+        font_path_regular = tmp_font
+        font_path_bold = tmp_font
+    
     try:
-        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48)
-        font_md = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 36)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
-        font_xs = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 22)
+        font_lg = ImageFont.truetype(font_path_bold, 48)
+        font_md = ImageFont.truetype(font_path_regular, 36)
+        font_sm = ImageFont.truetype(font_path_regular, 28)
+        font_xs = ImageFont.truetype(font_path_regular, 22)
     except (OSError, IOError):
         font_lg = ImageFont.load_default()
         font_md = font_lg
@@ -167,7 +185,7 @@ async def generate_card_and_upload(match_data: Dict) -> Optional[str]:
 
         # 2. Firebase Storage에 업로드
         from google.cloud import storage as gcs
-        bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "smart-proto-inv-2026.firebasestorage.app")
+        bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "smart-proto-inv-2026-sns-assets")
         client = gcs.Client()
         bucket = client.bucket(bucket_name)
 
@@ -177,9 +195,14 @@ async def generate_card_and_upload(match_data: Dict) -> Optional[str]:
 
         blob = bucket.blob(blob_path)
         blob.upload_from_string(png_bytes, content_type="image/png")
-        blob.make_public()
+        
+        try:
+            blob.make_public()
+            public_url = blob.public_url
+        except Exception as acl_e:
+            logger.warning(f"Failed to make_public: {acl_e}. Using assumed URL...")
+            public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
 
-        public_url = blob.public_url
         logger.info(f"✅ Card uploaded: {public_url}")
         return public_url
 

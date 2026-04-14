@@ -32,6 +32,25 @@ interface AIResponse {
 }
 
 /* ───── Helpers ───── */
+const TEAM_NAME_MAP: Record<string, string> = {
+    "Arsenal": "아스널", "Aston Villa": "애스턴 빌라", "Bournemouth": "본머스", "Brentford": "브렌트포드", "Brighton": "브라이튼", "Burnley": "번리", "Chelsea": "첼시", "Crystal Palace": "크리스탈 팰리스", "Everton": "에버턴", "Fulham": "풀럼", "Liverpool": "리버풀", "Luton": "루턴", "Luton Town": "루턴 타운", "Manchester City": "맨시티", "Man City": "맨시티", "Manchester United": "맨유", "Man Utd": "맨유", "Newcastle": "뉴캐슬", "Nottingham Forest": "노팅엄", "Sheffield United": "셰필드", "Tottenham": "토트넘", "Spurs": "토트넘", "West Ham": "웨스트햄", "Wolves": "울버햄튼", "Wolverhampton": "울버햄튼",
+    "Real Madrid": "레알 마드리드", "Barcelona": "바르셀로나", "Atletico Madrid": "아틀레티코", "Girona": "지로나", "Athletic Club": "빌바오", "Real Sociedad": "소시에다드", "Real Betis": "베티스", "Valencia": "발렌시아", "Villarreal": "비야레알", "Sevilla": "세비야", "Osasuna": "오사수나", "Mallorca": "마요르카", "Celta Vigo": "셀타 비고",
+    "Bayern Munich": "바이에른 뮌헨", "Bayer Leverkusen": "레버쿠젠", "Stuttgart": "슈투트가르트", "RB Leipzig": "라이프치히", "Borussia Dortmund": "도르트문트", "Dortmund": "도르트문트", "Eintracht Frankfurt": "프랑크푸르트", "Freiburg": "프라이부르크",
+    "Inter": "인테르", "Juventus": "유벤투스", "AC Milan": "AC밀란", "Roma": "로마", "Atalanta": "아탈란타", "Bologna": "볼로냐", "Napoli": "나폴리", "Fiorentina": "피오렌티나", "Lazio": "라치오", "Torino": "토리노",
+    "PSG": "파리 생제르맹", "Paris SG": "파리 생제르맹", "Monaco": "모나코", "Marseille": "마르세유", "Lille": "릴", "Lens": "랑스", "Nice": "니스", "Rennes": "렌", "Lyon": "리옹",
+    "LALIGA": "라리가", "PREMIER LEAGUE": "프리미어리그", "SERIE A": "세리에 A", "BUNDESLIGA": "분데스리가", "LIGUE 1": "리그 1"
+};
+
+const mapTeamName = (engName: string) => {
+    if (!engName) return '';
+    if (TEAM_NAME_MAP[engName]) return TEAM_NAME_MAP[engName];
+    const upperEng = engName.toUpperCase();
+    for (const [key, val] of Object.entries(TEAM_NAME_MAP)) {
+        if (upperEng.includes(key.toUpperCase())) return val;
+    }
+    return engName; 
+};
+
 const formatTime = (iso: string) => {
     if (!iso) return '';
     try {
@@ -108,7 +127,12 @@ function ConfidenceGauge({ value }: { value: number }) {
     return (
         <div className="w-full">
             <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] text-white/40 uppercase tracking-wider">신뢰도</span>
+                <span className="text-[10px] text-white/40 uppercase tracking-wider group relative cursor-help">
+                    신뢰도 ⓘ
+                    <div className="absolute bottom-full left-0 mb-2 w-56 p-2.5 bg-gray-900 border border-white/10 rounded-xl text-[10px] text-white leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none shadow-2xl normal-case">
+                        AI가 추천 예측에 대해 얼마나 강하게 확신하는지 나타냅니다. 변수가 적을수록 높아집니다. <br/>(70% 이상부터 추천 구간)
+                    </div>
+                </span>
                 <span className="text-sm font-black" style={{ color: level.color }}>{value.toFixed(1)}%</span>
             </div>
             <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -198,6 +222,7 @@ export default function AnalysisPage() {
     const [sortBy, setSortBy] = useState<'confidence' | 'time'>('confidence');
     const [selectedSport, setSelectedSport] = useState<string>('ALL');
     const [fetchError, setFetchError] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -342,6 +367,48 @@ export default function AnalysisPage() {
                                     <div className="text-[10px] text-[var(--text-muted)] mt-1">평균 신뢰도</div>
                                 </div>
                             </div>
+
+                            {/* Guide Toggle Button */}
+                            <div className="mt-6 animate-fade-up" style={{ animationDelay: '300ms' }}>
+                                <button
+                                    onClick={() => setShowGuide(!showGuide)}
+                                    className="px-4 py-2 rounded-full border border-white/10 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all flex items-center mx-auto"
+                                >
+                                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    AI 데이터 분석 가이드 {showGuide ? '접기 ▲' : '보기 ▼'}
+                                </button>
+                            </div>
+
+                            {/* Guide Panel */}
+                            {showGuide && (
+                                <div className="mt-4 p-5 rounded-2xl text-left border border-white/10 max-w-3xl mx-auto shadow-2xl animate-fade-down text-sm" style={{ background: 'var(--bg-card)' }}>
+                                    <h3 className="text-base font-bold text-white mb-3 flex items-center">
+                                        <span className="w-1.5 h-4 bg-cyan-400 rounded-full mr-2"></span>
+                                        일반 스코어 앱과 무엇이 다른가요? (Scorenix AI)
+                                    </h3>
+                                    <p className="mb-4 text-xs leading-relaxed text-[var(--text-secondary)]">
+                                        스코어닉스의 AI 엔진은 일반적인 배당률 기반 통계나 단순 상대전적을 넘어, <strong className="text-cyan-400">결장자 변수, 동기부여(순위 싸움), 홈/원정 폼, 피로도 등 최대 28개의 다각적 특성을 머신러닝(LightGBM)으로 분석</strong>합니다. 직감이나 단순 배팅 흐름이 아닌 철저한 데이터 기반 가치 지표입니다.
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                            <div className="font-bold text-white mb-1">🎯 승무패 예측 확률</div>
+                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">머신러닝 모델이 분석한 순수 결과 도출 확률입니다. 홈 이점, 선수단 체급 차이 등이 알고리즘 관점에서 복합적으로 수치화됩니다.</p>
+                                        </div>
+                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                            <div className="font-bold text-[#ef4444] mb-1">⭐ 신뢰도 (Confidence)</div>
+                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">AI가 산출한 결과에 대해 <strong>스스로 조차 얼마나 데이터를 맹신하는가</strong>를 나타냅니다. 변동성 변수가 적을수록 신뢰도가 높습니다. (70% 이상 추천구간)</p>
+                                        </div>
+                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                            <div className="font-bold text-[#f97316] mb-1">💸 EV (기대수익 마진)</div>
+                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">제공되는 배당률과 AI 확률을 비교한 손익 기대값입니다. <strong>마이너스(-) 수치</strong>는 배당률 대비 투자 가치가 현저히 부족함(오즈메이커 함정)을 경고합니다.</p>
+                                        </div>
+                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                                            <div className="font-bold text-[#10b981] mb-1">📊 투자 가치 지표</div>
+                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">투자 비중 분배를 위한 수학적 리스크 측정입니다. EV와 신뢰도를 복합하여 해당 경기가 데이터적으로 메리트가 있는지를 추산합니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -405,8 +472,12 @@ export default function AnalysisPage() {
                                 {topPicks.map((pick, i) => {
                                     const level = getConfidenceLevel(pick.confidence);
                                     const parts = pick.match_id.split('_');
-                                    const home = pick.team_home || parts[0] || '';
-                                    const away = pick.team_away || parts.slice(1).join(' ') || '';
+                                    const homeEng = pick.team_home || parts[0] || '';
+                                    const awayEng = pick.team_away || parts.slice(1).join(' ') || '';
+                                    const mappedHomeKo = pick.team_home_ko || mapTeamName(homeEng);
+                                    const mappedAwayKo = pick.team_away_ko || mapTeamName(awayEng);
+                                    const home = mappedHomeKo && mappedHomeKo !== homeEng ? `${mappedHomeKo} (${homeEng})` : homeEng;
+                                    const away = mappedAwayKo && mappedAwayKo !== awayEng ? `${mappedAwayKo} (${awayEng})` : awayEng;
                                     return (
                                         <div key={i} className="relative overflow-hidden rounded-2xl transition-all hover:scale-[1.02] cursor-pointer group"
                                             style={{
@@ -525,8 +596,12 @@ export default function AnalysisPage() {
                             {filteredPredictions.map((pred, idx) => {
                                 const level = getConfidenceLevel(pred.confidence);
                                 const parts = pred.match_id.split('_');
-                                const home = pred.team_home || parts[0] || '';
-                                const away = pred.team_away || parts.slice(1).join(' ') || '';
+                                const homeEng = pred.team_home || parts[0] || '';
+                                const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
+                                const mappedHomeKo = pred.team_home_ko || mapTeamName(homeEng);
+                                const mappedAwayKo = pred.team_away_ko || mapTeamName(awayEng);
+                                const home = mappedHomeKo && mappedHomeKo !== homeEng ? `${mappedHomeKo} (${homeEng})` : homeEng;
+                                const away = mappedAwayKo && mappedAwayKo !== awayEng ? `${mappedAwayKo} (${awayEng})` : awayEng;
                                 const matchKey = `analysis-${idx}`;
                                 const isExpanded = expandedCard === matchKey;
 

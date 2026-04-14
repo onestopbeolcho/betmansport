@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.5.0 - AI Sports Analysis Pipeline Specialization (Soccer Focus)
+
+### ⚽ Core AI Evolution: Soccer Specialization
+- **Domain-Specific Feature Engineering** (`soccer_features.py`, `soccer_stats_service.py`):
+    - Implemented a deterministic stats generator simulating real-world indicators (xG, Form, Fatigue, Possession, Injury Impact) for consistent frontend prototyping and UX tuning.
+    - Scaled feature extraction to output detailed indices evaluating head-to-head tactical dominance based on aggregated xG limits and match schedules.
+- **Heuristic Inference Engine** (`ml_service.py`):
+    - Replaced standard flat mock predictions with `_heuristic_soccer_predict()`, a fallback inference mechanism that synthesizes win probability explicitly from extracted features (xG, schedules) when the primary LightGBM model lacks data.
+    - Passed component insights (e.g., Weight, Score, Cause) transparently through the API response schema to support descriptive breakdowns in VIP dashboards.
+
+### 🔌 API & System Integrations
+- **Data Auto-Injection** (`scheduler.py`, `ai_predictions.py`):
+    - Rewired prediction endpoints and the background cron task (`update_job`) to successfully invoke and embed `soccer_stats_service` outputs prior to AI model execution, validating the end-to-end data funnel.
+- **Frontend Environment Resilience**:
+    - Purged unstable local API dependencies (`localhost:8000`) inside Next.js components (`VipComboPanel.tsx`, `DroppingOddsRadar.tsx`), binding API requests securely to `process.env.NEXT_PUBLIC_API_URL` to resolve silent production failures.
+
+## v0.4.0 - SNS Automation Pipeline Enhancement
+
+### 📢 Social Media Management
+- **Duplicate Post Prevention**: Implemented a timestamp-based signature (`[Ref: {timestamp}]`) in `gemini_service.py` (`generate_generic_promo()`) to bypass Buffer API's spam filters and duplicate content blocks.
+- **Dynamic Content Generation**: Refined `SNS_GENERIC_MARKETING_PROMPT` to enforce unique content generation per cycle (variable tone, dynamic emoji placement) during low-data periods.
+- **Multi-Platform Support Readiness**: Verified `buffer_service.py` iterates over active channels, ensuring immediate compatibility when expanding platforms (e.g., adding more via premium Buffer plan).
+
+### 🛠 System Diagnosis & Deployment
+- **Log Forensics**: Identified and resolved silent failures caused by Buffer duplicating detection rules via GCP Cloud Run logs.
+- **Production CI/CD**: Successfully pushed codebase updates to GitHub and deployed backend patches securely to `scorenix-backend` (via `/deploy-backend` workflow), confirming system stability (`HTTP 200`).
+
+
 ## v0.3.0 - AI Infrastructure Standardization & Git Backup
 
 ### 🛡️ System Protection & Documentation

@@ -696,19 +696,11 @@ export default function MarketPage() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        addToCart({
-                                                            id: `${item.team_home}_${item.team_away}_Home`,
-                                                            match_name: `${item.team_home} vs ${item.team_away}`,
-                                                            selection: 'Home',
-                                                            odds: item.home_odds,
-                                                            team_home: item.team_home_ko || item.team_home,
-                                                            team_away: item.team_away_ko || item.team_away,
-                                                            time: formatTime(item.match_time)
-                                                        });
+                                                        handleVote(`${item.team_home}_${item.team_away}`, 'Home', item.home_odds);
                                                     }}
-                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`) ? 'ring-1 ring-[var(--accent-primary)]' : ''}`}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Home' ? 'ring-1 ring-[var(--accent-primary)]' : ''}`}
                                                     style={{
-                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`) ? 'rgba(0,212,255,0.12)' : 'var(--bg-card)',
+                                                        background: votedMatches[`${item.team_home}_${item.team_away}`] === 'Home' ? 'rgba(0,212,255,0.12)' : 'var(--bg-card)',
                                                         border: '1px solid var(--border-subtle)',
                                                     }}
                                                 >
@@ -719,20 +711,12 @@ export default function MarketPage() {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         if (item.draw_odds > 0) {
-                                                            addToCart({
-                                                                id: `${item.team_home}_${item.team_away}_Draw`,
-                                                                match_name: `${item.team_home} vs ${item.team_away}`,
-                                                                selection: 'Draw',
-                                                                odds: item.draw_odds,
-                                                                team_home: item.team_home_ko || item.team_home,
-                                                                team_away: item.team_away_ko || item.team_away,
-                                                                time: formatTime(item.match_time)
-                                                            });
+                                                            handleVote(`${item.team_home}_${item.team_away}`, 'Draw', item.draw_odds);
                                                         }
                                                     }}
-                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`) ? 'ring-1 ring-white/30' : ''}`}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Draw' ? 'ring-1 ring-white/30' : ''}`}
                                                     style={{
-                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`) ? 'rgba(255,255,255,0.08)' : 'var(--bg-card)',
+                                                        background: votedMatches[`${item.team_home}_${item.team_away}`] === 'Draw' ? 'rgba(255,255,255,0.08)' : 'var(--bg-card)',
                                                         border: '1px solid var(--border-subtle)',
                                                         opacity: item.draw_odds > 0 ? 1 : 0.3,
                                                     }}
@@ -744,19 +728,11 @@ export default function MarketPage() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        addToCart({
-                                                            id: `${item.team_home}_${item.team_away}_Away`,
-                                                            match_name: `${item.team_home} vs ${item.team_away}`,
-                                                            selection: 'Away',
-                                                            odds: item.away_odds,
-                                                            team_home: item.team_home_ko || item.team_home,
-                                                            team_away: item.team_away_ko || item.team_away,
-                                                            time: formatTime(item.match_time)
-                                                        });
+                                                        handleVote(`${item.team_home}_${item.team_away}`, 'Away', item.away_odds);
                                                     }}
-                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`) ? 'ring-1 ring-[var(--accent-secondary)]' : ''}`}
+                                                    className={`py-3 rounded-lg text-center transition-all active:scale-95 ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Away' ? 'ring-1 ring-[var(--accent-secondary)]' : ''}`}
                                                     style={{
-                                                        background: cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`) ? 'rgba(139,92,246,0.12)' : 'var(--bg-card)',
+                                                        background: votedMatches[`${item.team_home}_${item.team_away}`] === 'Away' ? 'rgba(139,92,246,0.12)' : 'var(--bg-card)',
                                                         border: '1px solid var(--border-subtle)',
                                                     }}
                                                 >
@@ -945,21 +921,13 @@ export default function MarketPage() {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    addToCart({
-                                                                        id: `${item.team_home}_${item.team_away}_Home`,
-                                                                        match_name: `${item.team_home} vs ${item.team_away}`,
-                                                                        selection: 'Home',
-                                                                        odds: item.home_odds,
-                                                                        team_home: item.team_home_ko || item.team_home,
-                                                                        team_away: item.team_away_ko || item.team_away,
-                                                                        time: formatTime(item.match_time)
-                                                                    });
+                                                                    handleVote(`${item.team_home}_${item.team_away}`, 'Home', item.home_odds);
                                                                 }}
-                                                                className={`odds-cell w-full py-2 rounded font-bold text-sm ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`)
+                                                                className={`odds-cell w-full py-2 rounded font-bold text-sm ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Home'
                                                                     ? 'selected'
                                                                     : ''
                                                                     }`}
-                                                                style={cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Home`)
+                                                                style={votedMatches[`${item.team_home}_${item.team_away}`] === 'Home'
                                                                     ? { color: 'var(--accent-primary)' }
                                                                     : { color: 'var(--odds-home)' }
                                                                 }
@@ -972,21 +940,13 @@ export default function MarketPage() {
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        addToCart({
-                                                                            id: `${item.team_home}_${item.team_away}_Draw`,
-                                                                            match_name: `${item.team_home} vs ${item.team_away}`,
-                                                                            selection: 'Draw',
-                                                                            odds: item.draw_odds,
-                                                                            team_home: item.team_home_ko || item.team_home,
-                                                                            team_away: item.team_away_ko || item.team_away,
-                                                                            time: formatTime(item.match_time)
-                                                                        });
+                                                                        handleVote(`${item.team_home}_${item.team_away}`, 'Draw', item.draw_odds);
                                                                     }}
-                                                                    className={`odds-cell w-full py-2 rounded font-bold text-sm ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`)
+                                                                    className={`odds-cell w-full py-2 rounded font-bold text-sm ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Draw'
                                                                         ? 'selected'
                                                                         : ''
                                                                         }`}
-                                                                    style={cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Draw`)
+                                                                    style={votedMatches[`${item.team_home}_${item.team_away}`] === 'Draw'
                                                                         ? { color: 'var(--accent-primary)' }
                                                                         : { color: 'var(--odds-draw)' }
                                                                     }
@@ -1001,21 +961,13 @@ export default function MarketPage() {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    addToCart({
-                                                                        id: `${item.team_home}_${item.team_away}_Away`,
-                                                                        match_name: `${item.team_home} vs ${item.team_away}`,
-                                                                        selection: 'Away',
-                                                                        odds: item.away_odds,
-                                                                        team_home: item.team_home_ko || item.team_home,
-                                                                        team_away: item.team_away_ko || item.team_away,
-                                                                        time: formatTime(item.match_time)
-                                                                    });
+                                                                    handleVote(`${item.team_home}_${item.team_away}`, 'Away', item.away_odds);
                                                                 }}
-                                                                className={`odds-cell w-full py-2 rounded font-bold text-sm ${cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`)
+                                                                className={`odds-cell w-full py-2 rounded font-bold text-sm ${votedMatches[`${item.team_home}_${item.team_away}`] === 'Away'
                                                                     ? 'selected'
                                                                     : ''
                                                                     }`}
-                                                                style={cartItems.some(c => c.id === `${item.team_home}_${item.team_away}_Away`)
+                                                                style={votedMatches[`${item.team_home}_${item.team_away}`] === 'Away'
                                                                     ? { color: 'var(--accent-primary)' }
                                                                     : { color: 'var(--odds-away)' }
                                                                 }
@@ -1116,7 +1068,7 @@ export default function MarketPage() {
                                                                                     const awayPct = (a / total) * 100;
                                                                                     const maxPct = Math.max(homePct, drawPct, awayPct);
                                                                                     const rec = homePct === maxPct ? 'HOME' : awayPct === maxPct ? 'AWAY' : 'DRAW';
-                                                                                    const recLabel = rec === 'HOME' ? `${item.team_home_ko || item.team_home} ${tm.win || 'Win'}` : rec === 'AWAY' ? `${item.team_away_ko || item.team_away} ${tm.win || 'Win'}` : (tm.draw || 'Draw');
+                                                                                    const recLabel = rec === 'HOME' ? `${item.team_home_ko ? `${item.team_home_ko}(${item.team_home})` : item.team_home} ${tm.win || 'Win'}` : rec === 'AWAY' ? `${item.team_away_ko ? `${item.team_away_ko}(${item.team_away})` : item.team_away} ${tm.win || 'Win'}` : (tm.draw || 'Draw');
 
                                                                                     return (
                                                                                         <div className="mt-4 surface-card p-4">
@@ -1162,8 +1114,8 @@ export default function MarketPage() {
                                                                                     <ProAnalysisPanel
                                                                                         prediction={pred}
                                                                                         injuries={matchDetail?.injuries}
-                                                                                        homeTeam={item.team_home_ko || item.team_home}
-                                                                                        awayTeam={item.team_away_ko || item.team_away}
+                                                                                        homeTeam={item.team_home_ko ? `${item.team_home_ko}(${item.team_home})` : item.team_home}
+                                                                                        awayTeam={item.team_away_ko ? `${item.team_away_ko}(${item.team_away})` : item.team_away}
                                                                                         historyData={historyData}
                                                                                         userTier={user?.tier || 'free'}
                                                                                     />

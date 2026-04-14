@@ -17,31 +17,31 @@ export default function ManualPage() {
         {
             id: 'intro',
             icon: '🎯',
-            title: 'Service Introduction',
+            title: '서비스 소개',
             content: (
                 <div className="space-y-6">
                     <div className="p-5 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08), rgba(139,92,246,0.08))', border: '1px solid rgba(0,212,255,0.15)' }}>
-                        <h3 className="text-lg font-extrabold mb-3" style={{ color: 'var(--accent-primary)' }}>What is Scorenix?</h3>
+                        <h3 className="text-lg font-extrabold mb-3" style={{ color: 'var(--accent-primary)' }}>스코어닉스란?</h3>
                         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            Scorenix compares and analyzes global sports odds data to identify
-                            statistically favorable zones (Value Opportunities) — an <strong className="text-white">AI-powered sports data analytics platform</strong>.
+                            스코어닉스(Scorenix)는 글로벌 스포츠 배당 데이터를 비교/분석하여
+                            통계적으로 유리한 구간(밸류 기회)을 찾아내는 <strong className="text-white">AI 기반 스포츠 데이터 분석 플랫폼</strong>입니다.
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FeatureCard
                             icon="📊"
-                            title="Odds Efficiency Analysis"
-                            desc="Compares true probabilities from global odds with domestic odds to automatically identify zones with 5%+ expected value (EV)."
+                            title="배당 효율성 분석"
+                            desc="해외 배당과 국내 배당을 비교하여 데이터 기반 기대수익(EV)이 5% 이상인 구간을 자동으로 계산 및 필터링합니다."
                         />
                         <FeatureCard
                             icon="🧮"
-                            title="Kelly Criterion Money Management"
-                            desc="Calculates mathematically optimal allocation ratios to minimize risk while maximizing long-term returns."
+                            title="안전한 비중 시스템"
+                            desc="안정성을 최우선으로 리스크를 최소화하면서 장기적으로 수치를 관리할 수 있는 수학적 최적의 분석 비중을 제안합니다."
                         />
                         <FeatureCard
                             icon="🤖"
-                            title="AI Analysis Reports"
-                            desc="Provides per-match AI analysis reports to support data-driven, rational decision making."
+                            title="AI 머신러닝 리포트"
+                            desc="단순 데이터 시각화를 넘어 28개 이상의 특성을 평가하는 AI 분석 엔진이 합리적인 의사결정을 지원합니다."
                         />
                     </div>
                 </div>
@@ -50,65 +50,65 @@ export default function ManualPage() {
         {
             id: 'value-bet',
             icon: '💡',
-            title: 'What is Value Analysis?',
+            title: '밸류 분석이란?',
             content: (
                 <div className="space-y-6">
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        A Value Opportunity is <strong className="text-white">a scenario where the odds offered are higher than the actual probability</strong>.
-                        Over time, these opportunities are mathematically expected to yield positive returns.
+                        밸류 기회(Value Opportunity)란 <strong className="text-white">실제 예상 확률에 비해 플랫폼에서 제공되는 배당률이 더 높게 책정된 구간</strong>을 뜻합니다.
+                        이러한 수학적 우위 기회에 장기적으로 접근할 경우 통계적으로 긍정적인 기대 마진을 발생시킬 수 있습니다.
                     </p>
                     <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📐 Expected Value (EV) Formula</h4>
+                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📐 기대 가치(EV) 산출 공식</h4>
                         <div className="p-4 rounded-lg font-mono text-center text-sm" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
-                            EV = (P<sub>true</sub> × O<sub>domestic</sub>) - 1
+                            EV(%) = (P<sub>true</sub> × O<sub>domestic</sub>) - 1
                         </div>
                         <ul className="mt-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">P<sub>true</sub></strong> = True probability derived from Pinnacle odds (margin removed)</span>
+                                <span><strong className="text-white">P<sub>true</sub></strong> = 해외 글로벌 오즈메이커의 마진을 제거해 산출한 실제 적중 확률</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">O<sub>domestic</sub></strong> = Domestic odds offered by Betman/Proto</span>
+                                <span><strong className="text-white">O<sub>domestic</sub></strong> = 국내 제공 기준 배당률</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span>When EV &gt; 0.05 (5%), it qualifies as a <strong style={{ color: 'var(--status-success)' }}>Value Opportunity</strong></span>
+                                <span>결과값이 0.05 (5%) 이상일 경우 해당 경기를 <strong style={{ color: 'var(--status-success)' }}>고가치 분석 구간 (Value Opportunity)</strong>으로 간주합니다.</span>
                             </li>
                         </ul>
                     </div>
                     <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📖 Example</h4>
+                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📖 예시 시나리오</h4>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr style={{ color: 'var(--text-muted)' }}>
-                                        <th className="text-left py-2 px-3">Item</th>
-                                        <th className="text-right py-2 px-3">Value</th>
+                                        <th className="text-left py-2 px-3">항목</th>
+                                        <th className="text-right py-2 px-3">수치</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[var(--border-subtle)]">
                                     <tr>
-                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>Pinnacle Home Odds</td>
+                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>해외 기준 홈 승 무마진 배당</td>
                                         <td className="py-2 px-3 text-right font-mono" style={{ color: 'var(--text-primary)' }}>1.85</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>True Probability (margin removed)</td>
+                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>내부 산출 실제 당첨 확률</td>
                                         <td className="py-2 px-3 text-right font-mono" style={{ color: 'var(--text-primary)' }}>55.2%</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>Betman Home Odds</td>
+                                        <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>국내 배당 (홈 승리 시)</td>
                                         <td className="py-2 px-3 text-right font-mono font-bold" style={{ color: 'var(--odds-home)' }}>2.05</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-2 px-3 font-bold" style={{ color: 'var(--text-primary)' }}>Expected Value (EV)</td>
+                                        <td className="py-2 px-3 font-bold" style={{ color: 'var(--text-primary)' }}>기대 가치(EV) 밸류 지수</td>
                                         <td className="py-2 px-3 text-right font-mono font-bold" style={{ color: 'var(--status-success)' }}>+13.2% ✅</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                         <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
-                            → In this case, selecting Home Win at Betman yields an expected excess return of 13.2% over the long run.
+                            → 결과 해석: 위 경우 데이터를 기준으로 약 100회 산출할 때, 1회당 장기적으로 13.2%의 통계적 우위(Edge) 구조를 가집니다.
                         </p>
                     </div>
                 </div>
@@ -117,39 +117,38 @@ export default function ManualPage() {
         {
             id: 'kelly',
             icon: '📈',
-            title: 'Kelly Criterion',
+            title: '안전 보장 (켈리 자산관리)',
             content: (
                 <div className="space-y-6">
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        The Kelly Criterion is a money management strategy that <strong className="text-white">mathematically calculates the optimal bet size</strong>.
-                        Scorenix uses a safe <strong style={{ color: 'var(--accent-primary)' }}>1/8 Fractional Kelly</strong> approach.
+                        켈리 공식은 금융계에서 증권 등에 접근할 때 쓰이는 <strong className="text-white">수학적 최적 자산 비중 분배 전략</strong>입니다.
+                        스코어닉스는 변동성을 관리하기 위해 방어적이고 보수적인 <strong style={{ color: 'var(--accent-primary)' }}>1/8 켈리 시스템</strong>을 핵심 원칙으로 제안합니다.
                     </p>
                     <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
-                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📐 1/8 Kelly Formula</h4>
+                        <h4 className="font-bold mb-3 text-sm" style={{ color: 'var(--accent-primary)' }}>📐 1/8 분할 켈리 비중 산출 공식</h4>
                         <div className="p-4 rounded-lg font-mono text-center text-sm" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>
-                            Bet = Bankroll × (1/8) × (P × O - 1) / (O - 1)
+                            투입 비중 = 총 자본금 × (1/8) × (P × O - 1) / (O - 1)
                         </div>
                         <ul className="mt-4 space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">Bankroll</strong> = Total funds</span>
+                                <span><strong className="text-white">자본금</strong> = 현재 포트폴리오의 뱅크롤 총액</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">P</strong> = True win probability (Pinnacle-based)</span>
+                                <span><strong className="text-white">P</strong> = 밸류 분석에서 기반 산정한 이길 체급(확률)</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span style={{ color: 'var(--accent-primary)' }}>▸</span>
-                                <span><strong className="text-white">O</strong> = Domestic odds</span>
+                                <span><strong className="text-white">O</strong> = 현재 검증하려는 기준 배당률</span>
                             </li>
                         </ul>
                     </div>
                     <div className="p-4 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                        <h4 className="text-sm font-bold mb-2" style={{ color: '#f87171' }}>⚠️ Why 1/8 Kelly?</h4>
+                        <h4 className="text-sm font-bold mb-2" style={{ color: '#f87171' }}>⚠️ 전액 할당이 아닌 1/8 분할인 이유</h4>
                         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            Full Kelly is theoretically optimal but has very high variance.
-                            Using 1/8 Kelly <strong className="text-white">retains ~87% of returns while reducing bankruptcy risk to below 0.01%</strong>.
-                            Professional bettors typically use 1/4 to 1/8 Kelly as the standard.
+                            수학적으로 최대 분배가 목표 도달에는 빠를 수 있지만, 단기 변동성에 의해 데이터 지표가 크게 흔들립니다. 
+                            1/8 분할 기준을 사용하면 <strong className="text-white">분석 효율의 87%는 유지하면서, 지표 이탈 위험(Drawdown)을 0.01% 이하로 극소화할 수 있습니다.</strong> 전문 데이터 분석가들이 지향하는 기본적인 데이터 접근 마인드셋입니다.
                         </p>
                     </div>
                 </div>
@@ -158,34 +157,34 @@ export default function ManualPage() {
         {
             id: 'data-sources',
             icon: '🌐',
-            title: 'Data Sources',
+            title: '검증된 데이터 소스',
             content: (
                 <div className="space-y-6">
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        Scorenix collects and analyzes global odds data to provide the most accurate probabilities.
+                        스코어닉스는 편향된 오즈메이커가 아닌 세계에서 가장 효율적인 기관들의 데이터를 조합 활용합니다.
                     </p>
                     <div className="space-y-3">
                         <RuleItem
-                            title="Pinnacle (Sharp Line)"
-                            desc="The world's largest bookmaker, offering the most efficient market prices through low margins (~2-3%). Widely recognized as the industry benchmark for 'true odds'."
+                            title="Pinnacle (마켓 기준 배당)"
+                            desc="세계 최대 규모의 샤프(Sharp) 오즈 마켓으로, 마진이 2~3% 미만이라 전체 시장 참여자들의 실시간 동향이 가장 순수하게 반영되는 '공정 확률'의 기준점입니다."
                             badge="Benchmark"
                             badgeColor="#60a5fa"
                         />
                         <RuleItem
-                            title="API-Football"
-                            desc="Comprehensive sports data API providing odds, standings, player stats, injuries, live scores, and AI predictions from a single source."
+                            title="API-Football 연동"
+                            desc="선수 결장(Injury), 헤드투헤드 폼, 동기부여 등 데이터 분석에 필요한 기초 재료를 엔터프라이즈 급 API를 통해 매일 30분 마다 고도화 수집합니다."
                             badge="Primary"
                             badgeColor="#4ade80"
                         />
                         <RuleItem
-                            title="Supported Sports"
-                            desc="Covers major leagues including Soccer (EPL, La Liga, Serie A, Bundesliga, K-League), Baseball (MLB, KBO, NPB), Basketball (NBA, KBL), Volleyball, and more."
+                            title="종목 커버리지"
+                            desc="축구(EPL, 라리가, 세리에A, K-League 등), 야구(MLB, KBO), 농구(KBL, NBA) 등 전세계 메이저 스포츠 데이터 일체 커버"
                             badge="Sports"
                             badgeColor="#a78bfa"
                         />
                         <RuleItem
-                            title="Data Refresh Cycle"
-                            desc="Odds data is refreshed periodically and may change until match start. Always verify on the official site before making final decisions."
+                            title="데이터 업데이트 시간"
+                            desc="배당 정보는 매 30분마다 동기화 되며 배당 낙폭이 발생합니다. 실제 기록 및 판단 전 공식 사이트의 데이터를 반드시 직접 재차 대조하십시오."
                             badge="Refresh"
                             badgeColor="#fbbf24"
                         />
@@ -196,34 +195,34 @@ export default function ManualPage() {
         {
             id: 'howto',
             icon: '📖',
-            title: 'How to Use',
+            title: '서비스 이용 워크플로우',
             content: (
                 <div className="space-y-6">
                     <div className="space-y-4">
                         <StepItem
                             step={1}
-                            title="Browse Value Opportunities"
-                            desc="Compare odds efficiency on the 'Value Analysis' page. Matches with EV of 5%+ are automatically filtered."
+                            title="[밸류 분석] 탭 모니터링"
+                            desc="매일 업데이트 되는 경기 중, 시장 배당 효율성과 비교하여 마이너스 가치를 내는 경기를 버리고 5% 이상 밸류 경기들만 스캔하세요."
                         />
                         <StepItem
                             step={2}
-                            title="Check AI Analysis"
-                            desc="View detailed match analysis, odds history charts, and AI reports on the 'AI Predictions' page."
+                            title="[AI 예측] 데이터 교차검증"
+                            desc="단순 밸류가 높아도 핵심 결장자가 있으면 AI 신뢰도가 낮습니다. AI 엔진이 해당 데이터에 부여한 '신뢰도'와 상세 그래프를 직접 검증하세요."
                         />
                         <StepItem
                             step={3}
-                            title="Select & Combine Matches"
-                            desc="Add analyzed matches to your cart and check optimal Kelly-based allocation."
+                            title="바구니 및 시스템 비중 파악"
+                            desc="데이터 검증이 끝난 대상을 클릭하여 하단 카트에 담고, 뱅크롤 대비 시스템이 계산해주는 켈리 비중의 수준을 파악합니다."
                         />
                         <StepItem
                             step={4}
-                            title="Save Portfolio"
-                            desc="Save your final combinations to 'My Portfolio' for systematic management."
+                            title="[내 포트폴리오] 탭 저장"
+                            desc="단기성에 그치지 않기 위해 분석한 포트폴리오를 내 정보에 직접 저장하여 기록/관리를 시작하세요."
                         />
                         <StepItem
                             step={5}
-                            title="Track Performance"
-                            desc="After matches end, check results and ROI. Analyze cumulative performance to refine your strategy."
+                            title="성과 및 멘탈 트래킹"
+                            desc="장기적인 분석 성과를 지표화하기 위해 감이 아닌 데이터를 계속 추적하고 실제 결과 데이터를 반영하여 피드백 루프를 반복하세요."
                         />
                     </div>
                 </div>
@@ -232,28 +231,24 @@ export default function ManualPage() {
         {
             id: 'faq',
             icon: '❓',
-            title: 'FAQ',
+            title: '자주 묻는 질문 (FAQ)',
             content: (
                 <div className="space-y-4">
                     <FaqItem
-                        q="이 서비스는 어떤 서비스인가요?"
-                        a="Scorenix는 스포츠 데이터 분석 플랫폼입니다. 데이터를 통계적으로 비교·분석하여 정보를 제공하며, 직접적인 거래를 중개하지 않습니다."
+                        q="이 플랫폼의 정체성과 목적이 무엇인가요?"
+                        a="스코어닉스는 스포츠 데이터 분석 및 시각화 정보를 제공하는 구독형/열람형 정보제공 인포 플랫폼입니다. 특정 경기나 도박 행위를 유도하지 않으며, 직접적인 사행성 연결 조장 행위는 절대 취급하지 않습니다."
                     />
                     <FaqItem
-                        q="해외 데이터를 기준으로 사용하는 이유는?"
-                        a="해외 글로벌 데이터는 세계에서 가장 효율적이고 마진이 낮아(~2-3%), 업계에서 공정 데이터의 기준점으로 널리 인정받고 있습니다."
+                        q="왜 해외 데이터를 가지고 와서 비교하나요?"
+                        a="한국 기관 배당은 마진율이 높고 조정 속도가 보수적인 특징을 띄며 변동성이 적습니다. 전 세계 시장 흐름을 즉각 반영하는 해외 Sharp 마켓의 흐름을 지표 삼아 국내 시장에서의 유리한 간극(갭 차이)를 찾아내는 것이 핵심 로직입니다."
                     />
                     <FaqItem
-                        q="밸류 기회가 결과를 보장하나요?"
-                        a="아닙니다. 밸류 기회는 장기적으로 기대값이 높다는 의미입니다. 개별 경기는 빗나갈 수 있으며, 수백 개 샘플에 걸쳐 효과가 나타납니다."
+                        q="밸류 5%라는 것이 데이터 우위를 뜻하나요?"
+                        a="그렇습니다. 밸류 기회란 동전 던지기에서 확률 대비 수학적 기대치가 더 높게 형성된 프리미엄 확률 구간을 뜻합니다. 개별 분석 결과의 성공여부와 무관하게 수백 번 누적될 수록 확률적으로 견고해지는 수학적 연구 기조를 의미합니다."
                     />
                     <FaqItem
-                        q="어떤 스포츠/리그를 지원하나요?"
-                        a="축구(EPL, 라리가, 세리에A, 분데스리가, K리그), 야구(MLB, KBO, NPB), 농구(NBA, KBL), 배구 등 주요 글로벌 리그를 지원합니다. 지원 리그는 계속 확대되고 있습니다."
-                    />
-                    <FaqItem
-                        q="데이터는 실시간인가요?"
-                        a="30개 이상의 글로벌 데이터 소스에서 주기적으로 갱신됩니다. 데이터는 경기 시작 전까지 변동될 수 있으니 최종 확인을 권장합니다."
+                        q="현재 이용 권한 정책은 어떻게 되나요?"
+                        a="일부 베이직 스포트는 무료 열람이 가능하며, AI 딥 머신러닝 리포트와 고밸류 추출 알고리즘 엔진 풀액세스를 위해선 VIP 프라임 멤버십 구독이 요구됩니다."
                     />
                 </div>
             ),
@@ -261,31 +256,22 @@ export default function ManualPage() {
         {
             id: 'disclaimer',
             icon: '📜',
-            title: '면책조항',
+            title: '면책조항 필독',
             content: (
                 <div className="space-y-4">
                     <div className="p-5 rounded-xl" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
                         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            Scorenix는 <strong className="text-white">스포츠 데이터 분석 정보</strong>를 제공하는 서비스입니다.
-                            본 서비스는 불법 행위를 조장하지 않으며, 이용자의 예측 결과에 대한 법적 책임을 지지 않습니다.
+                            스코어닉스(Scorenix)에서 표출하는 지표 및 확률 알고리즘은 <strong className="text-white">오직 스포츠 통계 및 빅데이터 데이터 분석 시각화 연구 목적</strong>으로 구동됩니다.
                         </p>
                     </div>
                     <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            본 서비스의 분석 결과는 참고용입니다. 최종 판단과 책임은 이용자에게 있습니다.
+                            본 서비스의 예측 및 추천 마킹 표기는 참고용 정보일 뿐, 이용자의 최종 판단의 근거로 보장받거나 손실 구제를 약속하지 않습니다.
                         </li>
                         <li className="flex items-start gap-2">
                             <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            서비스 이용 시 해당 국가의 법률과 규정을 준수해 주세요.
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            과도한 사용은 문제를 일으킬 수 있습니다. 책임감 있는 이용을 권장합니다.
-                        </li>
-                        <li className="flex items-start gap-2">
-                            <span style={{ color: 'var(--text-muted)' }}>•</span>
-                            데이터의 정확성은 보장되지 않습니다. 최종 확인은 공식 사이트에서 해주세요.
+                            관련 법령 내에서 건전하고 책임감 있는 방향으로 데이터를 참고해주시기를 당부드리며 모든 민/형사상 최종 판단/결과 책임은 이용자 당사자에게 귀속됩니다.
                         </li>
                     </ul>
                 </div>
@@ -302,10 +288,10 @@ export default function ManualPage() {
                 <div className="mb-8">
                     <h1 className="text-2xl font-extrabold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
                         <span className="text-3xl">📖</span>
-                        이용 안내
+                        플랫폼 이용 안내서
                     </h1>
                     <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        핵심 개념과 서비스 이용 방법을 알아보세요.
+                        데이터가 든든하게 뒷받침하는 명확한 데이터 분석 가이드를 만나보세요.
                     </p>
                 </div>
 

@@ -18,10 +18,13 @@ BUFFER_REST_URL = "https://api.bufferapp.com/1"
 
 class BufferService:
     def __init__(self):
-        self.access_token = os.getenv("BUFFER_ACCESS_TOKEN", "")
         self._channels_cache: List[Dict] = []
         self._org_id: Optional[str] = None
         self._cache_time: Optional[datetime] = None
+
+    @property
+    def access_token(self) -> str:
+        return os.getenv("BUFFER_ACCESS_TOKEN", "")
 
     @property
     def is_configured(self) -> bool:

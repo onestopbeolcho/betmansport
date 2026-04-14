@@ -1,0 +1,15 @@
+Testing Buffer raw REST request...
+
+--- Publishing to Instagram via REST ---
+Status: 401
+{
+  "error": "OIDC tokens are not accepted for direct API access",
+  "code": 401
+}
+
+--- Publishing to Facebook via REST ---
+Status: 401
+{
+  "error": "OIDC tokens are not accepted for direct API access",
+  "code": 401
+}

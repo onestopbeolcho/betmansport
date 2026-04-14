@@ -1,0 +1,10 @@
+Testing Buffer GraphQL AssetsInput...
+
+--- Trying Asset: url ---
+MutationError: Failed to create post: Failed to fetch image dimensions: Bad Request
+
+--- Trying Asset: photo ---
+Error: Variable "$input" got invalid value { photo: "https://scorenix.com/sns/preview/football.jpg" } at "input.assets.images[0]"; Field "url" of required type "String!" was not provided.
+
+--- Trying Asset: link ---
+Error: Variable "$input" got invalid value { link: "https://scorenix.com/sns/preview/football.jpg" } at "input.assets.images[0]"; Field "url" of required type "String!" was not provided.

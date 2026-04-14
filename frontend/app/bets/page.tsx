@@ -425,7 +425,19 @@ export default function BetsPage() {
                             </div>
                             {/* Compliance disclaimer */}
                             <div className="mt-3 text-[10px] text-white/20 leading-relaxed border-t border-white/5 pt-2">
-                                ⚠️ 본 페이지의 모든 수치와 시뮬레이션 결과는 과거 통계를 기반으로 한 학술적 연구 목적의 데이터이며, 어떠한 형태의 도박이나 투자 행위를 유도·권유하지 않습니다.
+                                ⚠️ 본 페이지의 모든 수치와 시뮬레이션 결과는 과거 통계를 기반으로 한 학술적 연구 목적의 데이터이며, 어떠한 형태의 도박이나 기타 사행성 행위를 권유하지 않습니다.
+                            </div>
+
+                            {/* AI Analytics Explanation */}
+                            <div className="mt-4 p-3 rounded-lg flex flex-col gap-2 bg-white/5 border border-white/10">
+                                <h3 className="text-sm font-bold text-white flex items-center gap-1">
+                                    <span>💡</span> AI 데이터 분석 가이드
+                                </h3>
+                                <ul className="text-xs text-white/50 space-y-1">
+                                    <li><strong className="text-white/80">핵심 분석 요소:</strong> 배당 변동률, 라이브업/결장자 정보, 양팀 상대 전적 및 최근 기세 등 예측에 큰 영향을 미친 요소들을 백분율(%)로 표기합니다. 이 수치가 높을수록 해당 요소가 경기 분석에 강하게 반영되었음을 뜻합니다.</li>
+                                    <li><strong className="text-white/80">종합 신뢰도:</strong> AI 엔진이 산출한 승무패 확률과 해외 마켓 배당 사이의 '가치 괴리(Value Edge)'를 측정합니다. <br/>(🔴 강력 시그널: 85% 이상 / 🟢 양호: 70% 이상 / 🔵 참고: 55% 이상)</li>
+                                    <li><strong className="text-white/80">효율(%):</strong> 해당 분석 방향을 선택했을 때 수학적으로 기대할 수 있는 초과 효율 비율(Expected Value, 계산상 + 구간)을 의미합니다.</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -441,8 +453,10 @@ export default function BetsPage() {
                                 {topPicks.map((pick, i) => {
                                     const level = getConfidenceLevel(pick.confidence);
                                     const parts = pick.match_id.split('_');
-                                    const home = pick.team_home || parts[0] || '';
-                                    const away = pick.team_away || parts.slice(1).join(' ') || '';
+                                    const homeEng = pick.team_home || parts[0] || '';
+                                    const awayEng = pick.team_away || parts.slice(1).join(' ') || '';
+                                    const home = pick.team_home_ko ? `${pick.team_home_ko} (${homeEng})` : homeEng;
+                                    const away = pick.team_away_ko ? `${pick.team_away_ko} (${awayEng})` : awayEng;
                                     return (
                                         <div key={i} className="relative overflow-hidden rounded-2xl transition-all hover:scale-[1.02] cursor-pointer group"
                                             style={{
@@ -572,8 +586,10 @@ export default function BetsPage() {
                                     {sportFilteredPredictions.map((pred, idx) => {
                                         const level = getConfidenceLevel(pred.confidence);
                                         const parts = pred.match_id.split('_');
-                                        const home = pred.team_home || parts[0] || '';
-                                        const away = pred.team_away || parts.slice(1).join(' ') || '';
+                                        const homeEng = pred.team_home || parts[0] || '';
+                                        const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
+                                        const home = pred.team_home_ko ? `${pred.team_home_ko} (${homeEng})` : homeEng;
+                                        const away = pred.team_away_ko ? `${pred.team_away_ko} (${awayEng})` : awayEng;
                                         const matchKey = `ai-${idx}`;
                                         const isExpanded = expandedCard === matchKey;
 

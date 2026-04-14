@@ -4,7 +4,7 @@ AI 승리예상 분석 API 엔드포인트
 - 개별 경기 상세 분석
 - 데이터 소스 수집 트리거
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from typing import Optional
 from datetime import datetime, timezone
 import logging
@@ -47,11 +47,36 @@ _last_prediction_time: str = ""
 
 
 @router.get("/predictions")
-async def get_ai_predictions():
-    """전체 경기 AI 예측 목록 (ML 모델 우선, 폴백: 6-Factor 가중치)"""
+async def get_ai_predictions(background_tasks: BackgroundTasks):
+    """전체 경기 AI 예측 목록 (Firestore daily_portfolios 우선, 폴백: 실시간 추론)"""
     global _predictions_cache, _last_prediction_time
+    from app.db.firestore import get_firestore_db
+    from datetime import datetime, timezone
+    
+    # 1. 1순위: Firestore daily_portfolios 단일 읽기 (비용 최적화)
+    db = get_firestore_db()
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    try:
+        doc_ref = db.collection("daily_portfolios").document(today_str)
+        doc = doc_ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            matches = data.get("matches", [])
+            _predictions_cache = matches
+            _last_prediction_time = data.get("updated_at", datetime.now(timezone.utc).isoformat())
+            
+            logger.info(f"📊 Serving {len(matches)} predictions from daily_portfolios")
+            return PredictionResponse(
+                predictions=matches,
+                last_updated=_last_prediction_time,
+                data_sources=["Firestore (daily_portfolios)", "LightGBM ML Engine"],
+            ).model_dump()
+    except Exception as e:
+        logger.warning(f"daily_portfolios read failed: {e}")
 
-    # 인메모리 → Firestore → Mock 순서로 탐색 (Cold Start 안전)
+    # 2. 2순위: 데이터가 없는 경우 실시간 추론 (Cold Start)
+    logger.info("daily_portfolios not found. Falling back to real-time inference.")
     odds_data = await pinnacle_service.fetch_odds()
     if not odds_data:
         return PredictionResponse(
@@ -60,123 +85,84 @@ async def get_ai_predictions():
             data_sources=["데이터 수집 중... 잠시 후 새로고침해주세요"],
         ).model_dump()
 
-    predictions = []
-    engine_used = "fallback"
-
-    if ml_predictor.is_ml_ready:
-        # ── Use LightGBM ML model ──
-        engine_used = "lightgbm"
+    from app.services.ml_service import ml_inference_service
+    matches_dict = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in odds_data]
+    
+    soccer_matches = [m for m in matches_dict if m.get("sport", "Soccer").lower() == "soccer"]
+    baseball_matches = [m for m in matches_dict if m.get("sport", "Soccer").lower() == "baseball"]
+    
+    from app.services.soccer_stats_service import soccer_stats_service
+    
+    soccer_teams = set()
+    for m in soccer_matches:
+        if m.get("team_home"): soccer_teams.add(m.get("team_home"))
+        if m.get("team_away"): soccer_teams.add(m.get("team_away"))
+        
+    stats_db = soccer_stats_service.fetch_team_stats(list(soccer_teams))
+    soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
+    baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
+    
+    predictions = soccer_preds + baseball_preds
+    
+    # Fallback to odds-only if ML fails to produce results
+    if not predictions:
         for odds in odds_data:
-            try:
-                ml_result = await ml_predictor.predict(
-                    home_team=odds.team_home,
-                    away_team=odds.team_away,
-                    league=odds.league or "",
-                    home_odds=odds.home_odds,
-                    draw_odds=odds.draw_odds,
-                    away_odds=odds.away_odds,
-                )
-                # Convert ML dict → MatchPrediction for frontend compatibility
-                pred = MatchPrediction(
-                    match_id=ml_result.get("match_id", f"{odds.team_home}_{odds.team_away}"),
-                    team_home=odds.team_home,
-                    team_away=odds.team_away,
-                    team_home_ko=odds.team_home_ko,
-                    team_away_ko=odds.team_away_ko,
-                    league=odds.league or "",
-                    sport=odds.sport or "Soccer",
-                    match_time=odds.match_time,
-                    confidence=ml_result.get("confidence", 0.0),
-                    recommendation=ml_result.get("recommendation", ""),
-                    home_win_prob=round(ml_result["predictions"]["home_win"] * 100, 1),
-                    draw_prob=round(ml_result["predictions"]["draw"] * 100, 1),
-                    away_win_prob=round(ml_result["predictions"]["away_win"] * 100, 1),
-                    factors=[{"name": f["feature"], "weight": f["importance"], "score": round(f["value"]*100, 1), "detail": f"ML Feature: {f['feature']}"} for f in ml_result.get("top_features", [])],
-                )
-                predictions.append(pred)
-            except Exception as e:
-                logger.error(f"ML prediction error for {odds.team_home} vs {odds.team_away}: {e}")
-                # Fallback for this individual match
-                try:
-                    if ai_predictor is not None:
-                        pred = ai_predictor.predict_match(odds)
-                        predictions.append(pred)
-                except Exception as e2:
-                    logger.error(f"Fallback prediction also failed: {e2}")
-        logger.info(f"🧠 ML predicted {len(predictions)} matches via LightGBM")
-    elif ai_predictor is not None:
-        # ── Fallback: Legacy 6-Factor AIPredictor ──
-        predictions = ai_predictor.predict_all(odds_data)
-        logger.info(f"🧠 Fallback predicted {len(predictions)} matches via 6-Factor")
-    else:
-        # Services not yet initialized — provide basic odds-based analysis
-        engine_used = "odds-only"
-        for odds in odds_data:
-            try:
-                imp_h = 1 / odds.home_odds if odds.home_odds > 0 else 0
-                imp_d = 1 / odds.draw_odds if odds.draw_odds > 0 else 0
-                imp_a = 1 / odds.away_odds if odds.away_odds > 0 else 0
-                total_imp = imp_h + imp_d + imp_a
-                if total_imp <= 0:
-                    continue
-                h_pct = round((imp_h / total_imp) * 100, 1)
-                d_pct = round((imp_d / total_imp) * 100, 1)
-                a_pct = round((imp_a / total_imp) * 100, 1)
-                best = max(h_pct, d_pct, a_pct)
-                if best == h_pct:
-                    rec = "HOME"
-                elif best == a_pct:
-                    rec = "AWAY"
-                else:
-                    rec = "DRAW"
-                pred = MatchPrediction(
-                    match_id=f"{odds.team_home}_{odds.team_away}",
-                    team_home=odds.team_home,
-                    team_away=odds.team_away,
-                    team_home_ko=odds.team_home_ko,
-                    team_away_ko=odds.team_away_ko,
-                    league=odds.league or "",
-                    sport=odds.sport or "Soccer",
-                    match_time=odds.match_time,
-                    confidence=round(best, 1),
-                    recommendation=rec,
-                    home_win_prob=h_pct,
-                    draw_prob=d_pct,
-                    away_win_prob=a_pct,
-                    factors=[{"name": "배당률 내재 확률", "weight": 100, "score": best, "detail": f"홈 {h_pct}% / 무 {d_pct}% / 원정 {a_pct}%"}],
-                )
-                predictions.append(pred)
-            except Exception as e:
-                logger.warning(f"Inline odds prediction error: {e}")
-        logger.info(f"📊 Odds-only predicted {len(predictions)} matches")
+            imp_h = 1 / odds.home_odds if odds.home_odds > 0 else 0
+            imp_d = 1 / odds.draw_odds if odds.draw_odds > 0 else 0
+            imp_a = 1 / odds.away_odds if odds.away_odds > 0 else 0
+            total_imp = imp_h + imp_d + imp_a
+            if total_imp <= 0: continue
+            
+            h_pct = round((imp_h / total_imp) * 100, 1)
+            d_pct = round((imp_d / total_imp) * 100, 1)
+            a_pct = round((imp_a / total_imp) * 100, 1)
+            best = max(h_pct, d_pct, a_pct)
+            
+            predictions.append({
+                "match_id": f"{odds.team_home}_{odds.team_away}",
+                "team_home": odds.team_home,
+                "team_away": odds.team_away,
+                "team_home_ko": odds.team_home_ko,
+                "team_away_ko": odds.team_away_ko,
+                "league": odds.league or "",
+                "sport": odds.sport or "Soccer",
+                "match_time": odds.match_time,
+                "confidence": round(best, 1),
+                "recommendation": "HOME" if best == h_pct else "AWAY" if best == a_pct else "DRAW",
+                "home_win_prob": h_pct,
+                "draw_prob": d_pct,
+                "away_win_prob": a_pct,
+                "factors": [{"name": "배당률 내재 확률", "weight": 100, "score": best, "detail": f"홈 {h_pct}% / 원정 {a_pct}%"}]
+            })
 
-    # Sort by confidence (highest first)
-    predictions.sort(key=lambda p: p.confidence if isinstance(p, MatchPrediction) else p.get("confidence", 0), reverse=True)
-
+    # Sort by confidence
+    predictions.sort(key=lambda p: p.get("confidence", 0), reverse=True)
     _predictions_cache = predictions
     _last_prediction_time = datetime.now(timezone.utc).isoformat()
 
-    # ── Auto-save AI predictions to Firestore (비동기, 논블로킹) ──
+    # Async Update Firestore daily_portfolios to avoid missing next time
     try:
-        from app.models.prediction_db import save_ai_predictions_batch
-        pred_dicts = [p.model_dump() if hasattr(p, 'model_dump') else p for p in predictions]
-        asyncio.create_task(_save_predictions_background(pred_dicts))
-    except Exception as e:
-        logger.warning(f"AI prediction auto-save setup failed: {e}")
+        def bg_update():
+            try:
+                db_ref = get_firestore_db().collection("daily_portfolios").document(today_str)
+                db_ref.set({
+                    "date": today_str,
+                    "updated_at": _last_prediction_time,
+                    "matches": predictions
+                }, merge=True)
+                logger.info(f"Background: saved {len(predictions)} matches to daily_portfolios")
+            except Exception as e_bg:
+                logger.error(f"Background save failed: {e_bg}")
+        background_tasks.add_task(bg_update)
+    except Exception as e_task:
+        logger.warning(f"Could not add background task: {e_task}")
 
-    # Determine active data sources (safe access)
-    sources = ["API-Football (배당률·통계)"]
-    if ml_predictor.is_ml_ready:
-        sources.insert(0, "LightGBM ML Engine")
+    sources = ["LightGBM ML Engine (Real-time fallback)"]
     if football_stats and getattr(football_stats, 'api_key', None):
-        sources.append("API-Football (팀통계/부상)")
-    if league_standings and getattr(league_standings, 'api_key', None):
-        sources.append("football-data.org (리그순위)")
-    if basketball_stats and getattr(basketball_stats, 'api_key', None):
-        sources.append("API-Basketball (NBA)")
-
+        sources.append("API-Football")
+        
     return PredictionResponse(
-        predictions=[p.model_dump() if hasattr(p, 'model_dump') else p for p in predictions],
+        predictions=predictions,
         last_updated=_last_prediction_time,
         data_sources=sources,
     ).model_dump()
@@ -196,14 +182,34 @@ async def _save_predictions_background(pred_dicts: list):
 @router.get("/predictions/{match_id}")
 async def get_match_prediction(match_id: str):
     """개별 경기 AI 상세 분석 (ML 모델 우선)"""
+    global _predictions_cache
     _ensure_services()
-    # Find in cache
+
+    # 1. 1순위: 메모리 캐시 확인
     for pred in _predictions_cache:
         pid = pred.match_id if hasattr(pred, 'match_id') else pred.get('match_id', '')
         if pid == match_id:
             return pred.model_dump() if hasattr(pred, 'model_dump') else pred
 
-    # Try to compute on the fly
+    # 2. 2순위: 캐시가 없다면 Firestore daily_portfolios에서 단건 조회용으로 전체 로드 시도 (콜드스타트 방어)
+    try:
+        from app.db.firestore import get_firestore_db
+        from datetime import datetime, timezone
+        db = get_firestore_db()
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        doc_ref = db.collection("daily_portfolios").document(today_str)
+        doc = doc_ref.get()
+        if doc.exists:
+            matches = doc.to_dict().get("matches", [])
+            _predictions_cache = matches  # 메모리에 캐싱
+            for pred in matches:
+                if pred.get("match_id") == match_id:
+                    logger.info(f"Loaded {match_id} from daily_portfolios on demand.")
+                    return pred
+    except Exception as e:
+        logger.warning(f"daily_portfolios read failed in get_match_prediction: {e}")
+
+    # 3. 3순위: Firestore에도 없다면 개별 실시간 추론 (Fallback)
     odds_data = await pinnacle_service.fetch_odds()
     for odds in odds_data:
         mid = f"{odds.team_home}_{odds.team_away}"

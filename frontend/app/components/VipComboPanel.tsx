@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useDictionarySafe } from "../context/DictionaryContext";
 import { motion } from "framer-motion";
 
 interface ComboMatch {
@@ -23,6 +24,7 @@ interface ComboData {
 
 export default function VipComboPanel() {
   const { user, token } = useAuth();
+  const t = useDictionarySafe()?.vip || {};
   const [combos, setCombos] = useState<ComboData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,8 @@ export default function VipComboPanel() {
     const fetchCombos = async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:8000/api/vip/combo/auto-optimize", {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://scorenix-backend-n5dv44kdaa-du.a.run.app";
+        const res = await fetch(`${API_URL}/api/vip/combo/auto-optimize`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -74,12 +77,12 @@ export default function VipComboPanel() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z" />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold font-outfit text-white mb-2">VIP Exclusive AI Portfolio</h3>
+          <h3 className="text-2xl font-bold font-outfit text-white mb-2">{t.portfolioTitle || "VIP 전용 AI 포트폴리오"}</h3>
           <p className="text-gray-300 mb-6 max-w-md">
-            Unlock AI-optimized combinations with Kelly Criterion stake sizing. Maximize your EV (Expected Value) dynamically.
+            {t.portfolioIntro || "켈리 기준 금액 설정이 반영된 AI 최적화 조합을 확인하세요. 기대 가치(EV)를 동적으로 극대화할 수 있습니다."}
           </p>
           <a href="/pricing" className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold hover:shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-all">
-            Upgrade to VIP
+            {t.upgradeVip || "VIP 등급으로 업그레이드"}
           </a>
         </div>
         
@@ -87,14 +90,14 @@ export default function VipComboPanel() {
         <div className="opacity-30 blur-sm pointer-events-none">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-amber-400">🤖</span> AI Portfolio Recommendations
+              <span className="text-amber-400">🤖</span> {t.aiPortfolioRec || "AI 포트폴리오 추천"}
             </h3>
           </div>
           <div className="space-y-4">
             {[1, 2].map(i => (
               <div key={i} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-amber-400 font-bold">Combo #{i}</span>
+                  <span className="text-amber-400 font-bold">{t.combo || "조합"} #{i}</span>
                   <span className="text-sm bg-green-500/20 text-green-400 px-2 py-1 rounded">EV: +15.4%</span>
                 </div>
                 <div className="h-12 bg-gray-700 rounded mb-2"></div>
@@ -112,9 +115,9 @@ export default function VipComboPanel() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold font-outfit text-white flex items-center gap-2">
-            <span className="text-amber-400">⚡</span> AI Optimized Portfolios
+            <span className="text-amber-400">⚡</span> {t.aiOptPortfolio || "AI 최적화 포트폴리오"}
           </h2>
-          <p className="text-gray-400 text-sm mt-1">Machine learning generated combinations with Kelly criterion allocation.</p>
+          <p className="text-gray-400 text-sm mt-1">{t.aiOptPortfolioDesc || "켈리 기준 자산 배분이 적용된 머신러닝 생성 조합입니다."}</p>
         </div>
       </div>
 
@@ -128,7 +131,7 @@ export default function VipComboPanel() {
         </div>
       ) : combos.length === 0 ? (
         <div className="p-8 text-center bg-gray-800/50 rounded-xl border border-gray-700">
-          <p className="text-gray-400">No profitable combinations found at the moment. The AI is scanning for new values.</p>
+          <p className="text-gray-400">{t.noCombos || "현재 충분한 수익성을 가진 조합을 찾을 수 없습니다. AI가 새로운 경기 가치를 스캔 중입니다."}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -146,14 +149,14 @@ export default function VipComboPanel() {
                     #{idx + 1}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-sm">Target EV: <span className="text-green-400">+{combo.expected_value_percent.toFixed(1)}%</span></h3>
-                    <p className="text-xs text-gray-400">Total Odds: {combo.total_odds.toFixed(2)}x</p>
+                    <h3 className="font-bold text-white text-sm">{t.targetEV || "목표 EV:"} <span className="text-green-400">+{combo.expected_value_percent.toFixed(1)}%</span></h3>
+                    <p className="text-xs text-gray-400">{t.totalInd || "총 지표:"} {combo.total_odds.toFixed(2)}x</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-gray-400 mb-1">Recommended Stake</div>
+                  <div className="text-xs text-gray-400 mb-1">{t.recWeight || "추천 투자 비중"}</div>
                   <div className="font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg">
-                    Kelly: {(combo.kelly_fraction * 100).toFixed(1)}%
+                    {t.kelly || "켈리:"} {(combo.kelly_fraction * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>
@@ -166,7 +169,7 @@ export default function VipComboPanel() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-end">
-                        <span className="text-xs text-gray-400">Selection</span>
+                        <span className="text-xs text-gray-400">{t.selection || "선택"}</span>
                         <span className="text-sm font-bold text-blue-400 capitalize">{match.selection}</span>
                       </div>
                       <div className="w-16 text-center bg-gray-800 rounded py-1 px-2 border border-gray-700">

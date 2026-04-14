@@ -1,0 +1,2 @@
+{'success': True, 'published': 1, 'posts': [{'channel_id': '69c0ab99af47dacb69457f18', 'post_id': '69d8e4163a4890ca51637eeb', 'status': 'sent'}], 'errors': None}
+

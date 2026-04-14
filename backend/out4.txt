@@ -1,0 +1,64 @@
+Fetching GraphQL Schema for CreatePostInput...
+Status: 200
+{
+  "data": {
+    "__type": {
+      "name": "AssetsInput",
+      "inputFields": [
+        {
+          "name": "images",
+          "type": {
+            "name": null,
+            "kind": "LIST",
+            "ofType": {
+              "name": null,
+              "kind": "NON_NULL",
+              "ofType": {
+                "name": "ImageAssetInput",
+                "kind": "INPUT_OBJECT"
+              }
+            }
+          }
+        },
+        {
+          "name": "videos",
+          "type": {
+            "name": null,
+            "kind": "LIST",
+            "ofType": {
+              "name": null,
+              "kind": "NON_NULL",
+              "ofType": {
+                "name": "VideoAssetInput",
+                "kind": "INPUT_OBJECT"
+              }
+            }
+          }
+        },
+        {
+          "name": "documents",
+          "type": {
+            "name": null,
+            "kind": "LIST",
+            "ofType": {
+              "name": null,
+              "kind": "NON_NULL",
+              "ofType": {
+                "name": "DocumentAssetInput",
+                "kind": "INPUT_OBJECT"
+              }
+            }
+          }
+        },
+        {
+          "name": "link",
+          "type": {
+            "name": "LinkAssetInput",
+            "kind": "INPUT_OBJECT",
+            "ofType": null
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "match_name": "바르셀로 vs AT마드",
+  "league": "UCL",
+  "match_time": "2026-04-08T19:00:00+00:00",
+  "home_odds": 1.37,
+  "draw_odds": 4.4,
+  "away_odds": 4.85,
+  "pin_home_odds": 1.52,
+  "pin_draw_odds": 5.14,
+  "pin_away_odds": 5.36,
+  "best_bet_type": "Away",
+  "best_ev": 90.5,
+  "best_kelly": 0.0,
+  "has_betman": true
+}

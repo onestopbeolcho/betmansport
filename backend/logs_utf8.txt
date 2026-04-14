@@ -1,0 +1,5 @@
+TIMESTAMP                    TEXT_PAYLOAD
+2026-04-10T23:41:46.702569Z  ? [SNS-Scheduler] Failed to generate image: cannot import name 'generate_prediction_card' from 'app.services.card_generator' (/app/app/services/card_generator.py)
+2026-04-10T21:41:28.864717Z  ? [SNS-Scheduler] Failed to generate image: cannot import name 'generate_prediction_card' from 'app.services.card_generator' (/app/app/services/card_generator.py)
+2026-04-10T19:41:00.202221Z  ? [SNS-Scheduler] Failed to generate image: cannot import name 'generate_prediction_card' from 'app.services.card_generator' (/app/app/services/card_generator.py)
+2026-04-10T17:40:27.302742Z  ? [SNS-Scheduler] Failed to generate image: cannot import name 'generate_prediction_card' from 'app.services.card_generator' (/app/app/services/card_generator.py)

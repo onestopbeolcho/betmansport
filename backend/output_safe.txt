@@ -1,0 +1,22 @@
+Testing Buffer Configuration...
+Found 2 channels:
+ - instagram: 69c074d0af47dacb6944d570 (scorenix_official)
+ - facebook: 69c0ab99af47dacb69457f18 (Scorenix)
+Attempting to publish a test post...
+Publish result: {'success': False, 'error': 'Failed to publish to all channels', 'details': [{'channel_id': '69c074d0af47dacb6944d570', 'error': 'Failed to create post: Failed to fetch image dimensions: Bad Request'}, {'channel_id': '69c0ab99af47dacb69457f18', 'error': 'Failed to create post: Failed to fetch image dimensions: Bad Request'}]}
+
+INFO:app.db.firestore:\u2705 Firebase initialized with service account: smart-proto-inv-2026-firebase-adminsdk-fbsvc-8067fa1f84.json
+INFO:app.db.firestore:\u2705 Firestore client ready.
+INFO:app.models.config_db:  \U0001f511 API_FOOTBALL_KEY = e0c5...75af (from Firestore)
+INFO:app.models.config_db:  \U0001f511 BUFFER_ACCESS_TOKEN = dhWj...Q510 (from Firestore)
+INFO:app.models.config_db:\U0001f4cb Firestore config 로드 완료: 2개 키 주입됨
+INFO:httpx:HTTP Request: POST https://api.buffer.com "HTTP/1.1 200 OK"
+INFO:app.services.buffer_service:\u2705 Buffer channels loaded: 2 channels
+INFO:app.services.buffer_service:\U0001f4f8 Attaching image to channel 69c074d0af47dacb6944d570: https://scorenix.com/sns/preview/football.jpg...
+INFO:httpx:HTTP Request: POST https://api.buffer.com "HTTP/1.1 200 OK"
+INFO:app.services.buffer_service:createPost result for 69c074d0af47dacb6944d570: {'data': {'createPost': {'message': 'Failed to create post: Failed to fetch image dimensions: Bad Request'}}}
+ERROR:app.services.buffer_service:Buffer mutation error (ch=69c074d0af47dacb6944d570): Failed to create post: Failed to fetch image dimensions: Bad Request
+INFO:app.services.buffer_service:\U0001f4f8 Attaching image to channel 69c0ab99af47dacb69457f18: https://scorenix.com/sns/preview/football.jpg...
+INFO:httpx:HTTP Request: POST https://api.buffer.com "HTTP/1.1 200 OK"
+INFO:app.services.buffer_service:createPost result for 69c0ab99af47dacb69457f18: {'data': {'createPost': {'message': 'Failed to create post: Failed to fetch image dimensions: Bad Request'}}}
+ERROR:app.services.buffer_service:Buffer mutation error (ch=69c0ab99af47dacb69457f18): Failed to create post: Failed to fetch image dimensions: Bad Request

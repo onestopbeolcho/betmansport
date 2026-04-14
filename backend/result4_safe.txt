@@ -1,0 +1,4 @@
+{'success': False, 'error': 'Failed to publish to all channels', 'details': [{'channel_id': '69c074d0af47dacb6944d570', 'error': 'Failed to create post: Failed to fetch image dimensions: Not Found'}, {'channel_id': '69c0ab99af47dacb69457f18', 'error': 'Failed to create post: Failed to fetch image dimensions: Not Found'}]}
+
+Buffer mutation error (ch=69c074d0af47dacb6944d570): Failed to create post: Failed to fetch image dimensions: Not Found
+Buffer mutation error (ch=69c0ab99af47dacb69457f18): Failed to create post: Failed to fetch image dimensions: Not Found

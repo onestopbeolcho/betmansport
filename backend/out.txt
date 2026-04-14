@@ -1,0 +1,31 @@
+Testing Buffer raw request...
+Channels: [{'id': '69c074d0af47dacb6944d570', 'name': 'scorenix_official', 'service': 'instagram'}, {'id': '69c0ab99af47dacb69457f18', 'name': 'Scorenix', 'service': 'facebook'}]
+
+--- Publishing to scorenix_official (instagram) ---
+Status: 400
+{
+  "errors": [
+    {
+      "message": "Variable \"$input\" got invalid value { text: \"[Scorenix Test] Automated Posting Check.\", channelId: \"69c074d0af47dacb6944d570\", schedulingType: \"automatic\", mode: \"shareNow\", metadata: { instagram: [Object] }, media: [[Object]] }; Field \"media\" is not defined by type \"CreatePostInput\". [Suggestion hidden]?",
+      "locations": [
+        {
+          "line": 2,
+          "column": 33
+        }
+      ],
+      "extensions": {
+        "code": "BAD_USER_INPUT"
+      }
+    }
+  ]
+}
+
+--- Publishing to Scorenix (facebook) ---
+Status: 200
+{
+  "data": {
+    "createPost": {
+      "message": "Invalid post: Whoops, it looks like you've posted that one recently. Unfortunately, we're not able to post the same thing again so soon!"
+    }
+  }
+}

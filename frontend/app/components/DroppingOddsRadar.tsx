@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useDictionarySafe } from "../context/DictionaryContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface DroppingAlert {
@@ -18,6 +19,7 @@ interface DroppingAlert {
 
 export default function DroppingOddsRadar() {
   const { user, token } = useAuth();
+  const t = useDictionarySafe()?.vip || {};
   const [alerts, setAlerts] = useState<DroppingAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,8 @@ export default function DroppingOddsRadar() {
       try {
         setLoading(true);
         // 기본 10% 이상 하락 경기 조회
-        const res = await fetch("http://localhost:8000/api/vip/market/dropping-odds?threshold=5.0", {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://scorenix-backend-n5dv44kdaa-du.a.run.app";
+        const res = await fetch(`${API_URL}/api/vip/market/dropping-odds?threshold=5.0`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -78,12 +81,12 @@ export default function DroppingOddsRadar() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
             </span>
-            Dropping Odds Radar
+            {t.radarTitle || "급락 배당 레이더"}
           </h2>
-          <p className="text-gray-400 text-sm mt-1">Smart Money Detection. Sharp odds movements (5%+ drop) detected.</p>
+          <p className="text-gray-400 text-sm mt-1">{t.radarDesc || "스마트 머니 감지. 급격한 배당 변동(5% 이상 하락)을 탐지합니다."}</p>
         </div>
         <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 px-3 py-1 rounded-full text-xs font-bold">
-          LIVE
+          {t.radarLive || "LIVE"}
         </div>
       </div>
 
@@ -97,7 +100,7 @@ export default function DroppingOddsRadar() {
         </div>
       ) : alerts.length === 0 ? (
         <div className="p-8 text-center bg-gray-800/50 rounded-xl border border-gray-700">
-          <p className="text-gray-400">No sharp odds drops detected currently. The radar is actively scanning.</p>
+          <p className="text-gray-400">{t.noAlerts || "현재 급격한 변동이 감지된 경기가 없습니다. 레이더가 모니터링 중입니다."}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -126,7 +129,7 @@ export default function DroppingOddsRadar() {
                   
                   <div className="flex items-center gap-6 bg-gray-900 rounded-lg p-2 border border-gray-700 w-fit">
                     <div className="flex flex-col items-center">
-                      <span className="text-xs text-gray-500 mb-1">Initial</span>
+                      <span className="text-xs text-gray-500 mb-1">{t.initialOdds || "초기 배당"}</span>
                       <span className="text-gray-400 line-through text-sm">{alert.initial_odds.toFixed(2)}</span>
                     </div>
                     <div className="text-rose-500">
@@ -135,7 +138,7 @@ export default function DroppingOddsRadar() {
                       </svg>
                     </div>
                     <div className="flex flex-col items-center">
-                      <span className="text-xs text-rose-400 font-bold mb-1">Current</span>
+                      <span className="text-xs text-rose-400 font-bold mb-1">{t.currentOdds || "현재 배당"}</span>
                       <span className="text-white font-bold text-lg">{alert.current_odds.toFixed(2)}</span>
                     </div>
                     <div className="bg-rose-500/20 border border-rose-500/50 text-rose-400 rounded px-2 py-1 flex items-center justify-center">

@@ -1,0 +1,108 @@
+﻿python : INFO:app.db.firest
+ore:\u2705 Firebase initial
+ized with service account: 
+smart-proto-inv-2026-fireba
+se-adminsdk-fbsvc-8067fa1f8
+4.json
+위치 줄:1 문자:1
++ python test_buffer.py > t
+est_buffer_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (INF  
+  O:app.db.fir...8067fa1   
+ f84.json:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+INFO:app.db.firestore:\u270
+5 Firestore client ready.
+INFO:app.models.config_db: 
+ \U0001f511 API_FOOTBALL_KE
+Y = e0c5...75af (from Fires
+tore)
+INFO:app.models.config_db: 
+ \U0001f511 BUFFER_ACCESS_T
+OKEN = dhWj...Q510 (from Fi
+restore)
+INFO:app.models.config_db:\
+U0001f4cb Firestore config 
+로드 완료: 2개 키 주입됨
+INFO:httpx:HTTP Request: PO
+ST https://api.buffer.com "
+HTTP/1.1 200 OK"
+INFO:app.services.buffer_se
+rvice:\u2705 Buffer channel
+s loaded: 2 channels
+INFO:app.services.buffer_se
+rvice:\U0001f4f8 Attaching 
+image to channel 69c074d0af
+47dacb6944d570: https://sco
+renix.com/sns/preview/footb
+all.jpg...
+INFO:httpx:HTTP Request: PO
+ST https://api.buffer.com "
+HTTP/1.1 400 Bad Request"
+ERROR:app.services.buffer_s
+ervice:Buffer GraphQL error
+: 400 {"errors":[{"message"
+:"Variable \"$input\" got i
+nvalid value { text: \"[Sco
+renix] Automated System Che
+ck. Please ignore.\", chann
+elId: \"69c074d0af47dacb694
+4d570\", schedulingType: \"
+automatic\", mode: \"shareN
+ow\", metadata: { instagram
+: [Object] }, media: [[Obje
+ct]] }; Field \"media\" is 
+not defin
+INFO:app.services.buffer_se
+rvice:createPost result for
+ 69c074d0af47dacb6944d570: 
+{'errors': [{'message': 'HT
+TP 400'}]}
+ERROR:app.services.buffer_s
+ervice:Buffer publish error
+ (ch=69c074d0af47dacb6944d5
+70): HTTP 400
+INFO:app.services.buffer_se
+rvice:\U0001f4f8 Attaching 
+image to channel 69c0ab99af
+47dacb69457f18: https://sco
+renix.com/sns/preview/footb
+all.jpg...
+INFO:httpx:HTTP Request: PO
+ST https://api.buffer.com "
+HTTP/1.1 400 Bad Request"
+ERROR:app.services.buffer_s
+ervice:Buffer GraphQL error
+: 400 {"errors":[{"message"
+:"Variable \"$input\" got i
+nvalid value { text: \"[Sco
+renix] Automated System Che
+ck. Please ignore.\", chann
+elId: \"69c0ab99af47dacb694
+57f18\", schedulingType: \"
+automatic\", mode: \"shareN
+ow\", metadata: { facebook:
+ [Object] }, media: [[Objec
+t]] }; Field \"media\" is n
+ot define
+INFO:app.services.buffer_se
+rvice:createPost result for
+ 69c0ab99af47dacb69457f18: 
+{'errors': [{'message': 'HT
+TP 400'}]}
+ERROR:app.services.buffer_s
+ervice:Buffer publish error
+ (ch=69c0ab99af47dacb69457f
+18): HTTP 400
+Testing Buffer Configuration...
+Found 2 channels:
+ - instagram: 69c074d0af47dacb6944d570 (scorenix_official)
+ - facebook: 69c0ab99af47dacb69457f18 (Scorenix)
+Attempting to publish a test post...
+Publish result: {'success': False, 'error': 'Failed to publish to all channels', 'details': [{'channel_id': '69c074d0af47dacb6944d570', 'error': 'HTTP 400'}, {'channel_id': '69c0ab99af47dacb69457f18', 'error': 'HTTP 400'}]}
