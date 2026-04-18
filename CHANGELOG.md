@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.1 - System Configuration & AI Recovery
+- **API Key Management**: Restored missing Gemini API Key (`GEMINI_API_KEY`) to production Firestore `system_config` to re-enable AI-driven analysis text generation (bypassing the fallback simple templates).
+- **Backend Deployment**: Successfully deployed to `scorenix-backend` Cloud Run service.
+
 ## v0.6.0 - Premium Financial Analysis & Platform Compliance Cleanup
 
 ### 💼 Financial Math Integration (VIP / PRO)
