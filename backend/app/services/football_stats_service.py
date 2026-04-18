@@ -614,63 +614,71 @@ class FootballStatsService:
     async def fetch_odds_for_league(self, league_id: int, season: int = CURRENT_SEASON) -> List[Dict]:
         """
         특정 리그의 다가오는 경기 배당을 API-Football /odds 엔드포인트에서 수집.
-        bookmaker: Pinnacle(4) 우선, 없으면 bet365(6) fallback.
+        bookmaker: Pinnacle(4) 우선, 없으면 bet365(8) fallback으로 리스트 병합.
         """
-        data = await self._get("odds", {
+        results_map = {}
+
+        # 1. Bet365 배당 먼저 수집 (기본 베이스)
+        data_bet365 = await self._get("odds", {
+            "league": league_id,
+            "season": season,
+            "bookmaker": BET365_BOOKMAKER_ID,
+        })
+        
+        def parse_odds_response(data: Dict) -> List[Dict]:
+            res = []
+            if not data or not data.get("response"):
+                return res
+            for item in data.get("response", []):
+                fixture = item.get("fixture", {})
+                fixture_id = fixture.get("id")
+                fixture_date = fixture.get("date", "")
+                league_info = item.get("league", {})
+
+                for bookie in item.get("bookmakers", []):
+                    bookie_name = bookie.get("name", "")
+                    for bet in bookie.get("bets", []):
+                        if bet.get("name") != "Match Winner":
+                            continue
+                        home_odds, draw_odds, away_odds = 0.0, 0.0, 0.0
+                        for val in bet.get("values", []):
+                            v = val.get("value", "")
+                            odd = float(val.get("odd", 0))
+                            if v == "Home": home_odds = odd
+                            elif v == "Draw": draw_odds = odd
+                            elif v == "Away": away_odds = odd
+
+                        if home_odds > 0 and away_odds > 0:
+                            res.append({
+                                "fixture_id": fixture_id,
+                                "home_odds": home_odds,
+                                "draw_odds": draw_odds,
+                                "away_odds": away_odds,
+                                "bookmaker": bookie_name,
+                                "match_time": fixture_date,
+                                "league_name": league_info.get("name", ""),
+                                "league_country": league_info.get("country", ""),
+                            })
+                        break
+                    break
+            return res
+
+        # Bet365 파싱 및 맵에 저장
+        parsed_bet365 = parse_odds_response(data_bet365)
+        for r in parsed_bet365:
+            results_map[r["fixture_id"]] = r
+
+        # 2. Pinnacle 배당 수집 (Bet365를 덮어씀 - 우선순위)
+        data_pin = await self._get("odds", {
             "league": league_id,
             "season": season,
             "bookmaker": PINNACLE_BOOKMAKER_ID,
         })
-        if not data or not data.get("response"):
-            # Pinnacle 없으면 bet365 시도
-            data = await self._get("odds", {
-                "league": league_id,
-                "season": season,
-                "bookmaker": BET365_BOOKMAKER_ID,
-            })
-        if not data:
-            return []
+        parsed_pin = parse_odds_response(data_pin)
+        for r in parsed_pin:
+            results_map[r["fixture_id"]] = r
 
-        results = []
-        for item in data.get("response", []):
-            fixture = item.get("fixture", {})
-            fixture_id = fixture.get("id")
-            fixture_date = fixture.get("date", "")
-            league_info = item.get("league", {})
-
-            for bookie in item.get("bookmakers", []):
-                bookie_name = bookie.get("name", "")
-                for bet in bookie.get("bets", []):
-                    # "Match Winner" = h2h (1X2)
-                    if bet.get("name") != "Match Winner":
-                        continue
-                    home_odds = 0.0
-                    draw_odds = 0.0
-                    away_odds = 0.0
-                    for val in bet.get("values", []):
-                        v = val.get("value", "")
-                        odd = float(val.get("odd", 0))
-                        if v == "Home":
-                            home_odds = odd
-                        elif v == "Draw":
-                            draw_odds = odd
-                        elif v == "Away":
-                            away_odds = odd
-
-                    if home_odds > 0 and away_odds > 0:
-                        results.append({
-                            "fixture_id": fixture_id,
-                            "home_odds": home_odds,
-                            "draw_odds": draw_odds,
-                            "away_odds": away_odds,
-                            "bookmaker": bookie_name,
-                            "match_time": fixture_date,
-                            "league_name": league_info.get("name", ""),
-                            "league_country": league_info.get("country", ""),
-                        })
-                    break  # 첫 번째 Match Winner만
-                break  # 첫 번째 bookie만
-        return results
+        return list(results_map.values())
 
     async def fetch_all_odds(self) -> List[Dict]:
         """
@@ -680,11 +688,11 @@ class FootballStatsService:
         all_odds = []
 
         for league_key, league_id in LEAGUE_MAP.items():
-            # 먼저 다가오는 경기 목록 조회 (팀 이름 확보)
+            # 먼저 다가오는 경기 목록 조회 (팀 이름 확보) 
             fixtures_data = await self._get("fixtures", {
                 "league": league_id,
                 "season": CURRENT_SEASON,
-                "next": 15,
+                "next": 50,  # 넉넉하게 50경기 수집하여 누락 방지
             })
             if not fixtures_data:
                 continue
