@@ -25,6 +25,7 @@ class ValueBetOpportunity(BaseModel):
     kelly_pct: float
     max_tax_free_stake: Optional[int] = None
     timestamp: str
+    ai_insight: Optional[str] = None
 
 class MatchBetSummary(BaseModel):
     """One row per match — contains all 3 odds + best bet info."""

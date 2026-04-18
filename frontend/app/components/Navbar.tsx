@@ -31,10 +31,10 @@ export default function Navbar() {
 
     const navLinks = [
         { href: `/${currentLang}`, label: t.home || "홈", icon: "⚡", desc: t.homeDesc || "서비스 소개" },
-        { href: `/${currentLang}/bets`, label: t.valueBet || "데이터 추세 분석", icon: "📊", desc: t.valueBetDesc || "시장 통계 및 가치 분석" },
-        { href: `/${currentLang}/market`, label: t.matchPredict || "실시간 지표", icon: "📈", desc: t.matchPredictDesc || "실시간 시장 배당 흐름" },
-        { href: `/${currentLang}/analysis`, label: t.aiPredict || "AI 프로젝션", icon: "🧠", desc: t.aiPredictDesc || "다차원 경기 통계 예측" },
-        { href: `/${currentLang}/mypage`, label: t.portfolio || "데이터 포트폴리오", icon: "💼", desc: t.portfolioDesc || "시뮬레이션 기록 및 수익률" },
+        { href: `/${currentLang}/bets`, label: t.valueBet || "AI 우세팀 분석", icon: "📊", desc: t.valueBetDesc || "수학적/통계적으로 우세한 팀 선별" },
+        { href: `/${currentLang}/market`, label: t.matchPredict || "실시간 배당 흐름", icon: "📈", desc: t.matchPredictDesc || "글로벌 배당 변화와 대중의 쏠림 현상 파악" },
+        { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 데이터 리포트", icon: "🧠", desc: t.aiPredictDesc || "예측을 뒷받침하는 세부 경기 데이터" },
+        { href: `/${currentLang}/mypage`, label: t.portfolio || "나의 분석 노트", icon: "💼", desc: t.portfolioDesc || "관심 경기 배분 및 시뮬레이션" },
         { href: `/${currentLang}/vip`, label: "VIP 리포트", icon: "👑", desc: t.vipDesc || "전문가용 데이터 심층 분석" },
         { href: `/${currentLang}/manual`, label: t.guide || "이용안내", icon: "📖", desc: t.guideDesc || "데이터 툴 사용 방법" },
     ];

@@ -10,6 +10,7 @@ interface BetProps {
         expected_value: number;
         kelly_pct: number;
         max_tax_free_stake?: number;
+        ai_insight?: string;
     }
 }
 
@@ -66,6 +67,19 @@ export default function BetCard({ data }: BetProps) {
                     </div>
                 </div>
             </div>
+
+            {data.ai_insight && (
+                <div className="mt-4 p-3 rounded-lg bg-[rgba(0,212,255,0.05)] border border-[rgba(0,212,255,0.1)]">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm">🤖</span>
+                        <span className="text-xs font-bold text-[var(--accent-primary)]">AI Analysis Insight</span>
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                        {/* If text contains markdown-like bold, we can just split or render as text for now. Since we are passing clean text with `**`, let's just strip or handle it simply. */}
+                        {data.ai_insight.replace(/\*\*/g, '')}
+                    </p>
+                </div>
+            )}
 
             <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex justify-end gap-2">
                 <button

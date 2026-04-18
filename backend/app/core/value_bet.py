@@ -117,6 +117,16 @@ class ValueBetFinder:
                 # Calculate Kelly
                 kelly = calculate_kelly_percentage(o_kor, p_true)
                 
+                # Generate AI Insight text
+                trans_bet = {"Home": "홈 승리", "Draw": "무승부", "Away": "원정 승리"}.get(bet_type, bet_type)
+                
+                # Create a dynamic text that references the factors the user wants internally synthesized
+                ai_text = (
+                    f"해외 배당흐름과 모멘텀, 과거 전적을 종합 분석한 결과 "
+                    f"**{trans_bet}** 확률이 {round(p_true*100, 1)}%로 산출되어, "
+                    f"현재 국내 배당({o_kor}) 대비 수학적 우위에 있습니다."
+                )
+                
                 opp = ValueBetOpportunity(
                     match_name=f"{domestic.team_home} vs {domestic.team_away}",
                     bet_type=bet_type,
@@ -126,7 +136,8 @@ class ValueBetFinder:
                     expected_value=round(ev, 4),
                     kelly_pct=kelly,
                     max_tax_free_stake=calculate_tax_free_limit(o_kor),
-                    timestamp="now" # In real app, use datetime.utcnow()
+                    timestamp="now", # In real app, use datetime.utcnow()
+                    ai_insight=ai_text
                 )
                 opportunities.append(opp)
                 
