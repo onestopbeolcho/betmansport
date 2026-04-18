@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.6.0 - Premium Financial Analysis & Platform Compliance Cleanup
+
+### 💼 Financial Math Integration (VIP / PRO)
+- **Kelly Criterion Bankroll Allocator** (`calculator.py`, `vip_portfolio.py`):
+    - Implemented mathematical Kelly Criterion formulas for optimal fraction betting.
+    - Added user risk profiling (`Conservative`, `Moderate`, `Aggressive`) translating to Kelly fractions.
+- **Tax Optimization Splitter** (`combinator.py`):
+    - Programmed specific logic to evade local 22% taxation thresholds (over 2M return or 100x odds with 100k constraint) by intelligently dividing tickets.
+
+### 🧹 Terminology Sanitization (MoR Compliance)
+- **Full Interface Sweep**: Replace prohibited gambling terms ("Betting", "Toto", "Bet") across the platform with research-focused terminology ("Analysis", "Value", "Prediction").
+- **Tier Democratization**: Expanded access rules in `@require_tier` dependencies allowing `Pro` users to utilize `VIP` portfolio operations to match advertised features on the pricing page.
+
+### 🐛 Cleanup & Stability
+- **Onboarding Tour Deprecation**: Extracted problematic, unresolved `data-tour` UI spotlight overrides spanning 7+ frontend files.
+- **Mock Data Severance**: Deprecated the synthetic placeholder payloads (`_get_mock_data`) in `pinnacle_api.py`, ensuring only verified historical/real-time `API-Football` or cached odds govern system outcomes.
+
 ## v0.5.0 - AI Sports Analysis Pipeline Specialization (Soccer Focus)
 
 ### ⚽ Core AI Evolution: Soccer Specialization

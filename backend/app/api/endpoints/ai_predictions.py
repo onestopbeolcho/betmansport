@@ -98,7 +98,7 @@ async def get_ai_predictions(background_tasks: BackgroundTasks):
         if m.get("team_home"): soccer_teams.add(m.get("team_home"))
         if m.get("team_away"): soccer_teams.add(m.get("team_away"))
         
-    stats_db = soccer_stats_service.fetch_team_stats(list(soccer_teams))
+    stats_db = await soccer_stats_service.fetch_team_stats(list(soccer_teams))
     soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
     baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
     

@@ -246,6 +246,8 @@ async def save_betting_slip(user_id: str, items: list, total_odds: float, potent
     if not db:
         logger.error("Firestore unavailable — cannot save betting slip")
         return None
+    
+    now = datetime.datetime.utcnow()
     doc_ref = db.collection(BETTING_SLIPS_COLLECTION).document()
     doc_ref.set({
         "user_id": user_id,
@@ -253,7 +255,12 @@ async def save_betting_slip(user_id: str, items: list, total_odds: float, potent
         "total_odds": total_odds,
         "potential_return": potential_return,
         "status": "PENDING",
-        "created_at": datetime.datetime.utcnow()
+        "created_at": now,
+        "status_history": [{
+            "status": "PENDING",
+            "timestamp": now,
+            "reason": "Slip created"
+        }]
     })
     return doc_ref.id
 
@@ -284,7 +291,7 @@ async def get_all_pending_slips() -> list:
         return []
 
 
-async def update_slip_status(slip_id: str, status: str, results: list = None):
+async def update_slip_status(slip_id: str, status: str, results: list = None, reason: str = "Auto-settlement processing"):
     """
     Update a betting slip's status after grading.
 
@@ -292,15 +299,27 @@ async def update_slip_status(slip_id: str, status: str, results: list = None):
         slip_id: Firestore document ID
         status: 'WON', 'LOST', 'PUSH', 'PARTIAL', 'PENDING'
         results: Per-item grade results [{match, grade, score}, ...]
+        reason: Description of why the status changed
     """
     db = _get_firestore()
     if not db:
         logger.error("Firestore unavailable — cannot update slip")
         return
-    update_data = {
-        "status": status,
-        "settled_at": datetime.datetime.utcnow(),
-    }
-    if results:
-        update_data["grade_results"] = results
-    db.collection(BETTING_SLIPS_COLLECTION).document(slip_id).update(update_data)
+        
+    try:
+        from google.cloud import firestore
+        now = datetime.datetime.utcnow()
+        update_data = {
+            "status": status,
+            "settled_at": now,
+            "status_history": firestore.ArrayUnion([{
+                "status": status,
+                "timestamp": now,
+                "reason": reason
+            }])
+        }
+        if results:
+            update_data["grade_results"] = results
+        db.collection(BETTING_SLIPS_COLLECTION).document(slip_id).update(update_data)
+    except Exception as e:
+        logger.error(f"Failed to update slip status {slip_id}: {e}")

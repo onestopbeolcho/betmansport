@@ -86,7 +86,7 @@ class PinnacleService(BaseOddsProvider):
         """
         if not self.api_key or self.api_key.strip() == "":
             logger.info("No API Key configured. Using Mock Data.")
-            return self._get_mock_data()
+            return []
 
         cache_key = "odds_snapshot"
 
@@ -114,7 +114,7 @@ class PinnacleService(BaseOddsProvider):
 
         # 3. No cache available — return mock data (NOT external API)
         logger.warning("No cached odds available. Returning mock data until scheduler runs.")
-        return self._get_mock_data()
+        return []
 
     async def refresh_odds(self) -> List[OddsItem]:
         """
@@ -368,7 +368,7 @@ class PinnacleService(BaseOddsProvider):
         except Exception as e:
             logger.warning(f"Cold-start Firestore cache read failed: {e}")
         # 최종 폴백: Mock 데이터로라도 경기 표시
-        return self._get_mock_data()
+        return []
 
     # ─── 참고용 The Odds API (무료 500건/월) ───
     _ref_odds_cache: List[OddsItem] = []

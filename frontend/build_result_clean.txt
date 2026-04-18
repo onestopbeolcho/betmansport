@@ -1,0 +1,87 @@
+
+> frontend@0.1.0 build
+> next build && node scripts/generate-seo.mjs && node scripts/post-to-buffer.mjs
+
+node.exe : ??Specified "rew
+rites" will not automatical
+ly work with "output: expor
+t". See more info here: htt
+ps://nextjs.org/docs/messag
+es/export-no-custom-routes
+X C:\Program Files\nodejs\
+npm.ps1:29 8:3
++   & $NODE_EXE $NPM_CLI_JS
+ $args
++   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (??S  
+  pecified "re...o-custo   
+ m-routes:String) [], R    
+emoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+??Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+??The "middleware" file con
+vention is deprecated. Plea
+se use "proxy" instead. Lea
+rn more: https://nextjs.org
+/docs/messages/middleware-t
+o-proxy
+  Creating an optimized production build ...
+??Specified "rewrites" will
+ not automatically work wit
+h "output: export". See mor
+e info here: https://nextjs
+.org/docs/messages/export-n
+o-custom-routes
+??Compiled successfully in 8.5s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+Error: export const dynamic
+ = "force-static"/export co
+nst revalidate not configur
+ed on route "/robots.txt" w
+ith "output: export". See m
+ore info here: https://next
+js.org/docs/advanced-featur
+es/static-html-export
+    at module evaluation (C
+:\Smart_Proto_Investor_Plan
+\frontend\.next\server\chun
+ks\[root-of-the-server]__f8
+2cec3b._.js:16:913)
+    at instantiateModule (C
+:\Smart_Proto_Investor_Plan
+\frontend\.next\server\chun
+ks\[turbopack]_runtime.js:7
+40:9)
+    at instantiateRuntimeMo
+dule (C:\Smart_Proto_Invest
+or_Plan\frontend\.next\serv
+er\chunks\[turbopack]_runti
+me.js:768:12)
+    at getOrInstantiateRunt
+imeModule (C:\Smart_Proto_I
+nvestor_Plan\frontend\.next
+\server\chunks\[turbopack]_
+runtime.js:781:12)
+    at Object.m (C:\Smart_P
+roto_Investor_Plan\frontend
+\.next\server\chunks\[turbo
+pack]_runtime.js:790:18)
+    at Object.<anonymous> (
+C:\Smart_Proto_Investor_Pla
+n\frontend\.next\server\app
+\robots.txt\route.js:5:3)
+
+> Build error occurred
+Error: Failed to collect pa
+ge data for /robots.txt
+    at ignore-listed frames
+ {
+  type: 'Error'
+}

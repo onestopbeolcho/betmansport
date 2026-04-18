@@ -51,7 +51,7 @@ RISK_FRACTIONS = {
 @router.post("/optimize")
 async def optimize_portfolio(
     req: OptimizeRequest,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """
     🏆 Kelly Criterion 기반 자금 배분 최적화.
@@ -186,7 +186,7 @@ async def optimize_portfolio(
 @router.get("/stats")
 async def get_portfolio_stats(
     days: int = 30,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """
     📊 포트폴리오 성과 통계.

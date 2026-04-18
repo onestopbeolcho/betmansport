@@ -46,7 +46,10 @@ async def get_my_portfolio(current_user: User = Depends(get_current_user)):
     return await get_user_portfolio(current_user.id)
 
 
-# --- Betting Slip / Cart Features ---
+from app.services.pinnacle_api import pinnacle_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SlipItem(BaseModel):
     id: str
@@ -73,28 +76,63 @@ class SlipResponse(SlipCreate):
 
 @router.post("/slip/save", response_model=SlipResponse)
 async def save_bet_slip(slip: SlipCreate, current_user: User = Depends(get_current_user)):
-    # Serialize items to JSON string if needed, or store as array in Firestore
-    # Firestore supports arrays/maps natively! No need to JSON dump unless we want string.
-    # But previous model had `items` as string.
-    # Let's verify what the frontend expects.
-    # Frontend likely expects parsed JSON since `items: List[SlipItem]`.
-    # Firestore can store `items` as a list of maps.
+    # 1. Fetch latest odds from backend cache
+    latest_odds = await pinnacle_service.fetch_odds()
     
-    items_list = [item.dict() for item in slip.items]
+    # 2. Create map for fast lookup
+    odds_map = {}
+    for o in latest_odds:
+        key_en = f"{o.team_home}_{o.team_away}".lower()
+        key_ko = f"{o.team_home_ko}_{o.team_away_ko}".lower()
+        odds_map[key_en] = o
+        odds_map[key_ko] = o
+        
+    updated_items = []
+    calculated_total_odds = 1.0
+    
+    # 3. Verify against backend odds
+    for item in slip.items:
+        key = f"{item.team_home}_{item.team_away}".lower().strip()
+        latest_item = odds_map.get(key)
+        
+        server_odds = item.odds # Default to existing if not found (or match started)
+        if latest_item:
+            sel = item.selection.strip().capitalize()
+            if sel in ["Home", "홈"]:
+                server_odds = latest_item.home_odds
+            elif sel in ["Draw", "무", "무승부"]:
+                server_odds = latest_item.draw_odds
+            elif sel in ["Away", "원정"]:
+                server_odds = latest_item.away_odds
+        
+        # Rule: If server odds exist and difference is significant (>= 0.1), reject slip
+        if server_odds > 0 and abs(server_odds - item.odds) >= 0.1:
+            logger.warning(f"Rejecting slip for {current_user.id}: Odds mismatch on {item.match_name}. User={item.odds}, Server={server_odds}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"[{item.team_home} vs {item.team_away}] 배당률이 변동되었습니다 (현재 {server_odds}). 화면을 새로고침해주세요."
+            )
+            
+        # Update the item with verified odds
+        item.odds = server_odds
+        updated_items.append(item.dict())
+        calculated_total_odds *= server_odds
+    
+    calculated_potential_return = int(slip.stake * calculated_total_odds)
     
     slip_id = await save_betting_slip(
         user_id=current_user.id,
-        items=items_list,
-        total_odds=slip.total_odds,
-        potential_return=slip.potential_return
+        items=updated_items,
+        total_odds=round(calculated_total_odds, 2),
+        potential_return=calculated_potential_return
     )
     
     return {
         "id": slip_id,
-        "items": slip.items,
+        "items": updated_items,
         "stake": slip.stake,
-        "total_odds": slip.total_odds,
-        "potential_return": slip.potential_return,
+        "total_odds": round(calculated_total_odds, 2),
+        "potential_return": calculated_potential_return,
         "status": "PENDING",
         "created_at": datetime.utcnow()
     }
@@ -102,6 +140,4 @@ async def save_bet_slip(slip: SlipCreate, current_user: User = Depends(get_curre
 @router.get("/slips/my", response_model=List[SlipResponse])
 async def get_my_slips(current_user: User = Depends(get_current_user)):
     slips = await get_user_betting_slips(current_user.id)
-    # Firestore returns `items` as list (if we stored as list).
-    # If we stored as list of dicts, it matches `List[SlipItem]`.
     return slips

@@ -133,6 +133,31 @@ async def update_user(user_id: str, updates: dict):
     return None
 
 
+
+async def update_user_prediction_stats(user_id: str, new_slip_status: str, total_odds: float):
+    User = await get_user_by_id(user_id)
+    if not User:
+        return
+    
+    stats = User.get("stats", {"won": 0, "lost": 0, "push": 0, "partial": 0, "total_roi": 0.0, "prediction_count": 0})
+    stats["prediction_count"] += 1
+    
+    if new_slip_status == "WON":
+        stats["won"] += 1
+        stats["total_roi"] += (total_odds - 1) * 100
+    elif new_slip_status == "LOST":
+        stats["lost"] += 1
+        stats["total_roi"] -= 100
+    elif new_slip_status == "PUSH":
+        stats["push"] += 1
+    elif new_slip_status == "PARTIAL":
+        stats["partial"] += 1
+        
+    total_decided = stats["won"] + stats["lost"] + stats["partial"]
+    stats["hit_rate"] = round(stats["won"] / total_decided * 100, 2) if total_decided > 0 else 0.0
+    
+    await update_user(user_id, {"stats": stats})
+
 # --- Payment Helpers ---
 async def create_payment(payment_data: dict):
     if _is_firestore_available():

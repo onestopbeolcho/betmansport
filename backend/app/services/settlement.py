@@ -148,7 +148,20 @@ async def auto_settle_slips() -> dict:
                     slip_id=slip_id,
                     status=overall_status,
                     results=grade_result["results"],
+                    reason=f"Auto-settled. Final grade: {overall_status}"
                 )
+                
+                # Update User Stats
+                try:
+                    from app.models.user_db import update_user_prediction_stats
+                    await update_user_prediction_stats(
+                        user_id=slip.get("user_id"),
+                        new_slip_status=overall_status,
+                        total_odds=slip.get("total_odds", 1.0)
+                    )
+                except Exception as stats_e:
+                    logger.error(f"Failed to update user stats for slip {slip_id}: {stats_e}")
+                    
                 stats["settled"] += 1
 
                 if overall_status == "WON":

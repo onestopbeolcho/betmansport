@@ -51,7 +51,7 @@ class CustomComboRequest(BaseModel):
 @router.post("/auto-optimize")
 async def auto_optimize_combo(
     req: AutoOptimizeRequest,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """
     🎯 오늘의 밸류벳 자동 조합 최적화.
@@ -146,7 +146,7 @@ async def auto_optimize_combo(
 @router.post("/custom")
 async def custom_combo(
     req: CustomComboRequest,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """
     🎯 사용자 선택 경기 커스텀 조합 최적화.

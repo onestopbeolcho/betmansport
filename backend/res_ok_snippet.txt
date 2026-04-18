@@ -1,0 +1,6 @@
+dds: totalOdds })
+            });
+            if (res.ok) { alert("조합이 저장되었습니다! 💾"); clearCart(); toggleCart(); }
+            else { const err = await res.json(); alert("저장 실패: " + (err.detail || "알 수 없는 오류")); }
+        } catch (e) { console.error(e); alert("네트워크 오류"); }
+        finally { setSaving

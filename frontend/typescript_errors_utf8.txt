@@ -1,0 +1,797 @@
+﻿app/admin/page.tsx(347,56): error TS1002: Unterminated string literal.
+app/admin/page.tsx(349,9): error TS1005: ',' expected.
+app/admin/page.tsx(445,105): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/admin/page.tsx(549,139): error TS1005: ',' expected.
+app/admin/page.tsx(549,158): error TS1005: ',' expected.
+app/admin/page.tsx(549,169): error TS1127: Invalid character.
+app/admin/page.tsx(549,170): error TS1005: ',' expected.
+app/admin/page.tsx(549,171): error TS1005: ',' expected.
+app/admin/page.tsx(549,171): error TS1351: An identifier or keyword cannot immediately follow a numeric literal.
+app/admin/page.tsx(549,176): error TS1005: ',' expected.
+app/admin/page.tsx(549,197): error TS1005: ',' expected.
+app/admin/page.tsx(549,216): error TS1005: ',' expected.
+app/admin/page.tsx(549,227): error TS1005: ',' expected.
+app/admin/page.tsx(549,234): error TS1005: ',' expected.
+app/admin/page.tsx(549,239): error TS1002: Unterminated string literal.
+app/admin/page.tsx(551,41): error TS1005: ',' expected.
+app/admin/page.tsx(553,37): error TS1005: ',' expected.
+app/admin/page.tsx(555,34): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/admin/page.tsx(567,21): error TS1005: ')' expected.
+app/admin/page.tsx(569,18): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/admin/page.tsx(591,33): error TS2657: JSX expressions must have one parent element.
+app/admin/page.tsx(591,179): error TS1005: ',' expected.
+app/admin/page.tsx(591,198): error TS1005: ',' expected.
+app/admin/page.tsx(591,209): error TS1127: Invalid character.
+app/admin/page.tsx(591,210): error TS1005: ',' expected.
+app/admin/page.tsx(591,211): error TS1005: ',' expected.
+app/admin/page.tsx(591,211): error TS1351: An identifier or keyword cannot immediately follow a numeric literal.
+app/admin/page.tsx(591,216): error TS1005: ',' expected.
+app/admin/page.tsx(591,237): error TS1005: ',' expected.
+app/admin/page.tsx(591,256): error TS1005: ',' expected.
+app/admin/page.tsx(591,267): error TS1005: ',' expected.
+app/admin/page.tsx(591,274): error TS1005: ',' expected.
+app/admin/page.tsx(591,300): error TS1002: Unterminated string literal.
+app/admin/page.tsx(595,29): error TS1003: Identifier expected.
+app/admin/page.tsx(605,25): error TS1005: ')' expected.
+app/analysis/insights/page.tsx(197,66): error TS1005: ',' expected.
+app/analysis/insights/page.tsx(197,69): error TS1005: ',' expected.
+app/analysis/insights/page.tsx(197,80): error TS1005: ':' expected.
+app/analysis/insights/page.tsx(197,85): error TS1109: Expression expected.
+app/analysis/insights/page.tsx(617,48): error TS1005: ',' expected.
+app/analysis/insights/page.tsx(617,52): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(619,9): error TS1005: ':' expected.
+app/analysis/insights/page.tsx(621,9): error TS1136: Property assignment expected.
+app/analysis/insights/page.tsx(621,48): error TS1005: ',' expected.
+app/analysis/insights/page.tsx(621,52): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(623,5): error TS1005: ':' expected.
+app/analysis/insights/page.tsx(699,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(723,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(733,19): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/insights/page.tsx(833,90): error TS1003: Identifier expected.
+app/analysis/insights/page.tsx(833,91): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(833,92): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(859,39): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/insights/page.tsx(863,37): error TS1005: ')' expected.
+app/analysis/insights/page.tsx(913,35): error TS17015: Expected corresponding closing tag for JSX fragment.
+app/analysis/insights/page.tsx(913,38): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(915,30): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/insights/page.tsx(923,87): error TS1003: Identifier expected.
+app/analysis/insights/page.tsx(923,88): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(923,89): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(983,35): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/insights/page.tsx(985,30): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/insights/page.tsx(1043,113): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(1097,58): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/analysis/insights/page.tsx(1097,100): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(1157,30): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/insights/page.tsx(1165,88): error TS1003: Identifier expected.
+app/analysis/insights/page.tsx(1165,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(1165,90): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(1217,92): error TS1109: Expression expected.
+app/analysis/insights/page.tsx(1217,98): error TS1109: Expression expected.
+app/analysis/insights/page.tsx(1217,100): error TS1005: ':' expected.
+app/analysis/insights/page.tsx(1217,101): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/insights/page.tsx(1217,102): error TS1002: Unterminated string literal.
+app/analysis/insights/page.tsx(1251,35): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/insights/page.tsx(1271,38): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/analysis/insights/page.tsx(1271,65): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/insights/page.tsx(1279,27): error TS1003: Identifier expected.
+app/analysis/insights/page.tsx(1281,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/insights/page.tsx(1283,19): error TS17002: Expected corresponding JSX closing tag for 'section'.
+app/analysis/page.tsx(71,24): error TS1005: ',' expected.
+app/analysis/page.tsx(71,30): error TS1005: ',' expected.
+app/analysis/page.tsx(71,35): error TS1005: ',' expected.
+app/analysis/page.tsx(71,40): error TS1005: ':' expected.
+app/analysis/page.tsx(71,45): error TS1005: ',' expected.
+app/analysis/page.tsx(71,49): error TS1005: ':' expected.
+app/analysis/page.tsx(71,60): error TS1005: ',' expected.
+app/analysis/page.tsx(71,64): error TS1005: ':' expected.
+app/analysis/page.tsx(71,68): error TS1109: Expression expected.
+app/analysis/page.tsx(71,93): error TS1005: ',' expected.
+app/analysis/page.tsx(71,101): error TS1005: ',' expected.
+app/analysis/page.tsx(71,105): error TS1005: ':' expected.
+app/analysis/page.tsx(71,109): error TS1005: ':' expected.
+app/analysis/page.tsx(71,113): error TS1005: ':' expected.
+app/analysis/page.tsx(71,120): error TS1005: ',' expected.
+app/analysis/page.tsx(71,124): error TS1005: ':' expected.
+app/analysis/page.tsx(71,126): error TS1005: ',' expected.
+app/analysis/page.tsx(71,130): error TS1005: ':' expected.
+app/analysis/page.tsx(71,137): error TS1005: ',' expected.
+app/analysis/page.tsx(71,141): error TS1005: ':' expected.
+app/analysis/page.tsx(71,143): error TS1005: ',' expected.
+app/analysis/page.tsx(71,147): error TS1005: ':' expected.
+app/analysis/page.tsx(71,155): error TS1005: ',' expected.
+app/analysis/page.tsx(71,161): error TS1005: ',' expected.
+app/analysis/page.tsx(71,166): error TS1005: ':' expected.
+app/analysis/page.tsx(71,174): error TS1109: Expression expected.
+app/analysis/page.tsx(71,195): error TS1005: ',' expected.
+app/analysis/page.tsx(71,201): error TS1005: ',' expected.
+app/analysis/page.tsx(71,205): error TS1005: ':' expected.
+app/analysis/page.tsx(71,207): error TS1109: Expression expected.
+app/analysis/page.tsx(71,208): error TS1109: Expression expected.
+app/analysis/page.tsx(71,269): error TS1005: ',' expected.
+app/analysis/page.tsx(71,280): error TS1005: ',' expected.
+app/analysis/page.tsx(71,284): error TS1005: ',' expected.
+app/analysis/page.tsx(71,288): error TS1005: ':' expected.
+app/analysis/page.tsx(71,292): error TS1109: Expression expected.
+app/analysis/page.tsx(71,314): error TS1005: ',' expected.
+app/analysis/page.tsx(71,325): error TS1005: ',' expected.
+app/analysis/page.tsx(71,331): error TS1005: ',' expected.
+app/analysis/page.tsx(71,335): error TS1005: ':' expected.
+app/analysis/page.tsx(71,337): error TS1005: ',' expected.
+app/analysis/page.tsx(71,341): error TS1005: ':' expected.
+app/analysis/page.tsx(71,345): error TS1005: ',' expected.
+app/analysis/page.tsx(71,348): error TS1005: ',' expected.
+app/analysis/page.tsx(71,352): error TS1005: ':' expected.
+app/analysis/page.tsx(71,354): error TS1005: ',' expected.
+app/analysis/page.tsx(71,358): error TS1005: ':' expected.
+app/analysis/page.tsx(71,367): error TS1005: ',' expected.
+app/analysis/page.tsx(71,372): error TS1005: ':' expected.
+app/analysis/page.tsx(71,375): error TS1109: Expression expected.
+app/analysis/page.tsx(71,406): error TS1005: ',' expected.
+app/analysis/page.tsx(71,416): error TS1005: ',' expected.
+app/analysis/page.tsx(71,422): error TS1005: ',' expected.
+app/analysis/page.tsx(71,427): error TS1005: ':' expected.
+app/analysis/page.tsx(71,430): error TS1109: Expression expected.
+app/analysis/page.tsx(71,453): error TS1005: ',' expected.
+app/analysis/page.tsx(71,458): error TS1005: ',' expected.
+app/analysis/page.tsx(71,463): error TS1005: ':' expected.
+app/analysis/page.tsx(71,466): error TS1109: Expression expected.
+app/analysis/page.tsx(73,81): error TS1005: ',' expected.
+app/analysis/page.tsx(73,87): error TS1005: ',' expected.
+app/analysis/page.tsx(73,91): error TS1005: ':' expected.
+app/analysis/page.tsx(73,94): error TS1005: ',' expected.
+app/analysis/page.tsx(73,98): error TS1005: ':' expected.
+app/analysis/page.tsx(73,107): error TS1005: ',' expected.
+app/analysis/page.tsx(73,111): error TS1005: ',' expected.
+app/analysis/page.tsx(73,115): error TS1005: ':' expected.
+app/analysis/page.tsx(73,119): error TS1109: Expression expected.
+app/analysis/page.tsx(73,148): error TS1005: ',' expected.
+app/analysis/page.tsx(73,153): error TS1005: ',' expected.
+app/analysis/page.tsx(73,158): error TS1005: ',' expected.
+app/analysis/page.tsx(73,162): error TS1005: ':' expected.
+app/analysis/page.tsx(73,166): error TS1109: Expression expected.
+app/analysis/page.tsx(73,229): error TS1005: ',' expected.
+app/analysis/page.tsx(73,236): error TS1005: ',' expected.
+app/analysis/page.tsx(73,241): error TS1005: ':' expected.
+app/analysis/page.tsx(73,244): error TS1005: ':' expected.
+app/analysis/page.tsx(73,248): error TS1005: ':' expected.
+app/analysis/page.tsx(73,256): error TS1005: ',' expected.
+app/analysis/page.tsx(73,260): error TS1005: ':' expected.
+app/analysis/page.tsx(73,264): error TS1005: ',' expected.
+app/analysis/page.tsx(73,268): error TS1005: ':' expected.
+app/analysis/page.tsx(73,274): error TS1005: ',' expected.
+app/analysis/page.tsx(73,278): error TS1005: ',' expected.
+app/analysis/page.tsx(73,282): error TS1005: ':' expected.
+app/analysis/page.tsx(73,287): error TS1005: ',' expected.
+app/analysis/page.tsx(73,289): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(75,5): error TS1005: ':' expected.
+app/analysis/page.tsx(75,20): error TS1005: ',' expected.
+app/analysis/page.tsx(75,31): error TS1005: ':' expected.
+app/analysis/page.tsx(75,108): error TS1005: ',' expected.
+app/analysis/page.tsx(75,117): error TS1005: ',' expected.
+app/analysis/page.tsx(75,125): error TS1005: ',' expected.
+app/analysis/page.tsx(75,130): error TS1005: ':' expected.
+app/analysis/page.tsx(75,135): error TS1109: Expression expected.
+app/analysis/page.tsx(75,159): error TS1005: ',' expected.
+app/analysis/page.tsx(75,169): error TS1005: ',' expected.
+app/analysis/page.tsx(75,178): error TS1005: ',' expected.
+app/analysis/page.tsx(75,183): error TS1005: ':' expected.
+app/analysis/page.tsx(75,188): error TS1005: ':' expected.
+app/analysis/page.tsx(75,192): error TS1005: ':' expected.
+app/analysis/page.tsx(75,200): error TS1005: ',' expected.
+app/analysis/page.tsx(75,205): error TS1005: ':' expected.
+app/analysis/page.tsx(75,210): error TS1005: ',' expected.
+app/analysis/page.tsx(75,212): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(77,5): error TS1005: ':' expected.
+app/analysis/page.tsx(77,12): error TS1005: ',' expected.
+app/analysis/page.tsx(77,21): error TS1005: ':' expected.
+app/analysis/page.tsx(77,29): error TS1005: ',' expected.
+app/analysis/page.tsx(77,34): error TS1005: ':' expected.
+app/analysis/page.tsx(77,37): error TS1005: ':' expected.
+app/analysis/page.tsx(77,41): error TS1005: ':' expected.
+app/analysis/page.tsx(77,44): error TS1005: ',' expected.
+app/analysis/page.tsx(77,49): error TS1005: ',' expected.
+app/analysis/page.tsx(77,53): error TS1005: ':' expected.
+app/analysis/page.tsx(77,61): error TS1005: ':' expected.
+app/analysis/page.tsx(77,65): error TS1005: ',' expected.
+app/analysis/page.tsx(77,69): error TS1005: ':' expected.
+app/analysis/page.tsx(77,71): error TS1005: ',' expected.
+app/analysis/page.tsx(77,75): error TS1005: ':' expected.
+app/analysis/page.tsx(77,83): error TS1005: ',' expected.
+app/analysis/page.tsx(77,88): error TS1005: ':' expected.
+app/analysis/page.tsx(77,95): error TS1005: ',' expected.
+app/analysis/page.tsx(77,102): error TS1005: ',' expected.
+app/analysis/page.tsx(77,106): error TS1005: ':' expected.
+app/analysis/page.tsx(77,110): error TS1109: Expression expected.
+app/analysis/page.tsx(77,129): error TS1005: ',' expected.
+app/analysis/page.tsx(77,139): error TS1005: ',' expected.
+app/analysis/page.tsx(77,144): error TS1005: ':' expected.
+app/analysis/page.tsx(77,149): error TS1109: Expression expected.
+app/analysis/page.tsx(77,168): error TS1005: ',' expected.
+app/analysis/page.tsx(77,174): error TS1005: ',' expected.
+app/analysis/page.tsx(77,179): error TS1005: ':' expected.
+app/analysis/page.tsx(77,182): error TS1109: Expression expected.
+app/analysis/page.tsx(79,63): error TS1005: ',' expected.
+app/analysis/page.tsx(79,72): error TS1005: ',' expected.
+app/analysis/page.tsx(79,76): error TS1005: ':' expected.
+app/analysis/page.tsx(79,80): error TS1005: ':' expected.
+app/analysis/page.tsx(79,84): error TS1005: ':' expected.
+app/analysis/page.tsx(79,89): error TS1005: ',' expected.
+app/analysis/page.tsx(79,94): error TS1005: ':' expected.
+app/analysis/page.tsx(79,140): error TS1005: ',' expected.
+app/analysis/page.tsx(79,144): error TS1005: ',' expected.
+app/analysis/page.tsx(79,148): error TS1005: ':' expected.
+app/analysis/page.tsx(79,150): error TS1005: ',' expected.
+app/analysis/page.tsx(79,152): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(81,5): error TS1005: ':' expected.
+app/analysis/page.tsx(81,13): error TS1005: ',' expected.
+app/analysis/page.tsx(81,20): error TS1005: ':' expected.
+app/analysis/page.tsx(133,118): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(141,38): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(143,39): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(505,95): error TS1109: Expression expected.
+app/analysis/page.tsx(521,110): error TS1002: Unterminated string literal.
+app/analysis/page.tsx(523,24): error TS1005: ')' expected.
+app/analysis/page.tsx(623,10): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/analysis/page.tsx(631,14): error TS17008: JSX element 'main' has no corresponding closing tag.
+app/analysis/page.tsx(635,18): error TS17008: JSX element 'section' has no corresponding closing tag.
+app/analysis/page.tsx(651,22): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/analysis/page.tsx(663,81): error TS1109: Expression expected.
+app/analysis/page.tsx(663,84): error TS1005: ':' expected.
+app/analysis/page.tsx(663,94): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(685,105): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(733,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(755,74): error TS1005: ':' expected.
+app/analysis/page.tsx(755,79): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(811,106): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(821,30): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(825,21): error TS1005: ')' expected.
+app/analysis/page.tsx(827,19): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/page.tsx(831,18): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/analysis/page.tsx(899,26): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/analysis/page.tsx(901,66): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(903,30): error TS17008: JSX element 'h3' has no corresponding closing tag.
+app/analysis/page.tsx(903,94): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(923,22): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(1183,30): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/analysis/page.tsx(1183,104): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1217,37): error TS2657: JSX expressions must have one parent element.
+app/analysis/page.tsx(1419,84): error TS1109: Expression expected.
+app/analysis/page.tsx(1523,121): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1539,124): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1551,47): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/page.tsx(1553,42): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(1559,29): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(1559,31): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(1561,27): error TS17002: Expected corresponding JSX closing tag for 'PremiumGate'.
+app/analysis/page.tsx(1593,34): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/analysis/page.tsx(1593,132): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1597,118): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1615,30): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/analysis/page.tsx(1615,53): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/analysis/page.tsx(1629,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/analysis/page.tsx(1635,9): error TS1005: ')' expected.
+app/analysis/page.tsx(1637,6): error TS1005: '}' expected.
+app/analysis/page.tsx(1639,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/analysis/page.tsx(1641,1): error TS1005: '</' expected.
+app/bets/page.tsx(133,61): error TS1005: ',' expected.
+app/bets/page.tsx(133,68): error TS1005: ':' expected.
+app/bets/page.tsx(133,76): error TS1005: ',' expected.
+app/bets/page.tsx(133,81): error TS1003: Identifier expected.
+app/bets/page.tsx(133,84): error TS1138: Parameter declaration expected.
+app/bets/page.tsx(133,85): error TS1003: Identifier expected.
+app/bets/page.tsx(133,87): error TS1138: Parameter declaration expected.
+app/bets/page.tsx(133,88): error TS1003: Identifier expected.
+app/bets/page.tsx(133,90): error TS1138: Parameter declaration expected.
+app/bets/page.tsx(133,91): error TS1003: Identifier expected.
+app/bets/page.tsx(133,96): error TS1005: '{' expected.
+app/bets/page.tsx(133,106): error TS1005: ':' expected.
+app/bets/page.tsx(133,125): error TS1005: ',' expected.
+app/bets/page.tsx(133,136): error TS1005: ':' expected.
+app/bets/page.tsx(133,140): error TS1002: Unterminated string literal.
+app/bets/page.tsx(135,5): error TS1005: ',' expected.
+app/bets/page.tsx(135,20): error TS1005: ',' expected.
+app/bets/page.tsx(135,25): error TS1005: ';' expected.
+app/bets/page.tsx(139,118): error TS1002: Unterminated string literal.
+app/bets/page.tsx(147,38): error TS1002: Unterminated string literal.
+app/bets/page.tsx(149,39): error TS1002: Unterminated string literal.
+app/bets/page.tsx(409,95): error TS1109: Expression expected.
+app/bets/page.tsx(425,110): error TS1002: Unterminated string literal.
+app/bets/page.tsx(427,24): error TS1005: ')' expected.
+app/bets/page.tsx(675,87): error TS1005: ')' expected.
+app/bets/page.tsx(675,91): error TS1005: ',' expected.
+app/bets/page.tsx(675,108): error TS1005: ';' expected.
+app/bets/page.tsx(675,137): error TS1109: Expression expected.
+app/bets/page.tsx(693,18): error TS17008: JSX element 'main' has no corresponding closing tag.
+app/bets/page.tsx(819,121): error TS1002: Unterminated string literal.
+app/bets/page.tsx(821,33): error TS1005: '}' expected.
+app/bets/page.tsx(893,68): error TS1002: Unterminated string literal.
+app/bets/page.tsx(895,29): error TS1005: '}' expected.
+app/bets/page.tsx(1091,66): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1093,29): error TS1005: '}' expected.
+app/bets/page.tsx(1157,38): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/bets/page.tsx(1157,142): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1159,33): error TS1005: '}' expected.
+app/bets/page.tsx(1313,62): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/bets/page.tsx(1313,158): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1315,66): error TS1005: '}' expected.
+app/bets/page.tsx(1315,168): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/page.tsx(1335,62): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/bets/page.tsx(1335,159): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1337,66): error TS1005: '}' expected.
+app/bets/page.tsx(1337,168): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/page.tsx(1357,62): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/bets/page.tsx(1357,160): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1359,66): error TS1005: '}' expected.
+app/bets/page.tsx(1359,168): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/page.tsx(1375,53): error TS1005: ')' expected.
+app/bets/page.tsx(1377,49): error TS1005: ')' expected.
+app/bets/page.tsx(1381,49): error TS1005: ')' expected.
+app/bets/page.tsx(1385,54): error TS17008: JSX element 'ConfidenceGauge' has no corresponding closing tag.
+app/bets/page.tsx(1385,127): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1389,58): error TS1005: '}' expected.
+app/bets/page.tsx(1413,121): error TS1005: '}' expected.
+app/bets/page.tsx(1415,148): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/page.tsx(1431,105): error TS1005: ':' expected.
+app/bets/page.tsx(1431,129): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1433,57): error TS1005: '}' expected.
+app/bets/page.tsx(1573,37): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/page.tsx(1573,39): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/page.tsx(1575,35): error TS17015: Expected corresponding closing tag for JSX fragment.
+app/bets/page.tsx(1577,29): error TS1109: Expression expected.
+app/bets/page.tsx(1577,30): error TS1128: Declaration or statement expected.
+app/bets/page.tsx(1579,25): error TS1128: Declaration or statement expected.
+app/bets/page.tsx(1581,21): error TS1109: Expression expected.
+app/bets/page.tsx(1581,22): error TS1128: Declaration or statement expected.
+app/bets/page.tsx(1769,17): error TS1128: Declaration or statement expected.
+app/bets/page.tsx(1839,46): error TS17008: JSX element 'button' has no corresponding closing tag.
+app/bets/page.tsx(1841,104): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/page.tsx(1877,106): error TS1002: Unterminated string literal.
+app/bets/page.tsx(1879,33): error TS1005: '}' expected.
+app/bets/page.tsx(1889,13): error TS1128: Declaration or statement expected.
+app/bets/page.tsx(1895,9): error TS1109: Expression expected.
+app/bets/page.tsx(1895,11): error TS1109: Expression expected.
+app/bets/page.tsx(1897,5): error TS1109: Expression expected.
+app/bets/page.tsx(1899,1): error TS1128: Declaration or statement expected.
+app/bets/view/page.tsx(155,10): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/bets/view/page.tsx(177,14): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/bets/view/page.tsx(255,116): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/view/page.tsx(263,128): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/bets/view/page.tsx(333,93): error TS1005: ':' expected.
+app/bets/view/page.tsx(333,115): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/view/page.tsx(361,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/view/page.tsx(367,5): error TS1109: Expression expected.
+app/bets/view/page.tsx(385,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/bets/view/page.tsx(387,1): error TS1005: '</' expected.
+app/components/AiAnalystWidget.tsx(197,26): error TS17008: JSX element 'button' has no corresponding closing tag.
+app/components/AiAnalystWidget.tsx(197,214): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/BetCard.tsx(78,18): error TS17008: JSX element 'button' has no corresponding closing tag.
+app/components/BetCard.tsx(78,85): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/DroppingOddsRadar.tsx(167,42): error TS1002: Unterminated string literal.
+app/components/DroppingOddsRadar.tsx(169,11): error TS1005: '}' expected.
+app/components/Footer.tsx(151,50): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/components/Footer.tsx(151,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/Footer.tsx(153,78): error TS1005: '}' expected.
+app/components/Footer.tsx(153,101): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(153,102): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(153,103): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/Footer.tsx(153,118): error TS17002: Expected corresponding JSX closing tag for 'p'.
+app/components/Footer.tsx(153,125): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/components/Footer.tsx(157,57): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/components/Footer.tsx(157,168): error TS1002: Unterminated string literal.
+app/components/Footer.tsx(159,30): error TS1005: ',' expected.
+app/components/Footer.tsx(159,50): error TS1005: '}' expected.
+app/components/Footer.tsx(159,161): error TS1002: Unterminated string literal.
+app/components/Footer.tsx(161,30): error TS1005: ',' expected.
+app/components/Footer.tsx(161,162): error TS1005: ',' expected.
+app/components/Footer.tsx(161,166): error TS1138: Parameter declaration expected.
+app/components/Footer.tsx(161,168): error TS1005: '}' expected.
+app/components/Footer.tsx(161,185): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(161,186): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(161,187): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/Footer.tsx(161,208): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/components/Footer.tsx(163,157): error TS1005: '}' expected.
+app/components/Footer.tsx(163,180): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(163,181): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Footer.tsx(163,182): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/Footer.tsx(163,198): error TS17002: Expected corresponding JSX closing tag for 'p'.
+app/components/Footer.tsx(163,202): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/components/Footer.tsx(167,19): error TS17002: Expected corresponding JSX closing tag for 'footer'.
+app/components/Footer.tsx(171,17): error TS1005: ')' expected.
+app/components/Footer.tsx(201,13): error TS1128: Declaration or statement expected.
+app/components/Footer.tsx(203,9): error TS1109: Expression expected.
+app/components/Footer.tsx(205,5): error TS1109: Expression expected.
+app/components/HeroSection.tsx(109,68): error TS1002: Unterminated string literal.
+app/components/HeroSection.tsx(111,25): error TS1005: '}' expected.
+app/components/HeroSection.tsx(129,90): error TS1002: Unterminated string literal.
+app/components/HeroSection.tsx(131,29): error TS1005: ',' expected.
+app/components/HeroSection.tsx(133,106): error TS1109: Expression expected.
+app/components/MatchVoting.tsx(36,54): error TS1002: Unterminated string literal.
+app/components/MatchVoting.tsx(37,5): error TS1005: ',' expected.
+app/components/MatchVoting.tsx(38,58): error TS1002: Unterminated string literal.
+app/components/MatchVoting.tsx(39,5): error TS1005: ',' expected.
+app/components/MatchVoting.tsx(175,52): error TS1002: Unterminated string literal.
+app/components/MatchVoting.tsx(176,26): error TS1005: '}' expected.
+app/components/MatchVoting.tsx(176,121): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/MatchVoting.tsx(178,23): error TS17002: Expected corresponding JSX closing tag for 'a'.
+app/components/MatchVoting.tsx(179,19): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/components/MatchVoting.tsx(180,15): error TS17002: Expected corresponding JSX closing tag for 'section'.
+app/components/MatchVoting.tsx(182,13): error TS1005: ')' expected.
+app/components/MatchVoting.tsx(335,9): error TS1128: Declaration or statement expected.
+app/components/MatchVoting.tsx(336,5): error TS1109: Expression expected.
+app/components/Navbar.tsx(65,67): error TS1109: Expression expected.
+app/components/Navbar.tsx(69,123): error TS1005: ':' expected.
+app/components/Navbar.tsx(69,127): error TS1005: ',' expected.
+app/components/Navbar.tsx(69,128): error TS1005: ',' expected.
+app/components/Navbar.tsx(69,132): error TS1002: Unterminated string literal.
+app/components/Navbar.tsx(71,9): error TS1005: ':' expected.
+app/components/Navbar.tsx(73,9): error TS1136: Property assignment expected.
+app/components/Navbar.tsx(73,117): error TS1109: Expression expected.
+app/components/Navbar.tsx(73,129): error TS1109: Expression expected.
+app/components/Navbar.tsx(75,94): error TS1109: Expression expected.
+app/components/Navbar.tsx(75,98): error TS1109: Expression expected.
+app/components/Navbar.tsx(75,101): error TS1005: ':' expected.
+app/components/Navbar.tsx(75,103): error TS1005: ',' expected.
+app/components/Navbar.tsx(75,107): error TS1002: Unterminated string literal.
+app/components/Navbar.tsx(77,9): error TS1005: ':' expected.
+app/components/Navbar.tsx(79,5): error TS1136: Property assignment expected.
+app/components/Navbar.tsx(169,14): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/components/Navbar.tsx(275,111): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/Navbar.tsx(275,112): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Navbar.tsx(277,43): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/components/Navbar.tsx(279,37): error TS1005: '}' expected.
+app/components/Navbar.tsx(281,33): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Navbar.tsx(281,35): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/Navbar.tsx(283,31): error TS17002: Expected corresponding JSX closing tag for 'button'.
+app/components/Navbar.tsx(287,21): error TS1005: ',' expected.
+app/components/Navbar.tsx(291,21): error TS1005: ')' expected.
+app/components/notification/NotificationSettings.tsx(335,22): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/components/notification/NotificationSettings.tsx(335,61): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/notification/NotificationSettings.tsx(371,54): error TS1003: Identifier expected.
+app/components/notification/NotificationSettings.tsx(371,55): error TS1002: Unterminated string literal.
+app/components/notification/NotificationSettings.tsx(381,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/ProAnalysisPanel.tsx(133,15): error TS1005: ':' expected.
+app/components/ProAnalysisPanel.tsx(133,17): error TS1002: Unterminated string literal.
+app/components/ProAnalysisPanel.tsx(135,5): error TS1005: ',' expected.
+app/components/ProAnalysisPanel.tsx(141,28): error TS1002: Unterminated string literal.
+app/components/ProAnalysisPanel.tsx(143,5): error TS1005: ',' expected.
+app/components/ProAnalysisPanel.tsx(143,15): error TS1005: ':' expected.
+app/components/ProAnalysisPanel.tsx(143,17): error TS1109: Expression expected.
+app/components/ProAnalysisPanel.tsx(145,20): error TS1002: Unterminated string literal.
+app/components/ProAnalysisPanel.tsx(147,5): error TS1005: ',' expected.
+app/components/ProAnalysisPanel.tsx(201,10): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/components/ProAnalysisPanel.tsx(415,107): error TS1109: Expression expected.
+app/components/ProAnalysisPanel.tsx(415,114): error TS1005: ':' expected.
+app/components/ProAnalysisPanel.tsx(427,122): error TS1109: Expression expected.
+app/components/ProAnalysisPanel.tsx(427,129): error TS1005: ':' expected.
+app/components/ProAnalysisPanel.tsx(637,22): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/components/ProAnalysisPanel.tsx(729,124): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/ProAnalysisPanel.tsx(731,38): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/ProAnalysisPanel.tsx(733,35): error TS17002: Expected corresponding JSX closing tag for 'p'.
+app/components/ProAnalysisPanel.tsx(737,33): error TS1005: ')' expected.
+app/components/ProAnalysisPanel.tsx(795,124): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/ProAnalysisPanel.tsx(797,38): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/ProAnalysisPanel.tsx(799,35): error TS17002: Expected corresponding JSX closing tag for 'p'.
+app/components/ProAnalysisPanel.tsx(801,29): error TS1005: ')' expected.
+app/components/ProAnalysisPanel.tsx(807,18): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/ProAnalysisPanel.tsx(887,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/components/ProAnalysisPanel.tsx(889,1): error TS1005: '</' expected.
+app/components/VipComboPanel.tsx(159,118): error TS1002: Unterminated string literal.
+app/components/VipComboPanel.tsx(161,14): error TS1005: '}' expected.
+app/components/VipComboPanel.tsx(161,53): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/VipComboPanel.tsx(165,13): error TS17002: Expected corresponding JSX closing tag for 'h3'.
+app/components/VipComboPanel.tsx(169,47): error TS1002: Unterminated string literal.
+app/components/VipComboPanel.tsx(171,11): error TS1005: '}' expected.
+app/components/VipComboPanel.tsx(235,14): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/components/VipComboPanel.tsx(235,53): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/components/VipComboPanel.tsx(235,91): error TS1002: Unterminated string literal.
+app/components/VipComboPanel.tsx(237,11): error TS1005: '}' expected.
+app/disclaimer/page.tsx(211,34): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/disclaimer/page.tsx(211,62): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/disclaimer/page.tsx(239,30): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/disclaimer/page.tsx(239,98): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/disclaimer/page.tsx(265,26): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/disclaimer/page.tsx(265,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/login/page.tsx(431,124): error TS1003: Identifier expected.
+app/login/page.tsx(431,125): error TS1002: Unterminated string literal.
+app/login/page.tsx(435,42): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/login/page.tsx(599,46): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/login/page.tsx(599,58): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(53,55): error TS17008: JSX element 'strong' has no corresponding closing tag.
+app/manual/page.tsx(53,112): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(77,35): error TS1003: Identifier expected.
+app/manual/page.tsx(79,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(87,35): error TS1003: Identifier expected.
+app/manual/page.tsx(89,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(109,18): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/manual/page.tsx(119,22): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/manual/page.tsx(129,26): error TS17008: JSX element 'ul' has no corresponding closing tag.
+app/manual/page.tsx(133,34): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(133,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(141,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(143,118): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(145,31): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/manual/page.tsx(149,34): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(149,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(155,27): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/manual/page.tsx(157,23): error TS17002: Expected corresponding JSX closing tag for 'li'.
+app/manual/page.tsx(165,30): error TS17008: JSX element 'table' has no corresponding closing tag.
+app/manual/page.tsx(207,136): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(209,153): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(211,39): error TS17002: Expected corresponding JSX closing tag for 'td'.
+app/manual/page.tsx(213,35): error TS17002: Expected corresponding JSX closing tag for 'td'.
+app/manual/page.tsx(215,31): error TS17002: Expected corresponding JSX closing tag for 'tr'.
+app/manual/page.tsx(217,27): error TS17002: Expected corresponding JSX closing tag for 'tbody'.
+app/manual/page.tsx(231,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(235,15): error TS1005: '}' expected.
+app/manual/page.tsx(243,18): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/manual/page.tsx(249,55): error TS17008: JSX element 'strong' has no corresponding closing tag.
+app/manual/page.tsx(249,123): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(263,26): error TS17008: JSX element 'ul' has no corresponding closing tag.
+app/manual/page.tsx(267,34): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(267,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(269,40): error TS17008: JSX element 'strong' has no corresponding closing tag.
+app/manual/page.tsx(269,80): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(275,34): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(275,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(283,89): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(285,103): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(287,31): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/manual/page.tsx(289,27): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/manual/page.tsx(291,23): error TS17002: Expected corresponding JSX closing tag for 'li'.
+app/manual/page.tsx(311,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(315,15): error TS1005: '}' expected.
+app/manual/page.tsx(387,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(391,15): error TS1005: '}' expected.
+app/manual/page.tsx(419,35): error TS1003: Identifier expected.
+app/manual/page.tsx(421,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(439,35): error TS1003: Identifier expected.
+app/manual/page.tsx(441,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(449,35): error TS1003: Identifier expected.
+app/manual/page.tsx(451,26): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(459,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(463,15): error TS1005: '}' expected.
+app/manual/page.tsx(509,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(513,15): error TS1005: '}' expected.
+app/manual/page.tsx(537,30): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(537,81): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(545,30): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(545,81): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(557,9): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(675,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(681,51): error TS1005: '}' expected.
+app/manual/page.tsx(681,89): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(683,5): error TS1109: Expression expected.
+app/manual/page.tsx(697,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(701,62): error TS1005: '}' expected.
+app/manual/page.tsx(701,120): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(703,5): error TS1109: Expression expected.
+app/manual/page.tsx(721,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(725,48): error TS1005: '}' expected.
+app/manual/page.tsx(725,86): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(727,5): error TS1109: Expression expected.
+app/manual/page.tsx(749,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(753,31): error TS1005: '}' expected.
+app/manual/page.tsx(753,51): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(755,5): error TS1109: Expression expected.
+app/manual/page.tsx(775,18): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/manual/page.tsx(775,151): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/manual/page.tsx(793,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/manual/page.tsx(795,1): error TS1005: '</' expected.
+app/market/page.tsx(247,95): error TS1109: Expression expected.
+app/market/page.tsx(265,110): error TS1002: Unterminated string literal.
+app/market/page.tsx(267,9): error TS1005: ',' expected.
+app/market/page.tsx(267,16): error TS1005: ':' expected.
+app/market/page.tsx(267,20): error TS1005: ',' expected.
+app/market/page.tsx(269,15): error TS1005: ')' expected.
+app/market/page.tsx(733,14): error TS17008: JSX element 'main' has no corresponding closing tag.
+app/market/page.tsx(795,38): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/market/page.tsx(803,56): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(851,81): error TS1002: Unterminated string literal.
+app/market/page.tsx(853,37): error TS1005: ',' expected.
+app/market/page.tsx(863,55): error TS1002: Unterminated string literal.
+app/market/page.tsx(865,37): error TS1005: ',' expected.
+app/market/page.tsx(865,87): error TS1002: Unterminated string literal.
+app/market/page.tsx(867,37): error TS1005: ',' expected.
+app/market/page.tsx(877,52): error TS1002: Unterminated string literal.
+app/market/page.tsx(879,37): error TS1005: ',' expected.
+app/market/page.tsx(879,89): error TS1002: Unterminated string literal.
+app/market/page.tsx(881,37): error TS1005: ',' expected.
+app/market/page.tsx(1011,72): error TS1127: Invalid character.
+app/market/page.tsx(1011,73): error TS1005: ':' expected.
+app/market/page.tsx(1011,75): error TS1005: ',' expected.
+app/market/page.tsx(1011,75): error TS1351: An identifier or keyword cannot immediately follow a numeric literal.
+app/market/page.tsx(1011,79): error TS1005: ',' expected.
+app/market/page.tsx(1011,83): error TS1002: Unterminated string literal.
+app/market/page.tsx(1013,29): error TS1005: ':' expected.
+app/market/page.tsx(1015,29): error TS1136: Property assignment expected.
+app/market/page.tsx(1201,38): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/market/page.tsx(1201,238): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(1275,125): error TS1002: Unterminated string literal.
+app/market/page.tsx(1277,57): error TS1005: '}' expected.
+app/market/page.tsx(1445,54): error TS17008: JSX element 'div' has no corresponding closing tag.
+app/market/page.tsx(1445,193): error TS1002: Unterminated string literal.
+app/market/page.tsx(1447,49): error TS1005: '}' expected.
+app/market/page.tsx(1531,113): error TS1005: ',' expected.
+app/market/page.tsx(1531,119): error TS1005: ',' expected.
+app/market/page.tsx(1531,123): error TS1002: Unterminated string literal.
+app/market/page.tsx(1533,61): error TS1005: ':' expected.
+app/market/page.tsx(1535,57): error TS1136: Property assignment expected.
+app/market/page.tsx(1665,58): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/market/page.tsx(1665,258): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(1711,118): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/market/page.tsx(1711,193): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(1715,77): error TS1002: Unterminated string literal.
+app/market/page.tsx(1723,110): error TS1005: ';' expected.
+app/market/page.tsx(1723,117): error TS1005: ';' expected.
+app/market/page.tsx(1723,131): error TS1005: ';' expected.
+app/market/page.tsx(1723,152): error TS1005: ';' expected.
+app/market/page.tsx(1723,156): error TS1002: Unterminated string literal.
+app/market/page.tsx(1745,58): error TS1128: Declaration or statement expected.
+app/market/page.tsx(1789,140): error TS1005: ':' expected.
+app/market/page.tsx(1789,196): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(1987,132): error TS1005: ',' expected.
+app/market/page.tsx(1987,139): error TS1005: ',' expected.
+app/market/page.tsx(1987,146): error TS1005: ',' expected.
+app/market/page.tsx(1987,150): error TS1002: Unterminated string literal.
+app/market/page.tsx(1989,73): error TS1005: ':' expected.
+app/market/page.tsx(1991,69): error TS1136: Property assignment expected.
+app/market/page.tsx(2293,130): error TS1003: Identifier expected.
+app/market/page.tsx(2293,178): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(2293,179): error TS1002: Unterminated string literal.
+app/market/page.tsx(2299,97): error TS1005: ')' expected.
+app/market/page.tsx(2301,93): error TS1005: ')' expected.
+app/market/page.tsx(2371,77): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(2371,81): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(2373,75): error TS17002: Expected corresponding JSX closing tag for 'td'.
+app/market/page.tsx(2375,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(2647,122): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/market/page.tsx(2655,78): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(2765,61): error TS1005: ')' expected.
+app/market/page.tsx(2765,63): error TS17002: Expected corresponding JSX closing tag for 'tr'.
+app/market/page.tsx(2767,57): error TS1005: ')' expected.
+app/market/page.tsx(2767,59): error TS17002: Expected corresponding JSX closing tag for 'React.Fragment'.
+app/market/page.tsx(2769,54): error TS1005: ',' expected.
+app/market/page.tsx(2773,47): error TS1005: ')' expected.
+app/market/page.tsx(2775,43): error TS17002: Expected corresponding JSX closing tag for 'tbody'.
+app/market/page.tsx(2779,34): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/market/page.tsx(2781,31): error TS17002: Expected corresponding JSX closing tag for 'table'.
+app/market/page.tsx(2783,27): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/market/page.tsx(2789,13): error TS1005: ')' expected.
+app/market/page.tsx(2795,9): error TS1109: Expression expected.
+app/market/page.tsx(2797,5): error TS1109: Expression expected.
+app/mypage/page.tsx(99,84): error TS1005: ',' expected.
+app/mypage/page.tsx(99,92): error TS1005: ',' expected.
+app/mypage/page.tsx(99,96): error TS1005: ',' expected.
+app/mypage/page.tsx(99,101): error TS1005: ',' expected.
+app/mypage/page.tsx(99,112): error TS1005: ',' expected.
+app/mypage/page.tsx(99,124): error TS1005: ',' expected.
+app/mypage/page.tsx(99,133): error TS1005: ',' expected.
+app/mypage/page.tsx(99,139): error TS1005: ',' expected.
+app/mypage/page.tsx(99,142): error TS1005: ',' expected.
+app/mypage/page.tsx(99,146): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(101,9): error TS1005: ':' expected.
+app/mypage/page.tsx(101,86): error TS1005: ':' expected.
+app/mypage/page.tsx(101,91): error TS1005: ',' expected.
+app/mypage/page.tsx(101,95): error TS1005: ',' expected.
+app/mypage/page.tsx(101,99): error TS1005: ',' expected.
+app/mypage/page.tsx(101,107): error TS1005: ',' expected.
+app/mypage/page.tsx(101,119): error TS1005: ',' expected.
+app/mypage/page.tsx(101,127): error TS1005: ',' expected.
+app/mypage/page.tsx(101,133): error TS1005: ',' expected.
+app/mypage/page.tsx(101,137): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(103,9): error TS1005: ':' expected.
+app/mypage/page.tsx(103,138): error TS1005: ':' expected.
+app/mypage/page.tsx(103,140): error TS1005: ',' expected.
+app/mypage/page.tsx(103,147): error TS1005: ',' expected.
+app/mypage/page.tsx(103,151): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(105,5): error TS1005: ':' expected.
+app/mypage/page.tsx(349,62): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(351,29): error TS1005: '}' expected.
+app/mypage/page.tsx(355,114): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(357,29): error TS1005: '}' expected.
+app/mypage/page.tsx(391,62): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(393,29): error TS1005: ',' expected.
+app/mypage/page.tsx(407,64): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(409,29): error TS1005: ',' expected.
+app/mypage/page.tsx(423,63): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(425,29): error TS1005: ',' expected.
+app/mypage/page.tsx(813,75): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(815,37): error TS1005: '}' expected.
+app/mypage/page.tsx(855,129): error TS1005: ')' expected.
+app/mypage/page.tsx(855,221): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/mypage/page.tsx(933,69): error TS1002: Unterminated string literal.
+app/mypage/page.tsx(935,25): error TS1005: '}' expected.
+app/payment/request/page.tsx(71,33): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,37): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,41): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,50): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,59): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,67): error TS1005: ',' expected.
+app/payment/request/page.tsx(71,71): error TS1002: Unterminated string literal.
+app/payment/request/page.tsx(73,13): error TS1005: ':' expected.
+app/payment/request/page.tsx(75,13): error TS1136: Property assignment expected.
+app/payment/request/page.tsx(75,33): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,41): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,46): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,53): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,66): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,71): error TS1005: ',' expected.
+app/payment/request/page.tsx(75,76): error TS1002: Unterminated string literal.
+app/payment/request/page.tsx(77,13): error TS1005: ',' expected.
+app/payment/request/page.tsx(83,33): error TS1005: ',' expected.
+app/payment/request/page.tsx(83,42): error TS1005: ',' expected.
+app/payment/request/page.tsx(83,51): error TS1005: ',' expected.
+app/payment/request/page.tsx(83,58): error TS1005: ',' expected.
+app/payment/request/page.tsx(83,62): error TS1002: Unterminated string literal.
+app/payment/request/page.tsx(85,9): error TS1005: ':' expected.
+app/pricing/page.tsx(39,10): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/pricing/page.tsx(39,71): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/pricing/page.tsx(43,22): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/pricing/page.tsx(45,10): error TS17008: JSX element 'span' has no corresponding closing tag.
+app/pricing/page.tsx(45,106): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/pricing/page.tsx(597,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/pricing/page.tsx(599,1): error TS1005: '</' expected.
+app/register/page.tsx(601,124): error TS1003: Identifier expected.
+app/register/page.tsx(601,125): error TS1002: Unterminated string literal.
+app/register/page.tsx(605,42): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/register/page.tsx(639,42): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/register/page.tsx(639,135): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/terms/page.tsx(221,29): error TS17008: JSX element 'strong' has no corresponding closing tag.
+app/terms/page.tsx(221,45): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/terms/page.tsx(225,26): error TS17008: JSX element 'p' has no corresponding closing tag.
+app/terms/page.tsx(225,107): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/vip/page.tsx(83,68): error TS1002: Unterminated string literal.
+app/vip/page.tsx(85,11): error TS1005: '}' expected.
+app/vip/page.tsx(135,20): error TS17008: JSX element 'h4' has no corresponding closing tag.
+app/vip/page.tsx(135,94): error TS1002: Unterminated string literal.
+app/vip/page.tsx(137,17): error TS1005: '}' expected.
+app/vip/page.tsx(159,98): error TS1002: Unterminated string literal.
+app/vip/page.tsx(161,28): error TS1005: '}' expected.
+app/vip/page.tsx(161,88): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/vip/page.tsx(167,23): error TS17002: Expected corresponding JSX closing tag for 'span'.
+app/vip/page.tsx(231,113): error TS1002: Unterminated string literal.
+app/vip/page.tsx(233,26): error TS1005: '}' expected.
+app/vip/page.tsx(233,59): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/vip/page.tsx(233,119): error TS17002: Expected corresponding JSX closing tag for 'h4'.
+app/vip/page.tsx(235,24): error TS17008: JSX element 'button' has no corresponding closing tag.
+app/vip/page.tsx(235,158): error TS1002: Unterminated string literal.
+app/vip/page.tsx(237,21): error TS1005: '}' expected.
+app/vip/portfolio/page.tsx(78,70): error TS1127: Invalid character.
+app/vip/portfolio/page.tsx(78,71): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(78,73): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(78,73): error TS1351: An identifier or keyword cannot immediately follow a numeric literal.
+app/vip/portfolio/page.tsx(78,77): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(78,87): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(78,94): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(78,107): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(78,117): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(78,121): error TS1002: Unterminated string literal.
+app/vip/portfolio/page.tsx(79,9): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(79,17): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(79,19): error TS1136: Property assignment expected.
+app/vip/portfolio/page.tsx(79,28): error TS1003: Identifier expected.
+app/vip/portfolio/page.tsx(79,38): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(79,47): error TS1003: Identifier expected.
+app/vip/portfolio/page.tsx(79,52): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(79,61): error TS1003: Identifier expected.
+app/vip/portfolio/page.tsx(79,70): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(79,78): error TS1003: Identifier expected.
+app/vip/portfolio/page.tsx(79,106): error TS1005: ':' expected.
+app/vip/portfolio/page.tsx(235,41): error TS2657: JSX expressions must have one parent element.
+app/vip/portfolio/page.tsx(235,125): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/vip/portfolio/page.tsx(236,38): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/vip/portfolio/page.tsx(237,35): error TS17002: Expected corresponding JSX closing tag for 'button'.
+app/vip/portfolio/page.tsx(275,29): error TS1005: ')' expected.
+app/vip/portfolio/page.tsx(276,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+app/vip/portfolio/page.tsx(279,21): error TS1005: ')' expected.
+app/vip/portfolio/page.tsx(280,29): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(280,54): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(281,25): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(282,25): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(282,32): error TS1136: Property assignment expected.
+app/vip/portfolio/page.tsx(287,26): error TS1005: ',' expected.
+app/vip/portfolio/page.tsx(287,27): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+app/vip/portfolio/page.tsx(289,23): error TS17002: Expected corresponding JSX closing tag for 'div'.
+app/vip/portfolio/page.tsx(415,1): error TS1128: Declaration or statement expected.

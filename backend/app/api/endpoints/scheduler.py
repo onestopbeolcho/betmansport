@@ -651,6 +651,7 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
     2. 종목별 Feature Engineering
     3. In-memory LightGBM 모델 추론
     4. 결과를 Firestore의 `daily_portfolios`에 Batch Update 하여 읽기 비용 절감
+    5. 오류 발생 시 자동 재시도 및 하드 리밋 방어 로직 적용
     """
     async def update_job():
         try:
@@ -659,9 +660,21 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
             from app.services.ml_service import ml_inference_service
             from app.db.firestore import get_firestore_db
             from datetime import datetime, timezone
+            import asyncio
             
-            # 1. Fetch latest matches
-            matches = await pinnacle_service.refresh_odds()
+            async def retry_async(func, *args, retries=3, delay=2, backoff=2, **kwargs):
+                for attempt in range(retries):
+                    try:
+                        return await func(*args, **kwargs)
+                    except Exception as e:
+                        if attempt == retries - 1:
+                            raise e
+                        logger.warning(f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay}s...")
+                        await asyncio.sleep(delay)
+                        delay *= backoff
+
+            # 1. Fetch latest matches (with retry)
+            matches = await retry_async(pinnacle_service.refresh_odds)
             matches_dict = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in matches]
             
             # Separate by sports
@@ -670,7 +683,7 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
             
             logger.info(f"Fetched {len(soccer_matches)} soccer and {len(baseball_matches)} baseball matches.")
             
-            # 2. Fetch soccer specific advanced stats
+            # 2. Fetch soccer specific advanced stats (with retry)
             from app.services.soccer_stats_service import soccer_stats_service
             
             soccer_teams = set()
@@ -678,13 +691,34 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
                 if m.get("team_home"): soccer_teams.add(m.get("team_home"))
                 if m.get("team_away"): soccer_teams.add(m.get("team_away"))
                 
-            stats_db = soccer_stats_service.fetch_team_stats(list(soccer_teams))            
-            # 2 & 3. Feature Engineering & Predict
-            soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
-            baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
+            stats_db = {}
+            if soccer_teams:
+                try:
+                    stats_db = await retry_async(soccer_stats_service.fetch_team_stats, list(soccer_teams))
+                except Exception as e:
+                    logger.error(f"Failed to fetch soccer team stats after retries: {e}")
+                    # Continue without stats_db (fallback to default logic or empty)
+            
+            # 2 & 3. Feature Engineering & Predict (with separate try/except)
+            soccer_preds = []
+            try:
+                soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
+            except Exception as e:
+                logger.error(f"Soccer prediction pipeline failed entirely: {e}", exc_info=True)
+                
+            baseball_preds = []
+            try:
+                baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
+            except Exception as e:
+                logger.error(f"Baseball prediction pipeline failed entirely: {e}", exc_info=True)
             
             all_preds = soccer_preds + baseball_preds
             
+            # Sub-slice if array exceeds max size to prevent 1MiB crash (hard limit: 600)
+            if len(all_preds) > 600:
+                logger.warning(f"Total predictions ({len(all_preds)}) exceeds safe limit. Truncating to 600 to prevent Firestore limit errors.")
+                all_preds = all_preds[:600]
+
             # 4. Batch update to Firestore daily_portfolios
             if all_preds:
                 db = get_firestore_db()
@@ -699,9 +733,11 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
                 }, merge=True)
                 
                 logger.info(f"Updated daily_portfolios for {today_str} with {len(all_preds)} matches.")
+            else:
+                logger.warning("No predictions were generated. Skipping Firestore update.")
                 
         except Exception as e:
-            logger.error(f"Scheduled prediction update failed: {e}")
+            logger.error(f"Scheduled prediction update failed: {e}", exc_info=True)
 
     background_tasks.add_task(update_job)
     return {"status": "Update job triggered in background"}
