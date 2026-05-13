@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.2 - Crawler Stability & Error Handling
+- **Betman Crawler Enhancement** (`crawler_betman_browser.py`):
+    - Restricted automated round selection to `G101` (Win/Draw/Loss), preventing API failures caused by selecting unsupported `G102` (Record) games.
+    - Improved diagnostic logging for non-JSON API responses (e.g., WAF blocks or maintenance pages) by capturing and logging HTML body snippets.
+    - Added explicit logging of available Game IDs when no compatible rounds are found.
+
 ## v0.6.1 - System Configuration & AI Recovery
 - **API Key Management**: Restored missing Gemini API Key (`GEMINI_API_KEY`) to production Firestore `system_config` to re-enable AI-driven analysis text generation (bypassing the fallback simple templates).
 - **Backend Deployment**: Successfully deployed to `scorenix-backend` Cloud Run service.

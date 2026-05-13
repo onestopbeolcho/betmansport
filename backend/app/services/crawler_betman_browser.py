@@ -166,7 +166,8 @@ def crawl_betman_via_browser(headless: bool = True) -> Dict:
             logger.info(f"Odds API: status={odds_status}, ct={odds_ct}, len={len(odds_body)}")
 
             if "application/json" not in odds_ct:
-                result["error"] = f"Odds API returned non-JSON (ct={odds_ct})"
+                snippet = odds_body[:200].replace('\n', ' ')
+                result["error"] = f"Odds API returned non-JSON (ct={odds_ct}). Body snippet: {snippet}"
                 logger.error(result["error"])
                 browser.close()
                 return result
@@ -194,35 +195,34 @@ def crawl_betman_via_browser(headless: bool = True) -> Dict:
 
 
 def _select_best_round(data: dict):
-    """Select the best available round from discovery response."""
+    """
+    Select the best available round from discovery response.
+    We currently ONLY support G101 (Proto Win/Draw/Loss).
+    G102 (Record) uses a different structure and API payload.
+    """
     proto_games = data.get("protoGames", [])
-    logger.info(f"Found {len(proto_games)} proto games")
+    logger.info(f"Found {len(proto_games)} proto games in discovery")
 
-    # Priority 1: Active G101 (발매중)
-    for g in proto_games:
-        if g.get("gmId") == "G101" and str(g.get("mainState")) == "1":
-            logger.info(f"✅ Active G101: gmTs={g.get('gmTs')}")
-            return g.get("gmTs"), "G101"
+    # Filter only G101
+    g101_games = [g for g in proto_games if g.get("gmId") == "G101"]
+    
+    if not g101_games:
+        available_ids = [g.get("gmId") for g in proto_games]
+        logger.warning(f"No G101 rounds found. Available IDs: {available_ids}")
+        return None, None
 
-    # Priority 2: Any active proto
-    for g in proto_games:
+    # Priority 1: Active G101 (mainState == 1: 발매중)
+    for g in g101_games:
         if str(g.get("mainState")) == "1":
-            logger.info(f"⚠️ Active {g.get('gmId')}: gmTs={g.get('gmTs')}")
-            return g.get("gmTs"), g.get("gmId")
-
-    # Priority 3: Latest closed G101
-    for g in proto_games:
-        if g.get("gmId") == "G101":
-            logger.info(f"📁 Closed G101 fallback: gmTs={g.get('gmTs')}")
+            logger.info(f"✅ Active G101 found: gmTs={g.get('gmTs')}")
             return g.get("gmTs"), "G101"
 
-    # Priority 4: Any available
-    if proto_games:
-        g = proto_games[0]
-        logger.info(f"📁 First available: {g.get('gmId')}, gmTs={g.get('gmTs')}")
-        return g.get("gmTs"), g.get("gmId")
-
-    return None, None
+    # Priority 2: Latest G101 (even if closed)
+    # The list is usually sorted by gmTs descending or at least contains the most recent ones.
+    # We take the first one found.
+    g = g101_games[0]
+    logger.info(f"📁 No active G101. Falling back to latest G101: gmTs={g.get('gmTs')}")
+    return g.get("gmTs"), "G101"
 
 
 def _parse_odds_data(data: dict) -> List[Dict]:

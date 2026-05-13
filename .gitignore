@@ -26,8 +26,26 @@ backend/test.db
 # Firebase service account key
 serviceAccountKey.json
 *-firebase-adminsdk-*.json
+.firebase/
 
 # API keys / secrets config
 system_config.json
 backend/system_config.json
+
+# Logs
+*.log
+betman_sync.log
+logs.txt
+logs2.txt
+
+# Temp / Large Assets
+backend/bgm.mp3
+backend/test_tts.mp3
+backend/background_ai.png
+backend/premium_bg.png
+backend/presenter.png
+backend/youtube_token.pickle
+backend/credentials.json
+backend/token.txt
+brain/
 
