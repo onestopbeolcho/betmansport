@@ -1,5 +1,5 @@
 """
-AI Avatar Service — ElevenLabs TTS + D-ID Talking Head
+AI Avatar Service - ElevenLabs TTS + D-ID Talking Head
 ======================================================
 스코어닉스 쇼츠 파이프라인을 위한 AI 아바타 서비스.
 - ElevenLabs: 사람과 구분 불가능한 자연스러운 TTS
@@ -46,9 +46,9 @@ def is_did_available():
     return bool(DID_API_KEY) and os.path.exists(PRESENTER_IMAGE)
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # ElevenLabs TTS
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 def elevenlabs_tts(text: str, output_path: str, voice_id: str = None) -> bool:
     """
@@ -81,21 +81,21 @@ def elevenlabs_tts(text: str, output_path: str, voice_id: str = None) -> bool:
         if resp.status_code == 200:
             with open(output_path, "wb") as f:
                 f.write(resp.content)
-            print(f"    ✅ ElevenLabs TTS → {os.path.basename(output_path)}")
+            print(f"    [OK] ElevenLabs TTS → {os.path.basename(output_path)}")
             return True
         else:
-            print(f"    ⚠ ElevenLabs error {resp.status_code}: {resp.text[:100]}")
+            print(f"    [!] ElevenLabs error {resp.status_code}: {resp.text[:100]}")
             return False
 
     except Exception as e:
-        print(f"    ⚠ ElevenLabs exception: {e}")
+        print(f"    [!] ElevenLabs exception: {e}")
         return False
 
 
 def list_elevenlabs_voices():
     """사용 가능한 ElevenLabs 음성 목록 조회"""
     if not ELEVENLABS_API_KEY:
-        print("❌ ELEVENLABS_API_KEY not set")
+        print("[X] ELEVENLABS_API_KEY not set")
         return []
 
     try:
@@ -109,19 +109,19 @@ def list_elevenlabs_voices():
             for v in voices:
                 labels = v.get("labels", {})
                 lang = labels.get("language", "?")
-                print(f"  🎙️ {v['name']} (ID: {v['voice_id']}) — {lang}")
+                print(f"  [MIC] {v['name']} (ID: {v['voice_id']}) - {lang}")
             return voices
         else:
-            print(f"❌ Error: {resp.status_code}")
+            print(f"[X] Error: {resp.status_code}")
             return []
     except Exception as e:
-        print(f"❌ {e}")
+        print(f"[X] {e}")
         return []
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # D-ID Talking Head
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 def _upload_image_to_did(image_path: str) -> str:
     """D-ID에 프레젠터 이미지 업로드 → URL 반환"""
@@ -138,7 +138,7 @@ def _upload_image_to_did(image_path: str) -> str:
     if resp.status_code in (200, 201):
         data = resp.json()
         img_url = data.get("url", "")
-        print(f"    ✅ D-ID image uploaded: ...{img_url[-30:]}")
+        print(f"    [OK] D-ID image uploaded: ...{img_url[-30:]}")
         return img_url
     else:
         raise Exception(f"D-ID image upload failed: {resp.status_code} {resp.text[:100]}")
@@ -159,7 +159,7 @@ def _upload_audio_to_did(audio_path: str) -> str:
     if resp.status_code in (200, 201):
         data = resp.json()
         audio_url = data.get("url", "")
-        print(f"    ✅ D-ID audio uploaded: ...{audio_url[-30:]}")
+        print(f"    [OK] D-ID audio uploaded: ...{audio_url[-30:]}")
         return audio_url
     else:
         raise Exception(f"D-ID audio upload failed: {resp.status_code} {resp.text[:100]}")
@@ -183,12 +183,12 @@ def create_talking_head(audio_path: str, output_path: str,
 
     img = image_path or PRESENTER_IMAGE
     if not os.path.exists(img):
-        print(f"    ⚠ Presenter image not found: {img}")
+        print(f"    [!] Presenter image not found: {img}")
         return False
 
     try:
         # 1. 이미지 & 오디오 업로드
-        print("    📤 Uploading to D-ID...")
+        print("    [UP] Uploading to D-ID...")
         img_url = _upload_image_to_did(img)
         audio_url = _upload_audio_to_did(audio_path)
 
@@ -213,14 +213,14 @@ def create_talking_head(audio_path: str, output_path: str,
                              json=payload, timeout=30)
 
         if resp.status_code not in (200, 201):
-            print(f"    ⚠ D-ID talk create failed: {resp.status_code}")
+            print(f"    [!] D-ID talk create failed: {resp.status_code}")
             return False
 
         talk_id = resp.json().get("id")
-        print(f"    🎬 D-ID Talk created: {talk_id}")
+        print(f"    [CUT] D-ID Talk created: {talk_id}")
 
         # 3. 완료 대기 (최대 5분)
-        print("    ⏳ Waiting for D-ID rendering...")
+        print("    [..] Waiting for D-ID rendering...")
         for attempt in range(60):
             time.sleep(5)
             status_resp = requests.get(
@@ -238,17 +238,17 @@ def create_talking_head(audio_path: str, output_path: str,
                 result_url = data.get("result_url")
                 if result_url:
                     # 4. 다운로드
-                    print(f"    📥 Downloading result video...")
+                    print(f"    [DL] Downloading result video...")
                     video_resp = requests.get(result_url, timeout=60)
                     with open(output_path, "wb") as f:
                         f.write(video_resp.content)
-                    print(f"    ✅ D-ID video → {os.path.basename(output_path)}")
+                    print(f"    [OK] D-ID video → {os.path.basename(output_path)}")
                     return True
                 break
 
             elif status == "error":
                 err = data.get("error", {})
-                print(f"    ❌ D-ID error: {err}")
+                print(f"    [X] D-ID error: {err}")
                 return False
 
             elif status in ("created", "started"):
@@ -256,11 +256,11 @@ def create_talking_head(audio_path: str, output_path: str,
                     print(f"      ... still rendering ({attempt * 5}s)")
                 continue
 
-        print("    ⚠ D-ID timeout (5min)")
+        print("    [!] D-ID timeout (5min)")
         return False
 
     except Exception as e:
-        print(f"    ❌ D-ID exception: {e}")
+        print(f"    [X] D-ID exception: {e}")
         return False
 
 
@@ -281,12 +281,12 @@ def create_full_avatar_clip(script_text: str, output_video: str,
     audio_path = output_audio or output_video.replace(".mp4", "_audio.mp3")
 
     # Step 1: TTS
-    print("  🎙️ [AI Avatar] Step 1: ElevenLabs TTS")
+    print("  [MIC] [AI Avatar] Step 1: ElevenLabs TTS")
     if not elevenlabs_tts(script_text, audio_path):
         return False
 
     # Step 2: Talking Head
-    print("  🎬 [AI Avatar] Step 2: D-ID Talking Head")
+    print("  [CUT] [AI Avatar] Step 2: D-ID Talking Head")
     result = create_talking_head(audio_path, output_video)
 
     # Cleanup temp audio
@@ -299,9 +299,9 @@ def create_full_avatar_clip(script_text: str, output_video: str,
     return result
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 상태 확인 유틸리티
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 def check_status():
     """현재 AI 서비스 연결 상태 확인"""

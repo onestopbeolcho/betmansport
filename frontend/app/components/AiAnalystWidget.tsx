@@ -23,7 +23,6 @@ export default function AiAnalystWidget() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     // Hide on mypage — inline AI prompt is embedded there instead
     const isMyPage = pathname.includes('/mypage');
@@ -54,17 +53,34 @@ export default function AiAnalystWidget() {
         setLoading(true);
 
         try {
-            const res = await fetch(`${API}/api/analysis/ask`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const res = await fetch(`${apiUrl}/api/analysis/ask`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: userMsg.content }),
             });
-            if (!res.ok) throw new Error('Failed');
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Server error (${res.status})`);
+            }
+            
             const data = await res.json();
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: data.response }]);
-        } catch {
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'assistant', content: t.aiWidgetError || "An error occurred. Please try again later." }]);
-        } finally { setLoading(false); }
+            setMessages(prev => [...prev, { 
+                id: Date.now() + 1, 
+                role: 'assistant', 
+                content: data.response || data.message || "No response received." 
+            }]);
+        } catch (error: any) {
+            console.error('[AiAnalyst] Error:', error);
+            setMessages(prev => [...prev, { 
+                id: Date.now() + 1, 
+                role: 'assistant', 
+                content: `${t.aiWidgetError || "Error occurred."} (${error.message})` 
+            }]);
+        } finally { 
+            setLoading(false); 
+        }
     };
 
     return isMyPage ? null : (

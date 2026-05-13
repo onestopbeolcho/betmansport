@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Firestore collection name
 BETMAN_ROUNDS_COLLECTION = "betman_rounds"
-BETMAN_META_DOC = "__meta__"
+BETMAN_META_DOC = "betman_meta"
 
 # In-memory cache (fast reads within same process)
 _MEMORY_CACHE: Dict = {
@@ -183,6 +183,10 @@ def save_betman_round(round_id: str, matches: List[Dict]) -> int:
 # ─────────────────────────────────────────────
 # READ
 # ─────────────────────────────────────────────
+
+def load_betman_data() -> dict:
+    """Unified data loader for scripts."""
+    return _get_db()
 
 def get_betman_matches(round_id: Optional[str] = None) -> List[Dict]:
     """Get Betman matches for the latest or specified round."""

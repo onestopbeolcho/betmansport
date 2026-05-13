@@ -96,10 +96,6 @@ export const metadata: Metadata = {
     apple: "/icon-512.png",
   },
   manifest: "/manifest.json",
-  verification: {
-    // Google Search Console — 발급 후 실제 값으로 교체
-    // google: "your-google-verification-code",
-  },
 };
 
 export default function RootLayout({

@@ -6,16 +6,21 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://scorenix-backen
 export async function generateStaticParams() {
     try {
         const res = await fetch(`${API_BASE_URL}/api/ai/predictions`);
-        if (res.ok) {
-            const data = await res.json();
-            return (data.predictions || []).map((p: any) => ({
-                match_id: p.match_id,
-            }));
+        if (!res.ok) return [{ lang: 'ko', match_id: 'demo_match' }];
+        const data = await res.json();
+        const params: any[] = [];
+        const predictions = data.predictions || [];
+        for (const p of predictions) {
+            for (const lang of ['ko', 'en', 'ja', 'zh']) {
+                params.push({ lang, match_id: p.match_id });
+            }
         }
+        if (params.length === 0) return [{ lang: 'ko', match_id: 'demo_match' }];
+        return params;
     } catch (e) {
         console.error("Failed to fetch predictions for static build", e);
+        return [{ lang: 'ko', match_id: 'demo_match' }];
     }
-    return [];
 }
 
 export async function generateMetadata({ params }: { params: { match_id: string; lang: string } }): Promise<Metadata> {

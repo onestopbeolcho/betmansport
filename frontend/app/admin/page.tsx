@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface SystemConfig {
     api_football_key: string;
@@ -48,6 +50,8 @@ export default function AdminPage() {
     // --- Tab 2: SNS Marketing ---
     const [publishSending, setPublishSending] = useState(false);
     const [publishResult, setPublishResult] = useState('');
+    const [remoteTriggering, setRemoteTriggering] = useState(false);
+    const [remoteResult, setRemoteResult] = useState('');
 
     // --- Tab 3: Users ---
     const [users, setUsers] = useState<User[]>([]);
@@ -176,6 +180,24 @@ export default function AdminPage() {
         setPublishSending(false);
     };
 
+    const handleRemoteTrigger = async () => {
+        setRemoteTriggering(true);
+        setRemoteResult('');
+        try {
+            const triggerRef = doc(db, "system_control", "remote_trigger");
+            await setDoc(triggerRef, {
+                trigger_auto_all: true,
+                last_requested: serverTimestamp(),
+                status: 'pending'
+            }, { merge: true });
+            setRemoteResult('✅ 성공: 로컬 PC로 원격 실행 신호를 전송했습니다! (Auto-Manager 확인)');
+        } catch (error) {
+            console.error("Firebase remote trigger error:", error);
+            setRemoteResult('❌ 실패: Firebase 연결 권한 또는 설정을 확인하세요.');
+        }
+        setRemoteTriggering(false);
+    };
+
     const inputStyle = {
         background: 'var(--bg-elevated)',
         border: '1px solid var(--border-subtle)',
@@ -299,6 +321,23 @@ export default function AdminPage() {
                                 {publishSending ? (
                                     <><div className="animate-spin inline-block w-5 h-5 border-2 border-white/20 border-t-white rounded-full" /> 컨텐츠 생성 및 즉시 발행 중...</>
                                 ) : '🚀 다중 채널 즉시 발행 (Publish Now)'}
+                            </button>
+                        </div>
+                        
+                        <div className="mt-8 pt-6 border-t border-[var(--border-subtle)]">
+                            <h3 className="text-md font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                                💻 로컬 PC 원격 자동화 제어 (Auto-Manager)
+                            </h3>
+                            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                                집에 켜져있는 PC의 Scorenix Manager 프로그램에 원격으로 전체 자동화(크롤링~렌더링~업로드) 명령을 내립니다.
+                            </p>
+                            {remoteResult && (
+                                <div className="p-3 mb-4 rounded-lg text-sm font-medium" style={remoteResult.includes('✅') ? { background: 'rgba(34,197,94,0.1)', color: '#4ade80' } : { background: 'rgba(239,68,68,0.1)', color: '#f87171' }}>
+                                    {remoteResult}
+                                </div>
+                            )}
+                            <button onClick={handleRemoteTrigger} disabled={remoteTriggering} className="w-full py-4 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-50 shadow-lg" style={{ background: 'linear-gradient(135deg, #0f172a, #3b82f6)' }}>
+                                {remoteTriggering ? '신호 전송 중...' : '📡 원격 영상 생성 및 자동화 시작 (Remote Trigger)'}
                             </button>
                         </div>
                     </div>

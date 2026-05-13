@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
 import PremiumGate from '../components/PremiumGate';
-import AiAnalystWidget from '../components/AiAnalystWidget';
+
 
 /* ───── Types ───── */
 interface AIPrediction {
@@ -814,7 +814,7 @@ export default function AnalysisPage() {
                 </div>
             </main>
 
-            <AiAnalystWidget />
+
         </div>
     );
 }

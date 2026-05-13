@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDcZcIkmeZph_GGd7Na9dZr5ICsoSvRj2k",
@@ -13,6 +14,7 @@ const firebaseConfig = {
 // Prevent re-initialization
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
+const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { app, auth, googleProvider, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential };
+export { app, auth, db, googleProvider, RecaptchaVerifier, signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential };

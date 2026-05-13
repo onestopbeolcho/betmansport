@@ -113,6 +113,13 @@ class SoccerStatsService:
         
         await self._ensure_mapping()
         
+        # Understat 데이터 미리 가져오기 (성능 최적화)
+        from app.services.understat_xg_service import understat_service
+        understat_data = understat_service.get_cached()
+        if not understat_data:
+            await understat_service.collect_all_leagues()
+            understat_data = understat_service.get_cached()
+
         async with httpx.AsyncClient() as client:
             for team in team_names:
                 if not team: continue
@@ -124,66 +131,80 @@ class SoccerStatsService:
                         results[team] = data
                         continue
                 
-                # 2. Check API Key presence
+                # 2. Base data (API-Football or Mock)
+                stats_obj = {}
                 if not self.api_key:
-                    results[team] = self._generate_deterministic_mock(team)
-                    continue
-                
-                # 3. Find mapped ID
-                mapping = self._find_mapped_team(team)
-                if not mapping:
-                    # Cannot find mapping (maybe non-top-4 league) -> use mock gracefully
-                    logger.debug(f"Cannot find API-Football mapping for team '{team}', using mock fallback.")
-                    results[team] = self._generate_deterministic_mock(team)
-                    continue
-                
-                # 4. Fetch Real API
-                t_id = mapping["team_id"]
-                l_id = mapping["league_id"]
-                
-                try:
-                    resp = await client.get(
-                        f"{self.base_url}/teams/statistics",
-                        headers=self.headers,
-                        params={"season": self.current_season, "team": t_id, "league": l_id},
-                        timeout=8.0
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json().get("response", {})
-                        if not data:
-                            results[team] = self._generate_deterministic_mock(team)
-                            continue
-                            
-                        goals = data.get("goals", {})
-                        
-                        g_for = goals.get("for", {}).get("average", {}).get("total", "1.0")
-                        g_against = goals.get("against", {}).get("average", {}).get("total", "1.0")
-                        
-                        hg_for = goals.get("for", {}).get("average", {}).get("home", "1.0")
-                        ag_for = goals.get("for", {}).get("average", {}).get("away", "1.0")
-                        
-                        form_str = data.get("form", "")
-                        
-                        stats_obj = {
-                            "avg_xG_for": float(g_for) if g_for else 1.0,
-                            "avg_xG_against": float(g_against) if g_against else 1.0,
-                            "avg_home_xG_for": float(hg_for) if hg_for else 1.0,
-                            "avg_away_xG_for": float(ag_for) if ag_for else 1.0,
-                            "form_index": self._calculate_form_index(form_str),
-                            "possession_avg": 50.0, # Standard default if omitted
-                            "matches_last_14_days": 2, 
-                            "injury_impact_score": 0.5
-                        }
-                        
-                        # Save to cache
-                        self.stats_cache[team] = (now, stats_obj)
-                        results[team] = stats_obj
+                    stats_obj = self._generate_deterministic_mock(team)
+                else:
+                    mapping = self._find_mapped_team(team)
+                    if not mapping:
+                        stats_obj = self._generate_deterministic_mock(team)
                     else:
-                        logger.warning(f"API-Football Non-200 Response for '{team}': {resp.status_code}")
-                        results[team] = self._generate_deterministic_mock(team)
-                except Exception as e:
-                    logger.warning(f"Error fetching stats for '{team}': {e}")
-                    results[team] = self._generate_deterministic_mock(team)
+                        t_id = mapping["team_id"]
+                        l_id = mapping["league_id"]
+                        try:
+                            resp = await client.get(
+                                f"{self.base_url}/teams/statistics",
+                                headers=self.headers,
+                                params={"season": self.current_season, "team": t_id, "league": l_id},
+                                timeout=8.0
+                            )
+                            if resp.status_code == 200:
+                                data = resp.json().get("response", {})
+                                if data:
+                                    goals = data.get("goals", {})
+                                    g_for = goals.get("for", {}).get("average", {}).get("total", "1.0")
+                                    g_against = goals.get("against", {}).get("average", {}).get("total", "1.0")
+                                    hg_for = goals.get("for", {}).get("average", {}).get("home", "1.0")
+                                    ag_for = goals.get("for", {}).get("average", {}).get("away", "1.0")
+                                    form_str = data.get("form", "")
+                                    
+                                    stats_obj = {
+                                        "avg_xG_for": float(g_for) if g_for else 1.0,
+                                        "avg_xG_against": float(g_against) if g_against else 1.0,
+                                        "avg_home_xG_for": float(hg_for) if hg_for else 1.0,
+                                        "avg_away_xG_for": float(ag_for) if ag_for else 1.0,
+                                        "form_index": self._calculate_form_index(form_str),
+                                        "possession_avg": 50.0,
+                                        "matches_last_14_days": 2, 
+                                        "injury_impact_score": 0.5
+                                    }
+                                else:
+                                    stats_obj = self._generate_deterministic_mock(team)
+                            else:
+                                stats_obj = self._generate_deterministic_mock(team)
+                        except Exception as e:
+                            logger.warning(f"Error fetching stats for '{team}': {e}")
+                            stats_obj = self._generate_deterministic_mock(team)
+
+                # 3. Enrich with Understat (Advanced Metrics)
+                # Try to find team in understat data
+                enriched = False
+                for league_key, teams in understat_data.items():
+                    for u_name, u_stats in teams.items():
+                        if team.lower() in u_name.lower() or u_name.lower() in team.lower():
+                            stats_obj["xg_per_match"] = u_stats.get("xG_per_match", stats_obj.get("avg_xG_for", 1.0))
+                            stats_obj["xga_per_match"] = u_stats.get("xGA_per_match", stats_obj.get("avg_xG_against", 1.0))
+                            stats_obj["ppda_avg"] = u_stats.get("ppda_avg", 10.0)
+                            stats_obj["deep_completions"] = u_stats.get("deep_completions", 0)
+                            stats_obj["xg_overperformance"] = u_stats.get("xG_overperformance", 0.0)
+                            enriched = True
+                            break
+                    if enriched: break
+                
+                # Default values for advanced metrics if not found
+                if not enriched:
+                    stats_obj["xg_per_match"] = stats_obj.get("avg_xG_for", 1.0)
+                    stats_obj["xga_per_match"] = stats_obj.get("avg_xG_against", 1.0)
+                    stats_obj["ppda_avg"] = 10.0
+                    stats_obj["deep_completions"] = 5
+                    stats_obj["xg_overperformance"] = 0.0
+
+                # 4. Save to cache
+                self.stats_cache[team] = (now, stats_obj)
+                results[team] = stats_obj
+                    
+        return results
                     
         return results
 

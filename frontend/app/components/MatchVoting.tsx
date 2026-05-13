@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { i18n } from '../lib/i18n-config';
 import { useDictionarySafe } from '../context/DictionaryContext';
+import ProAnalysisPanel from './ProAnalysisPanel';
 
 interface OddsItem {
     provider: string;
@@ -50,10 +51,12 @@ export default function MatchVoting() {
 
     const [matches, setMatches] = useState<OddsItem[]>([]);
     const [stats, setStats] = useState<Record<string, VoteStats>>({});
+    const [aiPredictions, setAiPredictions] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
     const [votedMatches, setVotedMatches] = useState<Record<string, string>>({});
     const [activeSport, setActiveSport] = useState('all');
     const [expandedLeague, setExpandedLeague] = useState<string | null>(null);
+    const [expandedAiPanel, setExpandedAiPanel] = useState<string | null>(null);
 
     const [userId] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -85,6 +88,21 @@ export default function MatchVoting() {
                         }
                     } catch { /* non-critical */ }
                 }
+
+                // AI Predictions 가져오기
+                try {
+                    const aiRes = await fetch(`${API}/api/ai/predictions`);
+                    if (aiRes.ok) {
+                        const aiData = await aiRes.json();
+                        const predMap: Record<string, any> = {};
+                        if (aiData.predictions) {
+                            aiData.predictions.forEach((p: any) => {
+                                predMap[p.match_id] = p;
+                            });
+                        }
+                        setAiPredictions(predMap);
+                    }
+                } catch { /* non-critical */ }
             }
         } catch (err) {
             console.error(err);
@@ -297,8 +315,6 @@ export default function MatchVoting() {
                                                             <button onClick={() => handleVote(matchId, 'Home', match.home_odds)}
                                                                 className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95 hover:shadow-[0_0_12px_rgba(0,212,255,0.2)]"
                                                                 style={{ minHeight: '48px', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.18)', color: '#66d9ff' }}
-                                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.35)'; }}
-                                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,212,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(0,212,255,0.18)'; }}
                                                             >
                                                                 {tv.homeWin || 'Home'}
                                                             </button>
@@ -306,8 +322,6 @@ export default function MatchVoting() {
                                                                 <button onClick={() => handleVote(matchId, 'Draw', match.draw_odds)}
                                                                     className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95"
                                                                     style={{ minHeight: '48px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
-                                                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
-                                                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
                                                                 >
                                                                     {tv.draw || 'Draw'}
                                                                 </button>
@@ -315,11 +329,48 @@ export default function MatchVoting() {
                                                             <button onClick={() => handleVote(matchId, 'Away', match.away_odds)}
                                                                 className="py-3 rounded-lg text-xs font-bold transition-all active:scale-95 hover:shadow-[0_0_12px_rgba(139,92,246,0.2)]"
                                                                 style={{ minHeight: '48px', background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.18)', color: '#b89dfa' }}
-                                                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)'; }}
-                                                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.06)'; e.currentTarget.style.borderColor = 'rgba(139,92,246,0.18)'; }}
                                                             >
                                                                 {tv.awayWin || 'Away'}
                                                             </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* AI Data Toggle Button & Mini Badges */}
+                                                    {aiPredictions[matchId] && (
+                                                        <div className="mt-4">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <div className="flex gap-2">
+                                                                    {aiPredictions[matchId].home_rank > 0 && (
+                                                                        <span className="text-[10px] px-2 py-0.5 rounded bg-[rgba(0,212,255,0.1)] text-[#00d4ff] font-bold border border-[rgba(0,212,255,0.2)]">
+                                                                            🏆 홈 {aiPredictions[matchId].home_rank}위 vs 원정 {aiPredictions[matchId].away_rank}위
+                                                                        </span>
+                                                                    )}
+                                                                    {aiPredictions[matchId].injuries_home?.length > 0 && (
+                                                                        <span className="text-[10px] px-2 py-0.5 rounded bg-[rgba(239,68,68,0.1)] text-[#f87171] font-bold border border-[rgba(239,68,68,0.2)]">
+                                                                            🏥 핵심 결장
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => setExpandedAiPanel(expandedAiPanel === matchId ? null : matchId)}
+                                                                    className="text-[11px] font-bold text-white bg-[rgba(255,255,255,0.1)] px-3 py-1.5 rounded-full hover:bg-[rgba(255,255,255,0.2)] transition-all flex items-center gap-1"
+                                                                >
+                                                                    🤖 {expandedAiPanel === matchId ? '분석 닫기' : 'AI 세부 분석 열기'}
+                                                                    <svg className={`w-3 h-3 transition-transform ${expandedAiPanel === matchId ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            {/* Expanded Pro Analysis Panel */}
+                                                            {expandedAiPanel === matchId && (
+                                                                <div className="mt-2 animate-fade-in">
+                                                                    <ProAnalysisPanel 
+                                                                        prediction={aiPredictions[matchId]} 
+                                                                        homeTeam={match.team_home_ko || match.team_home} 
+                                                                        awayTeam={match.team_away_ko || match.team_away} 
+                                                                        userTier="free" 
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

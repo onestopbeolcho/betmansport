@@ -13,12 +13,30 @@ from app.services.pinnacle_api import pinnacle_service
 from app.models.betman_db import get_betman_matches
 from app.services.team_mapper import TeamMapper
 from app.services.gemini_service import analyze_match
+from app.core.ai_predictor import AIPredictor
+from app.services.football_stats_service import FootballStatsService
+from app.services.league_standings_service import LeagueStandingsService
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 _mapper = TeamMapper()
+
+# Lazy-init singletons
+_services_initialized = False
+football_stats = None
+league_standings = None
+ai_predictor = None
+
+def _ensure_services():
+    global _services_initialized, football_stats, league_standings, ai_predictor
+    if not _services_initialized:
+        football_stats = FootballStatsService()
+        league_standings = LeagueStandingsService()
+        ai_predictor = AIPredictor()
+        _services_initialized = True
+
 
 # General query keywords
 GENERAL_KEYWORDS = [
@@ -213,7 +231,8 @@ async def ask_analyst(request: AnalysisRequest):
     except Exception as e:
         logger.warning(f"Betman enrichment failed: {e}")
 
-    # ── Build match_data dict ─────────────────
+    # ── Enrich with Stats & Info ────────────────
+    _ensure_services()
     match_data = {
         "team_home": selected.team_home,
         "team_away": selected.team_away,
@@ -223,13 +242,47 @@ async def ask_analyst(request: AnalysisRequest):
         "home_odds": selected.home_odds,
         "draw_odds": selected.draw_odds,
         "away_odds": selected.away_odds,
+        "standings": {"home": None, "away": None},
+        "recent_matches": {"home": [], "away": []},
+        "injuries": {"home": [], "away": []},
+        "h2h": None,
+        "lineups": None
     }
+
     if betman_home and betman_away:
         match_data["betman_home_odds"] = betman_home
         match_data["betman_draw_odds"] = betman_draw
         match_data["betman_away_odds"] = betman_away
 
+    # Collect stats from cache
+    try:
+        home_name = selected.team_home
+        away_name = selected.team_away
+
+        # 1. Standings
+        for league_key, s_list in ai_predictor._standings_cache.items():
+            for team in s_list:
+                t_name = team.team_name if hasattr(team, 'team_name') else team.get("team_name", "")
+                if t_name.lower() == home_name.lower() or home_name.lower() in t_name.lower():
+                    match_data["standings"]["home"] = team.model_dump() if hasattr(team, 'model_dump') else team
+                if t_name.lower() == away_name.lower() or away_name.lower() in t_name.lower():
+                    match_data["standings"]["away"] = team.model_dump() if hasattr(team, 'model_dump') else team
+
+        # 2. League Standings backup
+        if not match_data["standings"]["home"] or not match_data["standings"]["away"]:
+            for league_key, teams_list in league_standings.get_cached().items():
+                for team_data in teams_list:
+                    t_name = team_data.get("team_name", "")
+                    if not match_data["standings"]["home"] and (t_name.lower() == home_name.lower() or home_name.lower() in t_name.lower()):
+                        match_data["standings"]["home"] = team_data
+                    if not match_data["standings"]["away"] and (t_name.lower() == away_name.lower() or away_name.lower() in t_name.lower()):
+                        match_data["standings"]["away"] = team_data
+            
+    except Exception as e:
+        logger.warning(f"Stats enrichment failed: {e}")
+
     # ── Call Gemini (or fallback) ─────────────
+
     analysis_text = await analyze_match(match_data, query)
 
     home_name = selected.team_home_ko or selected.team_home

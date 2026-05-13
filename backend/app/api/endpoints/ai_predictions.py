@@ -179,6 +179,49 @@ async def _save_predictions_background(pred_dicts: list):
         logger.error(f"Background AI prediction save error: {e}")
 
 
+import re
+
+def to_slug(name: str) -> str:
+    s = name.lower().strip()
+    s = re.sub(r'[^a-z0-9\s-]', '', s)
+    s = re.sub(r'[\s]+', '-', s)
+    s = re.sub(r'^-+|-+$', '', s)
+    return s or 'team'
+
+@router.get("/match-list")
+async def get_match_list():
+    """Returns all available matches with slugs and dates for SEO routing"""
+    _ensure_services()
+    matches = await pinnacle_service.fetch_odds()
+    result = []
+    
+    for odds in matches:
+        home_slug = to_slug(odds.team_home)
+        away_slug = to_slug(odds.team_away)
+        match_slug = f"{home_slug}-vs-{away_slug}"
+        
+        date_str = str(odds.match_time)[:10] if odds.match_time else "today"
+        
+        result.append({
+            "date": date_str,
+            "slug": match_slug,
+            "match_id": f"{odds.team_home}_{odds.team_away}",
+            "home": odds.team_home,
+            "away": odds.team_away,
+            "home_ko": odds.team_home_ko or "",
+            "away_ko": odds.team_away_ko or "",
+            "home_odds": odds.home_odds,
+            "draw_odds": odds.draw_odds,
+            "away_odds": odds.away_odds,
+            "home_prob": odds.home_win_prob,
+            "draw_prob": odds.draw_prob,
+            "away_prob": odds.away_win_prob,
+            "league": odds.league
+        })
+        
+    return {"matches": result}
+
+
 @router.get("/predictions/{match_id}")
 async def get_match_prediction(match_id: str):
     """개별 경기 AI 상세 분석 (ML 모델 우선)"""

@@ -242,13 +242,43 @@ export default function BetsPage() {
         });
     }, [matches, selectedSport]);
 
-    /* Top AI picks — sorted by confidence */
+    /* Sorted predictions by EV and Confidence */
+    const sortedPredictions = useMemo(() => {
+        return [...sportFilteredPredictions].map(pred => {
+            let ev = 0;
+            const parts = pred.match_id.split('_');
+            const homeEng = pred.team_home || parts[0] || '';
+            const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
+            const home = pred.team_home_ko ? `${pred.team_home_ko} (${homeEng})` : homeEng;
+            const away = pred.team_away_ko ? `${pred.team_away_ko} (${awayEng})` : awayEng;
+
+            const oddsMatch = matches.find(m => {
+                const mp = m.match_name.split(' vs ');
+                return mp[0] === home || mp[1] === away || m.match_name.includes(home);
+            });
+
+            if (oddsMatch) {
+                const recProb = pred.recommendation === 'HOME' ? pred.home_win_prob :
+                    pred.recommendation === 'AWAY' ? pred.away_win_prob : pred.draw_prob;
+                const recOdds = pred.recommendation === 'HOME' ? oddsMatch.home_odds :
+                    pred.recommendation === 'AWAY' ? oddsMatch.away_odds : oddsMatch.draw_odds;
+                if (recOdds > 1) {
+                    ev = ((recProb / 100) * recOdds - 1) * 100;
+                }
+            }
+            return { ...pred, calculatedEv: ev, oddsMatch };
+        }).sort((a, b) => {
+            if (b.calculatedEv !== a.calculatedEv) return b.calculatedEv - a.calculatedEv;
+            return b.confidence - a.confidence;
+        });
+    }, [sportFilteredPredictions, matches]);
+
+    /* Top AI picks — sorted by EV and confidence */
     const topPicks = useMemo(() => {
-        return [...sportFilteredPredictions]
+        return sortedPredictions
             .filter(p => p.confidence >= 60)
-            .sort((a, b) => b.confidence - a.confidence)
             .slice(0, 3);
-    }, [sportFilteredPredictions]);
+    }, [sortedPredictions]);
 
     /* Stats (based on sport-filtered) */
     const totalMatches = sportFilteredPredictions.length;
@@ -583,7 +613,7 @@ export default function BetsPage() {
                                 </div>
                             ) : (
                                 <div data-tour="tour-bets-table" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {sportFilteredPredictions.map((pred, idx) => {
+                                    {sortedPredictions.map((pred, idx) => {
                                         const level = getConfidenceLevel(pred.confidence);
                                         const parts = pred.match_id.split('_');
                                         const homeEng = pred.team_home || parts[0] || '';
@@ -592,24 +622,8 @@ export default function BetsPage() {
                                         const away = pred.team_away_ko ? `${pred.team_away_ko} (${awayEng})` : awayEng;
                                         const matchKey = `ai-${idx}`;
                                         const isExpanded = expandedCard === matchKey;
-
-                                        /* Find matching odds data */
-                                        const oddsMatch = matches.find(m => {
-                                            const mp = m.match_name.split(' vs ');
-                                            return mp[0] === home || mp[1] === away || m.match_name.includes(home);
-                                        });
-
-                                        /* Calculate expected value if we have odds */
-                                        let ev = 0;
-                                        if (oddsMatch) {
-                                            const recProb = pred.recommendation === 'HOME' ? pred.home_win_prob :
-                                                pred.recommendation === 'AWAY' ? pred.away_win_prob : pred.draw_prob;
-                                            const recOdds = pred.recommendation === 'HOME' ? oddsMatch.home_odds :
-                                                pred.recommendation === 'AWAY' ? oddsMatch.away_odds : oddsMatch.draw_odds;
-                                            if (recOdds > 1) {
-                                                ev = ((recProb / 100) * recOdds - 1) * 100;
-                                            }
-                                        }
+                                        const oddsMatch = pred.oddsMatch;
+                                        const ev = pred.calculatedEv;
 
                                         return (
                                             <div key={idx} className="rounded-2xl overflow-hidden transition-all hover:translate-y-[-2px]"
@@ -623,6 +637,9 @@ export default function BetsPage() {
                                                 <div className="p-4 pb-0">
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-black px-2 py-0.5 rounded" style={{ background: 'var(--accent-primary)', color: '#0d1321' }}>
+                                                                #{idx + 1}
+                                                            </span>
                                                             <span className="text-[10px] text-white/30">{pred.league || ''}</span>
                                                             {pred.match_time && <span className="text-[10px] text-white/20">{formatTime(pred.match_time)}</span>}
                                                         </div>
@@ -635,16 +652,22 @@ export default function BetsPage() {
                                                     {/* Teams */}
                                                     <div className="flex items-center justify-between mt-2">
                                                         <div className="flex-1">
-                                                            <div className={`text-base font-bold ${pred.recommendation === 'HOME' ? 'text-white' : 'text-white/60'}`}>
+                                                            <div className={`text-base font-bold flex items-center gap-2 ${pred.recommendation === 'HOME' ? 'text-white' : 'text-white/60'}`}>
                                                                 {home}
                                                                 {pred.recommendation === 'HOME' && (
-                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
+                                                                )}
+                                                                {pred.oddsMatch?.has_betman && (
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30">BETMAN</span>
                                                                 )}
                                                             </div>
-                                                            <div className={`text-sm mt-0.5 ${pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/40'}`}>
+                                                            <div className={`text-sm mt-0.5 flex items-center gap-2 ${pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/40'}`}>
                                                                 vs {away}
                                                                 {pred.recommendation === 'AWAY' && (
-                                                                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
+                                                                )}
+                                                                {!pred.recommendation.includes('HOME') && pred.oddsMatch?.has_betman && (
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30">BETMAN</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -831,7 +854,12 @@ export default function BetsPage() {
                                                         <div className="flex items-center space-x-2">
                                                             <div className="text-[10px] text-white/25 w-12 shrink-0">{formatTime(m.match_time)}</div>
                                                             <div>
-                                                                <div className="text-sm font-semibold text-white leading-tight">{home}</div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="text-sm font-semibold text-white leading-tight">{home}</div>
+                                                                    {m.has_betman && (
+                                                                        <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/20">BETMAN</span>
+                                                                    )}
+                                                                </div>
                                                                 <div className="text-xs text-white/40 leading-tight">{away}</div>
                                                             </div>
                                                         </div>

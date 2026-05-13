@@ -15,13 +15,13 @@ try:
     from app.models.config_db import load_config_to_env
     loaded = load_config_to_env()
     if loaded:
-        print(f"🔑 Firestore에서 {loaded}개 API 키 로드 완료")
+        print(f"Firestore load complete: {loaded} keys")
 except Exception as _e:
-    print(f"⚠️ Firestore config 로드 스킵: {_e}")
+    print(f"Firestore config load skipped: {_e}")
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, tax, combinator, ai_predictions, notifications, league
+from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, tax, combinator, ai_predictions, notifications, league, blogger
 from app.api.endpoints import vip_combo, vip_alerts, vip_portfolio, vip_market
 from app.api.endpoints import backtest
 from app.api.endpoints import marketing
@@ -35,6 +35,7 @@ app = FastAPI(title="Scorenix API")
 _cors_origins_env = os.getenv("CORS_ORIGINS", "")
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:3005",
     "http://127.0.0.1:3000",
     "https://smart-proto-inv-2026.web.app",
     "https://smart-proto-inv-2026.firebaseapp.com",
@@ -112,8 +113,9 @@ app.include_router(vip_market.router, prefix="/api/vip/market", tags=["vip-marke
 # Backtest Insights
 app.include_router(backtest.router, prefix="/api/backtest", tags=["backtest"])
 
-# Marketing (Buffer SNS)
+# Marketing (Buffer SNS & Blogger)
 app.include_router(marketing.router, prefix="/api/marketing", tags=["marketing"])
+app.include_router(blogger.router, prefix="/api/blogger", tags=["blogger"])
 
 
 async def _auto_collect_stats():
@@ -470,6 +472,49 @@ async def _periodic_sns_publish():
             await asyncio.sleep(600)  # 에러 시 10분 후 재시도
 
 
+async def _periodic_blogger_publish():
+    """매일 11:00 KST 구글 블로그(Blogger) 자동 포스팅"""
+    from datetime import timezone, timedelta
+    KST = timezone(timedelta(hours=9))
+    logger.info("✍️ [Blogger-Scheduler] Starting, will run daily at 11:00 KST...")
+    await asyncio.sleep(15 * 60)  # 서버 구동 후 초기 수집(30분 주기) 대기
+
+    while True:
+        try:
+            now_kst = __import__("datetime").datetime.now(KST)
+            target = now_kst.replace(hour=11, minute=0, second=0, microsecond=0)
+            if target <= now_kst:
+                target += timedelta(days=1)
+            wait_seconds = (target - now_kst).total_seconds()
+            
+            logger.info(f"✍️ [Blogger-Scheduler] Next post at 11:00 KST (in {wait_seconds/3600:.1f}h)")
+            await asyncio.sleep(wait_seconds)
+
+            logger.info("✍️ [Blogger-Scheduler] Waking up to post to Blogger...")
+            
+            # Blogger 연동 확인
+            from app.services.blogger_service import blogger_service
+            if not blogger_service.blog_id:
+                logger.info("✍️ [Blogger-Scheduler] Blogger ID not set, skipping")
+                await asyncio.sleep(600)
+                continue
+                
+            from fastapi import BackgroundTasks
+            bg = BackgroundTasks()
+            from app.api.endpoints.blogger import trigger_daily_blogger_post
+            # Call the endpoint handler function directly
+            await trigger_daily_blogger_post(bg)
+            
+            # await the background tasks to actually execute it here
+            for task in bg.tasks:
+                await task()
+                
+            logger.info("✍️ [Blogger-Scheduler] Blogger posting triggered successfully.")
+            
+        except Exception as e:
+            logger.error(f"[Blogger-Scheduler] Error: {e}")
+            await asyncio.sleep(600)  # 에러 시 10분 후 재시도
+
 @app.on_event("startup")
 async def startup_event():
     # Ensure API key is set on pinnacle_service
@@ -477,7 +522,7 @@ async def startup_event():
     api_key = os.getenv("API_FOOTBALL_KEY") or os.getenv("PINNACLE_API_KEY")
     if api_key and not pinnacle_service.api_key:
         pinnacle_service.set_api_key(api_key)
-    print(f"Backend Startup: Firestore mode | API-Football Key: {'✅' if pinnacle_service.api_key else '❌'}")
+    print(f"Backend Startup: Firestore mode | API-Football Key: {'YES' if pinnacle_service.api_key else 'NO'}")
 
     # 백그라운드 스케줄러 시작
     asyncio.create_task(_auto_collect_stats())         # 시작 시 1회 전체 수집
@@ -486,7 +531,8 @@ async def startup_event():
     asyncio.create_task(_periodic_stats_collection())   # 12시간마다 순위/부상/H2H (09:00, 21:00 KST)
     asyncio.create_task(_periodic_nightly_retrain())    # 매일 03:00 KST ML 재학습
     asyncio.create_task(_periodic_sns_publish())        # 매일 10:00, 16:00 KST SNS 자동 발행
-    logger.info("🚀 All background schedulers started (including SNS auto-publish)")
+    asyncio.create_task(_periodic_blogger_publish())    # 매일 11:00 KST Blogger 자동 발행
+    logger.info("🚀 All background schedulers started (including Blogger auto-publish)")
 
 @app.get("/")
 def read_root():

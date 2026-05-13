@@ -9,6 +9,10 @@ class SystemConfig(BaseModel):
     pinnacle_api_key: str = ""
     gemini_api_key: str = ""
     buffer_access_token: str = ""
+    blogger_blog_id: str = ""
+    blogger_client_id: str = ""
+    blogger_client_secret: str = ""
+    blogger_refresh_token: str = ""
     betman_user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     scrape_interval_minutes: int = 10
     
@@ -36,6 +40,16 @@ class SystemConfig(BaseModel):
             config.gemini_api_key = env_gemini
         if env_buffer:
             config.buffer_access_token = env_buffer
+            
+        # Blogger Env
+        if os.getenv("BLOGGER_BLOG_ID"):
+            config.blogger_blog_id = os.getenv("BLOGGER_BLOG_ID")
+        if os.getenv("BLOGGER_CLIENT_ID"):
+            config.blogger_client_id = os.getenv("BLOGGER_CLIENT_ID")
+        if os.getenv("BLOGGER_CLIENT_SECRET"):
+            config.blogger_client_secret = os.getenv("BLOGGER_CLIENT_SECRET")
+        if os.getenv("BLOGGER_REFRESH_TOKEN"):
+            config.blogger_refresh_token = os.getenv("BLOGGER_REFRESH_TOKEN")
             
         return config
 

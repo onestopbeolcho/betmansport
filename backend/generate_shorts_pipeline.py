@@ -1,5 +1,5 @@
 """
-Scorenix Shorts Video Generator v4.0 — AI Avatar Edition
+Scorenix Shorts Video Generator v4.0 - AI Avatar Edition
 =========================================================
 - ElevenLabs TTS: 사람과 구분 불가한 자연스러운 음성 (폴백: Edge TTS)
 - D-ID Avatar: AI 앵커가 실제로 말하는 듯한 영상 생성 (폴백: 정적 배경)
@@ -79,7 +79,7 @@ def fetch_top_matches():
         out.sort(key=lambda x: x["win_prob"], reverse=True)
         return out[:3] if len(out) >= 3 else _dummy()
     except Exception as e:
-        print(f"  ⚠ Data load failed: {e}")
+        print(f"  [!] Data load failed: {e}")
         return _dummy()
 
 
@@ -154,12 +154,12 @@ def build_script(matches):
     h1, h2, h3 = short(m1['home']), short(m2['home']), short(m3['home'])
     a1, a2, a3 = short(m1['away']), short(m2['away']), short(m3['away'])
 
-    # 인트로 변형
+    # 인트로 변형 (유튜브 친화적 구어체)
     intros = [
-        f"{today} {hour} 기준, 스코어닉스 AI가 수백 개 경기 데이터를 분석했어요. 그 중 가장 유리한 경기 세 개를 뽑아봤습니다.",
-        f"안녕하세요! {today} 실시간 배당 데이터 기반으로, AI가 선별한 고확률 경기 세 가지 공개할게요.",
-        f"{today} 오늘의 배당 흐름이 심상치 않아요. AI 데이터 분석으로 찾아낸 핵심 경기 세 가지, 바로 가볼게요.",
-        f"배당판이 요동치는 {today}, 스코어닉스 AI가 숫자로 말하는 오늘의 분석 리포트입니다.",
+        f"자, 집중! {today} 배당판 흐름이 심상치 않습니다. AI가 찾아낸 꿀잼 경기 세 개 바로 갈게요.",
+        f"안녕하세요! {today} 실시간 배당을 분석해보니, 오늘 이거 무조건 봐야겠는데요? 바로 확인하시죠.",
+        f"다들 주목! {today} 스코어닉스 AI가 배당 데이터를 싹 다 긁어왔습니다. 가장 확률 높은 세 경기 뽑아봤어요.",
+        f"배당이 요동치는 {today}, 오늘은 어떤 팀이 웃을까요? 숫자로 증명하는 오늘의 분석 탑 쓰리 시작합니다.",
     ]
     intro_captions = [
         f"[DATA] {today} {hour}\nAI 데이터 분석 리포트",
@@ -169,12 +169,13 @@ def build_script(matches):
     ]
     intro_idx = random.randint(0, len(intros) - 1)
 
-    # 경기 분석 멘트 변형 (TTS는 원래 팀명 사용)
+    # 경기 분석 멘트 변형 (TTS가 자연스럽게 읽도록 쉼표와 감탄사 활용)
     def match_tts(m, order):
         templates = [
-            f"{order} 경기, {m['home']} 대 {m['away']}. {m['reason']} AI 환산 승률은 {m['win_prob']}%입니다.",
-            f"{order}. {m['home']} 대 {m['away']}입니다. 배당 데이터를 살펴보면요, {m['reason']} 종합 승률 {m['win_prob']}%로 분석돼요.",
-            f"{order} 경기는 {m['home']}과 {m['away']}의 맞대결이에요. {m['reason']} 데이터 기반 승률 {m['win_prob']}%예요.",
+            f"{order} 경기는, {m['home']} 대 {m['away']}입니다. {m['reason']} AI 환산 승률, 무려 {m['win_prob']}%나 되네요.",
+            f"{order}, {m['home']}과 {m['away']}의 맞대결! 배당 데이터를 뜯어보면요, {m['reason']} 승률 {m['win_prob']}%로 아주 좋습니다.",
+            f"다음 {order}는 {m['home']} 대 {m['away']} 경기예요. {m['reason']} 데이터상 승률이 {m['win_prob']}%를 가리키고 있습니다.",
+            f"{order} 경기, {m['home']}과 {m['away']}! 자, 이 경기 조심하셔야 해요. {m['reason']} AI 분석 승률 {m['win_prob']}%입니다.",
         ]
         return random.choice(templates)
 
@@ -187,16 +188,18 @@ def build_script(matches):
         ]
         return random.choice(templates)
 
-    # 마무리 변형
+    # 마무리 CTA 변형 (구독, 멤버십, 웹앱 유도)
     ctas = [
-        "오늘 분석은 여기까지예요. 더 자세한 조합 분석과 전체 경기 리포트는, 프로필 링크에서 확인하세요.",
-        "이상 AI 데이터 분석이었습니다. 수익률 시뮬레이션과 전체 경기 분석은 사이트에서 볼 수 있어요.",
-        "오늘의 핵심 데이터 분석 요약이었습니다. 종합 리포트는 사이트에서 확인해 주세요. 다음 분석에서 만나요!",
+        "오늘 분석은 여기까지! 유튜브 멤버십에 가입하시면, 스코어닉스 닷컴에서 모든 경기의 프리미엄 데이터를 무제한으로 보실 수 있습니다. 구독과 좋아요 잊지 마세요!",
+        "데이터는 거짓말을 안 하죠! 스코어닉스 닷컴에 오시면 AI가 분석한 결장자 정보와 H2H 데이터를 직접 확인하실 수 있습니다. 지금 바로 프로필 링크를 클릭해보세요!",
+        "매일 업데이트되는 AI 분석, 멤버십 가입하고 스코어닉스 닷컴에서 VIP 혜택을 누려보세요! 다음 분석에서 만나요.",
+        "수익률을 높이고 싶으시다면 스코어닉스 닷컴의 AI 조합기를 활용해보세요! 유튜브 멤버십 회원님들은 전면 무료입니다. 구독, 좋아요 꾹 눌러주세요!",
     ]
     cta_captions = [
-        "전체 분석 리포트\n\nscoreni x.com",
-        "종합 데이터 분석\n\nscoreni x.com",
-        "AI 리포트 전문 확인\n\nscoreni x.com",
+        "멤버십 혜택 안내\n\nscorenix.com",
+        "VIP 데이터 분석\n\nscorenix.com",
+        "프리미엄 7-팩터 분석\n\nscorenix.com",
+        "AI 자동 조합기\n\nscorenix.com",
     ]
     cta_idx = random.randint(0, len(ctas) - 1)
 
@@ -226,8 +229,10 @@ except ImportError:
 
 async def _tts_async(text, path):
     import edge_tts
+    # 텐션있는 여성 음성(SunHi)에 속도와 피치를 조절하여 AI 느낌 감소
     voice = "ko-KR-SunHiNeural"
-    communicate = edge_tts.Communicate(text, voice, rate="+12%", pitch="+2Hz")
+    # 속도를 +15%로 조금 빠르게, 피치를 +5Hz 올려 아나운서보다 유튜버 느낌으로 세팅
+    communicate = edge_tts.Communicate(text, voice, rate="+15%", pitch="+5Hz")
     await communicate.save(path)
 
 
@@ -237,14 +242,14 @@ def generate_tts(text, path):
     if is_elevenlabs_available():
         if elevenlabs_tts(text, path):
             return
-        print("    ↪ ElevenLabs failed, trying Edge TTS...")
+        print("    [>] ElevenLabs failed, trying Edge TTS...")
 
     # 2차: Edge TTS
     try:
         asyncio.run(_tts_async(text, path))
         return
     except Exception as e:
-        print(f"    ⚠ Edge TTS failed ({e}), falling back to gTTS")
+        print(f"    [!] Edge TTS failed ({e}), falling back to gTTS")
 
     # 3차: gTTS
     from gtts import gTTS
@@ -314,30 +319,38 @@ def render_caption(text, scene="match"):
     box_x2 = box_x1 + box_w
     box_y2 = box_y1 + box_h
 
-    # 장면별 컬러 스킴
+    # 장면별 컬러 스킴 (프리미엄 네온 테마)
     if scene == "intro":
-        box_color = (15, 15, 50, 220)
-        accent = (255, 210, 60, 255)
-        border = (255, 210, 60, 200)
+        box_color = (10, 10, 30, 230)
+        accent = (255, 215, 0, 255)
+        border = (255, 215, 0, 180)
     elif scene == "cta":
-        box_color = (80, 15, 15, 220)
-        accent = (255, 120, 100, 255)
-        border = (255, 120, 100, 200)
+        box_color = (30, 10, 15, 230)
+        accent = (255, 80, 80, 255)
+        border = (255, 80, 80, 180)
     else:
-        box_color = (8, 8, 25, 220)
-        accent = (100, 210, 255, 255)
-        border = (100, 210, 255, 180)
+        box_color = (15, 20, 35, 220)
+        accent = (0, 255, 255, 255)
+        border = (0, 200, 255, 180)
 
-    # 반투명 박스 + 테두리
+    # 그림자(Drop Shadow) 효과 추가
     try:
-        draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2],
-                               radius=25, fill=box_color)
-        draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2],
-                               radius=25, outline=border, width=2)
+        from PIL import ImageFilter
+        shadow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        shadow_draw = ImageDraw.Draw(shadow)
+        shadow_draw.rounded_rectangle([box_x1 + 15, box_y1 + 15, box_x2 + 15, box_y2 + 15], radius=30, fill=(0, 0, 0, 180))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(15))
+        img.paste(shadow, (0, 0), shadow)
+        
+        # 반투명 박스 + 테두리
+        draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2], radius=25, fill=box_color)
+        draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2], radius=25, outline=border, width=3)
+        # 이너 글로우(Inner Glow) 느낌을 위한 얇은 추가 테두리
+        draw.rounded_rectangle([box_x1+2, box_y1+2, box_x2-2, box_y2-2], radius=23, outline=(255, 255, 255, 30), width=1)
     except AttributeError:
         draw.rectangle([box_x1, box_y1, box_x2, box_y2], fill=box_color)
 
-    # 텍스트 렌더링
+    # 텍스트 렌더링 (그림자 추가)
     cur_y = box_y1 + pad
     for line, w, h in line_data:
         if not line:
@@ -345,18 +358,12 @@ def render_caption(text, scene="match"):
             continue
         x = (WIDTH - w) // 2
 
-        # 키워드 하이라이트
-        highlight_keys = ["승률", "승리", "유리", "TOP", "확인",
-                          "배당", "격차", "%", "vs", "DATA", "LIVE",
-                          "ODDS", "AI", "HOME", ">>", "리포트"]
-        if any(k in line for k in highlight_keys):
-            color = accent
-        else:
-            color = (255, 255, 255, 255)
+        highlight_keys = ["승률", "승리", "유리", "TOP", "확인", "배당", "격차", "%", "vs", "DATA", "LIVE", "ODDS", "AI", "HOME", ">>", "리포트"]
+        color = accent if any(k in line for k in highlight_keys) else (255, 255, 255, 255)
 
-        # 외곽선 (가독성) — 경량화: 4방향만
-        for ox, oy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
-            draw.text((x + ox, cur_y + oy), line, font=font, fill=(0, 0, 0, 200))
+        # 텍스트 강한 그림자
+        draw.text((x + 3, cur_y + 3), line, font=font, fill=(0, 0, 0, 220))
+        draw.text((x + 1, cur_y + 1), line, font=font, fill=(0, 0, 0, 150))
         draw.text((x, cur_y), line, font=font, fill=color)
         cur_y += h + spacing
 
@@ -455,14 +462,14 @@ def ken_burns(clip, duration, zoom_start=1.0, zoom_end=1.08):
 def get_bgm():
     bgm_path = os.path.join(os.path.dirname(__file__), "bgm.mp3")
     if not os.path.exists(bgm_path):
-        print("  🎵 BGM not found — downloading free sample...")
+        print("  [~] BGM not found - downloading free sample...")
         import urllib.request
         try:
             url = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
             urllib.request.urlretrieve(url, bgm_path)
-            print("  ✅ BGM downloaded")
+            print("  [OK] BGM downloaded")
         except Exception as e:
-            print(f"  ⚠ BGM download failed: {e}")
+            print(f"  [!] BGM download failed: {e}")
     return bgm_path
 
 
@@ -476,17 +483,17 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
 
     print("=" * 50)
     if avatar_mode:
-        print(" 🤖 Scorenix AI Avatar Shorts v4.0 — Rendering")
+        print(" [AI] Scorenix AI Avatar Shorts v4.0 - Rendering")
     else:
-        print(" 🚀 Scorenix Premium Shorts v4.0 — Rendering")
+        print(" [>>] Scorenix Premium Shorts v4.0 - Rendering")
     if is_elevenlabs_available():
-        print(" 🎙️ TTS: ElevenLabs (premium)")
+        print(" [MIC] TTS: ElevenLabs (premium)")
     else:
-        print(" 🎙️ TTS: Edge TTS (free)")
+        print(" [MIC] TTS: Edge TTS (free)")
     print("=" * 50)
 
     # 1) 배경 준비
-    ai_bg = os.path.join(os.path.dirname(__file__), "background_ai.png")
+    ai_bg = os.path.join(os.path.dirname(__file__), "premium_bg.png") # 프리미엄 배경 적용
     if os.path.exists(bg_video_path):
         base_bg = VideoFileClip(bg_video_path).resize(height=HEIGHT)
         base_bg = base_bg.crop(x_center=base_bg.w // 2, y_center=HEIGHT // 2,
@@ -497,7 +504,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         # 안전하게 리사이즈
         base_bg = base_bg.resize(newsize=(WIDTH, HEIGHT))
         bg_is_video = False
-        print("  ✨ AI background image loaded")
+        print("  [*] AI background image loaded")
     else:
         base_bg = ColorClip(size=(WIDTH, HEIGHT), color=(12, 12, 25)).set_duration(120)
         bg_is_video = False
@@ -527,7 +534,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
             avatar_video_path = os.path.join(
                 os.path.dirname(__file__), f"_tmp_avatar_{i}.mp4"
             )
-            print(f"    🤖 Generating D-ID avatar for {seg['scene']}...")
+            print(f"    [AI] Generating D-ID avatar for {seg['scene']}...")
             if create_talking_head(audio_path, avatar_video_path):
                 try:
                     avatar_clip = VideoFileClip(avatar_video_path)
@@ -547,9 +554,9 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                         )
                     bg_seg = avatar_clip.set_duration(dur)
                     used_avatar = True
-                    print(f"    ✅ Avatar video applied!")
+                    print(f"    [OK] Avatar video applied!")
                 except Exception as e:
-                    print(f"    ⚠ Avatar clip failed: {e}")
+                    print(f"    [!] Avatar clip failed: {e}")
 
         if not used_avatar:
             # 기존 방식: 정적 배경 + Ken Burns
@@ -566,10 +573,20 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
 
         bg_seg = bg_seg.set_audio(audio)
 
-        # 자막 카드 (아바타 모드일 때는 하단에 배치)
+        # 자막 카드 (아바타 모드일 때는 하단에 배치, Slide-up 애니메이션 적용)
         cap_arr = render_caption(seg["caption"], seg["scene"])
+        
+        # 슬라이드 인 애니메이션 함수 (0.5초 동안 아래에서 위로 올라옴)
+        def slide_up(t):
+            # t가 0에서 0.5로 갈 때, offset이 100에서 0으로 줄어듦
+            progress = min(1.0, t * 2) 
+            # Ease-out 수식
+            ease = 1 - (1 - progress) * (1 - progress)
+            offset = 150 * (1 - ease)
+            return ("center", offset)
+            
         if used_avatar:
-            # 아바타 영상 위에는 자막을 하단에 배치
+            # 아바타 영상 위에는 자막을 하단 고정 (위치 고정)
             cap_clip = (ImageClip(cap_arr)
                         .set_duration(dur)
                         .set_position(("center", HEIGHT - 500))
@@ -578,9 +595,9 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         else:
             cap_clip = (ImageClip(cap_arr)
                         .set_duration(dur)
-                        .set_position("center")
-                        .crossfadein(0.25)
-                        .crossfadeout(0.15))
+                        .set_position(slide_up)
+                        .crossfadein(0.3)
+                        .crossfadeout(0.2))
 
         layers = [bg_seg]
         if not used_avatar:
@@ -591,13 +608,13 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         clips.append(comp)
 
     # 4) 연결
-    print("\n  🎬 Stitching scenes...")
+    print("\n  [CUT] Stitching scenes...")
     final = concatenate_videoclips(clips, method="compose")
 
     # 5) BGM 믹싱
     bgm_path = get_bgm()
     if os.path.exists(bgm_path):
-        print("  🎧 Mixing BGM...")
+        print("  [~] Mixing BGM...")
         from moviepy.audio.fx.volumex import volumex
         from moviepy.audio.AudioClip import CompositeAudioClip
 
@@ -614,7 +631,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         )
 
     # 6) 렌더링 (고품질)
-    print("  📹 Encoding final video (high quality)...")
+    print("  [REC] Encoding final video (high quality)...")
     final.write_videofile(
         output_path,
         fps=30,
@@ -635,7 +652,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                 except OSError:
                     pass
 
-    print(f"\n  ✅ Done! → {output_path}")
+    print(f"\n  [OK] Done! → {output_path}")
 
     # 8) 유튜브 업로드
     if auto_upload:
@@ -668,11 +685,11 @@ def _upload(video_path):
         ]
 
         desc = (
-            f"📊 {now.strftime('%Y년 %m월 %d일 %H시')} 기준 AI 데이터 분석\n\n"
+            f"[#] {now.strftime('%Y년 %m월 %d일 %H시')} 기준 AI 데이터 분석\n\n"
             "스코어닉스 AI가 실시간 배당 데이터를 분석하여\n"
             "통계적으로 유리한 경기를 선별한 리포트입니다.\n\n"
-            "⚠️ 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
-            "🔗 전체 분석 리포트: https://scorenix.com\n\n"
+            "[!] 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
+            "[>] 전체 분석 리포트: https://scorenix.com\n\n"
             "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts"
         )
         tags = ["스포츠분석", "AI분석", "배당분석", "데이터분석",
@@ -680,13 +697,13 @@ def _upload(video_path):
 
         vid = upload_to_youtube(video_path, random.choice(titles), desc, tags)
         if vid:
-            print(f"  🎉 YouTube upload success! https://youtu.be/{vid}")
+            print(f"  [OK] YouTube upload success! https://youtu.be/{vid}")
             return True
         else:
-            print("  ❌ Upload failed")
+            print("  [X] Upload failed")
             return False
     except Exception as e:
-        print(f"  ❌ YouTube error: {e}")
+        print(f"  [X] YouTube error: {e}")
         return False
 
 
@@ -709,7 +726,7 @@ if __name__ == "__main__":
             from ai_avatar_service import check_status
             check_status()
         except ImportError:
-            print("  ⚠ ai_avatar_service.py not found")
+            print("  [!] ai_avatar_service.py not found")
     print()
 
     desktop = _get_desktop()
@@ -718,9 +735,9 @@ if __name__ == "__main__":
 
     if args.loop:
         print("=" * 50)
-        mode = "🤖 AI Avatar" if args.avatar else "🚀 Premium"
-        print(f" 🔥 24H Auto-Upload [{mode}] (every {args.interval}h)")
-        print(f" 📂 Output: {output_dir}")
+        mode = "[AI] AI Avatar" if args.avatar else "[>>] Premium"
+        print(f" [!] 24H Auto-Upload [{mode}] (every {args.interval}h)")
+        print(f" [DIR] Output: {output_dir}")
         print("=" * 50)
 
         upload_count = 0
@@ -740,26 +757,26 @@ if __name__ == "__main__":
                     fail_count = 0
                     try:
                         os.remove(out)
-                        print(f"  🗑️ Local file cleaned up")
+                        print(f"  [DEL] Local file cleaned up")
                     except OSError:
                         pass
                 else:
                     fail_count += 1
 
-                print(f"\n  📊 Total uploads: {upload_count} | Fails: {fail_count}")
+                print(f"\n  [#] Total uploads: {upload_count} | Fails: {fail_count}")
 
                 if fail_count >= 3:
-                    print("  ⚠️ 3 consecutive failures — waiting 30min")
+                    print("  [!] 3 consecutive failures - waiting 30min")
                     time.sleep(1800)
                     fail_count = 0
                     continue
 
             except Exception as e:
-                print(f"\n  ❌ Pipeline error: {e}")
+                print(f"\n  [X] Pipeline error: {e}")
                 fail_count += 1
 
             next_time = datetime.datetime.now() + datetime.timedelta(hours=args.interval)
-            print(f"\n  💤 Next upload at {next_time.strftime('%H:%M')}")
+            print(f"\n  [Z] Next upload at {next_time.strftime('%H:%M')}")
             time.sleep(args.interval * 3600)
     else:
         # 수동 모드
@@ -768,7 +785,7 @@ if __name__ == "__main__":
         generate_video("background.mp4", out,
                        auto_upload=False, use_avatar=args.avatar)
 
-        choice = input("\n🚀 Upload to YouTube? (y/n): ")
+        choice = input("\n[>>] Upload to YouTube? (y/n): ")
         if choice.strip().lower() == "y":
             _upload(out)
 

@@ -27,6 +27,10 @@ FIELD_TO_ENV = {
     "the_odds_api_key": "THE_ODDS_API_KEY",
     "secret_key": "SECRET_KEY",
     "lemon_squeezy_api_key": "LEMON_SQUEEZY_API_KEY",
+    "blogger_blog_id": "BLOGGER_BLOG_ID",
+    "google_client_id": "BLOGGER_CLIENT_ID",
+    "google_client_secret": "BLOGGER_CLIENT_SECRET",
+    "google_refresh_token": "BLOGGER_REFRESH_TOKEN",
 }
 
 

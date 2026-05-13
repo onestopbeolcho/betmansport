@@ -739,5 +739,5 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
         except Exception as e:
             logger.error(f"Scheduled prediction update failed: {e}", exc_info=True)
 
-    background_tasks.add_task(update_job)
-    return {"status": "Update job triggered in background"}
+    await update_job()
+    return {"status": "Update job completed successfully"}
