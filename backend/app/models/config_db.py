@@ -31,6 +31,9 @@ FIELD_TO_ENV = {
     "google_client_id": "BLOGGER_CLIENT_ID",
     "google_client_secret": "BLOGGER_CLIENT_SECRET",
     "google_refresh_token": "BLOGGER_REFRESH_TOKEN",
+    "wordpress_url": "WORDPRESS_URL",
+    "wordpress_username": "WORDPRESS_USERNAME",
+    "wordpress_app_password": "WORDPRESS_APP_PASSWORD",
 }
 
 

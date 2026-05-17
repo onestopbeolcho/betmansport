@@ -21,7 +21,7 @@ except Exception as _e:
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, tax, combinator, ai_predictions, notifications, league, blogger
+from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, tax, combinator, ai_predictions, notifications, league, blogger, wordpress
 from app.api.endpoints import vip_combo, vip_alerts, vip_portfolio, vip_market
 from app.api.endpoints import backtest
 from app.api.endpoints import marketing
@@ -113,9 +113,10 @@ app.include_router(vip_market.router, prefix="/api/vip/market", tags=["vip-marke
 # Backtest Insights
 app.include_router(backtest.router, prefix="/api/backtest", tags=["backtest"])
 
-# Marketing (Buffer SNS & Blogger)
+# Marketing (Buffer SNS, Blogger, WordPress)
 app.include_router(marketing.router, prefix="/api/marketing", tags=["marketing"])
 app.include_router(blogger.router, prefix="/api/blogger", tags=["blogger"])
+app.include_router(wordpress.router, prefix="/api/wordpress", tags=["wordpress"])
 
 
 async def _auto_collect_stats():
@@ -515,6 +516,42 @@ async def _periodic_blogger_publish():
             logger.error(f"[Blogger-Scheduler] Error: {e}")
             await asyncio.sleep(600)  # 에러 시 10분 후 재시도
 
+async def _periodic_wordpress_publish():
+    """매일 11:30 KST 워드프레스(WordPress) 자동 포스팅"""
+    from datetime import timezone, timedelta
+    KST = timezone(timedelta(hours=9))
+    logger.info("✍️ [WordPress-Scheduler] Starting, will run daily at 11:30 KST...")
+    await asyncio.sleep(20 * 60)  # 서버 구동 후 초기 수집 대기
+
+    while True:
+        try:
+            now_kst = __import__("datetime").datetime.now(KST)
+            target = now_kst.replace(hour=11, minute=30, second=0, microsecond=0)
+            if target <= now_kst:
+                target += timedelta(days=1)
+            wait_seconds = (target - now_kst).total_seconds()
+            
+            logger.info(f"✍️ [WordPress-Scheduler] Next post at 11:30 KST (in {wait_seconds/3600:.1f}h)")
+            await asyncio.sleep(wait_seconds)
+
+            logger.info("✍️ [WordPress-Scheduler] Waking up to post to WordPress...")
+            
+            # WordPress 연동 확인
+            from app.services.wordpress_service import wordpress_service
+            if not wordpress_service.wp_url or not wordpress_service.wp_username or not wordpress_service.wp_app_password:
+                logger.info("✍️ [WordPress-Scheduler] WordPress credentials not fully configured, skipping")
+                await asyncio.sleep(600)
+                continue
+                
+            from app.api.endpoints.wordpress import trigger_daily_wordpress_post
+            # Call the daily posting logic directly
+            result = await trigger_daily_wordpress_post()
+            logger.info(f"✍️ [WordPress-Scheduler] WordPress post response: {result}")
+            
+        except Exception as e:
+            logger.error(f"[WordPress-Scheduler] Error: {e}")
+            await asyncio.sleep(600)  # 에러 시 10분 후 재시도
+
 @app.on_event("startup")
 async def startup_event():
     # Ensure API key is set on pinnacle_service
@@ -532,7 +569,8 @@ async def startup_event():
     asyncio.create_task(_periodic_nightly_retrain())    # 매일 03:00 KST ML 재학습
     asyncio.create_task(_periodic_sns_publish())        # 매일 10:00, 16:00 KST SNS 자동 발행
     asyncio.create_task(_periodic_blogger_publish())    # 매일 11:00 KST Blogger 자동 발행
-    logger.info("🚀 All background schedulers started (including Blogger auto-publish)")
+    asyncio.create_task(_periodic_wordpress_publish())  # 매일 11:30 KST WordPress 자동 발행
+    logger.info("🚀 All background schedulers started (including Blogger & WordPress auto-publish)")
 
 @app.get("/")
 def read_root():

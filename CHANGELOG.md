@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.3 - YouTube Shorts Multi-Mode & WordPress Auto-Publishing
+- **Shorts Generator Upgrades** (`generate_shorts_pipeline.py`):
+    - Added parallel multi-video generation: Creates separate **Membership (Subscriber)** deep analytical videos and **Marketing (Funnel)** teasers.
+    - Updated script generator to use separate narration templates and calls to action depending on target audience.
+    - Disabled automatic deletion of local shorts files after uploading, retaining them on the desktop for distribution to other SNS accounts.
+- **WordPress Auto-Publishing Service** (`wordpress_service.py`, `endpoints/wordpress.py`):
+    - Engineered WordPress REST API integration using Application Passwords (Basic Auth).
+    - Integrated with Firestore system config for secure, dynamic storage of WordPress URL, username, and application password.
+    - Scheduled daily automatic match predictions post generation at 11:30 KST in the background.
+    - Added FastAPI manual trigger endpoint at `/api/wordpress/post`.
+
 ## v0.6.2 - Crawler Stability & Error Handling
 - **Betman Crawler Enhancement** (`crawler_betman_browser.py`):
     - Restricted automated round selection to `G101` (Win/Draw/Loss), preventing API failures caused by selecting unsupported `G102` (Record) games.

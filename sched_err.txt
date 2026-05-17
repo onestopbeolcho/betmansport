@@ -1,0 +1,7 @@
+ERROR: (gcloud.scheduler.jobs.create.http) unrecognized arguments:
+  0
+  11
+  *
+  *\ --timezone=\Asia/Seoul\ --uri=\https://scorenix-backend-n5dv44kdaa-du.a.run.app/api/blogger/post\ --http-method=POST --project smart-proto-inv-2026 --location=asia-northeast3  (did you mean '--time-zone'?)
+  To search the help text of gcloud commands, run:
+  gcloud help -- SEARCH_TERMS

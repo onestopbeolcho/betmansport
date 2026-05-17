@@ -134,8 +134,12 @@ def _dummy():
 
 
 # ─── 대본 (매번 다른 템플릿) ──────────────────────────────
-def build_script(matches):
-    """랜덤 템플릿으로 매번 다른 느낌의 대본을 생성합니다"""
+def build_script(matches, mode="membership"):
+    """
+    랜덤 템플릿으로 매번 다른 느낌의 대본을 생성합니다.
+    - membership: 3개 경기 모두 명확한 분석 및 승률 예측 제공 (구독자용 분석 명확한 영상)
+    - marketing: 1번째 경기 상세 오픈 + 2, 3번째 경기는 스코어닉스 웹사이트 방문 유도 (마케팅/유입용 영상)
+    """
     import random
     m1, m2, m3 = matches
     today = datetime.datetime.now().strftime("%m월 %d일")
@@ -143,10 +147,8 @@ def build_script(matches):
 
     # 팀명 축약 (긴 이름이 박스를 넘기지 않도록)
     def short(name, max_len=8):
-        # 너무 긴 팀명 줄이기
         if len(name) <= max_len:
             return name
-        # & 앞 부분만 사용
         if '&' in name:
             return name.split('&')[0].strip()
         return name[:max_len]
@@ -154,62 +156,88 @@ def build_script(matches):
     h1, h2, h3 = short(m1['home']), short(m2['home']), short(m3['home'])
     a1, a2, a3 = short(m1['away']), short(m2['away']), short(m3['away'])
 
-    # 인트로 변형 (유튜브 친화적 구어체)
-    intros = [
-        f"자, 집중! {today} 배당판 흐름이 심상치 않습니다. AI가 찾아낸 꿀잼 경기 세 개 바로 갈게요.",
-        f"안녕하세요! {today} 실시간 배당을 분석해보니, 오늘 이거 무조건 봐야겠는데요? 바로 확인하시죠.",
-        f"다들 주목! {today} 스코어닉스 AI가 배당 데이터를 싹 다 긁어왔습니다. 가장 확률 높은 세 경기 뽑아봤어요.",
-        f"배당이 요동치는 {today}, 오늘은 어떤 팀이 웃을까요? 숫자로 증명하는 오늘의 분석 탑 쓰리 시작합니다.",
-    ]
-    intro_captions = [
-        f"[DATA] {today} {hour}\nAI 데이터 분석 리포트",
-        f"[LIVE] {today}\n실시간 배당 기반 분석",
-        f"[ODDS] {today} 배당 분석\nAI 선별 TOP 3",
-        f"[AI] {today}\n데이터 리포트",
-    ]
-    intro_idx = random.randint(0, len(intros) - 1)
-
-    # 경기 분석 멘트 변형 (TTS가 자연스럽게 읽도록 쉼표와 감탄사 활용)
-    def match_tts(m, order):
-        templates = [
-            f"{order} 경기는, {m['home']} 대 {m['away']}입니다. {m['reason']} AI 환산 승률, 무려 {m['win_prob']}%나 되네요.",
-            f"{order}, {m['home']}과 {m['away']}의 맞대결! 배당 데이터를 뜯어보면요, {m['reason']} 승률 {m['win_prob']}%로 아주 좋습니다.",
-            f"다음 {order}는 {m['home']} 대 {m['away']} 경기예요. {m['reason']} 데이터상 승률이 {m['win_prob']}%를 가리키고 있습니다.",
-            f"{order} 경기, {m['home']}과 {m['away']}! 자, 이 경기 조심하셔야 해요. {m['reason']} AI 분석 승률 {m['win_prob']}%입니다.",
+    if mode == "membership":
+        # 1. 멤버십(구독자용) 대본: 3개 경기 전체 완벽 정밀 분석 제공
+        intros = [
+            f"자, 집중! 스코어닉스 유튜브 멤버십 회원님들만을 위한 {today} AI 승률 예측 리포트입니다. 가장 확실한 꿀경기 세 개, 바로 정밀하게 뜯어볼게요.",
+            f"안녕하세요! {today} 스코어닉스 멤버십 회원 전용 리포트입니다. 정밀 분석한 AI 배당 흐름과 최종 승률 예측, 지금 바로 상세히 공개합니다.",
+            f"주목! 스코어닉스 VIP 멤버십 특별 브리핑입니다. {today} 배당 데이터와 정밀 통계를 심층 조합하여 엄선한 오늘의 분석 탑 쓰리 시작합니다."
         ]
-        return random.choice(templates)
-
-    # 자막은 축약 팀명 + 이모지 대신 텍스트 기호 사용
-    def match_caption(m, h, a):
-        templates = [
-            f"{h}\nvs\n{a}\n\n[HOME] 배당 {m.get('home_odds', '?')}x\n[AI] 승률 {m['win_prob']}%",
-            f"{h}\nvs\n{a}\n\n배당 {m.get('home_odds', '?')} : {m.get('away_odds', '?')}\n>> 승률 {m['win_prob']}%",
-            f"{h}\nvs\n{a}\n\n승률 격차 {m.get('odds_gap', '?')}%p\n>> {short(m['ai_pick'])} 유리",
+        intro_captions = [
+            f"[MEMBERSHIP VIP]\n{today} VIP 전용\nAI 데이터 분석 리포트",
+            f"[PREMIUM ONLY]\n{today} 멤버십 전용\n정밀 배당 예측 TOP 3",
+            f"[VIP REPORT]\n{today} 실시간 분석\n승률 순위 탑 3"
         ]
-        return random.choice(templates)
+        intro_idx = random.randint(0, len(intros) - 1)
 
-    # 마무리 CTA 변형 (구독, 멤버십, 웹앱 유도)
-    ctas = [
-        "오늘 분석은 여기까지! 유튜브 멤버십에 가입하시면, 스코어닉스 닷컴에서 모든 경기의 프리미엄 데이터를 무제한으로 보실 수 있습니다. 구독과 좋아요 잊지 마세요!",
-        "데이터는 거짓말을 안 하죠! 스코어닉스 닷컴에 오시면 AI가 분석한 결장자 정보와 H2H 데이터를 직접 확인하실 수 있습니다. 지금 바로 프로필 링크를 클릭해보세요!",
-        "매일 업데이트되는 AI 분석, 멤버십 가입하고 스코어닉스 닷컴에서 VIP 혜택을 누려보세요! 다음 분석에서 만나요.",
-        "수익률을 높이고 싶으시다면 스코어닉스 닷컴의 AI 조합기를 활용해보세요! 유튜브 멤버십 회원님들은 전면 무료입니다. 구독, 좋아요 꾹 눌러주세요!",
-    ]
-    cta_captions = [
-        "멤버십 혜택 안내\n\nscorenix.com",
-        "VIP 데이터 분석\n\nscorenix.com",
-        "프리미엄 7-팩터 분석\n\nscorenix.com",
-        "AI 자동 조합기\n\nscorenix.com",
-    ]
-    cta_idx = random.randint(0, len(ctas) - 1)
+        def match_tts(m, order):
+            templates = [
+                f"{order} 분석 경기는, {m['home']} 대 {m['away']}입니다. {m['reason']} AI 데이터 환산 승률은 무려 {m['win_prob']}%로 홈팀 우위가 통계적으로 확실합니다.",
+                f"{order} 순위는, {m['home']}과 {m['away']}의 격돌! {m['reason']} AI 정밀 예측 승률은 {m['win_prob']}%로 최종 분석되었습니다.",
+                f"마지막 {order} 경기는 {m['home']} 대 {m['away']}입니다. {m['reason']} 통계적 승률 {m['win_prob']}%로 홈팀의 우세가 예상됩니다."
+            ]
+            idx = 0 if "첫" in order else (1 if "두" in order else 2)
+            return templates[idx]
 
-    return [
-        {"tts": intros[intro_idx], "caption": intro_captions[intro_idx], "scene": "intro"},
-        {"tts": match_tts(m1, "첫 번째"), "caption": match_caption(m1, h1, a1), "scene": "match"},
-        {"tts": match_tts(m2, "두 번째"), "caption": match_caption(m2, h2, a2), "scene": "match"},
-        {"tts": match_tts(m3, "세 번째"), "caption": match_caption(m3, h3, a3), "scene": "match"},
-        {"tts": ctas[cta_idx], "caption": cta_captions[cta_idx], "scene": "cta"},
-    ]
+        def match_caption(m, h, a):
+            return f"{h}\nvs\n{a}\n\n[VIP 추천] 승률 {m['win_prob']}%\n배당 홈 {m.get('home_odds', '?')}x"
+
+        ctas = [
+            "오늘 멤버십 전용 정밀 분석은 여기까지입니다! 스코어닉스 닷컴(scorenix.com)에 로그인하시면 모든 경기의 7-팩터 정밀 분석 데이터와 AI 자동 조합기를 무제한으로 사용하실 수 있습니다. 항상 감사드립니다!",
+            "구독자 회원님들을 위해 엄선한 3경기 완벽 분석이었습니다. 스코어닉스 닷컴에서 VIP 계정을 즉시 연동하시고 오늘 준비된 프리미엄 조합 픽을 바로 확인해보세요!"
+        ]
+        cta_captions = [
+            "멤버십 회원 연동 완료\n\nscorenix.com 무제한 이용",
+            "VIP 전용 실시간 조합기\n\nscorenix.com 즉시 확인"
+        ]
+        cta_idx = random.randint(0, len(ctas) - 1)
+
+        return [
+            {"tts": intros[intro_idx], "caption": intro_captions[intro_idx], "scene": "intro"},
+            {"tts": match_tts(m1, "첫 번째"), "caption": match_caption(m1, h1, a1), "scene": "match"},
+            {"tts": match_tts(m2, "두 번째"), "caption": match_caption(m2, h2, a2), "scene": "match"},
+            {"tts": match_tts(m3, "세 번째"), "caption": match_caption(m3, h3, a3), "scene": "match"},
+            {"tts": ctas[cta_idx], "caption": cta_captions[cta_idx], "scene": "cta"},
+        ]
+
+    else:
+        # 2. 마케팅(유입/일반공개용) 대본: 1번째 경기 상세 오픈 + 2/3번째 경기 티저
+        intros = [
+            f"자, 주목! {today} 스포츠 배당 데이터 분석! 스코어닉스 AI가 오늘 무조건 확인해야 할 승률 탑 쓰리 경기를 들고 왔습니다.",
+            f"다들 주목하세요! {today} 실시간 해외 배당판이 요동치고 있습니다. AI가 검증한 가장 확실한 오늘의 경기 TOP 3를 바로 공개합니다."
+        ]
+        intro_captions = [
+            f"[PUBLIC REPORT]\n{today} 실시간\nAI 추천 경기 TOP 3",
+            f"[TODAY PICK]\n{today} 대박 예상 경기\n실시간 배당 분석"
+        ]
+        intro_idx = random.randint(0, len(intros) - 1)
+
+        m1_tts = f"먼저, 승률이 가장 높은 첫 번째 대박 경기는 바로 {m1['home']} 대 {m1['away']}입니다. {m1['reason']} AI 환산 승률 무려 {m1['win_prob']}%로 홈팀이 엄청나게 유리한 구도입니다."
+        m1_cap = f"{h1}\nvs\n{a1}\n\n[AI 추천] 승률 {m1['win_prob']}%\n배당 홈 {m1.get('home_odds', '?')}x"
+
+        m2_tts = f"그리고 두 번째로 예측되는 대박 매치인 {m2['home']} 대 {m2['away']} 경기와, 세 번째 매치인 {m3['home']} 대 {m3['away']}의 실시간 승리 예측 정보는요."
+        m2_cap = f"2순위: {h2} vs {a2}\n3순위: {h3} vs {a3}\n\n과연 AI의 최종 선택은?"
+
+        m3_tts = "스코어닉스 닷컴 웹사이트에서 100% 전면 무료로 즉시 공개해 드리고 있습니다! 지금 바로 전체 대진표와 실시간 배당을 확인하러 오세요."
+        m3_cap = "네이버에 [ 스코어닉스 ] 검색!\n\n scorenix.com 무료 확인"
+
+        ctas = [
+            "스코어닉스 닷컴(scorenix.com)에 오시면 전 세계 30개 리그의 결장자 정보와 실시간 AI 분석 카드를 가입 즉시 무료로 보실 수 있습니다. 지금 바로 프로필 링크를 클릭해 보세요!",
+            "구독과 좋아요 누르고 네이버에 스코어닉스를 검색해 보세요. 매일 쏟아지는 프리미엄 AI 분석 픽을 100% 무료로 볼 수 있는 유일한 기회, 절대 놓치지 마세요!"
+        ]
+        cta_captions = [
+            "실시간 스포츠 데이터 허브\n\n스코어닉스(scorenix.com)",
+            "네이버 검색창에 [ 스코어닉스 ]\n\n프로필 링크 클릭 시 즉시 접속"
+        ]
+        cta_idx = random.randint(0, len(ctas) - 1)
+
+        return [
+            {"tts": intros[intro_idx], "caption": intro_captions[intro_idx], "scene": "intro"},
+            {"tts": m1_tts, "caption": m1_cap, "scene": "match"},
+            {"tts": m2_tts, "caption": m2_cap, "scene": "match"},
+            {"tts": m3_tts, "caption": m3_cap, "scene": "match"},
+            {"tts": ctas[cta_idx], "caption": cta_captions[cta_idx], "scene": "cta"},
+        ]
 
 
 
@@ -474,9 +502,9 @@ def get_bgm():
 
 
 # ─── 메인 영상 생성 ─────────────────────────────────────
-def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False):
+def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="membership"):
     matches = fetch_top_matches()
-    script = build_script(matches)
+    script = build_script(matches, mode=mode)
 
     # AI 아바타 모드 체크
     avatar_mode = use_avatar and is_did_available() and is_elevenlabs_available()
@@ -746,20 +774,27 @@ if __name__ == "__main__":
         while True:
             try:
                 ts = datetime.datetime.now().strftime("%m%d_%H%M")
-                out = os.path.join(output_dir, f"scorenix_auto_{ts}.mp4")
+                
+                # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
+                out_membership = os.path.join(output_dir, f"scorenix_membership_{ts}.mp4")
+                out_marketing = os.path.join(output_dir, f"scorenix_marketing_{ts}.mp4")
 
-                generate_video("background.mp4", out,
-                               auto_upload=False, use_avatar=args.avatar)
+                print(f"\n[+] Generating MEMBERSHIP (Subscriber) Video: {out_membership}")
+                generate_video("background.mp4", out_membership,
+                               auto_upload=False, use_avatar=args.avatar, mode="membership")
 
-                success = _upload(out)
+                print(f"\n[+] Generating MARKETING (Funnel) Video: {out_marketing}")
+                generate_video("background.mp4", out_marketing,
+                               auto_upload=False, use_avatar=args.avatar, mode="marketing")
+
+                # 마케팅 영상을 유튜브 업로드 (멤버십 영상은 전용 혜택이므로 로컬에 그대로 유지)
+                # 유튜브 API를 통해 업로드하더라도, 데스크톱에 보존해야 다른 SNS 계정에도 수동/자동으로 업로드 가능!
+                # 따라서 os.remove(out) 코드는 완벽히 제거/주석처리하여 삭제하지 않고 보존합니다.
+                success = _upload(out_marketing)
                 if success:
                     upload_count += 1
                     fail_count = 0
-                    try:
-                        os.remove(out)
-                        print(f"  [DEL] Local file cleaned up")
-                    except OSError:
-                        pass
+                    print(f"  [SAVE] Both videos successfully saved on Desktop at: {output_dir}")
                 else:
                     fail_count += 1
 
@@ -781,13 +816,24 @@ if __name__ == "__main__":
     else:
         # 수동 모드
         ts = datetime.datetime.now().strftime("%m%d_%H%M")
-        out = os.path.join(output_dir, f"scorenix_shorts_{ts}.mp4")
-        generate_video("background.mp4", out,
-                       auto_upload=False, use_avatar=args.avatar)
+        
+        # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
+        out_membership = os.path.join(output_dir, f"scorenix_membership_{ts}.mp4")
+        out_marketing = os.path.join(output_dir, f"scorenix_marketing_{ts}.mp4")
 
-        choice = input("\n[>>] Upload to YouTube? (y/n): ")
+        print(f"\n[+] Generating MEMBERSHIP (Subscriber) Video: {out_membership}")
+        generate_video("background.mp4", out_membership,
+                       auto_upload=False, use_avatar=args.avatar, mode="membership")
+
+        print(f"\n[+] Generating MARKETING (Funnel) Video: {out_marketing}")
+        generate_video("background.mp4", out_marketing,
+                       auto_upload=False, use_avatar=args.avatar, mode="marketing")
+
+        print(f"  [SAVE] Both videos successfully saved on Desktop at: {output_dir}")
+
+        choice = input("\n[>>] Upload MARKETING video to YouTube? (y/n): ")
         if choice.strip().lower() == "y":
-            _upload(out)
+            _upload(out_marketing)
 
         os.startfile(output_dir)
 
