@@ -47,7 +47,7 @@ _last_prediction_time: str = ""
 
 
 @router.get("/predictions")
-async def get_ai_predictions(background_tasks: BackgroundTasks):
+async def get_ai_predictions(background_tasks: Optional[BackgroundTasks] = None):
     """전체 경기 AI 예측 목록 (Firestore daily_portfolios 우선, 폴백: 실시간 추론)"""
     global _predictions_cache, _last_prediction_time
     from app.db.firestore import get_firestore_db
