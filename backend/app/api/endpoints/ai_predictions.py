@@ -806,3 +806,20 @@ async def trigger_grade_predictions():
         "total_results_checked": len(results),
     }
 
+
+def get_slug(p: dict) -> str:
+    """경기 정보 딕셔너리에서 SEO에 부합하는 URL 슬러그 생성"""
+    import re
+    def to_slug(name: str) -> str:
+        if not name:
+            return "unknown"
+        # 영문, 숫자, 한글, 공백, 하이픈만 허용하고 나머지는 제거
+        name = re.sub(r'[^a-zA-Z0-9가-힣\s-]', '', name)
+        # 공백을 하이픈으로 대체
+        name = re.sub(r'[\s]+', '-', name)
+        return name.lower()
+
+    t_home = p.get("team_home_ko") or p.get("team_home") or "home"
+    t_away = p.get("team_away_ko") or p.get("team_away") or "away"
+    return f"{to_slug(t_home)}-vs-{to_slug(t_away)}"
+
