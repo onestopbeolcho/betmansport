@@ -360,8 +360,8 @@ async def _periodic_nightly_retrain():
             # 2. AI 예측 채점
             logger.info("🌙 [Nightly] Step 2: Grading AI predictions...")
             try:
-                from app.models.bets_db import grade_ai_predictions
-                grade_result = await grade_ai_predictions()
+                from app.api.endpoints.ai_predictions import trigger_grade_predictions
+                grade_result = await trigger_grade_predictions()
                 logger.info(f"  ✅ Graded: {grade_result}")
             except Exception as e:
                 logger.warning(f"  ⚠️ Grading error: {e}")
@@ -500,15 +500,9 @@ async def _periodic_blogger_publish():
                 await asyncio.sleep(600)
                 continue
                 
-            from fastapi import BackgroundTasks
-            bg = BackgroundTasks()
             from app.api.endpoints.blogger import trigger_daily_blogger_post
-            # Call the endpoint handler function directly
-            await trigger_daily_blogger_post(bg)
-            
-            # await the background tasks to actually execute it here
-            for task in bg.tasks:
-                await task()
+            # Call the endpoint handler function directly without arguments
+            await trigger_daily_blogger_post()
                 
             logger.info("✍️ [Blogger-Scheduler] Blogger posting triggered successfully.")
             
