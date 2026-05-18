@@ -47,8 +47,13 @@ _last_prediction_time: str = ""
 
 
 @router.get("/predictions")
-async def get_ai_predictions(background_tasks: Optional[BackgroundTasks] = None):
+async def get_ai_predictions(background_tasks: BackgroundTasks):
     """전체 경기 AI 예측 목록 (Firestore daily_portfolios 우선, 폴백: 실시간 추론)"""
+    return await get_ai_predictions_internal(background_tasks)
+
+
+async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks] = None):
+    """내부 처리용 공통 함수 (FastAPI 의존성 없이 프로그램적으로 호출 가능)"""
     global _predictions_cache, _last_prediction_time
     from app.db.firestore import get_firestore_db
     from datetime import datetime, timezone
@@ -153,9 +158,13 @@ async def get_ai_predictions(background_tasks: Optional[BackgroundTasks] = None)
                 logger.info(f"Background: saved {len(predictions)} matches to daily_portfolios")
             except Exception as e_bg:
                 logger.error(f"Background save failed: {e_bg}")
-        background_tasks.add_task(bg_update)
+        
+        if background_tasks:
+            background_tasks.add_task(bg_update)
+        else:
+            bg_update()
     except Exception as e_task:
-        logger.warning(f"Could not add background task: {e_task}")
+        logger.warning(f"Could not handle background task: {e_task}")
 
     sources = ["LightGBM ML Engine (Real-time fallback)"]
     if football_stats and getattr(football_stats, 'api_key', None):
@@ -166,6 +175,7 @@ async def get_ai_predictions(background_tasks: Optional[BackgroundTasks] = None)
         last_updated=_last_prediction_time,
         data_sources=sources,
     ).model_dump()
+
 
 
 async def _save_predictions_background(pred_dicts: list):

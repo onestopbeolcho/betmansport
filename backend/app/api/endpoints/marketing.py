@@ -106,7 +106,7 @@ async def publish_sns_content(req: PublishRequest = PublishRequest()):
         
         if not ai_pred_module._predictions_cache:
             logger.info("Predictions cache is empty. Forcing prediction generation...")
-            await ai_pred_module.get_ai_predictions()
+            await ai_pred_module.get_ai_predictions_internal()
             
         predictions = ai_pred_module._predictions_cache
         
