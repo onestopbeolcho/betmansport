@@ -435,26 +435,74 @@ class FootballStatsService:
         """캐시된 H2H 상대전적 반환"""
         return self._h2h_cache
 
+    async def get_plan_status(self) -> str:
+        """API-Football 요금제 상태 확인"""
+        if not self.api_key:
+            return "Free"
+        try:
+            # self._get tracking prevents status from consuming if already at limit, but status is high-priority
+            url = f"{self.base_url}/status"
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(url, headers=self._headers())
+                if resp.status_code == 200:
+                    data = resp.json()
+                    plan = data.get("response", {}).get("subscription", {}).get("plan", "Free")
+                    return plan
+        except Exception as e:
+            logger.warning(f"Failed to fetch API-Football status: {e}")
+        return "Free"
+
     async def collect_all(self) -> Dict:
         """하루 1회 전체 데이터 수집 (100건 한도 최적화)"""
         if not self.api_key:
             logger.info("⏭️ API-Football skipped (no key)")
             return {"standings": {}, "injuries": {}, "predictions": [], "h2h": {}}
 
+        # ─── 시간 기반 캐시 가드 (콜드스타트 시 API 요청 낭비 방지) ───
+        if self._last_fetch:
+            try:
+                last_dt = datetime.fromisoformat(self._last_fetch)
+                if (datetime.now(timezone.utc) - last_dt).total_seconds() < 4 * 3600:
+                    logger.info("⏭️ [API-Football] stats collected recently (within 4h) — skipping fresh API fetch")
+                    return self._cache
+            except Exception as e_cache:
+                logger.warning(f"Cache check failed: {e_cache}")
+
+        # 요금제 등급 확인
+        plan = await self.get_plan_status()
+        logger.info(f"📊 [API-Football] Current Plan: {plan}")
+
+        # 무료 플랜일 경우 상위 5대 리그만 수집하여 하루 100회 한도 절대 방어
+        target_leagues = LEAGUE_MAP
+        is_free_plan = plan.lower() == "free"
+        
+        if is_free_plan:
+            logger.info("⚠️ [API-Football] Free Plan detected. Scaling down to Top 5 European leagues to protect 100 req/day limit.")
+            target_leagues = {
+                "soccer_epl": 39,
+                "soccer_spain_la_liga": 140,
+                "soccer_germany_bundesliga": 78,
+                "soccer_italy_serie_a": 135,
+                "soccer_france_ligue_one": 61,
+            }
+            self._daily_limit = 100
+        else:
+            self._daily_limit = 75000
+
         result = {"standings": {}, "injuries": {}, "predictions": [], "h2h": {}}
         self._daily_requests = 0  # Reset daily counter
 
-        # 1. Standings for top leagues (6 requests)
+        # 1. Standings for top leagues
         #    → team_id_map도 자동으로 채워짐
-        for league_key in LEAGUE_MAP:
+        for league_key, league_id in target_leagues.items():
             standings = await self.fetch_standings(league_key)
             if standings:
                 result["standings"][league_key] = [s.model_dump() for s in standings]
             logger.info(f"  📊 {league_key}: {len(standings)} teams")
         logger.info(f"  🗂️ Team ID map: {len(self._team_id_map)} teams cached")
 
-        # 2. Injuries for top leagues (6 requests)
-        for league_key in LEAGUE_MAP:
+        # 2. Injuries for top leagues
+        for league_key, league_id in target_leagues.items():
             injuries = await self.fetch_injuries(league_key)
             if injuries:
                 result["injuries"][league_key] = [i.model_dump() for i in injuries]
@@ -462,19 +510,25 @@ class FootballStatsService:
 
         # 3. Upcoming fixtures + predictions + H2H
         remaining = self._daily_limit - self._daily_requests
-        # H2H 예산: 최대 50건 (42개 리그 대응)
-        h2h_budget = min(50, max(0, remaining - 100))
-        predictions_budget = max(0, remaining - h2h_budget - 50)
+        
+        if is_free_plan:
+            # 무료 플랜은 predictions (403 에러 발생)을 아예 스킵하고 H2H도 최대 5개로 극단적 제한
+            h2h_budget = 5
+            predictions_budget = 0
+        else:
+            h2h_budget = min(50, max(0, remaining - 100))
+            predictions_budget = max(0, remaining - h2h_budget - 50)
+            
         pred_count = 0
         h2h_count = 0
         h2h_seen = set()  # 중복 방지
 
-        for league_key in LEAGUE_MAP:
+        for league_key, league_id in target_leagues.items():
             if pred_count >= predictions_budget and h2h_count >= h2h_budget:
                 break
             fixtures = await self.fetch_upcoming_fixtures(league_key, next_count=8)
             for fix in fixtures:
-                # Predictions
+                # Predictions (유료 플랜 전용)
                 if pred_count < predictions_budget:
                     pred = await self.fetch_prediction(fix["fixture_id"])
                     if pred:

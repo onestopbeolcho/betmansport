@@ -128,13 +128,17 @@ class PinnacleService(BaseOddsProvider):
         cache_key = "odds_snapshot"
         logger.info("🔄 [Scheduler] Refreshing odds from API-Football...")
 
+        raw_odds = []
         try:
             # API-Football에서 배당 수집
             from app.services.football_stats_service import FootballStatsService
             fs = FootballStatsService()
             raw_odds = await fs.fetch_all_odds()
+        except Exception as e_fs:
+            logger.warning(f"⚠️ [Scheduler] API-Football fetch failed: {e_fs}")
 
-            if raw_odds:
+        if raw_odds:
+            try:
                 # API-Football 데이터를 OddsItem으로 파싱
                 parsed = self._parse_api_football_odds(raw_odds)
                 # Update in-memory cache
@@ -166,9 +170,39 @@ class PinnacleService(BaseOddsProvider):
                     logger.warning(f"History snapshot save failed (non-critical): {e}")
                 logger.info(f"✅ [Scheduler] Refreshed {len(parsed)} odds from API-Football")
                 return parsed
-        except Exception as e:
-            logger.error(f"❌ [Scheduler] API-Football Refresh Error: {e}")
-            traceback.print_exc()
+            except Exception as e:
+                logger.error(f"❌ [Scheduler] API-Football parsing Error: {e}")
+                traceback.print_exc()
+
+        # ─── FREE TIER FALLBACK: API-Football 실패 시 The-Odds-Api로 배당 조회 ───
+        logger.warning("⚠️ API-Football odds unavailable (Free tier or limit). Falling back to The-Odds-Api...")
+        try:
+            ref_odds = await self.fetch_reference_odds()
+            if ref_odds:
+                self._cache = ref_odds
+                self._last_fetch_time = time.time()
+                # Firestore 캐싱을 위해 API-Football 구조와 호환되게 직렬화
+                try:
+                    serialized = []
+                    for item in ref_odds:
+                        serialized.append({
+                            "home_team": item.team_home,
+                            "away_team": item.team_away,
+                            "home_odds": item.home_odds,
+                            "draw_odds": item.draw_odds,
+                            "away_odds": item.away_odds,
+                            "match_time": item.match_time,
+                            "league": item.league,
+                            "sport": item.sport,
+                            "bookmaker": item.provider,
+                        })
+                    await set_market_cache(cache_key, json.dumps(serialized))
+                    logger.info("✅ Saved The-Odds-Api fallback reference odds to Firestore cache")
+                except Exception as e_save:
+                    logger.warning(f"Failed to save fallback reference odds to Firestore: {e_save}")
+                return ref_odds
+        except Exception as e_ref:
+            logger.error(f"❌ [Scheduler] Reference Odds fallback failed: {e_ref}")
 
         return []
 
@@ -379,9 +413,9 @@ class PinnacleService(BaseOddsProvider):
         주의: 월 500건 한도이므로 수동 호출 or 1일 1회만 사용.
         주력 배당은 API-Football, 이것은 교차 검증용.
         """
-        ref_key = os.getenv("ODDS_API_KEY") or os.getenv("PINNACLE_API_KEY", "")
+        ref_key = os.getenv("THE_ODDS_API_KEY") or os.getenv("ODDS_API_KEY") or os.getenv("PINNACLE_API_KEY", "")
         if not ref_key:
-            logger.info("No ODDS_API_KEY — skipping reference odds")
+            logger.info("No THE_ODDS_API_KEY / ODDS_API_KEY / PINNACLE_API_KEY — skipping reference odds")
             return []
 
         base_url = "https://api.the-odds-api.com/v4"

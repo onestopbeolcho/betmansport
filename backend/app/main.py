@@ -237,10 +237,10 @@ async def _periodic_odds_refresh():
 
     while True:
         try:
-            await asyncio.sleep(30 * 60)  # 30분 간격
+            await asyncio.sleep(4 * 3600)  # 4시간 간격 (무료 플랜 쿼타 보호)
             if pinnacle_service.api_key:
                 odds = await pinnacle_service.refresh_odds()
-                logger.info(f"🔄 [Auto-Refresh] API-Football: {len(odds)} matches updated")
+                logger.info(f"🔄 [Auto-Refresh] Pinnacle/The-Odds-Api: {len(odds)} matches updated")
             else:
                 logger.debug("[Auto-Refresh] Skipping — no API key")
         except Exception as e:
