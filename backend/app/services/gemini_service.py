@@ -543,9 +543,17 @@ BLOGGER_SEO_PROMPT = """당신은 Scorenix의 SEO 마케팅 전문 AI입니다. 
 1. **타이틀 최적화:** <h1> 태그에 키워드를 넣어 매혹적인 제목 형식을 구성하세요 (예: [스코어닉스 AI분석] 팀A vs 팀B 데이터 기반 전력 검증).
 2. **SEO 구조:** <h2>, <h3> 요소를 적절히 사용하여 글을 나누고, 스키머(Skimmer)들이 읽기 편하게 구성하세요.
 3. **핵심 차단:** 결과에 대한 확실성, '도박', '베팅', '추천픽', '수익' 등의 단어는 절대 사용하지 마세요. 오직 '데이터 관점의 가치 분석' 위주로 서술해야 합니다.
-4. **마지막 유도:** 본문 맨 하단에는 반드시 공식 웹사이트로 연결하는 Call to Action 링크를 HTML <a> 태그로 크게 넣으세요.
-   - 링크 주소: 매치 상세 링크 파라미터를 그대로 사용하세요.
-   - 예시: <a href="https://scorenix.com/ko/match/2026-03-21/team-a-vs-team-b?utm_source=blogger&utm_medium=auto_post" style="display:block; font-size:18px; font-weight:bold; color:blue; margin-top:20px;">👉 더 자세한 AI 예측 모델 리포트 보러가기 (스코어닉스 공식 웹사이트)</a>
+4. **마지막 유도 (3단 연동 링크):** 본문 맨 하단에는 반드시 공식 웹사이트, 인스타그램, 유튜브로 연결하는 Call to Action 링크들을 HTML 태그로 구성해서 넣으세요.
+   - 스코어닉스 공식 웹사이트: 제공된 매치 상세 링크 파라미터를 사용하세요.
+   - 스코어닉스 인스타그램 공식 계정: https://www.instagram.com/scorenix_official/
+   - 스코어닉스 유튜브 공식 채널: https://www.youtube.com/@scorenix
+   - 예시 스타일 (버튼처럼 깔끔하게):
+     <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center;">
+       <h3 style="margin-top: 0; color: #333;">📢 스코어닉스 공식 채널 연동</h3>
+       <a href="https://scorenix.com/ko/match/2026-03-21/team-a-vs-team-b?utm_source=blogger" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
+       <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램 팔로우</a>
+       <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브 채널 구독</a>
+     </div>
 5. **디자인 요건:** 화려한 CSS보다는 기본 HTML 구조 중심으로 모바일 가독성을 고려해 <ul>, <li>, <strong>, <blockquote> 태그를 적절히 사용하세요.
 """
 
@@ -614,10 +622,11 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
     <p>Scorenix의 기계학습 모델이 산출한 구체적인 승/무/패 예측 모델 확률과 배당 가치 기대값(EV) 비교를 확인해보세요! 
     배당 흐름의 미세한 변화를 포착하여 어느 쪽 배당이 더 유리한 위치에 있는지 확인하실 수 있습니다.</p>
     
-    <div style="margin-top: 30px; text-align: center;">
-      <a href="{url}" style="display:inline-block; padding: 15px 30px; background-color: #0E2954; color: white; font-size:18px; font-weight:bold; text-decoration: none; border-radius: 8px;">
-        👉 {home} vs {away} AI 예측 상세 리포트 열람 (공식 홈페이지)
-      </a>
+    <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center;">
+      <h3 style="margin-top: 0; color: #333;">📢 스코어닉스 공식 채널 연동</h3>
+      <a href="{url}" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
+      <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램 팔로우</a>
+      <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브 채널 구독</a>
     </div>
     """
     return {"title": title, "html": html}

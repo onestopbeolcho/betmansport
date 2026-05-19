@@ -44,53 +44,96 @@ async def trigger_daily_blogger_post():
         if not valid:
             valid = matches
 
-        # Select match with highest confidence or fallback to random
-        valid_sorted = sorted(valid, key=lambda x: x.get("confidence", 0), reverse=True)
-        top_match = valid_sorted[0] if valid_sorted else valid[0]
-        
-        match_time = top_match.get("match_time") or today_str
-        if "T" in match_time:
-            date_param = match_time.split("T")[0]
-        elif " " in match_time:
-            date_param = match_time.split(" ")[0]
-        else:
-            date_param = match_time
+        from firebase_admin import firestore
+        published_count = 0
+        skipped_count = 0
+        urls = []
 
-        import re
-        def to_slug(name: str) -> str:
-            if not name:
-                return "unknown"
-            name = re.sub(r'[^a-zA-Z0-9가-힣\s-]', '', name)
-            name = re.sub(r'[\s]+', '-', name)
-            return name.lower()
+        # Loop through ALL valid matches of today to post each one individually
+        for match in valid:
+            match_id = match.get("match_id")
+            if not match_id:
+                t_home = match.get("team_home") or "home"
+                t_away = match.get("team_away") or "away"
+                match_id = f"{t_home}_{t_away}"
 
-        t_home = top_match.get("team_home_ko") or top_match.get("team_home")
-        t_away = top_match.get("team_away_ko") or top_match.get("team_away")
-        slug = f"{to_slug(t_home)}-vs-{to_slug(t_away)}"
-        
-        url_path = f"{date_param}/{slug}"
-        
-        # Generate SEO HTML via Gemini
-        logger.info(f"Generating Blogger content for match: {slug}")
-        content_res = await generate_blogger_content(top_match, url_path)
-        
-        if not content_res:
-            logger.error("Failed to generate HTML content from Gemini")
-            return {"status": "error", "message": "Failed to generate Gemini content"}
+            # Firestore-based duplicate check to ensure 0 duplicates
+            pub_doc_id = f"{today_str}_{match_id}"
+            pub_doc_ref = db.collection("blogger_published").document(pub_doc_id)
+            if pub_doc_ref.get().exists:
+                logger.info(f"Match {match_id} already published today on Blogger. Skipping to prevent duplicate.")
+                skipped_count += 1
+                continue
+
+            match_time = match.get("match_time") or today_str
+            if "T" in match_time:
+                date_param = match_time.split("T")[0]
+            elif " " in match_time:
+                date_param = match_time.split(" ")[0]
+            else:
+                date_param = match_time
+
+            import re
+            def to_slug(name: str) -> str:
+                if not name:
+                    return "unknown"
+                name = re.sub(r'[^a-zA-Z0-9가-힣\s-]', '', name)
+                name = re.sub(r'[\s]+', '-', name)
+                return name.lower()
+
+            t_home_ko = match.get("team_home_ko") or match.get("team_home")
+            t_away_ko = match.get("team_away_ko") or match.get("team_away")
+            slug = f"{to_slug(t_home_ko)}-vs-{to_slug(t_away_ko)}"
+            url_path = f"{date_param}/{slug}"
+
+            # Generate SEO HTML via Gemini
+            logger.info(f"Generating Blogger content for match: {slug}")
+            content_res = await generate_blogger_content(match, url_path)
+            if not content_res:
+                logger.error(f"Failed to generate HTML content from Gemini for {slug}")
+                continue
+
+            # Format SEO title exactly as requested: [YYYY년 MM월 DD일] 홈팀 vs 원정팀 경기 분석 및 AI 승률 예측
+            try:
+                date_obj = datetime.strptime(date_param, "%Y-%m-%d")
+                formatted_date = f"{date_obj.year}년 {date_obj.month}월 {date_obj.day}일"
+            except Exception:
+                formatted_date = date_param
             
-        # Post to blogger
-        logger.info("Publishing to Blogger...")
-        res = await blogger_service.publish_post(
-            title=content_res["title"],
-            content=content_res["html"]
-        )
-        
-        if res:
-            logger.info(f"Successfully posted to blogger. URL: {res.get('url')}")
-            return {"status": "success", "url": res.get("url")}
-        else:
-            logger.error("Blogger API failed.")
-            return {"status": "error", "message": "Blogger API call failed"}
+            seo_title = f"[{formatted_date}] {t_home_ko} vs {t_away_ko} 경기 분석 및 AI 승률 예측"
+            
+            # Update Gemini response title to our standard format
+            content_res["title"] = seo_title
+
+            # Post to blogger
+            logger.info(f"Publishing {seo_title} to Blogger...")
+            res = await blogger_service.publish_post(
+                title=content_res["title"],
+                content=content_res["html"]
+            )
+
+            if res:
+                published_url = res.get("url", "")
+                logger.info(f"Successfully posted to blogger. URL: {published_url}")
+                # Save to Firestore to prevent future duplicates
+                pub_doc_ref.set({
+                    "match_id": match_id,
+                    "published_at": firestore.SERVER_TIMESTAMP,
+                    "url": published_url,
+                    "title": seo_title
+                })
+                published_count += 1
+                urls.append(published_url)
+            else:
+                logger.error(f"Blogger API failed for {seo_title}")
+
+        return {
+            "status": "success",
+            "total_matches": len(valid),
+            "published": published_count,
+            "skipped": skipped_count,
+            "urls": urls
+        }
 
     except Exception as e:
         logger.error(f"Blogger pipeline error: {e}", exc_info=True)
