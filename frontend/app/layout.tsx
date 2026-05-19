@@ -25,22 +25,24 @@ const SITE_URL = "https://scorenix.com";
 
 export const metadata: Metadata = {
   title: {
-    default: "Scorenix | AI Sports Data Analytics",
+    default: "Scorenix (스코어닉스) | AI 스포츠 데이터 분석",
     template: "%s | Scorenix",
   },
   description:
-    "AI-powered sports data analytics platform — real-time odds analysis, match prediction, and portfolio optimization with LightGBM machine learning.",
+    "AI가 글로벌 스포츠 데이터를 실시간 분석합니다. 데이터 효율, 경기 확률 분석, 조합 최적화 및 7-Factor 머신러닝 예측 리포트를 제공합니다.",
   keywords: [
+    "스포츠 분석",
+    "AI 예측",
+    "데이터 분석",
+    "배당 효율",
+    "경기 분석",
+    "포트폴리오 최적화",
     "sports analytics",
     "AI prediction",
     "odds analysis",
     "match prediction",
     "sports data",
     "LightGBM",
-    "value analysis",
-    "스포츠 분석",
-    "AI 예측",
-    "데이터 분석",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: {
@@ -61,7 +63,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: SITE_URL,
     siteName: "Scorenix",
-    title: "Scorenix — AI Sports Data Analytics",
+    title: "Scorenix (스코어닉스) — AI 스포츠 데이터 분석",
     description:
       "AI가 글로벌 스포츠 데이터를 실시간 분석합니다. 데이터 효율, 경기 확률 분석, 조합 최적화까지.",
     images: [
@@ -69,15 +71,15 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Scorenix AI Sports Data Analytics",
+        alt: "Scorenix (스코어닉스) AI 스포츠 데이터 분석",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Scorenix — AI Sports Data Analytics",
+    title: "Scorenix (스코어닉스) — AI 스포츠 데이터 분석",
     description:
-      "AI-powered real-time sports analytics: odds efficiency, match prediction & portfolio optimization.",
+      "AI가 글로벌 스포츠 데이터를 실시간 분석합니다. 데이터 효율, 경기 확률 분석, 조합 최적화까지.",
     images: ["/og-image.png"],
   },
   robots: {
@@ -123,7 +125,7 @@ export default function RootLayout({
               name: "Scorenix",
               url: SITE_URL,
               description:
-                "AI-powered sports data analytics platform with real-time odds analysis and match prediction.",
+                "AI가 글로벌 스포츠 데이터를 실시간 분석합니다. 데이터 효율, 경기 확률 분석, 조합 최적화 및 7-Factor 머신러닝 예측 리포트를 제공합니다.",
               applicationCategory: "SportsApplication",
               operatingSystem: "Web",
               offers: {
