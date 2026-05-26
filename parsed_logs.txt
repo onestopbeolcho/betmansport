@@ -1,6 +1,0 @@
-2026-04-25 08:20:45 POST 200 https://scorenix-backend-n5dv44kdaa-du.a.run.app/api/blogger/post
-2026-04-25 08:20:45 /app/app/services/gemini_service.py:31: FutureWarning: 
-2026-04-25 08:20:45 https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
-2026-04-25 08:20:46 Blogger content generation error: 403 Your project has been denied access. Please contact support.
-2026-04-25 08:20:46 Failed to generate HTML content from Gemini
-2026-04-25 08:20:46 INFO:     169.254.169.126:4378 - "POST /api/blogger/post HTTP/1.1" 200 OK

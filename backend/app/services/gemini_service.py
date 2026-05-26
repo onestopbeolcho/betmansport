@@ -530,31 +530,196 @@ async def generate_generic_promo() -> Optional[str]:
     )
 
 # ═══════════════════════════════════════════════════
+# Phase 5-2: 다양한 SNS 콘텐츠 타입 확장 (적중 인증, 브랜드 교육, 오늘의 TOP 3)
+# ═══════════════════════════════════════════════════
+
+SNS_WINNING_PROOF_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어와 영어 혼용으로 트렌디하게 작성하세요.
+
+역할:
+- 최근 AI가 성공적으로 예측 적중(HIT)한 경기 데이터들을 유저들에게 보여주고, AI의 신뢰성을 어필하는 마케팅 게시물을 생성합니다.
+- 단순 자랑이 아닌, "데이터가 증명한 결과"임을 강조하세요.
+
+규칙 (매우 중요):
+1. **적중 결과 정보 포함**: 제공된 경기 이름, AI 예측 추천 방향(recommendation), 최종 스코어를 본문에 자연스럽게 녹여내세요.
+   (예: 어제 78% 확률로 예측한 A vs B 경기, 정확히 'A 승리' 적중! 스코어 3:1)
+2. 280자 이내로 작성하세요 (X/Twitter 호환).
+3. 이모지(🎉, ✅, 🤖, 📈 등)를 적극 활용하세요.
+4. 해시태그 3-5개를 포함하세요 (#Scorenix #적중인증 #AI분석 등).
+5. 본문 맨 마지막에는 항상 메인 홈페이지 링크를 첨부하세요:
+   👉 적중률 검증하러 가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning
+   (인스타는 프로필 링크 확인!)
+"""
+
+SNS_EDUCATIONAL_PROMPT = """당신은 Scorenix의 SNS 마케팅 및 스포츠 데이터 교육 AI입니다. 한국어로 작성하세요.
+
+역할:
+- 스포츠 데이터 투자 관련 지식 중 하나를 선택해 일반인도 이해하기 쉽고 흥미로운 1줄 지식과 함께, Scorenix의 강점을 홍보하는 SNS 게시물을 생성합니다.
+
+규칙 (매우 중요):
+1. **제공된 주제**를 바탕으로 쉽고 통찰력 있는 스포츠 데이터 투자 관련 지식을 작성하세요.
+2. 280자 이내로 콤팩트하게 작성하세요 (X/Twitter 호환).
+3. 이모지를 활용해 가독성을 높이세요.
+4. 해시태그 3-5개를 포함하세요 (#Scorenix #스포츠데이터 #가치투자 #배당분석).
+5. 본문 끝에는 항상 메인 홈페이지 링크를 첨부하세요:
+   👉 데이터 분석 시작하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_edu
+   (인스타는 프로필 링크 확인!)
+"""
+
+SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 트렌디하게 작성하세요.
+
+역할:
+- 오늘 밤/새벽 예정된 경기 중 AI 신뢰도(Confidence)가 가장 높은 상위 경기 리스트(최대 3개)를 받아, 오늘 놓치지 말아야 할 'AI 추천 매치 리스트'를 요약 소개합니다.
+
+규칙 (매우 중요):
+1. **호기심 유도 (스포일러 금지)**: 각 경기의 최종 추천 결과(누가 이길 것인가)는 **절대로 적지 마세요**. 대신 신뢰도 수치와 관전 포인트를 어필하세요.
+   (나쁜 예: "A vs B 경기 A 승리 추천")
+   (좋은 예: "🔥 A vs B: AI 신뢰도 82%! 역대급 전술적 상성 포착, 과연 결과는?")
+2. 280자 이내로 콤팩트하게 작성하세요 (X/Twitter 호환).
+3. 이모지(🔥, ⚽, 🚀 등)를 적극 활용하세요.
+4. 해시태그 3-5개를 포함하세요 (#Scorenix #오늘의경기 #AI예측 #분석리스트).
+5. 본문 맨 마지막에는 항상 메인 홈페이지 링크를 첨부하세요:
+   👉 오늘 밤 AI 픽 전체보기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_top3
+   (인스타는 프로필 링크 확인!)
+"""
+
+async def generate_winning_proof_sns(hits: list) -> Optional[str]:
+    """최근 적중(HIT) 경기 데이터를 바탕으로 적중 인증 마케팅 콘텐츠 생성"""
+    if not hits:
+        return None
+        
+    if _init_gemini() and _client is not None:
+        try:
+            import json
+            prompt = SNS_WINNING_PROOF_PROMPT + "\n\n최근 적중 경기 데이터:\n" + json.dumps(hits, ensure_ascii=False, indent=2)
+            prompt += "\n\n위 데이터를 바탕으로 신뢰성 높은 적중 인증 게시글을 작성하세요."
+            response = _client.generate_content(prompt)
+            text = response.text.strip()
+            if text:
+                logger.info(f"✅ Winning proof SNS content generated ({len(text)} chars)")
+                return text
+        except Exception as e:
+            logger.error(f"Winning proof SNS generation error: {e}")
+            
+    # Fallback if Gemini fails
+    hit = hits[0]
+    home = hit.get("team_home", "홈팀")
+    away = hit.get("team_away", "원정팀")
+    rec = hit.get("recommendation", "HOME")
+    h_score = hit.get("home_score", 0)
+    a_score = hit.get("away_score", 0)
+    return (
+        f"🎉 [AI 적중 인증] {home} vs {away} 경기 예측 성공! ✅\\n\\n"
+        f"AI가 예측한 포지션({rec})이 스코어 {h_score}:{a_score}로 정확히 맞아떨어졌습니다! 🤖📈\\n"
+        f"감에 의존하는 투자가 아닌, 철저히 숫자로만 승부하는 AI 데이터 분석의 결과입니다.\\n\\n"
+        f"👉 적중률 검증하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning\\n"
+        f"(인스타는 프로필 링크 확인!)\\n\\n"
+        f"#Scorenix #적중인증 #스포츠데이터 #AI분석"
+    )
+
+async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]:
+    """스포츠 데이터 투자 교육용 콘텐츠 생성"""
+    topics = [
+        "7-Factor AI 모델: 배당률 흐름, 최근 순위 및 폼, 전술 상성, 라인업 임팩트, 동기부여 등 7개 요소를 종합 분석하여 과학적인 승률을 도출합니다.",
+        "기대값(Expected Value) 투자: 스포츠 분석에서 이기는 팀을 찍는 것은 초보입니다. 핵심은 '배당 대비 이길 확률'이 높아 기대 가치(EV)가 플러스인 포지션에 진입하는 것입니다.",
+        "해외 배당 효율 분석: 세계 최고 수준인 Pinnacle의 배당 데이터와 국내 Betman 배당 효율을 실시간 교차 검증하여 해외보다 유리한 밸류 픽을 선별합니다.",
+        "데이터 기반의 이성적 베팅: 응원하는 마음과 인간의 감정은 제외하세요. 감정 없는 기계학습 모델이 철저하게 승률을 역추적합니다."
+    ]
+    import random
+    selected_topic = topic or random.choice(topics)
+    
+    if _init_gemini() and _client is not None:
+        try:
+            prompt = SNS_EDUCATIONAL_PROMPT + f"\n\n선택된 교육 주제:\n{selected_topic}"
+            prompt += "\n\n위 주제를 바탕으로 초보자도 이해하기 쉬운 1줄 지식을 포함한 트렌디한 마케팅 글을 작성하세요."
+            response = _client.generate_content(prompt)
+            text = response.text.strip()
+            if text:
+                logger.info(f"✅ Educational SNS content generated ({len(text)} chars)")
+                return text
+        except Exception as e:
+            logger.error(f"Educational SNS generation error: {e}")
+            
+    # Fallback
+    return (
+        f"💡 [스포츠 데이터 1분 지식] 🧠\\n\\n"
+        f"{selected_topic}\\n\\n"
+        f"Scorenix AI 분석 플랫폼에서는 매일 철저하게 가공된 기대값 데이터를 유저분들께 제공해 드립니다. 감으로 하는 투자는 이제 그만!\\n\\n"
+        f"👉 데이터 확인하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_edu\\n"
+        f"(인스타는 프로필 링크 확인!)\\n\\n"
+        f"#Scorenix #스포츠데이터 #가치투자 #배당분석"
+    )
+
+async def generate_top_picks_sns(predictions: list) -> Optional[str]:
+    """오늘 밤의 TOP 3 고신뢰 예측 리스트를 소개하는 종합 마케팅 콘텐츠 생성"""
+    if not predictions:
+        return None
+        
+    top_3 = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)[:3]
+    
+    if _init_gemini() and _client is not None:
+        try:
+            import json
+            prompt = SNS_TOP_PICKS_PROMPT + "\n\n오늘의 상위 추천 경기 데이터:\n" + json.dumps(top_3, ensure_ascii=False, indent=2)
+            prompt += "\n\n위 경기 목록을 바탕으로 호기심을 유발하는 종합 추천 매치 리스트를 작성하세요."
+            response = _client.generate_content(prompt)
+            text = response.text.strip()
+            if text:
+                logger.info(f"✅ Top picks SNS content generated ({len(text)} chars)")
+                return text
+        except Exception as e:
+            logger.error(f"Top picks SNS generation error: {e}")
+            
+    # Fallback
+    matches_text = ""
+    for i, p in enumerate(top_3):
+        home = p.get("team_home_ko") or p.get("team_home", "홈")
+        away = p.get("team_away_ko") or p.get("team_away", "원정")
+        conf = p.get("confidence", 0)
+        league = p.get("league", "")
+        matches_text += f"{i+1}. [{league}] {home} vs {away} (AI 신뢰도 {conf:.0f}%)\\n"
+        
+    return (
+        f"🔥 [오늘의 AI 추천 경기 TOP 3] 🔥\\n\\n"
+        f"오늘 밤 예정된 주요 매치 중 AI가 가장 강력하게 지목한 가치 분석 경기 목록입니다!\\n\\n"
+        f"{matches_text}\\n"
+        f"과연 이 경기들의 최종 승자는 누가 될까요? Scorenix AI 리포트에서 지금 바로 확인해 보세요!\\n\\n"
+        f"👉 AI 픽 전체 확인: https://scorenix.com?utm_source=sns&utm_medium=auto_post_top3\\n"
+        f"(인스타는 프로필 링크 확인!)\\n\\n"
+        f"#Scorenix #스포츠분석 #AI예측 #오늘의경기"
+    )
+
+# ═══════════════════════════════════════════════════
 # Phase 6: Blogger SEO 콘텐츠 자동 생성
 # ═══════════════════════════════════════════════════
 
-BLOGGER_SEO_PROMPT = """당신은 Scorenix의 SEO 마케팅 전문 AI입니다. 한국어로 작성하세요.
+BLOGGER_SEO_PROMPT = """당신은 Scorenix의 최고급 SEO 마케팅 및 스포츠 칼럼니스트 AI입니다. 한국어로 작성하세요.
 
 역할:
 - 제공된 AI 매치 분석 JSON 데이터를 사용하여 구글 블로거(Blogger) 연동용 HTML 마케팅 게시글을 작성합니다.
 - HTML 태그만 출력하세요. 마크다운 기호(```html) 등은 제외하고 순수 HTML 구조만 텍스트로 응답하세요.
 
 규칙 (매우 중요):
-1. **타이틀 최적화:** <h1> 태그에 키워드를 넣어 매혹적인 제목 형식을 구성하세요 (예: [스코어닉스 AI분석] 팀A vs 팀B 데이터 기반 전력 검증).
-2. **SEO 구조:** <h2>, <h3> 요소를 적절히 사용하여 글을 나누고, 스키머(Skimmer)들이 읽기 편하게 구성하세요.
-3. **핵심 차단:** 결과에 대한 확실성, '도박', '베팅', '추천픽', '수익' 등의 단어는 절대 사용하지 마세요. 오직 '데이터 관점의 가치 분석' 위주로 서술해야 합니다.
-4. **마지막 유도 (3단 연동 링크):** 본문 맨 하단에는 반드시 공식 웹사이트, 인스타그램, 유튜브로 연결하는 Call to Action 링크들을 HTML 태그로 구성해서 넣으세요.
+1. **타이틀 최적화:** <h1> 태그에 검색 포털 노출에 유리한 키워드를 넣어 매혹적인 제목 형식을 구성하세요 (예: [스코어닉스 분석] 팀A vs 팀B 전력 비교 및 AI 승률 데이터 검증).
+2. **SEO 및 분량 최적화:** 구글 검색 노출(SEO)을 위해 반드시 글의 분량을 1,500자 이상으로 매우 길고 상세하게 작성하세요. 내용이 빈약하면 안 됩니다.
+3. **풍부한 경기 정보 제공:** 제공된 데이터를 바탕으로 아래 내용을 반드시 상세히 서술하여 유저 체류 시간을 늘리세요:
+   - 양 팀의 최근 흐름 및 전력 비교 (상세히)
+   - 주요 관전 포인트 (예상 라인업, 결장자, 혹은 전술적 특징 등 데이터 기반 서술)
+   - 배당률 추이나 AI가 바라보는 데이터 상의 특이점 (수치적 접근)
+4. **구조화:** <h2>, <h3> 요소를 적절히 사용하여 단락을 확실히 나누고, 스키머(Skimmer)들이 읽기 편하도록 <ul>, <li>, <strong>, <blockquote> 태그를 적극 활용하세요.
+5. **핵심 차단:** 결과에 대한 확실성, '도박', '베팅', '추천픽', '수익' 등의 단어는 절대 사용하지 마세요. 오직 '데이터 관점의 가치 분석' 위주로 서술해야 합니다.
+6. **마지막 유도 (3단 연동 링크):** 본문 맨 하단에는 반드시 공식 웹사이트, 인스타그램, 유튜브로 연결하는 Call to Action 링크들을 아래 HTML 태그 구조로 정확히 넣으세요.
    - 스코어닉스 공식 웹사이트: 제공된 매치 상세 링크 파라미터를 사용하세요.
    - 스코어닉스 인스타그램 공식 계정: https://www.instagram.com/scorenix_official/
    - 스코어닉스 유튜브 공식 채널: https://www.youtube.com/@scorenix
-   - 예시 스타일 (버튼처럼 깔끔하게):
-     <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center;">
-       <h3 style="margin-top: 0; color: #333;">📢 스코어닉스 공식 채널 연동</h3>
-       <a href="https://scorenix.com/ko/match/2026-03-21/team-a-vs-team-b?utm_source=blogger" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
-       <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램 팔로우</a>
-       <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브 채널 구독</a>
+   - 템플릿:
+     <div style="margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+       <h3 style="margin-top: 0; color: #111;">🔍 더 깊은 AI 분석 결과가 궁금하다면?</h3>
+       <p style="color: #555; margin-bottom: 20px;">스코어닉스 공식 플랫폼에서 AI의 구체적인 확률 예측과 가치 투자의 방향을 확인하세요!</p>
+       <a href="https://scorenix.com/ko/match/2026-03-21/team-a-vs-team-b?utm_source=blogger" style="display:inline-block; margin: 8px; padding: 14px 28px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; transition: 0.3s;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
+       <br/>
+       <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 8px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램</a>
+       <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 8px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브</a>
      </div>
-5. **디자인 요건:** 화려한 CSS보다는 기본 HTML 구조 중심으로 모바일 가독성을 고려해 <ul>, <li>, <strong>, <blockquote> 태그를 적절히 사용하세요.
 """
 
 async def generate_blogger_content(match_data: dict, match_url_path: str) -> Optional[dict]:

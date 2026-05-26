@@ -32,7 +32,6 @@ export default function Navbar() {
     const navLinks = [
         { href: `/${currentLang}`, label: t.home || "홈", icon: "⚡", desc: t.homeDesc || "서비스 소개" },
         { href: `/${currentLang}/bets`, label: t.valueBet || "AI 우세팀 분석", icon: "📊", desc: t.valueBetDesc || "수학적/통계적으로 우세한 팀 선별" },
-        { href: `/${currentLang}/market`, label: t.matchPredict || "실시간 배당 흐름", icon: "📈", desc: t.matchPredictDesc || "글로벌 배당 변화와 대중의 쏠림 현상 파악" },
         { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 데이터 리포트", icon: "🧠", desc: t.aiPredictDesc || "예측을 뒷받침하는 세부 경기 데이터" },
         { href: `/${currentLang}/mypage`, label: t.portfolio || "나의 분석 노트", icon: "💼", desc: t.portfolioDesc || "관심 경기 배분 및 시뮬레이션" },
         { href: `/${currentLang}/vip`, label: "VIP 리포트", icon: "👑", desc: t.vipDesc || "전문가용 데이터 심층 분석" },

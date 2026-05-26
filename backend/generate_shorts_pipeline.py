@@ -79,8 +79,53 @@ def fetch_top_matches():
         out.sort(key=lambda x: x["win_prob"], reverse=True)
         return out[:3] if len(out) >= 3 else _dummy()
     except Exception as e:
-        print(f"  [!] Data load failed: {e}")
-        return _dummy()
+        print(f"  [!] Betman data load failed or empty: {e}")
+        # --- Fallback: Fetch from AI Predictions API ---
+        print("  [>] Falling back to AI Predictions API...")
+        try:
+            import urllib.request
+            import json
+            req = urllib.request.Request(
+                "https://scorenix-backend-n5dv44kdaa-du.a.run.app/api/ai/predictions",
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+            res = urllib.request.urlopen(req, timeout=10)
+            data = json.loads(res.read().decode('utf-8'))
+            preds = data.get("predictions", [])
+            
+            if not preds:
+                print("  [!] API returned no predictions. Using dummy.")
+                return _dummy()
+                
+            out = []
+            for p in preds:
+                home = p.get("team_home_ko") or p.get("team_home", "")
+                away = p.get("team_away_ko") or p.get("team_away", "")
+                win_prob = p.get("home_win_prob") or p.get("confidence", 0)
+                
+                # Mock odds since API might not have them directly in the top-level
+                h_odds = round(100 / win_prob, 2) if win_prob else 1.5
+                
+                out.append({
+                    "home": home,
+                    "away": away,
+                    "ai_pick": p.get("recommendation", "HOME"),
+                    "win_prob": int(win_prob),
+                    "home_odds": h_odds,
+                    "away_odds": 3.0,
+                    "draw_odds": 3.5,
+                    "odds_gap": int(win_prob) - 30, # Mock gap
+                    "is_betman": False,
+                    "league": p.get("league", ""),
+                    "reason": f"AI 팩터 분석에 따르면 홈 팀의 승리({int(win_prob)}%)가 매우 유력합니다."
+                })
+            
+            out.sort(key=lambda x: x["win_prob"], reverse=True)
+            return out[:3] if len(out) >= 3 else _dummy()
+            
+        except Exception as api_err:
+            print(f"  [!] Fallback failed: {api_err}")
+            return _dummy()
 
 
 def _build_data_reason(h_odds, a_odds, d_odds, gap, league):
@@ -726,12 +771,28 @@ def _upload(video_path):
         vid = upload_to_youtube(video_path, random.choice(titles), desc, tags)
         if vid:
             print(f"  [OK] YouTube upload success! https://youtu.be/{vid}")
-            return True
         else:
-            print("  [X] Upload failed")
-            return False
+            print("  [X] YouTube upload failed")
+
+        # ─── 구글 드라이브 업로드 추가 ───
+        print("  [Google Drive] Uploading video to shared Google Drive folder...")
+        try:
+            from app.services.google_drive_service import google_drive_service
+            from app.models.config_db import load_config_to_env
+            # Firestore 설정을 환경변수로 먼저 로드 (구글 드라이브 폴더 ID 등)
+            load_config_to_env()
+            
+            drive_link = google_drive_service.upload_video(video_path)
+            if drive_link:
+                print(f"  [OK] Google Drive upload success! Link: {drive_link}")
+            else:
+                print("  [X] Google Drive upload failed")
+        except Exception as drive_e:
+            print(f"  [X] Google Drive error: {drive_e}")
+
+        return bool(vid)
     except Exception as e:
-        print(f"  [X] YouTube error: {e}")
+        print(f"  [X] YouTube / Upload error: {e}")
         return False
 
 

@@ -29,7 +29,7 @@ interface Payment {
 }
 
 export default function AdminPage() {
-    const [activeTab, setActiveTab] = useState<'config' | 'sns' | 'users' | 'payments'>('config');
+    const [activeTab, setActiveTab] = useState<'config' | 'sns' | 'users' | 'payments' | 'accuracy'>('config');
     const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     // --- Tab 1: System Config ---
@@ -60,6 +60,10 @@ export default function AdminPage() {
     // --- Tab 4: Payments ---
     const [payments, setPayments] = useState<Payment[]>([]);
     const [paymentsLoading, setPaymentsLoading] = useState(false);
+
+    // --- Tab 5: Accuracy ---
+    const [accuracyData, setAccuracyData] = useState<any>(null);
+    const [accuracyLoading, setAccuracyLoading] = useState(false);
 
     // Initial Config Load
     useEffect(() => {
@@ -99,6 +103,18 @@ export default function AdminPage() {
             .finally(() => setPaymentsLoading(false));
         }
     }, [activeTab, API, payments.length]);
+
+    // Load Accuracy
+    useEffect(() => {
+        if (activeTab === 'accuracy' && !accuracyData) {
+            setAccuracyLoading(true);
+            fetch(`${API}/api/ai/accuracy?days=30`)
+            .then(res => res.json())
+            .then(data => setAccuracyData(data))
+            .catch(err => console.error(err))
+            .finally(() => setAccuracyLoading(false));
+        }
+    }, [activeTab, API, accuracyData]);
 
     const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -244,6 +260,7 @@ export default function AdminPage() {
                     <div onClick={() => setActiveTab('sns')} className={tabClasses('sns')}>SNS 발행</div>
                     <div onClick={() => setActiveTab('users')} className={tabClasses('users')}>회원 관리</div>
                     <div onClick={() => setActiveTab('payments')} className={tabClasses('payments')}>결제 내역</div>
+                    <div onClick={() => setActiveTab('accuracy')} className={tabClasses('accuracy')}>AI 검증</div>
                 </div>
 
                 {/* Tab 1: System Config */}
@@ -433,6 +450,55 @@ export default function AdminPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        )}
+                    </div>
+                )}
+
+                {/* Tab 5: Accuracy */}
+                {activeTab === 'accuracy' && (
+                    <div className="glass-card p-6">
+                        <h2 className="text-lg font-bold mb-4 flex justify-between items-center" style={{ color: 'var(--text-primary)' }}>
+                            AI 예측 검증 (최근 30일)
+                            <button onClick={async () => {
+                                setAccuracyLoading(true);
+                                try {
+                                    const res = await fetch(`${API}/api/ai/grade-predictions`, { method: 'POST' });
+                                    const data = await res.json();
+                                    alert(`수동 검증 완료: ${data.graded || 0}건 처리됨`);
+                                    const accRes = await fetch(`${API}/api/ai/accuracy?days=30`);
+                                    const accData = await accRes.json();
+                                    setAccuracyData(accData);
+                                } catch (e) {
+                                    alert('오류 발생');
+                                }
+                                setAccuracyLoading(false);
+                            }} className="text-xs px-3 py-1 rounded font-bold transition bg-blue-500/20 text-blue-400 hover:bg-blue-500/30">수동 검증(채점) 실행</button>
+                        </h2>
+                        {accuracyLoading ? (
+                             <div className="py-10 text-center" style={{ color: 'var(--text-secondary)' }}>로딩중...</div>
+                        ) : !accuracyData ? (
+                            <div className="py-10 text-center" style={{ color: 'var(--text-secondary)' }}>데이터가 없습니다.</div>
+                        ) : (
+                            <div className="space-y-4 text-sm" style={{ color: 'var(--text-primary)' }}>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                                        <div className="text-xs text-[var(--text-secondary)] mb-1">총 예측(종료)</div>
+                                        <div className="text-xl font-bold">{accuracyData.total_graded}건</div>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                                        <div className="text-xs text-[var(--text-secondary)] mb-1">적중(Hit)</div>
+                                        <div className="text-xl font-bold text-green-500">{accuracyData.hit}건</div>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                                        <div className="text-xs text-[var(--text-secondary)] mb-1">미적중(Miss)</div>
+                                        <div className="text-xl font-bold text-red-500">{accuracyData.miss}건</div>
+                                    </div>
+                                    <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-center">
+                                        <div className="text-xs text-[var(--text-secondary)] mb-1">적중률</div>
+                                        <div className="text-xl font-bold text-blue-500">{accuracyData.accuracy_percent}%</div>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 )}

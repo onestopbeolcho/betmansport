@@ -207,6 +207,160 @@ async def publish_manual_post(req: ManualPostRequest):
     return result
 
 
+class RotationPublishRequest(BaseModel):
+    post_type: Optional[str] = None  # preview, winning, educational, top_picks, generic
+    with_image: bool = True
+
+
+@router.post("/publish_rotation")
+async def publish_rotation_post(req: RotationPublishRequest = RotationPublishRequest()):
+    """
+    시간대별/지정 타입별 SNS 로테이션 발행 실행.
+    """
+    from app.services.buffer_service import buffer_service
+    from app.services.gemini_service import (
+        generate_sns_content,
+        generate_winning_proof_sns,
+        generate_educational_sns,
+        generate_top_picks_sns,
+        generate_generic_promo
+    )
+    from app.api.endpoints import ai_predictions as ai_pred_module
+    from app.models.prediction_db import get_recent_ai_predictions
+
+    if not buffer_service.is_configured:
+        raise HTTPException(status_code=503, detail="BUFFER_ACCESS_TOKEN not configured")
+
+    try:
+        # 1. KST 시간대 자동 분석 또는 지정 타입 결정
+        from datetime import datetime, timezone, timedelta
+        KST = timezone(timedelta(hours=9))
+        now_kst = datetime.now(KST)
+        hour = now_kst.hour
+
+        post_type = req.post_type
+        if not post_type:
+            # 08:00 - 10:59 -> top_picks
+            if 8 <= hour < 11:
+                post_type = "top_picks"
+            # 12:00 - 14:59 -> educational
+            elif 12 <= hour < 15:
+                post_type = "educational"
+            # 16:00 - 18:59 -> winning
+            elif 16 <= hour < 19:
+                post_type = "winning"
+            # 그 외 시간대 -> preview
+            else:
+                post_type = "preview"
+
+        logger.info(f"📱 SNS Rotation triggering: type={post_type} (KST Hour: {hour})")
+
+        # 2. 타입별 실행 및 데이터 매핑
+        text = None
+        image_url = None
+        match_id = "rotation"
+        confidence = 0
+
+        # 캐시된 경기 예측 로드
+        if not ai_pred_module._predictions_cache:
+            await ai_pred_module.get_ai_predictions_internal()
+        predictions = ai_pred_module._predictions_cache
+        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
+
+        if post_type == "top_picks":
+            # 상위 3개 고신뢰도 리스트
+            high_conf = [p for p in pred_dicts if p.get("confidence", 0) >= 55]
+            if high_conf:
+                text = await generate_top_picks_sns(high_conf)
+                match_id = "top_picks"
+            else:
+                post_type = "educational"  # 경기가 없으면 교육글로 대체
+
+        if post_type == "educational":
+            # 정보성/브랜드 빌딩 칼럼
+            text = await generate_educational_sns()
+            match_id = "educational"
+
+        elif post_type == "winning":
+            # 적중 인증형
+            try:
+                hits = await get_recent_ai_predictions(limit=5, status="HIT")
+                if hits:
+                    text = await generate_winning_proof_sns(hits)
+                    # 가장 최근 적중된 경기의 카드 생성 시도
+                    if req.with_image:
+                        from app.services.card_generator import generate_card_and_upload
+                        # hits[0]를 card_generator 형식으로 변환/전달
+                        best_hit = hits[0]
+                        # factors가 없으면 기본으로 넣어줌
+                        if "factors" not in best_hit:
+                            best_hit["factors"] = [{"name": "AI 예측 적중", "score": best_hit.get("confidence", 80)}]
+                        image_url = await generate_card_and_upload(best_hit)
+                    match_id = f"hit_{hits[0].get('match_id', '')}"
+                    confidence = hits[0].get("confidence", 0)
+                else:
+                    post_type = "preview"  # 적중 이력이 없으면 경기 프리뷰로 대체
+            except Exception as e:
+                logger.error(f"Winning proof rotation error: {e}")
+                post_type = "preview"
+
+        if post_type == "preview":
+            # 개별 경기 상세 분석형 (호기심 유발)
+            high_conf = [p for p in pred_dicts if p.get("confidence", 0) >= 55]
+            if high_conf:
+                import random
+                high_conf = sorted(high_conf, key=lambda x: x.get("confidence", 0), reverse=True)[:20]
+                selected_pred = random.choice(high_conf)
+                
+                posts = await generate_sns_content([selected_pred])
+                if posts:
+                    text = posts[0]["text"]
+                    match_id = posts[0]["match_id"]
+                    confidence = posts[0]["confidence"]
+                    
+                    if req.with_image:
+                        from app.services.card_generator import generate_card_and_upload
+                        image_url = await generate_card_and_upload(selected_pred)
+            else:
+                post_type = "generic"
+
+        if post_type == "generic" or not text:
+            # 최종 폴백: 일반 홍보글
+            text = await generate_generic_promo()
+            match_id = "generic_promo"
+
+        # 3. Buffer 실제 발행
+        if not text:
+            raise HTTPException(status_code=500, detail="Failed to generate SNS content")
+
+        result = await buffer_service.publish_post(
+            text=text,
+            image_url=image_url,
+        )
+
+        # 이력 저장
+        _publish_history.append({
+            "match_id": match_id,
+            "text": text[:100] + "...",
+            "published_at": datetime.now(timezone.utc).isoformat(),
+            "success": result.get("success", False),
+            "channels": result.get("published", 0),
+            "rotation_type": post_type,
+        })
+
+        return {
+            "success": result.get("success", False),
+            "rotation_type": post_type,
+            "text": text,
+            "image_url": image_url,
+            "buffer_result": result,
+        }
+
+    except Exception as e:
+        logger.error(f"SNS rotation publish error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ─── 이력 ───
 
 @router.get("/history")

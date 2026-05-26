@@ -54,9 +54,6 @@ export default function HeroSection() {
                         <a href={`/${currentLang}/bets`} data-tour="tour-cta-bets" className="btn-primary text-base px-8 py-3.5 animate-pulse-glow">
                             {t.ctaPrimary || 'Start AI Analysis →'}
                         </a>
-                        <a href={`/${currentLang}/market`} className="btn-ghost text-base px-8 py-3.5">
-                            {t.ctaSecondary || 'View All Matches'}
-                        </a>
                     </div>
 
                     {/* Stats */}

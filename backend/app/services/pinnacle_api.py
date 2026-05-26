@@ -86,7 +86,7 @@ class PinnacleService(BaseOddsProvider):
         """
         if not self.api_key or self.api_key.strip() == "":
             logger.info("No API Key configured. Using Mock Data.")
-            return []
+            return self._get_mock_data()
 
         cache_key = "odds_snapshot"
 
@@ -99,6 +99,21 @@ class PinnacleService(BaseOddsProvider):
         try:
             cached_data = await get_market_cache(cache_key)
             if cached_data and cached_data.get("data"):
+                # 캐시 만료 시간 체크 (24시간)
+                updated_at = cached_data.get("updated_at")
+                if updated_at:
+                    if isinstance(updated_at, str):
+                        try:
+                            updated_at = datetime.datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+                        except Exception:
+                            pass
+                    
+                    if isinstance(updated_at, datetime.datetime):
+                        age_seconds = (datetime.datetime.now(datetime.timezone.utc) - updated_at).total_seconds()
+                        if age_seconds > 86400: # 24시간 이상 지난 데이터는 버림
+                            logger.warning(f"Firestore cache is too old ({age_seconds}s). Ignoring.")
+                            return self._get_mock_data()
+                            
                 logger.info("Serving from Firestore cache")
                 try:
                     data = json.loads(cached_data["data"])
@@ -112,9 +127,9 @@ class PinnacleService(BaseOddsProvider):
         except Exception as e:
             logger.warning(f"Firestore cache unavailable: {e}")
 
-        # 3. No cache available — return mock data (NOT external API)
-        logger.warning("No cached odds available. Returning mock data until scheduler runs.")
-        return []
+        # 3. No cache available — return mock data
+        logger.warning("No cached odds available. Returning mock data.")
+        return self._get_mock_data()
 
     async def refresh_odds(self) -> List[OddsItem]:
         """
@@ -122,8 +137,8 @@ class PinnacleService(BaseOddsProvider):
         이 메서드만 외부 API를 호출합니다.
         """
         if not self.api_key or self.api_key.strip() == "":
-            logger.warning("No API Key configured. Cannot refresh odds.")
-            return []
+            logger.warning("No API Key configured. Cannot refresh odds. Using Mock Data.")
+            return self._get_mock_data()
 
         cache_key = "odds_snapshot"
         logger.info("🔄 [Scheduler] Refreshing odds from API-Football...")
@@ -204,7 +219,8 @@ class PinnacleService(BaseOddsProvider):
         except Exception as e_ref:
             logger.error(f"❌ [Scheduler] Reference Odds fallback failed: {e_ref}")
 
-        return []
+        logger.warning("All API fetches failed. Returning mock data.")
+        return self._get_mock_data()
 
     def _parse_api_football_odds(self, raw_odds: List[Dict]) -> List[OddsItem]:
         """API-Football fetch_all_odds() 결과를 OddsItem으로 변환"""

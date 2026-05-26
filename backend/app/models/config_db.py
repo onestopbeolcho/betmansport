@@ -34,6 +34,7 @@ FIELD_TO_ENV = {
     "wordpress_url": "WORDPRESS_URL",
     "wordpress_username": "WORDPRESS_USERNAME",
     "wordpress_app_password": "WORDPRESS_APP_PASSWORD",
+    "google_drive_folder_id": "GOOGLE_DRIVE_FOLDER_ID",
 }
 
 

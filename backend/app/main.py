@@ -387,8 +387,7 @@ async def _periodic_nightly_retrain():
 
 
 async def _periodic_sns_publish():
-    """2시간마다 자동 SNS 콘텐츠 발행 (Buffer)"""
-    import random
+    """2시간마다 자동 SNS 콘텐츠 발행 (Buffer 로테이션 시스템)"""
     from datetime import timezone, timedelta
     KST = timezone(timedelta(hours=9))
     logger.info("📱 [SNS-Scheduler] Starting, will run every 2 hours...")
@@ -406,63 +405,13 @@ async def _periodic_sns_publish():
                 await asyncio.sleep(7200)
                 continue
 
-            # 모델의 최근 예측 수동 로드 (캐시 비어 있을 대비)
-            from app.api.endpoints.ai_predictions import _predictions_cache, get_ai_predictions
-            predictions = _predictions_cache
-            if not predictions:
-                logger.info("📱 [SNS-Scheduler] No predictions cached, fetching explicitly...")
-                try:
-                    resp = await get_ai_predictions()
-                    # get_ai_predictions returns a dict (PredictionResponse.model_dump())
-                    predictions = resp.get("predictions", []) if isinstance(resp, dict) else resp.predictions
-                except Exception as e:
-                    logger.error(f"📱 [SNS-Scheduler] Failed to fetch predictions: {e}")
+            # 로테이션 기법으로 자동 발행 실행!
+            from app.api.endpoints.marketing import publish_rotation_post, RotationPublishRequest
+            req = RotationPublishRequest()
+            result = await publish_rotation_post(req)
             
-            if not predictions:
-                logger.info("📱 [SNS-Scheduler] Still no predictions, skipping")
-                await asyncio.sleep(7200)
-                continue
-
-            pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
-            
-            # 높은 신뢰도의 매치(55% 이상) 중 최대 상위 20개에서 1개 랜덤 선택 (중복 도배 방지 및 큐 관리)
-            high_conf_preds = [p for p in pred_dicts if p.get("confidence", 0) >= 55]
-            if not high_conf_preds:
-                logger.info("📱 [SNS-Scheduler] No high-confidence matches. Generating generic promo instead.")
-                from app.services.gemini_service import generate_generic_promo
-                generic_text = await generate_generic_promo()
-                if generic_text:
-                    result = await buffer_service.publish_post(text=generic_text, image_url=None)
-                    status = "✅" if result.get("success") else "❌"
-                    logger.info(f"📱 [SNS-Scheduler] {status} Published generic promo.")
-                else:
-                    logger.info("📱 [SNS-Scheduler] Failed to generate generic promo.")
-                await asyncio.sleep(7200)
-                continue
-                
-            # 상위 20개 중 랜덤으로 1개 픽
-            high_conf_preds = sorted(high_conf_preds, key=lambda x: x.get("confidence", 0), reverse=True)[:20]
-            selected_pred = random.choice(high_conf_preds)
-            
-            # SNS 콘텐츠 생성 (1개만)
-            from app.services.gemini_service import generate_sns_content
-            posts = await generate_sns_content([selected_pred])
-
-            if posts:
-                post = posts[0]
-                # 이미지 생성 및 첨부
-                image_url = None
-                try:
-                    from app.services.card_generator import generate_card_and_upload
-                    image_url = await generate_card_and_upload(selected_pred)
-                except Exception as e:
-                    logger.warning(f"📱 [SNS-Scheduler] Failed to generate image: {e}")
-
-                result = await buffer_service.publish_post(text=post["text"], image_url=image_url)
-                status = "✅" if result.get("success") else "❌"
-                logger.info(f"📱 [SNS-Scheduler] {status} Published: {post['match_id'][:30]} | Image: {bool(image_url)}")
-            else:
-                logger.info("📱 [SNS-Scheduler] Failed to generate NLP content")
+            status = "✅" if result.get("success") else "❌"
+            logger.info(f"📱 [SNS-Scheduler] {status} Rotational publish done: type={result.get('rotation_type')} | Image: {bool(result.get('image_url'))}")
 
             # 2시간(7200초) 대기
             logger.info("📱 [SNS-Scheduler] Sleeping for 2 hours...")

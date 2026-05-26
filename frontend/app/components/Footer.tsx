@@ -33,7 +33,6 @@ export default function Footer({ lang }: { lang?: string }) {
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.services || 'Services'}</h4>
                         <ul className="space-y-2 text-xs">
                             <li><a href={`/${currentLang}/bets`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.valueBet || 'Value Analysis'}</a></li>
-                            <li><a href={`/${currentLang}/market`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.aiPredict || 'AI Prediction'}</a></li>
                             <li><a href={`/${currentLang}/pricing`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.plans || 'Plans'}</a></li>
                         </ul>
                     </div>

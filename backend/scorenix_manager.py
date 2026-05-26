@@ -48,9 +48,15 @@ class ScorenixManagerApp(ctk.CTk):
         self.btn_upload = ctk.CTkButton(self.sidebar_frame, text="4. 유튜브 업로드", command=lambda: self.run_task("upload"))
         self.btn_upload.grid(row=4, column=0, padx=20, pady=10)
 
+        self.btn_publish = ctk.CTkButton(self.sidebar_frame, text="5. 어제 결과 텍스트 SNS 배포", command=lambda: self.run_task("publish_results"))
+        self.btn_publish.grid(row=5, column=0, padx=20, pady=10)
+
+        self.btn_results_vid = ctk.CTkButton(self.sidebar_frame, text="6. 어제 결과 영상 렌더링", command=lambda: self.run_task("results_video"))
+        self.btn_results_vid.grid(row=6, column=0, padx=20, pady=10)
+
         # 웹 연동 리스너 스위치 (하단 배치)
         self.switch_listener = ctk.CTkSwitch(self.sidebar_frame, text="🌐 웹 연동 대기 모드", command=self.toggle_listener)
-        self.switch_listener.grid(row=6, column=0, padx=20, pady=(10, 20))
+        self.switch_listener.grid(row=8, column=0, padx=20, pady=(10, 20))
 
     def _build_main_frame(self):
         # 메인 프레임
@@ -221,6 +227,10 @@ class ScorenixManagerApp(ctk.CTk):
                 self._run_script("app/services/youtube_uploader.py", "유튜브 쇼츠 업로드")
             else:
                 self.log_message("⚠️ 유튜브 업로드 스크립트를 찾을 수 없습니다.")
+        elif task_name == "publish_results":
+            self._run_script("publish_results_to_sns.py", "어제 결과 텍스트 SNS 배포")
+        elif task_name == "results_video":
+            self._run_script("generate_results_shorts.py", "어제 결과 쇼츠 영상 렌더링")
 
         self.progress_bar.stop()
         self.progress_bar.set(1)

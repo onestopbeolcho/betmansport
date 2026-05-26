@@ -741,7 +741,20 @@ class FootballStatsService:
         """
         all_odds = []
 
-        for league_key, league_id in LEAGUE_MAP.items():
+        # 무료 요금제인 경우 상위 5대 리그만 수집하여 하루 100회 한도 방어
+        plan = await self.get_plan_status()
+        target_leagues = LEAGUE_MAP
+        if plan.lower() == "free":
+            logger.info("⚠️ [API-Football] Free Plan detected in fetch_all_odds. Scaling down to Top 5 European leagues.")
+            target_leagues = {
+                "soccer_epl": 39,
+                "soccer_spain_la_liga": 140,
+                "soccer_germany_bundesliga": 78,
+                "soccer_italy_serie_a": 135,
+                "soccer_france_ligue_one": 61,
+            }
+
+        for league_key, league_id in target_leagues.items():
             # 먼저 다가오는 경기 목록 조회 (팀 이름 확보) 
             fixtures_data = await self._get("fixtures", {
                 "league": league_id,
