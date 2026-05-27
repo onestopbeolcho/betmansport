@@ -1014,6 +1014,10 @@ if __name__ == "__main__":
     parser.add_argument("--interval", type=int, default=3, help="Hours between uploads")
     parser.add_argument("--avatar", action="store_true",
                         help="D-ID AI avatar mode (requires ELEVENLABS_API_KEY & DID_API_KEY)")
+    parser.add_argument("--mode", type=str, choices=["marketing", "winning", "educational", "top_picks", "membership"],
+                        help="Directly specify the video mode without interactive prompt")
+    parser.add_argument("--auto-upload", action="store_true",
+                        help="Skip prompt and upload the video to YouTube automatically")
     args = parser.parse_args()
 
     # AI 서비스 상태 확인
@@ -1092,24 +1096,28 @@ if __name__ == "__main__":
             print(f"\n  [Z] Next upload at {next_time.strftime('%H:%M')}")
             time.sleep(args.interval * 3600)
     else:
-        # 수동 모드
+        # 수동 모드 또는 비대화식 단일 실행 모드
         ts = datetime.datetime.now().strftime("%m%d_%H%M")
         
-        print("\n[>>] Select MARKETING video mode:")
-        print("  1. 경기 분석 티저 (marketing)")
-        print("  2. 적중 인증 자랑 (winning)")
-        print("  3. 가치 투자 교육 (educational)")
-        print("  4. 오늘의 TOP 3 티저 (top_picks)")
-        mode_choice = input("Select mode (1-4) [Default: 1]: ").strip()
-        
-        if mode_choice == "2":
-            marketing_mode = "winning"
-        elif mode_choice == "3":
-            marketing_mode = "educational"
-        elif mode_choice == "4":
-            marketing_mode = "top_picks"
+        if args.mode:
+            marketing_mode = args.mode
+            print(f"\n[>>] Non-interactive execution. Selected Mode: {marketing_mode.upper()}")
         else:
-            marketing_mode = "marketing"
+            print("\n[>>] Select MARKETING video mode:")
+            print("  1. 경기 분석 티저 (marketing)")
+            print("  2. 적중 인증 자랑 (winning)")
+            print("  3. 가치 투자 교육 (educational)")
+            print("  4. 오늘의 TOP 3 티저 (top_picks)")
+            mode_choice = input("Select mode (1-4) [Default: 1]: ").strip()
+            
+            if mode_choice == "2":
+                marketing_mode = "winning"
+            elif mode_choice == "3":
+                marketing_mode = "educational"
+            elif mode_choice == "4":
+                marketing_mode = "top_picks"
+            else:
+                marketing_mode = "marketing"
 
         # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
         out_membership = os.path.join(output_dir, f"scorenix_membership_{ts}.mp4")
@@ -1125,9 +1133,16 @@ if __name__ == "__main__":
 
         print(f"  [SAVE] Both videos successfully saved on Desktop at: {output_dir}")
 
-        choice = input(f"\n[>>] Upload {marketing_mode.upper()} video to YouTube? (y/n): ")
-        if choice.strip().lower() == "y":
+        if args.auto_upload:
+            print(f"\n[>>] Auto-upload enabled. Uploading {marketing_mode.upper()} video to YouTube automatically...")
             _upload(out_marketing)
+        else:
+            choice = input(f"\n[>>] Upload {marketing_mode.upper()} video to YouTube? (y/n): ")
+            if choice.strip().lower() == "y":
+                _upload(out_marketing)
 
-        os.startfile(output_dir)
+        try:
+            os.startfile(output_dir)
+        except Exception:
+            pass
 

@@ -176,12 +176,16 @@ class ScorenixManagerApp(ctk.CTk):
         """실제 파이썬 스크립트를 하위 프로세스로 실행하고 로그를 캡처하는 함수"""
         import subprocess
         import sys
+        import shlex
         
         self.log_message(f"▶️ [{description}] 작업을 시작합니다... (실행 중: {script_name})")
         try:
+            # 파이썬 스크립트 명령어 분할 파싱
+            cmd = [sys.executable] + shlex.split(script_name)
+            
             # 파이썬 스크립트 실행 (stdout, stderr 캡처)
             process = subprocess.Popen(
-                [sys.executable, script_name],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -219,7 +223,7 @@ class ScorenixManagerApp(ctk.CTk):
             # AI 생성 스크립트가 별도로 있다면 여기에 추가 (예: check_preds.py)
             self._run_script("check_preds.py", "AI 예측 확인")
         elif task_name == "video":
-            self._run_script("generate_shorts_pipeline.py", "쇼츠 영상 자동 렌더링")
+            self._run_script("generate_shorts_pipeline.py --mode marketing --auto-upload", "쇼츠 영상 자동 렌더링")
         elif task_name == "upload":
             # 유튜브 업로더 스크립트 실행
             import os
@@ -245,21 +249,24 @@ class ScorenixManagerApp(ctk.CTk):
         tasks = [
             ("sync_betman_to_cloud.py", "1. 배당 크롤링"),
             ("check_preds.py", "2. AI 팩터 스코어 확인"),
-            ("generate_shorts_pipeline.py", "3. 쇼츠 렌더링"),
-            ("app/services/youtube_uploader.py", "4. 유튜브 업로드")
+            ("generate_shorts_pipeline.py --mode marketing --auto-upload", "3. 쇼츠 렌더링 및 자동 업로드"),
+            ("app/services/youtube_uploader.py", "4. 업로드 완료 체크")
         ]
         
         total_tasks = len(tasks)
         
         for i, (script, desc) in enumerate(tasks):
             import os
-            if os.path.exists(script):
+            # shlex로 스크립트 명만 추출하여 존재 여부 확인
+            import shlex
+            script_file = shlex.split(script)[0]
+            if os.path.exists(script_file):
                 success = self._run_script(script, desc)
                 if not success:
                     self.log_message(f"🛑 [{desc}] 단계에서 중단되었습니다.")
                     break
             else:
-                self.log_message(f"⚠️ 스크립트 누락: {script} (건너뜀)")
+                self.log_message(f"⚠️ 스크립트 누락: {script_file} (건너뜀)")
             
             self.progress_bar.set((i + 1) / total_tasks)
 
