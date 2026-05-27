@@ -52,8 +52,8 @@ async def main():
     yesterday_str = (now - timedelta(days=1)).strftime('%Y-%m-%d')
     two_days_ago_str = (now - timedelta(days=2)).strftime('%Y-%m-%d')
     
-    # 최근 경기 데이터를 가져와서 필터링 (간단하게 최근 50개 문서 중 is_matched 가 있는 것 필터링)
-    docs = db.collection('predictions').order_by('match_time', direction='DESCENDING').limit(100).get()
+    # 최근 경기 데이터를 가져와서 필터링 (ai_prediction_history 조회)
+    docs = db.collection('ai_prediction_history').order_by('match_time', direction='DESCENDING').limit(100).get()
     
     hits = []
     misses = []
@@ -64,8 +64,9 @@ async def main():
         
         # 최근 이틀 내의 경기들만 대상
         if yesterday_str in match_time_str or two_days_ago_str in match_time_str:
-            if 'is_matched' in data and data['is_matched'] is not None:
-                if data['is_matched'] is True:
+            status = data.get('status')
+            if status in ('HIT', 'MISS'):
+                if status == 'HIT':
                     hits.append(data)
                 else:
                     misses.append(data)

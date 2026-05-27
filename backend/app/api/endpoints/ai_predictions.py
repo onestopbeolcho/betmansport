@@ -72,6 +72,14 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
             _last_prediction_time = data.get("updated_at", datetime.now(timezone.utc).isoformat())
             
             logger.info(f"📊 Serving {len(matches)} predictions from daily_portfolios")
+            
+            # Save predictions to ai_prediction_history in the background to ensure it is populated!
+            if background_tasks:
+                background_tasks.add_task(_save_predictions_background, matches)
+            else:
+                import asyncio
+                asyncio.create_task(_save_predictions_background(matches))
+
             return PredictionResponse(
                 predictions=matches,
                 last_updated=_last_prediction_time,
@@ -147,7 +155,7 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
 
     # Async Update Firestore daily_portfolios to avoid missing next time
     try:
-        def bg_update():
+        async def bg_update():
             try:
                 db_ref = get_firestore_db().collection("daily_portfolios").document(today_str)
                 db_ref.set({
@@ -156,13 +164,16 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
                     "matches": predictions
                 }, merge=True)
                 logger.info(f"Background: saved {len(predictions)} matches to daily_portfolios")
+                # Also save to ai_prediction_history
+                await _save_predictions_background(predictions)
             except Exception as e_bg:
                 logger.error(f"Background save failed: {e_bg}")
         
         if background_tasks:
             background_tasks.add_task(bg_update)
         else:
-            bg_update()
+            import asyncio
+            asyncio.create_task(bg_update())
     except Exception as e_task:
         logger.warning(f"Could not handle background task: {e_task}")
 
