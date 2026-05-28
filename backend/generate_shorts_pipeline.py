@@ -982,21 +982,19 @@ def _upload(video_path):
         else:
             print("  [X] YouTube upload failed")
 
-        # ─── 구글 드라이브 업로드 추가 ───
-        print("  [Google Drive] Uploading video to shared Google Drive folder...")
-        try:
-            from app.services.google_drive_service import google_drive_service
-            from app.models.config_db import load_config_to_env
-            # Firestore 설정을 환경변수로 먼저 로드 (구글 드라이브 폴더 ID 등)
-            load_config_to_env()
-            
-            drive_link = google_drive_service.upload_video(video_path)
-            if drive_link:
-                print(f"  [OK] Google Drive upload success! Link: {drive_link}")
-            else:
-                print("  [X] Google Drive upload failed")
-        except Exception as drive_e:
-            print(f"  [X] Google Drive error: {drive_e}")
+        # ─── 구글 드라이브 업로드 비활성화 (OneDrive 동기화 대체) ───
+        # print("  [Google Drive] Uploading video to shared Google Drive folder...")
+        # try:
+        #     from app.services.google_drive_service import google_drive_service
+        #     from app.models.config_db import load_config_to_env
+        #     load_config_to_env()
+        #     drive_link = google_drive_service.upload_video(video_path)
+        #     if drive_link:
+        #         print(f"  [OK] Google Drive upload success! Link: {drive_link}")
+        #     else:
+        #         print("  [X] Google Drive upload failed")
+        # except Exception as drive_e:
+        #     print(f"  [X] Google Drive error: {drive_e}")
 
         return bool(vid)
     except Exception as e:
