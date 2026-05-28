@@ -762,6 +762,44 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         print(" [MIC] TTS: Edge TTS (free)")
     print("=" * 50)
 
+    # ─── 실시간 플랫폼 모바일 화면 자동 녹화 ───
+    if not use_avatar and mode in ("marketing", "winning", "educational", "top_picks"):
+        if os.path.exists(bg_video_path):
+            try:
+                os.remove(bg_video_path)
+            except Exception:
+                pass
+        try:
+            from app.services.browser_recorder import record_page
+            print(f"\n[>>] Real-time Browser Recording started for mode '{mode}'...")
+            
+            target_url = "https://scorenix.com"
+            tmp_webm = os.path.join(os.path.dirname(__file__), "_tmp_record.webm")
+            
+            import asyncio
+            success = asyncio.run(record_page(target_url, tmp_webm, duration=60.0))
+            
+            if success and os.path.exists(tmp_webm):
+                print(f"  [+] Web screen recorded. Compiling silent background: {bg_video_path}")
+                bg_clip = VideoFileClip(tmp_webm)
+                bg_clip.without_audio().write_videofile(
+                    bg_video_path,
+                    codec="libx264",
+                    audio=False,
+                    preset="ultrafast",
+                    threads=4
+                )
+                bg_clip.close()
+                try:
+                    os.remove(tmp_webm)
+                except Exception:
+                    pass
+                print("  [✅] Dynamic web screen background compiled successfully!")
+            else:
+                print("  [!] Browser recording failed. Falling back to static templates.")
+        except Exception as record_err:
+            print(f"  [❌] Browser recording error: {record_err}. Using fallback templates.")
+
     # 1) 배경 준비
     bg_filename = "premium_bg.png"
     if mode == "winning":
