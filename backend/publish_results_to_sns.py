@@ -87,11 +87,29 @@ async def main():
         print("  [!] Buffer Access Token이 설정되지 않아 업로드를 건너뜁니다.")
         return
         
-    result = await buffer_service.publish_post(text=report_text)
+    image_url = None
+    if hits:
+        best_hit = hits[0]
+        if "factors" not in best_hit:
+            best_hit["factors"] = [{"name": "AI 예측 적중", "score": best_hit.get("confidence", 80)}]
+        try:
+            from app.services.card_generator import generate_card_and_upload
+            print(f"  [>] 대표 적중 경기 '{best_hit.get('match_id')}'의 카드 이미지 생성 및 업로드 중...")
+            image_url = await generate_card_and_upload(best_hit)
+            if image_url:
+                print(f"  [✅] 카드 이미지 생성 완료: {image_url}")
+            else:
+                print("  [!] 카드 이미지 생성 실패 (None 반환)")
+        except Exception as card_e:
+            print(f"  [❌] 카드 이미지 생성 중 오류: {card_e}")
+
+    result = await buffer_service.publish_post(text=report_text, image_url=image_url)
     if result.get("success"):
         print(f"  [✅] SNS 업로드 완료! {result.get('published', 0)}개 채널에 발송됨.")
     else:
         print(f"  [❌] SNS 업로드 실패: {result.get('error', 'Unknown Error')}")
+        if result.get("details"):
+            print(f"  세부 정보: {result.get('details')}")
 
 if __name__ == "__main__":
     asyncio.run(main())
