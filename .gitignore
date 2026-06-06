@@ -48,4 +48,5 @@ backend/youtube_token.pickle
 backend/credentials.json
 backend/token.txt
 brain/
+video/output/
 
