@@ -21,10 +21,11 @@ except Exception as _e:
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, tax, combinator, ai_predictions, notifications, league, blogger, wordpress
+from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, combinator, ai_predictions, notifications, league, blogger, wordpress
 from app.api.endpoints import vip_combo, vip_alerts, vip_portfolio, vip_market
 from app.api.endpoints import backtest
 from app.api.endpoints import marketing
+from app.api.endpoints import video
 from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,6 @@ app.include_router(scheduler.router, prefix="/api/scheduler", tags=["scheduler"]
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(community.router, prefix="/api/community", tags=["community"])
 app.include_router(prediction.router, prefix="/api/prediction", tags=["prediction"])
-app.include_router(tax.router, prefix="/api/tax", tags=["tax"])
 app.include_router(combinator.router, prefix="/api/combinator", tags=["combinator"])
 app.include_router(ai_predictions.router, prefix="/api/ai", tags=["ai"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
@@ -117,6 +117,9 @@ app.include_router(backtest.router, prefix="/api/backtest", tags=["backtest"])
 app.include_router(marketing.router, prefix="/api/marketing", tags=["marketing"])
 app.include_router(blogger.router, prefix="/api/blogger", tags=["blogger"])
 app.include_router(wordpress.router, prefix="/api/wordpress", tags=["wordpress"])
+
+# Video Auto-Generation
+app.include_router(video.router, prefix="/api/video", tags=["video"])
 
 
 async def _auto_collect_stats():

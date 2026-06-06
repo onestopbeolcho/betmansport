@@ -135,12 +135,25 @@ class MLInferenceService:
                 
                 prediction = self._format_prediction(match, probs)
                 
-                # 분석 팩터 상세화 (사용자 포트폴리오 강화용)
+                # Align factors list with the 7-Factor Sports Data Scoring Engine
+                from app.services.factor_scorer import calculate_factor_scores
+                # Copy odds fields to ensure compatibility
+                match_copy = dict(match)
+                match_copy["home_odds"] = match_copy.get("home_odds") or match_copy.get("pin_home_odds") or 0.0
+                match_copy["draw_odds"] = match_copy.get("draw_odds") or match_copy.get("pin_draw_odds") or 0.0
+                match_copy["away_odds"] = match_copy.get("away_odds") or match_copy.get("pin_away_odds") or 0.0
+                
+                factor_res = calculate_factor_scores(match_copy)
+                details = factor_res.get("details", {})
+                
                 prediction["factors"] = [
-                    {"name": "xG 기대득실", "weight": 40, "score": round(feats.get("home_xG_advantage", 0), 2), "detail": "최근 경기 xG 생성 및 허용 지표 분석"},
-                    {"name": "압박 및 주도권", "weight": 20, "score": round(feats.get("ppda_diff", 0), 2), "detail": "PPDA 기반 압박 강도 및 박스 진입력"},
-                    {"name": "결정력 효율", "weight": 15, "score": round(feats.get("xg_eff_diff", 0), 2), "detail": "기대 득점 대비 실제 득점 전환 능력"},
-                    {"name": "모멘텀 및 스쿼드", "weight": 25, "score": round(feats.get("form_diff", 0), 2), "detail": "최근 5경기 성적 및 결장자 영향도"}
+                    {"name": "전력 지수", "weight": 20, "score": details.get("power_rating", 50), "detail": "리그 순위 및 득실차 기반 전력 수준"},
+                    {"name": "최근 경기 흐름", "weight": 15, "score": details.get("form_momentum", 50), "detail": "최근 5경기 경기 성적 흐름"},
+                    {"name": "상대 전적", "weight": 10, "score": details.get("h2h_dominance", 50), "detail": "양 팀 간 최근 맞대결 성적"},
+                    {"name": "부상 및 피로도", "weight": 15, "score": details.get("injury_fatigue", 50), "detail": "부상자 수 및 최근 일정 간격 피로도"},
+                    {"name": "감독 지수", "weight": 10, "score": details.get("coach_factor", 50), "detail": "감독 전술 성향 및 임기 안정성"},
+                    {"name": "선수단 경기력", "weight": 15, "score": details.get("squad_quality", 50), "detail": "점유율, xG 및 deep completions 경기력 세부 통계"},
+                    {"name": "배당 내재 확률", "weight": 15, "score": details.get("market_implied", 50), "detail": "해외 메이저 북메이커 내재 확률 분석"}
                 ]
                 preds.append(prediction)
             except Exception as e:

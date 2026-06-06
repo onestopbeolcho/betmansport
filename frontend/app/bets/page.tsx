@@ -658,7 +658,7 @@ export default function BetsPage() {
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                                 {pred.oddsMatch?.has_betman && (
-                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30">BETMAN</span>
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)]">DOMESTIC</span>
                                                                 )}
                                                             </div>
                                                             <div className={`text-sm mt-0.5 flex items-center gap-2 ${pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/40'}`}>
@@ -667,7 +667,7 @@ export default function BetsPage() {
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                                 {!pred.recommendation.includes('HOME') && pred.oddsMatch?.has_betman && (
-                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/30">BETMAN</span>
+                                                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)]">DOMESTIC</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -857,7 +857,7 @@ export default function BetsPage() {
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="text-sm font-semibold text-white leading-tight">{home}</div>
                                                                     {m.has_betman && (
-                                                                        <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#f59e0b]/20 text-[#f59e0b] border border-[#f59e0b]/20">BETMAN</span>
+                                                                        <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)]">DOMESTIC</span>
                                                                     )}
                                                                 </div>
                                                                 <div className="text-xs text-white/40 leading-tight">{away}</div>

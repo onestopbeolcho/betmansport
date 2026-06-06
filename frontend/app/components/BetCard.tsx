@@ -60,12 +60,6 @@ export default function BetCard({ data }: BetProps) {
                     <span className="text-[10px] text-[var(--text-muted)] uppercase">Kelly %</span>
                     <div className="text-lg font-black text-white">{(data.kelly_pct * 100).toFixed(2)}%</div>
                 </div>
-                <div className="text-right">
-                    <span className="text-[10px] text-[var(--text-muted)]">Tax-Free Limit</span>
-                    <div className="text-base font-bold text-[var(--accent-secondary)]">
-                        {data.max_tax_free_stake ? `${data.max_tax_free_stake.toLocaleString()} KRW` : '-'}
-                    </div>
-                </div>
             </div>
 
             {data.ai_insight && (
@@ -85,11 +79,10 @@ export default function BetCard({ data }: BetProps) {
                 <button
                     onClick={handleSave}
                     disabled={saved}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${saved ? 'bg-[rgba(0,212,255,0.1)] text-[var(--accent-primary)]' : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'}`}
+                    className={`w-full sm:w-auto px-4 py-2 rounded-xl text-sm font-semibold transition-all ${saved ? 'bg-[rgba(0,212,255,0.1)] text-[var(--accent-primary)]' : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'}`}
                 >
                     {saved ? '✅ Saved' : '+ Add to Portfolio'}
                 </button>
-                <button className="btn-primary text-sm px-4 py-1.5">Betman →</button>
             </div>
         </div>
     );

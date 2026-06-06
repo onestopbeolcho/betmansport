@@ -21,7 +21,7 @@ const PLANS: Record<string, {
             { icon: '🎯', text: 'AI TOP PICK — Today\'s best recommended match' },
             { icon: '📊', text: 'Confidence gauge + EV (expected value) analysis' },
             { icon: '🔮', text: 'Combo analysis simulator + expected returns' },
-            { icon: '📉', text: 'Pinnacle vs Betman odds gap analysis' },
+            { icon: '📉', text: 'Pinnacle vs Domestic odds gap analysis' },
             { icon: '💬', text: 'Unlimited AI expert chatbot' },
             { icon: '🔔', text: 'Real-time high-value analysis alerts' },
             { icon: '📱', text: 'Portfolio management + ROI tracker' },

@@ -27,10 +27,7 @@ class SettleResponse(BaseModel):
     settled_count: int
 
 
-# --- Betman state tracking ---
-_betman_last_crawl: Optional[str] = None
-_betman_last_count: int = 0
-_betman_crawling: bool = False
+
 
 
 @router.post("/collect_odds")
@@ -55,49 +52,14 @@ async def trigger_odds_collection(background_tasks: BackgroundTasks):
     }
 
 
-@router.post("/collect_betman")
-async def trigger_betman_collection(background_tasks: BackgroundTasks):
-    """
-    Manually trigger Betman crawler (프로토 승부식 배당 수집).
-    Uses 3-tier strategy: Browser → HTTP JSON API → DB fallback.
-    """
-    global _betman_crawling, _betman_last_crawl, _betman_last_count
 
-    if _betman_crawling:
-        return {"status": "Already crawling", "last_crawl": _betman_last_crawl}
-
-    def crawl():
-        global _betman_crawling, _betman_last_crawl, _betman_last_count
-        _betman_crawling = True
-        try:
-            from app.services.crawler_betman import BetmanCrawler
-            crawler = BetmanCrawler()
-            items = crawler.fetch_odds()
-            _betman_last_count = len(items)
-            _betman_last_crawl = datetime.now(timezone.utc).isoformat()
-            logger.info(f"✅ Betman crawl complete: {len(items)} matches")
-        except Exception as e:
-            logger.error(f"Betman crawl failed: {e}")
-        finally:
-            _betman_crawling = False
-
-    background_tasks.add_task(crawl)
-    return {
-        "status": "Betman crawl started",
-        "last_crawl": _betman_last_crawl,
-        "last_count": _betman_last_count,
-    }
 
 
 @router.post("/collect_all")
 async def trigger_all_collection(background_tasks: BackgroundTasks):
     """
-    Trigger both Pinnacle and Betman data collection simultaneously.
-    Use this for full data refresh before round starts.
+    Trigger Pinnacle data collection.
     """
-    global _betman_crawling
-
-    # Pinnacle (async)
     async def collect_pinnacle():
         try:
             odds = await pinnacle_service.refresh_odds()
@@ -105,31 +67,11 @@ async def trigger_all_collection(background_tasks: BackgroundTasks):
         except Exception as e:
             logger.error(f"Pinnacle collection failed: {e}")
 
-    # Betman (sync in executor)
-    def collect_betman():
-        global _betman_crawling, _betman_last_crawl, _betman_last_count
-        if _betman_crawling:
-            return
-        _betman_crawling = True
-        try:
-            from app.services.crawler_betman import BetmanCrawler
-            crawler = BetmanCrawler()
-            items = crawler.fetch_odds()
-            _betman_last_count = len(items)
-            _betman_last_crawl = datetime.now(timezone.utc).isoformat()
-            logger.info(f"Betman: {len(items)} matches collected")
-        except Exception as e:
-            logger.error(f"Betman collection failed: {e}")
-        finally:
-            _betman_crawling = False
-
     background_tasks.add_task(collect_pinnacle)
-    background_tasks.add_task(collect_betman)
 
     return {
-        "status": "Full collection started (Pinnacle + Betman)",
+        "status": "Collection started (Pinnacle)",
         "pinnacle_api_key": bool(pinnacle_service.api_key),
-        "betman_crawling": _betman_crawling,
     }
 
 
@@ -222,11 +164,7 @@ async def get_scheduler_status():
             "requests_used": pinnacle_service._requests_used,
             "target_sports": pinnacle_service.target_sports,
         },
-        "betman": {
-            "last_crawl": _betman_last_crawl,
-            "last_match_count": _betman_last_count,
-            "currently_crawling": _betman_crawling,
-        },
+
         "settlement": {
             "schedule": "Every 6 hours (00:00, 06:00, 12:00, 18:00 KST)",
             "manual_last_run": _settle_last_run,

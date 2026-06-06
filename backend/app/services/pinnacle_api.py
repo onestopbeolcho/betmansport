@@ -17,7 +17,7 @@ class PinnacleService(BaseOddsProvider):
     def __init__(self):
         super().__init__("Pinnacle")
         # API key: API_FOOTBALL_KEY 우선, PINNACLE_API_KEY 폴백 (하위호환)
-        self.api_key: Optional[str] = os.getenv("API_FOOTBALL_KEY") or os.getenv("PINNACLE_API_KEY")
+        self._api_key = None
         self._cache = []
         self._last_fetch_time = 0.0
         self._cache_duration = 300  # 5 minutes
@@ -73,6 +73,16 @@ class PinnacleService(BaseOddsProvider):
             logger.info(f"✅ API-Football Key loaded for odds (len={len(self.api_key)})")
         else:
             logger.warning("⚠️ No API_FOOTBALL_KEY/PINNACLE_API_KEY found — will use mock data")
+
+    @property
+    def api_key(self) -> str:
+        if hasattr(self, "_api_key") and self._api_key:
+            return self._api_key
+        return os.getenv("API_FOOTBALL_KEY") or os.getenv("PINNACLE_API_KEY") or ""
+
+    @api_key.setter
+    def api_key(self, value: str):
+        self._api_key = value
 
     def set_api_key(self, api_key: str):
         self.api_key = api_key

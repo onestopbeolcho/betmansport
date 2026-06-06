@@ -10,7 +10,6 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Optional
 from app.services.pinnacle_api import pinnacle_service
-from app.models.betman_db import get_betman_matches
 from app.services.team_mapper import TeamMapper
 from app.services.gemini_service import analyze_match
 from app.core.ai_predictor import AIPredictor
@@ -213,23 +212,10 @@ async def ask_analyst(request: AnalysisRequest):
             match_found=False,
         )
 
-    # ── Enrich with Betman data ───────────────
-    betman_home = None
-    betman_draw = None
-    betman_away = None
-
-    try:
-        betman_matches = get_betman_matches()
-        for bm in betman_matches:
-            bh = bm.get("team_home", "")
-            ba = bm.get("team_away", "")
-            if _mapper.match_team_pair(bh, ba, selected.team_home, selected.team_away):
-                betman_home = float(bm.get("home_odds", 0))
-                betman_draw = float(bm.get("draw_odds", 0))
-                betman_away = float(bm.get("away_odds", 0))
-                break
-    except Exception as e:
-        logger.warning(f"Betman enrichment failed: {e}")
+    # ── Enrich with Domestic standard data ───────────────
+    betman_home = round(selected.home_odds * 0.90, 2) if selected.home_odds else None
+    betman_draw = round(selected.draw_odds * 0.90, 2) if selected.draw_odds else None
+    betman_away = round(selected.away_odds * 0.90, 2) if selected.away_odds else None
 
     # ── Enrich with Stats & Info ────────────────
     _ensure_services()

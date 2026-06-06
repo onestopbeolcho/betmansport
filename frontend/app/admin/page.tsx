@@ -284,10 +284,6 @@ export default function AdminPage() {
                                     <input type="password" name="api_football_key" value={config.api_football_key} onChange={handleConfigChange} className="w-full px-4 py-3 rounded-xl text-sm transition" style={inputStyle} placeholder="Enter API Key" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Betman User-Agent</label>
-                                    <input type="text" name="betman_user_agent" value={config.betman_user_agent} onChange={handleConfigChange} className="w-full px-4 py-3 rounded-xl text-sm transition" style={inputStyle} />
-                                </div>
-                                <div>
                                     <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Scrape Interval (min)</label>
                                     <input type="number" name="scrape_interval_minutes" value={config.scrape_interval_minutes} onChange={handleConfigChange} min="1" max="60" className="w-full px-4 py-3 rounded-xl text-sm transition" style={inputStyle} />
                                 </div>

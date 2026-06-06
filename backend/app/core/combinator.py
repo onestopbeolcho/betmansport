@@ -134,40 +134,15 @@ class SmartCombinator:
     # ──────────────────────────────────────────────
     def calculate_tax(self, stake: int, total_odds: float) -> Dict:
         """
-        배트맨 세금 규정에 따른 세금 계산.
-        
-        Returns:
-            {
-                "gross_return": 총 환급금,
-                "tax_amount": 세금,
-                "net_return": 실수령액,
-                "tax_applied": 세금 적용 여부,
-                "tax_reason": 세금 적용 사유,
-            }
+        세금 계산 비활성화. 실수령액은 총 환급금과 동일.
         """
         gross_return = int(stake * total_odds)
-        profit = gross_return - stake
-        tax_amount = 0
-        tax_reason = ""
-
-        # Rule 1: 당첨금(이익) 200만원 초과
-        if profit > TAX_THRESHOLD_WINNINGS:
-            tax_amount = int(profit * TAX_RATE)
-            tax_reason = f"당첨금 {profit:,}원이 200만원을 초과하여 22% 세금 부과"
-
-        # Rule 2: 배당률 100배 초과 + 환급금 10만원 이상
-        elif total_odds > TAX_THRESHOLD_ODDS and gross_return >= TAX_THRESHOLD_RETURN:
-            tax_amount = int(profit * TAX_RATE)
-            tax_reason = f"배당률 {total_odds:.1f}배 (100배 초과) + 환급금 {gross_return:,}원 (10만원 이상)"
-
-        net_return = gross_return - tax_amount
-
         return {
             "gross_return": gross_return,
-            "tax_amount": tax_amount,
-            "net_return": net_return,
-            "tax_applied": tax_amount > 0,
-            "tax_reason": tax_reason or "세금 없음",
+            "tax_amount": 0,
+            "net_return": gross_return,
+            "tax_applied": False,
+            "tax_reason": "세금 없음",
         }
 
     # ──────────────────────────────────────────────
@@ -201,12 +176,7 @@ class SmartCombinator:
     # ──────────────────────────────────────────────
     def optimize_for_tax(self, items: List[BetItem], budget: int) -> List[Dict]:
         """
-        세금 구간을 피하는 최적 조합 분배.
-        
-        Strategy:
-        1. 전체 조합의 합산 배당률 계산
-        2. 세금이 걸리는 경우 → 조합을 2~3개로 분리
-        3. 각 분리 조합의 배팅 금액을 세금 면제 범위 내로 조정
+        세금 최적화 비활성화. 단일 조합으로 변환.
         """
         if not items:
             return []
@@ -215,95 +185,16 @@ class SmartCombinator:
         for item in items:
             total_odds *= item.odds
 
-        # Case 1: 세금 없는 경우 → 단일 조합
         tax_info = self.calculate_tax(budget, total_odds)
-        if not tax_info["tax_applied"]:
-            return [{
-                "items": [i.to_dict() for i in items],
-                "stake": budget,
-                "total_odds": round(total_odds, 2),
-                "expected_return": tax_info["gross_return"],
-                "tax": 0,
-                "net_return": tax_info["net_return"],
-                "strategy": "단일 조합 (세금 없음)",
-            }]
-
-        # Case 2: 세금이 걸리는 경우 → 금액 분할
-        combos = []
-
-        # Strategy A: 세금 면제 한도 역산
-        # 당첨금이 200만원 이내가 되려면: stake * total_odds - stake <= 200만원
-        # → stake <= 200만원 / (total_odds - 1)
-        if total_odds > 1.0:
-            tax_free_stake = int(TAX_THRESHOLD_WINNINGS / (total_odds - 1))
-            tax_free_stake = max(MIN_BET_AMOUNT, min(tax_free_stake, budget))
-        else:
-            tax_free_stake = budget
-
-        remaining = budget
-
-        # Split into tax-free chunks
-        chunk_count = 0
-        while remaining > 0 and chunk_count < 5:
-            chunk_stake = min(tax_free_stake, remaining)
-            if chunk_stake < MIN_BET_AMOUNT:
-                break
-
-            chunk_tax = self.calculate_tax(chunk_stake, total_odds)
-            combos.append({
-                "items": [i.to_dict() for i in items],
-                "stake": chunk_stake,
-                "total_odds": round(total_odds, 2),
-                "expected_return": chunk_tax["gross_return"],
-                "tax": chunk_tax["tax_amount"],
-                "net_return": chunk_tax["net_return"],
-                "strategy": f"분할 {chunk_count + 1} (세금 최적화)",
-            })
-            remaining -= chunk_stake
-            chunk_count += 1
-
-        # If couldn't split effectively, also offer the original as option
-        if len(combos) == 1 and combos[0]["tax"] > 0:
-            # Try splitting into 2 combos of fewer matches
-            if len(items) >= 4:
-                half = len(items) // 2
-                group_a = items[:half]
-                group_b = items[half:]
-                half_budget = budget // 2
-
-                odds_a = 1.0
-                for item in group_a:
-                    odds_a *= item.odds
-                odds_b = 1.0
-                for item in group_b:
-                    odds_b *= item.odds
-
-                tax_a = self.calculate_tax(half_budget, odds_a)
-                tax_b = self.calculate_tax(budget - half_budget, odds_b)
-
-                if tax_a["tax_amount"] + tax_b["tax_amount"] < tax_info["tax_amount"]:
-                    combos = [
-                        {
-                            "items": [i.to_dict() for i in group_a],
-                            "stake": half_budget,
-                            "total_odds": round(odds_a, 2),
-                            "expected_return": tax_a["gross_return"],
-                            "tax": tax_a["tax_amount"],
-                            "net_return": tax_a["net_return"],
-                            "strategy": "조합 A (경기 분리)",
-                        },
-                        {
-                            "items": [i.to_dict() for i in group_b],
-                            "stake": budget - half_budget,
-                            "total_odds": round(odds_b, 2),
-                            "expected_return": tax_b["gross_return"],
-                            "tax": tax_b["tax_amount"],
-                            "net_return": tax_b["net_return"],
-                            "strategy": "조합 B (경기 분리)",
-                        },
-                    ]
-
-        return combos
+        return [{
+            "items": [i.to_dict() for i in items],
+            "stake": budget,
+            "total_odds": round(total_odds, 2),
+            "expected_return": tax_info["gross_return"],
+            "tax": 0,
+            "net_return": tax_info["net_return"],
+            "strategy": "단일 조합 (세금 없음)",
+        }]
 
     # ──────────────────────────────────────────────
     # 5. 메인 최적화 엔트리
