@@ -7,14 +7,12 @@ from .accuracy_reveal import AccuracyRevealScenario
 from .odds_drop_alert import OddsDropAlertScenario
 from .ai_analysis import AIAnalysisScenario
 from .vip_showcase import VIPShowcaseScenario
-from .tax_calculator import TaxCalculatorScenario
 
 SCENARIO_MAP = {
     "accuracy_reveal": AccuracyRevealScenario,
     "odds_drop_alert": OddsDropAlertScenario,
     "ai_analysis": AIAnalysisScenario,
     "vip_showcase": VIPShowcaseScenario,
-    "tax_calculator": TaxCalculatorScenario,
 }
 
 __all__ = [
@@ -23,6 +21,5 @@ __all__ = [
     "OddsDropAlertScenario",
     "AIAnalysisScenario",
     "VIPShowcaseScenario",
-    "TaxCalculatorScenario",
     "SCENARIO_MAP",
 ]

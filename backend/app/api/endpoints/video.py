@@ -103,7 +103,7 @@ async def generate_video(req: VideoGenerateRequest, background_tasks: Background
     """
     영상 제작 요청. 백그라운드에서 실행되며 job_id로 상태 확인 가능.
 
-    - **type**: 영상 유형 (accuracy_reveal / odds_drop_alert / ai_analysis / vip_showcase / tax_calculator)
+    - **type**: 영상 유형 (accuracy_reveal / odds_drop_alert / ai_analysis / vip_showcase)
     - **headless**: True=백그라운드, False=브라우저 화면 표시 (디버그)
     """
     # 유효한 시나리오 유형인지 확인
