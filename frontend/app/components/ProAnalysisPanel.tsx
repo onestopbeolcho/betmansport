@@ -7,6 +7,7 @@ interface Factor {
     weight: number;
     score: number;
     detail: string;
+    evidence?: string;
     home_momentum?: number;
     away_momentum?: number;
     league_home_advantage?: number;
@@ -198,6 +199,12 @@ export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam,
                                     </div>
                                 </div>
                                 <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-secondary)' }}>{f.detail}</p>
+                                {f.evidence && (
+                                    <div className="mt-2 p-2 rounded bg-black/25 border border-white/5 flex flex-wrap items-center gap-1.5 text-[9.5px]">
+                                        <span style={{ color: '#00d4ff', fontWeight: 'bold' }}>📊 데이터 분석 근거:</span>
+                                        <span className="text-white/80 font-mono font-medium">{f.evidence}</span>
+                                    </div>
+                                )}
                                 {/* 모멘텀 트렌드 표시 */}
                                 {f.home_momentum !== undefined && (
                                     <div className="flex items-center gap-2 mt-1.5">

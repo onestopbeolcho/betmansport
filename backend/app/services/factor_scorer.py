@@ -19,7 +19,8 @@ def calculate_factor_scores(match_data: dict) -> dict:
                 "coach_factor": int,
                 "squad_quality": int,
                 "market_implied": int
-            }
+            },
+            "evidence": dict (raw calculation metrics)
         }
     """
     scores = {
@@ -30,6 +31,16 @@ def calculate_factor_scores(match_data: dict) -> dict:
         "coach_factor": 50,
         "squad_quality": 50,
         "market_implied": 50
+    }
+
+    evidence = {
+        "power_rating": {},
+        "form_momentum": {},
+        "h2h_dominance": {},
+        "injury_fatigue": {},
+        "coach_factor": {},
+        "squad_quality": {},
+        "market_implied": {}
     }
 
     home_name = match_data.get("team_home")
@@ -74,6 +85,11 @@ def calculate_factor_scores(match_data: dict) -> dict:
             
             power = 50 + (rank_diff * 2.0) + (gd_diff * 0.5)
             scores["power_rating"] = max(0, min(100, int(power)))
+            evidence["power_rating"] = {
+                "home_rank": home_rank,
+                "away_rank": away_rank,
+                "gd_diff": gd_diff
+            }
         except Exception:
             pass
     elif home_stats and away_stats:
@@ -81,6 +97,11 @@ def calculate_factor_scores(match_data: dict) -> dict:
         a_xg_adv = away_stats.get("avg_xG_for", 1.5) - away_stats.get("avg_xG_against", 1.5)
         power = 50 + (h_xg_adv - a_xg_adv) * 15
         scores["power_rating"] = max(0, min(100, int(power)))
+        evidence["power_rating"] = {
+            "home_xg_adv": round(h_xg_adv, 2),
+            "away_xg_adv": round(a_xg_adv, 2),
+            "xg_adv_diff": round(h_xg_adv - a_xg_adv, 2)
+        }
 
     # 2. Form & Momentum (최근 경기 흐름)
     if home_s and away_s:
@@ -96,6 +117,12 @@ def calculate_factor_scores(match_data: dict) -> dict:
             af_pts = calc_form_points(away_form_str)
             form_val = 50 + (hf_pts - af_pts) * 3.5
             scores["form_momentum"] = max(0, min(100, int(form_val)))
+            evidence["form_momentum"] = {
+                "home_form": home_form_str[-5:] if home_form_str else "N/A",
+                "away_form": away_form_str[-5:] if away_form_str else "N/A",
+                "home_pts": hf_pts,
+                "away_pts": af_pts
+            }
         except Exception:
             pass
     elif home_stats and away_stats:
@@ -103,6 +130,10 @@ def calculate_factor_scores(match_data: dict) -> dict:
         af_idx = away_stats.get("form_index", 1.0)
         form_val = 50 + (hf_idx - af_idx) * 20
         scores["form_momentum"] = max(0, min(100, int(form_val)))
+        evidence["form_momentum"] = {
+            "home_form_index": round(hf_idx, 2),
+            "away_form_index": round(af_idx, 2)
+        }
 
     # 3. H2H Dominance (상대 전적)
     h2h = match_data.get("h2h", {})
@@ -112,8 +143,15 @@ def calculate_factor_scores(match_data: dict) -> dict:
             if total > 0:
                 h_wins = int(h2h.get("team_a_wins", 0))
                 a_wins = int(h2h.get("team_b_wins", 0))
+                draws = int(h2h.get("draws", 0))
                 h2h_val = 50 + (h_wins - a_wins) * (40 / total)
                 scores["h2h_dominance"] = max(0, min(100, int(h2h_val)))
+                evidence["h2h_dominance"] = {
+                    "total_matches": total,
+                    "home_wins": h_wins,
+                    "away_wins": a_wins,
+                    "draws": draws
+                }
         except Exception:
             pass
 
@@ -132,6 +170,12 @@ def calculate_factor_scores(match_data: dict) -> dict:
     
     inj_score = 50 - (h_inj_pen + h_fatigue) + (a_inj_pen + a_fatigue)
     scores["injury_fatigue"] = max(0, min(100, int(inj_score)))
+    evidence["injury_fatigue"] = {
+        "home_injuries": home_inj,
+        "away_injuries": away_inj,
+        "home_recent_matches": home_matches_14d,
+        "away_recent_matches": away_matches_14d
+    }
 
     # 5. Coach Factor (감독 지수)
     def get_coach_tenure_score(team_name: str) -> float:
@@ -143,6 +187,10 @@ def calculate_factor_scores(match_data: dict) -> dict:
     ac_score = get_coach_tenure_score(away_name)
     coach_val = 50 + (hc_score - ac_score) * 0.5
     scores["coach_factor"] = max(0, min(100, int(coach_val)))
+    evidence["coach_factor"] = {
+        "home_coach_score": int(hc_score),
+        "away_coach_score": int(ac_score)
+    }
 
     # 6. Squad Performance/Player Quality (선수단 및 경기 세부 통계)
     if home_stats and away_stats:
@@ -163,6 +211,14 @@ def calculate_factor_scores(match_data: dict) -> dict:
         
         sq_val = 50 + (xg_diff * 12) + (deep_diff * 1.5) + (poss_diff * 0.4)
         scores["squad_quality"] = max(0, min(100, int(sq_val)))
+        evidence["squad_quality"] = {
+            "home_xg": round(h_xg, 2),
+            "away_xg": round(a_xg, 2),
+            "home_poss": round(h_poss, 1),
+            "away_poss": round(a_poss, 1),
+            "home_deep": h_deep,
+            "away_deep": a_deep
+        }
 
     # 7. Market Value/Implied Probabilities (배당 내재 확률)
     ho = float(match_data.get("home_odds", 0))
@@ -177,6 +233,12 @@ def calculate_factor_scores(match_data: dict) -> dict:
         if total_imp > 0:
             prob_home = imp_h / total_imp
             scores["market_implied"] = max(0, min(100, int(prob_home * 100)))
+            evidence["market_implied"] = {
+                "home_odds": ho,
+                "draw_odds": do,
+                "away_odds": ao,
+                "home_implied_prob": round((imp_h / total_imp) * 100, 1)
+            }
 
     # Weight sums to 1.00
     weights = {
@@ -193,5 +255,6 @@ def calculate_factor_scores(match_data: dict) -> dict:
     
     return {
         "total_score": round(total_score, 1),
-        "details": scores
+        "details": scores,
+        "evidence": evidence
     }

@@ -120,9 +120,12 @@ class PinnacleService(BaseOddsProvider):
                     
                     if isinstance(updated_at, datetime.datetime):
                         age_seconds = (datetime.datetime.now(datetime.timezone.utc) - updated_at).total_seconds()
-                        if age_seconds > 86400: # 24시간 이상 지난 데이터는 버림
-                            logger.warning(f"Firestore cache is too old ({age_seconds}s). Ignoring.")
+                        # 외부 API 만료 및 장애 시 대비: 최대 72시간(3일) 동안 캐시 보존 연장
+                        if age_seconds > 259200: # 72시간 초과 시에만 폐기
+                            logger.warning(f"Firestore cache is expired ({age_seconds}s > 72h). Ignoring.")
                             return self._get_mock_data()
+                        elif age_seconds > 86400:
+                            logger.warning(f"Firestore cache is aged ({age_seconds}s > 24h). Serving aged cache as fallback.")
                             
                 logger.info("Serving from Firestore cache")
                 try:

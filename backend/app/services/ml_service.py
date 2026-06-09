@@ -145,15 +145,57 @@ class MLInferenceService:
                 
                 factor_res = calculate_factor_scores(match_copy)
                 details = factor_res.get("details", {})
+                evidence = factor_res.get("evidence", {})
                 
+                # Construct detailed evidence strings for user trust
+                ev_power = evidence.get("power_rating", {})
+                if "home_rank" in ev_power:
+                    power_ev = f"순위차: 홈 {ev_power.get('home_rank')}위 vs 원정 {ev_power.get('away_rank')}위 (득실차 {ev_power.get('gd_diff'):+d})"
+                elif "home_xg_adv" in ev_power:
+                    power_ev = f"기대득점 우위: 홈 {ev_power.get('home_xg_adv'):+.2f} vs 원정 {ev_power.get('away_xg_adv'):+.2f}"
+                else:
+                    power_ev = "순위 및 득실 통계 분석 완료"
+
+                ev_form = evidence.get("form_momentum", {})
+                if "home_form" in ev_form:
+                    form_ev = f"최근 5경기: 홈 {ev_form.get('home_form')} ({ev_form.get('home_pts')}점) vs 원정 {ev_form.get('away_form')} ({ev_form.get('away_pts')}점)"
+                elif "home_form_index" in ev_form:
+                    form_ev = f"최근 흐름 점수: 홈 {ev_form.get('home_form_index')} vs 원정 {ev_form.get('away_form_index')}"
+                else:
+                    form_ev = "최근 흐름 및 폼 분석 완료"
+
+                ev_h2h = evidence.get("h2h_dominance", {})
+                if ev_h2h.get("total_matches", 0) > 0:
+                    h2h_ev = f"최근 맞대결 {ev_h2h.get('total_matches')}경기: 홈 {ev_h2h.get('home_wins')}승 {ev_h2h.get('draws')}무 {ev_h2h.get('away_wins')}패 (홈 기준)"
+                else:
+                    h2h_ev = "최근 3년간 공식 맞대결 기록 없음"
+
+                ev_inj = evidence.get("injury_fatigue", {})
+                inj_ev = f"부상자: 홈 {ev_inj.get('home_injuries', 0)}명 / 원정 {ev_inj.get('away_injuries', 0)}명 | 14일내 경기 수: 홈 {ev_inj.get('home_recent_matches', 2)}회 vs 원정 {ev_inj.get('away_recent_matches', 2)}회"
+
+                ev_coach = evidence.get("coach_factor", {})
+                coach_ev = f"감독 전술/임기 안정 점수: 홈 {ev_coach.get('home_coach_score', 50)}점 vs 원정 {ev_coach.get('away_coach_score', 50)}점"
+
+                ev_sq = evidence.get("squad_quality", {})
+                if "home_xg" in ev_sq:
+                    sq_ev = f"평균 xG: 홈 {ev_sq.get('home_xg'):.2f} vs 원정 {ev_sq.get('away_xg'):.2f} | 평균 점유율: 홈 {ev_sq.get('home_poss')}% vs 원정 {ev_sq.get('away_poss')}%"
+                else:
+                    sq_ev = "xG 및 패스 전개 경기력 분석 중"
+
+                ev_mkt = evidence.get("market_implied", {})
+                if "home_odds" in ev_mkt:
+                    mkt_ev = f"북메이커 배당률: [{ev_mkt.get('home_odds')} / {ev_mkt.get('draw_odds')} / {ev_mkt.get('away_odds')}] → 홈 승률 {ev_mkt.get('home_implied_prob')}% 예측"
+                else:
+                    mkt_ev = "해외 메이저 배당률 내재 확률 반영됨"
+
                 prediction["factors"] = [
-                    {"name": "전력 지수", "weight": 20, "score": details.get("power_rating", 50), "detail": "리그 순위 및 득실차 기반 전력 수준"},
-                    {"name": "최근 경기 흐름", "weight": 15, "score": details.get("form_momentum", 50), "detail": "최근 5경기 경기 성적 흐름"},
-                    {"name": "상대 전적", "weight": 10, "score": details.get("h2h_dominance", 50), "detail": "양 팀 간 최근 맞대결 성적"},
-                    {"name": "부상 및 피로도", "weight": 15, "score": details.get("injury_fatigue", 50), "detail": "부상자 수 및 최근 일정 간격 피로도"},
-                    {"name": "감독 지수", "weight": 10, "score": details.get("coach_factor", 50), "detail": "감독 전술 성향 및 임기 안정성"},
-                    {"name": "선수단 경기력", "weight": 15, "score": details.get("squad_quality", 50), "detail": "점유율, xG 및 deep completions 경기력 세부 통계"},
-                    {"name": "배당 내재 확률", "weight": 15, "score": details.get("market_implied", 50), "detail": "해외 메이저 북메이커 내재 확률 분석"}
+                    {"name": "전력 지수", "weight": 0.20, "score": details.get("power_rating", 50), "detail": "리그 순위 및 득실차 기반 전력 수준", "evidence": power_ev},
+                    {"name": "최근 경기 흐름", "weight": 0.15, "score": details.get("form_momentum", 50), "detail": "최근 5경기 경기 성적 흐름", "evidence": form_ev},
+                    {"name": "상대 전적", "weight": 0.10, "score": details.get("h2h_dominance", 50), "detail": "양 팀 간 최근 맞대결 성적", "evidence": h2h_ev},
+                    {"name": "부상 및 피로도", "weight": 0.15, "score": details.get("injury_fatigue", 50), "detail": "부상자 수 및 최근 일정 간격 피로도", "evidence": inj_ev},
+                    {"name": "감독 지수", "weight": 0.10, "score": details.get("coach_factor", 50), "detail": "감독 전술 성향 및 임기 안정성", "evidence": coach_ev},
+                    {"name": "선수단 경기력", "weight": 0.15, "score": details.get("squad_quality", 50), "detail": "점유율, xG 및 deep completions 경기력 세부 통계", "evidence": sq_ev},
+                    {"name": "배당 내재 확률", "weight": 0.15, "score": details.get("market_implied", 50), "detail": "해외 메이저 북메이커 내재 확률 분석", "evidence": mkt_ev}
                 ]
                 preds.append(prediction)
             except Exception as e:
