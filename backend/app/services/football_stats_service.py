@@ -87,7 +87,6 @@ class FootballStatsService:
     def _headers(self) -> Dict:
         return {
             "x-apisports-key": self.api_key,
-            "x-rapidapi-host": "v3.football.api-sports.io",
         }
 
     def _can_request(self) -> bool:
