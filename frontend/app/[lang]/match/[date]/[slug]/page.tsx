@@ -176,7 +176,7 @@ export default async function MatchDetailPage({ params }: MatchPageProps) {
                         
                         {/* Go to Market Button */}
                         <div className="mt-8 text-center">
-                            <a href={`/${params.lang}/market`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-white/10 hover:bg-white/20 transition-colors text-white">
+                            <a href={`/${params.lang}/bets`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold bg-white/10 hover:bg-white/20 transition-colors text-white">
                                 <span>전체 스코어닉스 분석 보기</span>
                                 <span>→</span>
                             </a>

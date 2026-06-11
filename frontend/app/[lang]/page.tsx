@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import DeadlineBanner from '../components/DeadlineBanner';
 import HeroSection from '../components/HeroSection';
-import MatchVoting from '../components/MatchVoting';
 import Leaderboard from '../components/Leaderboard';
 import OnboardingTour, { TourRestartButton } from '../components/OnboardingTour';
 import { homeTourSteps } from '../lib/tourSteps';
@@ -19,7 +18,6 @@ export default function Home() {
 
             <main className="flex-grow w-full relative z-10">
                 <HeroSection />
-                <MatchVoting />
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                     <Leaderboard />
                 </section>

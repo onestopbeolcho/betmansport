@@ -57,7 +57,7 @@ LEAGUE_MAP = {
     "soccer_egypt_premier_league": 233,     # 🇪🇬 Egypt — Premier League
 }
 
-CURRENT_SEASON = 2025  # 2025-2026 시즌
+CURRENT_SEASON = 2026  # 2026 시즌
 
 # Pinnacle bookmaker ID in API-Football = 4
 PINNACLE_BOOKMAKER_ID = 4
