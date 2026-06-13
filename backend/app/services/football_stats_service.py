@@ -41,6 +41,8 @@ LEAGUE_MAP = {
     "soccer_uefa_champs_league": 2,         # 🇪🇺 Champions League
     "soccer_uefa_europa_league": 3,         # 🇪🇺 Europa League
     "soccer_uefa_europa_conference_league": 848, # 🇪🇺 Europa Conference League
+    "soccer_world_cup": 1,                  # 🏆 World Cup
+
     # ─── 아시아 ───
     "soccer_korea_kleague": 292,            # 🇰🇷 Korea — K League 1
     "soccer_japan_jleague": 98,             # 🇯🇵 Japan — J1 League
@@ -778,6 +780,68 @@ class FootballStatsService:
 
             # 배당 수집
             odds_list = await self.fetch_odds_for_league(league_id)
+            
+            # Fallback: 만약 odds_list가 비어있고 다가오는 경기가 존재한다면 개별 fixture 단위로 수집 시도
+            if not odds_list and fixture_teams:
+                # 3일(72시간) 이내 경기만 필터링하여 불필요한 미래 경기 배당 요청 방지
+                now_utc = datetime.now(timezone.utc)
+                max_future = now_utc + timedelta(days=3)
+                valid_fixtures = {}
+                for fid, teams_info in fixture_teams.items():
+                    date_str = teams_info.get("date")
+                    if date_str:
+                        try:
+                            match_dt = datetime.fromisoformat(date_str)
+                            if now_utc <= match_dt <= max_future:
+                                valid_fixtures[fid] = teams_info
+                        except Exception:
+                            valid_fixtures[fid] = teams_info
+                    else:
+                        valid_fixtures[fid] = teams_info
+
+                if valid_fixtures:
+                    logger.info(f"  ⚠️ No batch odds for {league_key}. Trying fixture-by-fixture odds fallback for {len(valid_fixtures)} matches within 3 days...")
+                    for fid, teams_info in valid_fixtures.items():
+                        # Pinnacle (우선순위)
+                        data_pin = await self._get("odds", {"fixture": fid, "bookmaker": PINNACLE_BOOKMAKER_ID})
+                        # Bet365 (Fallback)
+                        data_bet = await self._get("odds", {"fixture": fid, "bookmaker": BET365_BOOKMAKER_ID})
+                    
+                    parsed_odds = None
+                    for data in [data_pin, data_bet]:
+                        if not data or not data.get("response"):
+                            continue
+                        for item in data.get("response", []):
+                            for bookie in item.get("bookmakers", []):
+                                for bet in bookie.get("bets", []):
+                                    if bet.get("name") != "Match Winner":
+                                        continue
+                                    home_odds, draw_odds, away_odds = 0.0, 0.0, 0.0
+                                    for val in bet.get("values", []):
+                                        v = val.get("value", "")
+                                        odd = float(val.get("odd", 0))
+                                        if v == "Home": home_odds = odd
+                                        elif v == "Draw": draw_odds = odd
+                                        elif v == "Away": away_odds = odd
+                                    if home_odds > 0 and away_odds > 0:
+                                        parsed_odds = {
+                                            "fixture_id": fid,
+                                            "home_odds": home_odds,
+                                            "draw_odds": draw_odds,
+                                            "away_odds": away_odds,
+                                            "bookmaker": bookie.get("name", ""),
+                                            "match_time": teams_info.get("date", ""),
+                                            "league_name": league_key,
+                                        }
+                                        break
+                                if parsed_odds: break
+                            if parsed_odds: break
+                        if parsed_odds:
+                            break
+                    
+                    if parsed_odds:
+                        odds_list.append(parsed_odds)
+            
             for o in odds_list:
                 fid = o.get("fixture_id")
                 teams = fixture_teams.get(fid, {})

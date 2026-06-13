@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 class SoccerStatsService:
     def __init__(self):
         self.api_key = os.getenv("API_FOOTBALL_KEY")
-        self.base_url = "https://api-football-v1.p.rapidapi.com/v3"
+        self.base_url = "https://v3.football.api-sports.io"
         self.headers = {
-            "X-RapidAPI-Key": self.api_key,
-            "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
+            "x-apisports-key": self.api_key,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         
-        # Target League IDs (EPL, La Liga, Bundesliga, Serie A)
-        self.target_leagues = [39, 140, 78, 135]
-        self.current_season = 2023 
+        # Target League IDs (World Cup, EPL, La Liga, Bundesliga, Serie A, K League, J League, MLS)
+        self.target_leagues = [1, 39, 140, 78, 135, 292, 98, 253]
+        self.current_season = 2026 
         
         # Cache memory
         # team_mapping_cache: name -> {"team_id": 33, "league_id": 39}
