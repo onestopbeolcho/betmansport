@@ -203,3 +203,48 @@ async def list_generated_videos():
 async def list_jobs():
     """현재 세션의 모든 작업 목록"""
     return {"jobs": list(_jobs.values()), "count": len(_jobs)}
+
+
+class VideoDistributeRequest(BaseModel):
+    mode: str = "top_picks"  # marketing, winning, educational, top_picks
+    avatar: bool = False
+
+
+@router.post("/distribute")
+async def trigger_video_distribution(req: VideoDistributeRequest, background_tasks: BackgroundTasks):
+    """
+    고화질 하이브리드 비디오 생성 및 유튜브 + 구글 드라이브 + 텔레그램 배포 파이프라인 트리거
+    """
+    job_id = str(uuid.uuid4())[:8]
+    _jobs[job_id] = {
+        "job_id": job_id,
+        "type": f"distribute_{req.mode}",
+        "status": "queued",
+        "created_at": datetime.now().isoformat(),
+    }
+    
+    async def run_pipeline_job():
+        _jobs[job_id]["status"] = "processing"
+        _jobs[job_id]["started_at"] = datetime.now().isoformat()
+        try:
+            from distribution_scheduler import run_distribution_pipeline
+            res = await run_distribution_pipeline(req.mode, req.avatar)
+            if res.get("status") == "success":
+                _jobs[job_id]["status"] = "done"
+                _jobs[job_id]["youtube_url"] = res.get("youtube_url")
+                _jobs[job_id]["google_drive_link"] = res.get("google_drive_link")
+            else:
+                _jobs[job_id]["status"] = "failed"
+                _jobs[job_id]["error"] = res.get("reason", "Unknown reason")
+        except Exception as e:
+            _jobs[job_id]["status"] = "failed"
+            _jobs[job_id]["error"] = str(e)
+        _jobs[job_id]["finished_at"] = datetime.now().isoformat()
+
+    background_tasks.add_task(run_pipeline_job)
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": f"배포 파이프라인이 백그라운드에서 트리거되었습니다. /api/video/status/{job_id} 에서 확인하세요."
+    }
+

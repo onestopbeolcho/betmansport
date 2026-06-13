@@ -447,6 +447,46 @@ except ImportError:
     PRESENTER_IMAGE = ""
 
 
+def apply_audio_ducking(bgm_clip, speech_clip, duck_vol=0.03, normal_vol=0.12, threshold=0.015, attack=0.15, release=0.35):
+    """
+    미리 말소리 진폭(Envelope)을 추출한 뒤 BGM 음량을 동적으로 조절하는 프로페셔널 오디오 덕킹 필터
+    """
+    duration = speech_clip.duration
+    fps = 10  # 0.1초마다 샘플링
+    n_samples = int(duration * fps)
+    times = np.linspace(0, duration, n_samples)
+    
+    amps = []
+    for t in times:
+        try:
+            frame = speech_clip.get_frame(t)
+            amps.append(np.max(np.abs(frame)))
+        except Exception:
+            amps.append(0.0)
+            
+    envelope = []
+    current_vol = normal_vol
+    for amp in amps:
+        target_vol = duck_vol if amp > threshold else normal_vol
+        if target_vol < current_vol:
+            current_vol = current_vol - (current_vol - target_vol) * (1.0 / max(1, fps * attack))
+            current_vol = max(current_vol, duck_vol)
+        else:
+            current_vol = current_vol + (target_vol - current_vol) * (1.0 / max(1, fps * release))
+            current_vol = min(current_vol, normal_vol)
+        envelope.append(current_vol)
+        
+    def get_vol(t):
+        if isinstance(t, np.ndarray):
+            indices = np.clip((t * fps).astype(int), 0, len(envelope) - 1)
+            return np.array([envelope[idx] for idx in indices])[:, np.newaxis]
+        else:
+            idx = min(int(t * fps), len(envelope) - 1)
+            return envelope[idx]
+            
+    return bgm_clip.fl(lambda gf, t: gf(t) * get_vol(t))
+
+
 async def _tts_async(text, path):
     import edge_tts
     # 텐션있는 여성 음성(SunHi)에 속도와 피치를 조절하여 AI 느낌 감소
@@ -828,6 +868,30 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         base_bg = ColorClip(size=(WIDTH, HEIGHT), color=(12, 12, 25)).set_duration(120)
         bg_is_video = False
 
+    # 1.1) 워터마크 채널 로고 준비
+    logo_filename = "match_briefing_logo.png"
+    if mode == "winning":
+        logo_filename = "ai_vs_bookmaker_logo.png"
+    elif mode == "educational":
+        logo_filename = "investor_academy_logo.png"
+
+    logo_path = os.path.join(os.path.dirname(__file__), logo_filename)
+    if not os.path.exists(logo_path):
+        # Fallback to video/
+        logo_path = os.path.join(os.path.dirname(__file__), "video", logo_filename)
+
+    logo_clip = None
+    if os.path.exists(logo_path):
+        try:
+            # 110x110 크기 조절 후 우측 상단 고정
+            logo_clip = (ImageClip(logo_path)
+                         .resize(newsize=(110, 110))
+                         .set_position((WIDTH - 150, 30))
+                         .set_duration(120))
+            print(f"  [*] Loaded channel logo: {logo_filename}")
+        except Exception as logo_err:
+            print(f"  [!] Failed to load logo: {logo_err}")
+
     # 2) 헤드라인
     hl_arr = render_headline()
     hl_clip = ImageClip(hl_arr).set_position(("center", 100))
@@ -921,6 +985,8 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         layers = [bg_seg]
         if not used_avatar:
             layers.append(hl_clip.set_duration(dur))
+            if logo_clip:
+                layers.append(logo_clip.set_duration(dur))
         layers.append(cap_clip)
 
         comp = CompositeVideoClip(layers)
@@ -930,7 +996,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
     print("\n  [CUT] Stitching scenes...")
     final = concatenate_videoclips(clips, method="compose")
 
-    # 5) BGM 믹싱
+    # 5) BGM 믹싱 (덕킹 효과 적용)
     bgm_path = get_bgm()
     if os.path.exists(bgm_path):
         print("  [~] Mixing BGM...")
@@ -943,7 +1009,14 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
             bgm = audio_loop(bgm, duration=final.duration)
         else:
             bgm = bgm.subclip(0, final.duration)
-        bgm = bgm.fx(volumex, 0.08)  # 목소리보다 훨씬 작게
+
+        # 프로페셔널 덕킹 효과 적용
+        try:
+            print("  [~] Applying audio ducking to BGM...")
+            bgm = apply_audio_ducking(bgm, final.audio)
+        except Exception as duck_err:
+            print(f"  [!] Ducking failed ({duck_err}) - falling back to fixed BGM volume")
+            bgm = bgm.fx(volumex, 0.08)
 
         final = final.set_audio(
             CompositeAudioClip([final.audio, bgm])
