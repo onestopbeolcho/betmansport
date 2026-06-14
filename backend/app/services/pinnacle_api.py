@@ -267,41 +267,19 @@ class PinnacleService(BaseOddsProvider):
 
     def _parse_firestore_cache_odds(self, data: List[Dict]) -> List[OddsItem]:
         """
-        Firestore 캐시에서 읽은 API-Football 형식 배당 데이터 파싱.
-        (기존 The Odds API 형식도 하위 호환)
+        Firestore 캐시에서 읽은 배당 데이터 파싱.
+        (API-Football 형식 및 The Odds API 형식 모두 지원)
         """
         items = []
         for o in data:
-            # API-Football 형식 (home_team 키 존재)
-            if "home_team" in o:
+            # 1. 레거시 The Odds API 형식 (bookmakers 배열이 존재하고, home_team도 있음)
+            # API-Football에는 bookmakers 배열이 존재하지 않고 바로 bookmaker(문자열) 필드가 들어감.
+            if "bookmakers" in o:
                 home_team = o.get("home_team", "")
                 away_team = o.get("away_team", "")
                 if not home_team or not away_team:
                     continue
 
-                home_ko = self.team_mapper.get_korean_name(home_team)
-                away_ko = self.team_mapper.get_korean_name(away_team)
-
-                bookmaker = o.get("bookmaker", "Pinnacle")
-                provider_name = f"Pinnacle" if "pinnacle" in bookmaker.lower() else f"Pinnacle ({bookmaker})"
-
-                items.append(OddsItem(
-                    provider=provider_name,
-                    sport=o.get("sport", "Soccer"),
-                    league=o.get("league", "Unknown"),
-                    team_home=home_team,
-                    team_away=away_team,
-                    team_home_ko=home_ko,
-                    team_away_ko=away_ko,
-                    home_odds=o.get("home_odds", 0.0),
-                    draw_odds=o.get("draw_odds", 0.0),
-                    away_odds=o.get("away_odds", 0.0),
-                    match_time=o.get("match_time", ""),
-                ))
-            # 레거시 The Odds API 형식 (home_team 키 없이 bookmakers 배열)
-            elif "bookmakers" in o:
-                home_team = o.get("home_team", "")
-                away_team = o.get("away_team", "")
                 home_ko = self.team_mapper.get_korean_name(home_team)
                 away_ko = self.team_mapper.get_korean_name(away_team)
                 bookmakers = o.get("bookmakers", [])
@@ -326,9 +304,19 @@ class PinnacleService(BaseOddsProvider):
                     elif name == "Draw":
                         draw_odds = price
                 if home_odds > 0 and away_odds > 0:
+                    # sport_key에 따라 종목 결정
+                    sport_key = o.get("sport_key", "").lower()
+                    sport_type = "Soccer"
+                    if "baseball" in sport_key:
+                        sport_type = "Baseball"
+                    elif "basketball" in sport_key:
+                        sport_type = "Basketball"
+                    elif "hockey" in sport_key:
+                        sport_type = "Hockey"
+
                     items.append(OddsItem(
-                        provider="Pinnacle",
-                        sport="Soccer",
+                        provider=f"Pinnacle (Ref)" if pinnacle_or_other.get("key") == "pinnacle" else f"Pinnacle ({pinnacle_or_other.get('title', 'Ref')})",
+                        sport=sport_type,
                         league=o.get("sport_title", "Unknown"),
                         team_home=home_team,
                         team_away=away_team,
@@ -339,6 +327,32 @@ class PinnacleService(BaseOddsProvider):
                         away_odds=away_odds,
                         match_time=o.get("commence_time", ""),
                     ))
+            # 2. API-Football 형식 (home_team 키 존재하고 bookmakers 배열 없음)
+            elif "home_team" in o:
+                home_team = o.get("home_team", "")
+                away_team = o.get("away_team", "")
+                if not home_team or not away_team:
+                    continue
+
+                home_ko = self.team_mapper.get_korean_name(home_team)
+                away_ko = self.team_mapper.get_korean_name(away_team)
+
+                bookmaker = o.get("bookmaker", "Pinnacle")
+                provider_name = f"Pinnacle" if "pinnacle" in bookmaker.lower() else f"Pinnacle ({bookmaker})"
+
+                items.append(OddsItem(
+                    provider=provider_name,
+                    sport=o.get("sport", "Soccer"),
+                    league=o.get("league", "Unknown"),
+                    team_home=home_team,
+                    team_away=away_team,
+                    team_home_ko=home_ko,
+                    team_away_ko=away_ko,
+                    home_odds=o.get("home_odds", 0.0),
+                    draw_odds=o.get("draw_odds", 0.0),
+                    away_odds=o.get("away_odds", 0.0),
+                    match_time=o.get("match_time", ""),
+                ))
         return items
 
     def _get_mock_data(self) -> List[OddsItem]:

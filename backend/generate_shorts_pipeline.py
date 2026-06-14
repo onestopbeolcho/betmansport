@@ -834,11 +834,11 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                     os.remove(tmp_webm)
                 except Exception:
                     pass
-                print("  [✅] Dynamic web screen background compiled successfully!")
+                print("  [OK] Dynamic web screen background compiled successfully!")
             else:
                 print("  [!] Browser recording failed. Falling back to static templates.")
         except Exception as record_err:
-            print(f"  [❌] Browser recording error: {record_err}. Using fallback templates.")
+            print(f"  [FAIL] Browser recording error: {record_err}. Using fallback templates.")
 
     # 1) 배경 준비
     bg_filename = "premium_bg.png"
