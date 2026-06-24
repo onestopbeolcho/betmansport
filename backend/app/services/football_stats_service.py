@@ -111,7 +111,7 @@ class FootballStatsService:
                 self._daily_requests += 1
 
                 if resp.status_code != 200:
-                    logger.warning(f"API-Football {endpoint}: HTTP {resp.status_code}")
+                    logger.warning(f"API-Football {endpoint}: HTTP {resp.status_code} | Response: {resp.text[:500]}")
                     return None
 
                 data = resp.json()
