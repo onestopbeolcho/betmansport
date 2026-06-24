@@ -795,3 +795,33 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
     </div>
     """
     return {"title": title, "html": html}
+
+
+def translate_text(text: str, target_lang: str) -> str:
+    """Gemini 1.5 Flash를 사용하여 텍스트를 고품질 번역합니다. 실패 시 원본 반환."""
+    if not _init_gemini():
+        logger.warning("Gemini not initialized for translation. Returning original text.")
+        return text
+
+    target_names = {
+        "en": "English (Sports betting prediction analyst tone)",
+        "ja": "Japanese (Sports tipping / prediction tone)",
+        "ko": "Korean (Sports analyst tone)"
+    }
+    target_name = target_names.get(target_lang, target_lang)
+
+    prompt = (
+        f"Translate the following text to {target_name}. "
+        f"Keep the original structure, line breaks, team names, numbers, and professional tone. "
+        f"Return ONLY the translated text, without any explanations or headers.\n\n"
+        f"Text:\n{text}"
+    )
+
+    try:
+        response = _client.generate_content(prompt)
+        if response and response.text:
+            return response.text.strip()
+    except Exception as e:
+        logger.error(f"Gemini translation error to {target_lang}: {e}")
+    return text
+

@@ -60,130 +60,156 @@ def send_telegram_alert(message: str) -> bool:
 
 async def run_distribution_pipeline(mode: str, use_avatar: bool = False):
     """
-    하이브리드 비디오 제작 및 플랫폼별 배포 자동화 파이프라인 실행
+    하이브리드 비디오 제작 및 플랫폼별 배포 자동화 파이프라인 실행 (다국어 일괄 처리)
     """
     logger.info(f"🚀 배포 파이프라인 트리거됨. 모드: {mode} (아바타 활성: {use_avatar})")
     
     # 0. 환경변수 최신화 (Firestore 로딩)
     load_config_to_env()
     
-    # 임시 출력 파일 경로 설정
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_output")
     os.makedirs(output_dir, exist_ok=True)
-    video_path = os.path.join(output_dir, f"scorenix_shorts_{mode}_{ts}.mp4")
     
-    # 1. 숏폼 비디오 생성 (인트로/아웃트로 D-ID 아바타 + 본문 7-Factor 카드 화면)
-    logger.info("🎥 하이브리드 숏폼 비디오 렌더링 시작...")
-    try:
-        # generate_shorts_pipeline 모듈의 비디오 제작 함수 비동기/동기 호출
-        # generate_video는 내부적으로 ffmpeg 및 moviepy를 사용하여 동기적으로 차례차례 빌드합니다.
-        loop = asyncio.get_running_loop()
-        # ThreadPoolExecutor를 사용하여 CPU/디스크 집약적인 moviepy 렌더링이 비동기 루프를 막지 않도록 실행
-        rendered_path = await loop.run_in_executor(
-            None, 
-            generate_video, 
-            "background.mp4", 
-            video_path, 
-            False,      # auto_upload는 본 스케줄러에서 따로 관리하므로 False
-            use_avatar, 
-            mode
-        )
-    except Exception as render_err:
-        logger.error(f"❌ 비디오 렌더링 중 오류 발생: {render_err}", exc_info=True)
-        return {"status": "failed", "reason": f"Rendering error: {render_err}"}
-
-    if not rendered_path or not os.path.exists(rendered_path):
-        logger.error("❌ 비디오 파일이 성공적으로 생성되지 않았습니다.")
-        return {"status": "failed", "reason": "Video file not found after rendering"}
-
-    logger.info(f"✅ 비디오 렌더링 완료: {rendered_path}")
-
-    # 2. 유튜브 숏츠 자동 업로드
-    logger.info("📤 유튜브 숏츠(YouTube Shorts) 자동 업로드 시도 중...")
-    youtube_url = None
-    try:
-        from app.services.youtube_uploader import upload_to_youtube
-        now = datetime.now()
+    results = {}
+    langs = ["ko", "en", "ja"]
+    
+    for lang in langs:
+        logger.info(f"🌐 [{lang.upper()}] 다국어 숏츠 빌드 및 배포 시작...")
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        video_path = os.path.join(output_dir, f"scorenix_shorts_{mode}_{lang}_{ts}.mp4")
         
-        # 제목 및 캡션 빌드
-        title = f"[AI 예측] {now.strftime('%m/%d')} 데이터가 말하는 오늘의 경기 #shorts"
-        description = (
-            f"✦ {now.strftime('%Y년 %m월 %d일')} 기준 AI 데이터 분석\n\n"
-            "7-Factor AI 알고리즘으로 분석한 기대값 리포트입니다.\n"
-            "※ 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
-            "👉 전체 분석 리포트 확인: https://scorenix.com\n\n"
-            "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts"
-        )
-        tags = ["스포츠분석", "AI분석", "배당분석", "데이터분석", "shorts", "스코어닉스"]
-        
-        youtube_vid = upload_to_youtube(rendered_path, title, description, tags)
-        if youtube_vid:
-            youtube_url = f"https://youtu.be/{youtube_vid}"
-            logger.info(f"✅ 유튜브 업로드 완료: {youtube_url}")
-        else:
-            logger.warning("⚠️ 유튜브 업로드 결과 비디오 ID를 받지 못했습니다.")
-    except Exception as yt_err:
-        logger.error(f"❌ 유튜브 업로드 실패: {yt_err}")
+        # 1. 숏폼 비디오 생성 (Gemini 번역 및 성우 튜닝 탑재)
+        try:
+            loop = asyncio.get_running_loop()
+            rendered_path = await loop.run_in_executor(
+                None, 
+                generate_video, 
+                "background.mp4", 
+                video_path, 
+                False,      # auto_upload는 본 스케줄러에서 따로 관리하므로 False
+                use_avatar, 
+                mode,
+                lang
+            )
+        except Exception as render_err:
+            logger.error(f"❌ [{lang.upper()}] 비디오 렌더링 중 오류 발생: {render_err}", exc_info=True)
+            continue
 
-    # 3. 구글 드라이브(Google Drive) 공유 폴더로 업로드 연동
-    logger.info("📂 인스타그램/틱톡 배포용 구글 드라이브 백업 업로드 시작...")
-    drive_link = None
-    try:
-        if google_drive_service.is_configured:
-            drive_link = google_drive_service.upload_video(rendered_path)
-            if drive_link:
-                logger.info(f"✅ 구글 드라이브 업로드 성공. 링크: {drive_link}")
+        if not rendered_path or not os.path.exists(rendered_path):
+            logger.error(f"❌ [{lang.upper()}] 비디오 파일이 성공적으로 생성되지 않았습니다.")
+            continue
+
+        logger.info(f"✅ [{lang.upper()}] 비디오 렌더링 완료: {rendered_path}")
+
+        # 2. 유튜브 숏츠 자동 업로드
+        logger.info(f"📤 [{lang.upper()}] 유튜브 숏츠 자동 업로드 시도 중...")
+        youtube_url = None
+        try:
+            from app.services.youtube_uploader import upload_to_youtube
+            now = datetime.now()
+            
+            # 제목 및 캡션 다국어 템플릿
+            title_templates = {
+                "ko": f"[AI 예측] {now.strftime('%m/%d')} 데이터가 말하는 오늘의 경기 #shorts",
+                "en": f"[AI Predict] {now.strftime('%m/%d')} Today's Match Predictions by Data #shorts",
+                "ja": f"[AI予測] {now.strftime('%m/%d')} データが語る今日の勝敗予想 #shorts"
+            }
+            title = title_templates.get(lang, title_templates["ko"])
+            
+            description_templates = {
+                "ko": (
+                    f"✦ {now.strftime('%Y년 %m월 %d일')} 기준 AI 데이터 분석\n\n"
+                    "7-Factor AI 알고리즘으로 분석한 기대값 리포트입니다.\n"
+                    "※ 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
+                    "👉 전체 분석 리포트 확인: https://scorenix.com\n\n"
+                    "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts"
+                ),
+                "en": (
+                    f"✦ AI Data Analysis as of {now.strftime('%b %d, %Y')}\n\n"
+                    "Expectation value report analyzed by 7-Factor AI algorithm.\n"
+                    "* This video is a data analysis result and is not an investment recommendation.\n\n"
+                    "👉 Check all analysis reports: https://scorenix.com\n\n"
+                    "#sportsanalytics #AIprediction #oddsanalysis #dataanalysis #shorts"
+                ),
+                "ja": (
+                    f"✦ {now.strftime('%Y年%m月%d日')} 基準 AIデータ分析\n\n"
+                    "7-Factor AIアルゴリズムで分析した期待値レポートです。\n"
+                    "※ 本動画はデータ分析結果であり、投資勧誘ではありません。\n\n"
+                    "👉 全分析レポートを確認: https://scorenix.com\n\n"
+                    "#スポーツ分析 #AI分析 #配当分析 #データ分析 #shorts"
+                )
+            }
+            description = description_templates.get(lang, description_templates["ko"])
+            
+            tags_map = {
+                "ko": ["스포츠분석", "AI분석", "배당분석", "데이터분석", "shorts", "스코어닉스"],
+                "en": ["sportsanalytics", "AIprediction", "oddsanalysis", "dataanalysis", "shorts", "scorenix"],
+                "ja": ["スポーツ分析", "AI分析", "配当分析", "データ分析", "shorts", "スコアニック"]
+            }
+            tags = tags_map.get(lang, tags_map["ko"])
+            
+            youtube_vid = upload_to_youtube(rendered_path, title, description, tags)
+            if youtube_vid:
+                youtube_url = f"https://youtu.be/{youtube_vid}"
+                logger.info(f"✅ [{lang.upper()}] 유튜브 업로드 완료: {youtube_url}")
             else:
-                logger.warning("⚠️ 구글 드라이브 업로드 결과 링크를 받지 못했습니다.")
-        else:
-            logger.warning("⚠️ 구글 드라이브 서비스가 비활성화 상태입니다. 서비스 계정 JSON 설정을 확인해 주세요.")
-    except Exception as drive_err:
-        logger.error(f"❌ 구글 드라이브 업로드 중 오류 발생: {drive_err}")
+                logger.warning(f"⚠️ [{lang.upper()}] 유튜브 업로드 결과 비디오 ID를 받지 못했습니다.")
+        except Exception as yt_err:
+            logger.error(f"❌ [{lang.upper()}] 유튜브 업로드 실패: {yt_err}")
 
-    # 4. 인스타그램 릴스 & 틱톡 복사용 텔레그램 채널 알림 전송
-    logger.info("📲 모바일 수동 배포 지원을 위한 텔레그램 알림 생성 중...")
+        # 3. 구글 드라이브 업로드
+        logger.info(f"📂 [{lang.upper()}] 구글 드라이브 백업 업로드 시작...")
+        drive_link = None
+        try:
+            if google_drive_service.is_configured:
+                drive_link = google_drive_service.upload_video(rendered_path)
+                if drive_link:
+                    logger.info(f"✅ [{lang.upper()}] 구글 드라이브 업로드 성공. 링크: {drive_link}")
+                else:
+                    logger.warning(f"⚠️ [{lang.upper()}] 구글 드라이브 업로드 결과 링크를 받지 못했습니다.")
+            else:
+                logger.warning(f"⚠️ [{lang.upper()}] 구글 드라이브 서비스가 비활성화 상태입니다.")
+        except Exception as drive_err:
+            logger.error(f"❌ [{lang.upper()}] 구글 드라이브 업로드 중 오류 발생: {drive_err}")
+
+        results[lang] = {
+            "youtube_url": youtube_url,
+            "drive_link": drive_link
+        }
+
+        # 5. 로컬 임시 파일 정리
+        try:
+            if os.path.exists(rendered_path):
+                os.remove(rendered_path)
+                logger.info(f"🗑️ [{lang.upper()}] 업로드 완료된 로컬 임시 비디오 파일이 정리되었습니다.")
+        except OSError as clean_err:
+            logger.warning(f"⚠️ [{lang.upper()}] 로컬 임시 비디오 정리 오류: {clean_err}")
+
+    # 4. 텔레그램 다국어 통합 알림 전송
+    logger.info("📲 통합 다국어 배포 알림 발송 중...")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     
-    # 알림 메시지 템플릿
-    alert_msg = f"""<b>🎬 스코어닉스 AI 숏폼 제작 완료 ({mode.upper()})</b>
+    alert_msg = f"""<b>🎬 스코어닉스 글로벌 AI 숏폼 제작 완료 ({mode.upper()})</b>
 일시: {now_str}
 
-<b>📲 인스타그램 릴스 및 틱톡 복사용 메타데이터</b>
---------------------------------------------
-<b>[제목 추천]</b>
-오늘 밤 AI 승리 예측 경기 TOP 3! ⚡
-
-<b>[본문 캡션 & 해시태그]</b>
-🧠 스코어닉스 7-Factor AI 알고리즘 분석 완료!
-Pinnacle 해외 배당판과 국내 배당 효율성을 완벽히 교차 검증한 기대값(EV) 분석 리포트입니다.
-
-👉 프로필 링크를 눌러 실시간 분석 카드를 무료로 확인하세요!
-
-#스코어닉스 #AI분석 #스포츠데이터 #가치투자 #오늘의경기 #릴스 #Reels #TikTok
---------------------------------------------
-
 <b>🔗 다운로드 및 퍼블릭 링크</b>
-📁 <a href="{drive_link or '#'}">구글 드라이브에서 비디오 다운로드</a>
-📺 <a href="{youtube_url or '#'}">유튜브 숏츠 바로가기</a>
 """
-    
+    for lang, res in results.items():
+        dl_link = res.get("drive_link") or "#"
+        yt_link = res.get("youtube_url") or "#"
+        alert_msg += f"""
+<b>[{lang.upper()} 버전]</b>
+📁 <a href="{dl_link}">구글 드라이브 비디오 다운로드</a>
+📺 <a href="{yt_link}">유튜브 숏츠 바로가기</a>
+"""
+
+    alert_msg += f"""
+<b>📲 SNS 복사용 기본 해시태그</b>
+#스코어닉스 #AI분석 #스포츠데이터 #릴스 #Reels #TikTok #shorts
+"""
     send_telegram_alert(alert_msg)
     
-    # 5. 로컬 영상 임시 보관 (클라우드 배포 시 파일 시스템 부족 방지를 위해 업로드 완료 후 로컬 파일 정리)
-    try:
-        if os.path.exists(rendered_path):
-            os.remove(rendered_path)
-            logger.info("🗑️ 업로드 완료된 로컬 임시 비디오 파일이 정리되었습니다.")
-    except OSError as clean_err:
-        logger.warning(f"⚠️ 로컬 임시 비디오 정리 오류: {clean_err}")
-
-    return {
-        "status": "success",
-        "mode": mode,
-        "youtube_url": youtube_url,
-        "google_drive_link": drive_link
-    }
+    return {"status": "success", "results": results}
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useEffect, useState, useMemo } from 'react';
+import { useDictionarySafe } from '../context/DictionaryContext';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
 import PremiumGate from '../components/PremiumGate';
@@ -214,6 +215,7 @@ type FilterType = 'all' | 'strong' | 'recommended' | 'neutral';
 
 /* ───── Main Component ───── */
 export default function AnalysisPage() {
+    const dict = useDictionarySafe();
     const [aiPredictions, setAiPredictions] = useState<AIPrediction[]>([]);
     const [dataSources, setDataSources] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -714,7 +716,7 @@ export default function AnalysisPage() {
 
                                         {/* Expandable detail panel */}
                                         {isExpanded && (
-                                            <PremiumGate featureName="AI Prediction Details" requiredTier="pro">
+                                            <PremiumGate featureName={dict?.bets?.aiDetailAnalysis || "AI 상세 분석"} requiredTier="pro">
                                                 <div className="px-4 pb-4 pt-3" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-subtle)' }}>
 
                                                     {/* Radar chart + factors side by side */}

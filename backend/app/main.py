@@ -21,7 +21,7 @@ except Exception as _e:
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, combinator, ai_predictions, notifications, league, blogger, wordpress
+from app.api.endpoints import admin, odds, auth, payments, portfolio, market, scheduler, analysis, community, prediction, combinator, ai_predictions, notifications, league, blogger, wordpress, gold
 from app.api.endpoints import vip_combo, vip_alerts, vip_portfolio, vip_market
 from app.api.endpoints import backtest
 from app.api.endpoints import marketing
@@ -93,6 +93,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(odds.router, prefix="/api", tags=["odds"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(payments.router, prefix="/api/payments", tags=["payments"])
+app.include_router(gold.router, prefix="/api/gold", tags=["gold"])
 app.include_router(portfolio.router, prefix="/api/portfolio", tags=["portfolio"])
 app.include_router(market.router, prefix="/api/market", tags=["market"])
 app.include_router(scheduler.router, prefix="/api/scheduler", tags=["scheduler"])

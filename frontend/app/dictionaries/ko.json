@@ -95,13 +95,13 @@
         "saveSuccess": "조합이 저장되었습니다!",
         "saveFail": "저장 실패",
         "networkError": "네트워크 오류",
-        "aiEngine": "AI 예측 엔진",
+        "aiEngine": "🤖 AI 고적중 예측 엔진",
         "errorFetch": "데이터를 불러오는데 실패했습니다.",
         "analyzedMatches": "분석 경기",
         "recommended": "핵심 분석",
         "avgConfidence": "평균 신뢰도",
         "gamesLearned": "경기 학습 완료",
-        "aiPrediction": "AI 예측",
+        "aiPrediction": "🔥 AI 확실 적중 예측",
         "oddsCompare": "데이터 비교",
         "matchesAnalyzed": "경기 분석 완료",
         "aiAnalyzing": "AI 예측 분석 중...",
@@ -115,7 +115,7 @@
         "odds": "지표",
         "collapse": "접기",
         "expand": "상세",
-        "aiDetailAnalysis": "AI 예측 상세 분석",
+        "aiDetailAnalysis": "🎯 AI 확실 적중 꿀픽 분석",
         "aiFactors": "AI 분석 요인",
         "betSelection": "분석 선택",
         "oddsAnalyzing": "데이터 분석 중...",
@@ -478,10 +478,11 @@
         "clearAll": "전체 삭제"
     },
     "premiumGate": {
-        "title": "프리미엄 전용 기능",
-        "description": "이 기능은 Pro 이상 회원만 이용할 수 있어요.",
-        "upgrade": "업그레이드",
-        "learnMore": "자세히 보기"
+        "title": "AI 데이터 분석 후원",
+        "description": "실시간 AI 예측 분석 엔진의 지속적인 서비스 유지를 위해 커피 한 잔 후원해 주세요.",
+        "upgrade": "커피 한 잔 후원하기 ☕",
+        "freeNotice": "(100% 무료 공개)",
+        "learnMore": "운영비 안내"
     },
     "deadline": {
         "title": "마감 임박",

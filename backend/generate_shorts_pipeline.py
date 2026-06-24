@@ -487,16 +487,31 @@ def apply_audio_ducking(bgm_clip, speech_clip, duck_vol=0.03, normal_vol=0.12, t
     return bgm_clip.fl(lambda gf, t: gf(t) * get_vol(t))
 
 
-async def _tts_async(text, path):
+async def _tts_async(text, path, lang="ko"):
     import edge_tts
-    # 텐션있는 여성 음성(SunHi)에 속도와 피치를 조절하여 AI 느낌 감소
-    voice = "ko-KR-SunHiNeural"
-    # 속도를 +15%로 조금 빠르게, 피치를 +5Hz 올려 아나운서보다 유튜버 느낌으로 세팅
-    communicate = edge_tts.Communicate(text, voice, rate="+15%", pitch="+5Hz")
+    # 언어별 최적의 성우 지정
+    voice_map = {
+        "ko": "ko-KR-SunHiNeural",
+        "en": "en-US-EmmaNeural",
+        "ja": "ja-JP-NanamiNeural"
+    }
+    voice = voice_map.get(lang, "ko-KR-SunHiNeural")
+    
+    # 속도를 언어별로 튜닝
+    rate_map = {
+        "ko": "+15%",
+        "en": "+12%",
+        "ja": "+10%"
+    }
+    rate = rate_map.get(lang, "+15%")
+    
+    pitch = "+5Hz" if lang == "ko" else "+0Hz"
+    
+    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(path)
 
 
-def generate_tts(text, path):
+def generate_tts(text, path, lang="ko"):
     """ElevenLabs (최고 품질) → Edge TTS (무료 폴백) → gTTS (최종 폴백)"""
     # 1차: ElevenLabs (API 키 있으면)
     if is_elevenlabs_available():
@@ -506,14 +521,15 @@ def generate_tts(text, path):
 
     # 2차: Edge TTS
     try:
-        asyncio.run(_tts_async(text, path))
+        asyncio.run(_tts_async(text, path, lang))
         return
     except Exception as e:
         print(f"    [!] Edge TTS failed ({e}), falling back to gTTS")
 
     # 3차: gTTS
     from gtts import gTTS
-    gTTS(text=text, lang="ko").save(path)
+    gTTS(text=text, lang=lang).save(path)
+
 
 
 # ─── 자막 이미지 렌더링 ─────────────────────────────────
@@ -773,7 +789,7 @@ def get_bgm():
 
 
 # ─── 메인 영상 생성 ─────────────────────────────────────
-def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="membership"):
+def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="membership", lang="ko"):
     if mode == "winning":
         try:
             from app.models.prediction_db import get_recent_ai_predictions
@@ -787,6 +803,20 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         matches = fetch_top_matches()
 
     script = build_script(matches, mode=mode)
+
+    # ─── 다국어 번역 (Gemini API 이용) ───
+    if lang != "ko":
+        print(f"\n[i18n] Translating video content to '{lang}' via Gemini...")
+        try:
+            from app.services.gemini_service import translate_text
+            for i, seg in enumerate(script):
+                orig_tts = seg["tts"]
+                orig_cap = seg["caption"]
+                seg["tts"] = translate_text(orig_tts, lang)
+                seg["caption"] = translate_text(orig_cap, lang)
+                print(f"  [{i+1}/{len(script)}] Translated: {seg['tts'][:20]}...")
+        except Exception as trans_e:
+            print(f"  [!] Translation failed, using original script: {trans_e}")
 
     # AI 아바타 모드 체크
     avatar_mode = use_avatar and is_did_available() and is_elevenlabs_available()
@@ -905,7 +935,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
 
         # TTS
         audio_path = os.path.join(os.path.dirname(__file__), f"_tmp_audio_{i}.mp3")
-        generate_tts(seg["tts"], audio_path)
+        generate_tts(seg["tts"], audio_path, lang=lang)
         audio = AudioFileClip(audio_path)
         dur = audio.duration
 
@@ -1127,6 +1157,8 @@ if __name__ == "__main__":
                         help="Directly specify the video mode without interactive prompt")
     parser.add_argument("--auto-upload", action="store_true",
                         help="Skip prompt and upload the video to YouTube automatically")
+    parser.add_argument("--lang", type=str, default="ko", choices=["ko", "en", "ja", "all"],
+                        help="Target language for script/TTS (ko, en, ja, all)")
     args = parser.parse_args()
 
     # AI 서비스 상태 확인
@@ -1228,19 +1260,23 @@ if __name__ == "__main__":
             else:
                 marketing_mode = "marketing"
 
-        # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
-        out_membership = os.path.join(output_dir, f"scorenix_membership_{ts}.mp4")
-        out_marketing = os.path.join(output_dir, f"scorenix_shorts_{marketing_mode}_{ts}.mp4")
+        # 3대 타겟 다국어 루프 생성
+        target_langs = ["ko", "en", "ja"] if args.lang == "all" else [args.lang]
+        
+        for lang in target_langs:
+            # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
+            out_membership = os.path.join(output_dir, f"scorenix_membership_{lang}_{ts}.mp4")
+            out_marketing = os.path.join(output_dir, f"scorenix_shorts_{marketing_mode}_{lang}_{ts}.mp4")
 
-        print(f"\n[+] Generating MEMBERSHIP (Subscriber) Video: {out_membership}")
-        generate_video("background.mp4", out_membership,
-                       auto_upload=False, use_avatar=args.avatar, mode="membership")
+            print(f"\n[+] Generating MEMBERSHIP (Subscriber) Video ({lang}): {out_membership}")
+            generate_video("background.mp4", out_membership,
+                           auto_upload=False, use_avatar=args.avatar, mode="membership", lang=lang)
 
-        print(f"\n[+] Generating MARKETING [Type: {marketing_mode}] Video: {out_marketing}")
-        generate_video("background.mp4", out_marketing,
-                       auto_upload=False, use_avatar=args.avatar, mode=marketing_mode)
+            print(f"\n[+] Generating MARKETING [Type: {marketing_mode}] Video ({lang}): {out_marketing}")
+            generate_video("background.mp4", out_marketing,
+                           auto_upload=False, use_avatar=args.avatar, mode=marketing_mode, lang=lang)
 
-        print(f"  [SAVE] Both videos successfully saved on Desktop at: {output_dir}")
+        print(f"  [SAVE] Generated videos successfully saved on Desktop at: {output_dir}")
 
         if args.auto_upload:
             print(f"\n[>>] Auto-upload enabled. Uploading {marketing_mode.upper()} video to YouTube automatically...")

@@ -415,10 +415,11 @@
         "clearAll": "Clear All"
     },
     "premiumGate": {
-        "title": "Premium Feature",
-        "description": "This feature is available for Pro members and above.",
-        "upgrade": "Upgrade",
-        "learnMore": "Learn More"
+        "title": "Support AI Analytics",
+        "description": "Please support a cup of coffee to maintain our real-time AI analytics engine.",
+        "upgrade": "Buy me a coffee ☕",
+        "freeNotice": "(100% Free)",
+        "learnMore": "Server Cost"
     },
     "deadline": {
         "title": "Deadline Approaching",
