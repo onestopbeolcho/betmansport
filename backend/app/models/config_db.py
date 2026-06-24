@@ -56,15 +56,17 @@ def load_config_to_env():
 
         for field_name, env_name in FIELD_TO_ENV.items():
             value = data.get(field_name, "")
-            if value and not os.getenv(env_name):
-                # 환경변수가 비어 있을 때만 Firestore 값 적용
-                os.environ[env_name] = str(value)
-                # 키 값은 보안을 위해 마스킹
-                masked = value[:4] + "..." + value[-4:] if len(str(value)) > 8 else "****"
-                logger.info(f"  🔑 {env_name} = {masked} (from Firestore)")
-                injected += 1
-            elif value and os.getenv(env_name):
-                logger.info(f"  ✅ {env_name} already set (env var takes priority)")
+            if value:
+                is_prod = bool(os.getenv("K_SERVICE"))
+                already_exists = bool(os.getenv(env_name))
+                if is_prod or not already_exists:
+                    os.environ[env_name] = str(value)
+                    masked = value[:4] + "..." + value[-4:] if len(str(value)) > 8 else "****"
+                    action_str = "overwrote" if already_exists else "injected"
+                    logger.info(f"  🔑 {env_name} = {masked} ({action_str} from Firestore)")
+                    injected += 1
+                else:
+                    logger.info(f"  ✅ {env_name} already set (local env var takes priority)")
 
         logger.info(f"📋 Firestore config 로드 완료: {injected}개 키 주입됨")
         return injected
