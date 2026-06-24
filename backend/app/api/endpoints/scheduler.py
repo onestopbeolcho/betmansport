@@ -671,6 +671,62 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
                 }, merge=True)
                 
                 logger.info(f"Updated daily_portfolios for {today_str} with {len(all_preds)} matches.")
+                
+                # 5. Generate and Update value_picks for VIP Combo Panel
+                try:
+                    from app.core.calculator import calculate_kelly_percentage
+                    
+                    value_picks_ref = db.collection("value_picks")
+                    batch = db.batch()
+                    value_count = 0
+                    
+                    # Fetch odds list once to match with predictions
+                    odds_list = await pinnacle_service.fetch_odds()
+                    
+                    for pred in all_preds:
+                        rec = pred.get("recommendation", "HOME")
+                        bet_type = "Home" if rec == "HOME" else "Away" if rec == "AWAY" else "Draw"
+                        
+                        prob_key = "home_win_prob" if rec == "HOME" else "away_win_prob" if rec == "AWAY" else "draw_prob"
+                        prob_pct = pred.get(prob_key, 33.3)
+                        true_prob = prob_pct / 100.0
+                        
+                        # Find corresponding pinnacle odds
+                        match_odds = next((o for o in odds_list if f"{o.team_home}_{o.team_away}" == pred.get("match_id")), None)
+                        if match_odds:
+                            p_odds = match_odds.home_odds if rec == "HOME" else match_odds.away_odds if rec == "AWAY" else match_odds.draw_odds
+                        else:
+                            p_odds = 1 / true_prob if true_prob > 0 else 1.9
+                            
+                        # Simulate domestic odds (94% payout margin)
+                        domestic_odds = round(p_odds * 0.94, 2)
+                        ev = true_prob * domestic_odds
+                        
+                        # EV threshold (0.95 to ensure some recommendations load)
+                        if ev >= 0.95:
+                            kelly = calculate_kelly_percentage(domestic_odds, true_prob) if domestic_odds > 1 else 0
+                            doc_id = f"{pred.get('match_id')}_{bet_type}_{today_str}".replace("/", "-").replace("\\", "-")
+                            
+                            doc_ref = value_picks_ref.document(doc_id)
+                            batch.set(doc_ref, {
+                                "match_name": f"{pred.get('team_home')} vs {pred.get('team_away')}",
+                                "bet_type": bet_type,
+                                "domestic_odds": domestic_odds,
+                                "pinnacle_odds": round(p_odds, 2),
+                                "true_probability": round(true_prob, 4),
+                                "expected_value": round(ev, 4),
+                                "kelly_pct": round(kelly, 2),
+                                "sport": pred.get("sport", "Soccer"),
+                                "league": pred.get("league", "Unknown"),
+                                "created_at": datetime.now(timezone.utc).isoformat()
+                            })
+                            value_count += 1
+                            
+                    if value_count > 0:
+                        batch.commit()
+                        logger.info(f"Populated {value_count} value_picks for today's VIP combo optimization.")
+                except Exception as e_val:
+                    logger.error(f"Failed to generate value_picks: {e_val}", exc_info=True)
             else:
                 logger.warning("No predictions were generated. Skipping Firestore update.")
                 
