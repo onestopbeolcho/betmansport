@@ -48,6 +48,24 @@ class CustomComboRequest(BaseModel):
 
 # ─── Endpoints ───
 
+@router.get("/auto-optimize")
+async def auto_optimize_combo_get(
+    budget: int = 100_000,
+    max_combo_size: int = 5,
+    min_value_gap: float = 5.0,
+    user_id: str = Depends(require_tier("pro")),
+):
+    """
+    🎯 오늘의 밸류벳 자동 조합 최적화 (GET 래퍼).
+    """
+    req = AutoOptimizeRequest(
+        budget=budget,
+        max_combo_size=max_combo_size,
+        min_value_gap=min_value_gap
+    )
+    return await auto_optimize_combo(req, user_id=user_id)
+
+
 @router.post("/auto-optimize")
 async def auto_optimize_combo(
     req: AutoOptimizeRequest,
