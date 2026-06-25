@@ -28,3 +28,8 @@
 ### 환경변수
 - Cloud Run의 환경변수는 Firestore `system_config/main_config`에서 자동 로드됩니다.
 - `.env` 파일은 로컬 개발 전용입니다.
+
+### 백그라운드 스케줄러 및 자동화 관리 규칙
+- **FastAPI 인메모리 백그라운드 스케줄러(`_periodic_sns_publish` 등)에 의존하지 마세요.** Cloud Run은 유저 요청이 없을 때 컨테이너가 scale down(Scale to 0) 되므로 인메모리 루프는 멈춥니다.
+- **모든 정기적인 배치/자동화 작업(블로그, SNS 발행, 동영상 제작 등)은 반드시 GCP Cloud Scheduler를 사용하여 외부 트리거로 동작해야 합니다.**
+- Cloud Run 배포 후 기존 Cloud Scheduler가 정상 등록되어 활성화(`ENABLED`) 상태인지 항상 `gcloud scheduler jobs list` 명령어로 검증하세요.

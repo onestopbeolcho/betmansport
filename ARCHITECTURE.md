@@ -251,16 +251,29 @@ firebase deploy --only hosting,functions
 
 ---
 
-## 9. 백그라운드 스케줄러 (main.py startup)
+## 9. 백그라운드 스케줄러 & 자동화 (GCP Cloud Scheduler)
 
-| 스케줄러 | 간격 | 기능 |
-|---------|------|------|
-| `_auto_collect_stats` | 시작 시 1회 | 전체 데이터 수집 (배당 + AI 통계) |
-| `_periodic_odds_refresh` | 매 30분 | API-Football 배당 갱신 |
-| `_periodic_settlement` | 매 30분 | 투표 자동 정산 |
-| `_periodic_stats_collection` | 12시간 (09:00, 21:00 KST) | 순위/부상/H2H 수집 |
-| `_periodic_nightly_retrain` | 매일 03:00 KST | ML 모델 재학습 + 예측 채점 |
-| `_periodic_sns_publish` | 매일 10:00, 16:00 KST | Buffer SNS 자동 발행 |
+> **⚠️ 경고: Cloud Run은 유저 요청이 없을 때 컨테이너가 대기 상태로 정지(Scale to 0)됩니다.**
+> 따라서 FastAPI 내부의 `asyncio` 인메모리 루프(`_periodic_sns_publish` 등)에 의존하는 스케줄러는 프로덕션에서 정상 동작하지 않고 멈춥니다.
+> **모든 핵심 정기 스케줄러는 반드시 아래와 같이 GCP Cloud Scheduler를 통해 외부 트리거(HTTP POST)로 작동하도록 보존되어야 합니다.**
+
+### 9.1 등록된 GCP Cloud Scheduler 작업 목록
+| 스케줄러 ID | 실행 주기 (KST 기준) | HTTP Target / URI | 용도 / 비고 |
+|---|---|---|---|
+| **scorenix-video-distribute** | 매일 11:30 | POST `/api/scheduler/cron/distribute-video?mode=top_picks` | 다국어 쇼츠 비디오 자동 생성, YouTube 업로드 및 드라이브 백업 |
+| **scorenix-sns-rotation-morning** | 매일 09:30 | POST `/api/marketing/publish_rotation` | Buffer를 통한 오전 탑픽 SNS 자동 발행 |
+| **scorenix-sns-rotation-afternoon** | 매일 13:30 | POST `/api/marketing/publish_rotation` | Buffer를 통한 오후 정보성 칼럼 SNS 자동 발행 |
+| **scorenix-sns-rotation-evening** | 매일 17:30 | POST `/api/marketing/publish_rotation` | Buffer를 통한 어제 경기 적중 인증 카드 및 SNS 자동 발행 |
+| **blogger-daily-post** | 매일 11:00 | POST `/api/blogger/post` | 블로그 일일 예측 리포트 자동 포스팅 |
+| **nightly-retrain** | 매일 03:00 (UTC 18:00) | POST `/api/scheduler/cron/nightly-retrain` | ML 모델 재학습 및 예측 채점 |
+| **firebase-schedule-odds_collect_scheduled** | 매 시간 0분 | HTTP GET | 실시간 배당 데이터 수집 |
+| **firebase-schedule-auto_settle_scheduled** | 3,9,15,21시 정각 | HTTP GET | 투표 결과 자동 정산 |
+
+### 9.2 FastAPI 내부 백업 루프 (startup)
+인스턴스가 활성 상태일 때 보조적으로 동작하는 루프들이며, 주력 자동화는 9.1의 Cloud Scheduler가 책임집니다.
+* `_auto_collect_stats`: 컨테이너 기동 시 1회 즉시 실행
+* `_periodic_odds_refresh`: 30분 간격 배당 갱신
+* `_periodic_settlement`: 30분 간격 투표 정산
 
 ---
 
