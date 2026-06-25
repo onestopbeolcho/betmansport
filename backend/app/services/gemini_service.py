@@ -30,7 +30,7 @@ def _init_gemini() -> bool:
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        _client = genai.GenerativeModel("gemini-1.5-flash")
+        _client = genai.GenerativeModel("gemini-2.5-flash")
         logger.info("✅ Gemini client initialized (google-generativeai SDK)")
         return True
     except ImportError:
