@@ -29,7 +29,7 @@ interface Payment {
 }
 
 export default function AdminPage() {
-    const [activeTab, setActiveTab] = useState<'config' | 'sns' | 'users' | 'payments' | 'accuracy'>('config');
+    const [activeTab, setActiveTab] = useState<'config' | 'sns' | 'video' | 'users' | 'payments' | 'accuracy'>('config');
     const API = process.env.NEXT_PUBLIC_API_URL || '';
 
     // --- Tab 1: System Config ---
@@ -64,6 +64,88 @@ export default function AdminPage() {
     // --- Tab 5: Accuracy ---
     const [accuracyData, setAccuracyData] = useState<any>(null);
     const [accuracyLoading, setAccuracyLoading] = useState(false);
+
+    // --- Tab 6: Video Config (신규) ---
+    interface VideoConfig {
+        tts_voice_ko: string;
+        tts_voice_en: string;
+        tts_voice_ja: string;
+        tts_speed_ko: string;
+        tts_speed_en: string;
+        tts_speed_ja: string;
+        tts_pitch_ko: string;
+        subtitle_base_size_intro: number;
+        subtitle_base_size_match: number;
+        subtitle_font_ko: string;
+        winning_intros: string[];
+        winning_ctas: string[];
+        educational_intros: string[];
+        educational_ctas: string[];
+    }
+    
+    const [videoConfig, setVideoConfig] = useState<VideoConfig>({
+        tts_voice_ko: 'ko-KR-SunHiNeural',
+        tts_voice_en: 'en-US-EmmaNeural',
+        tts_voice_ja: 'ja-JP-NanamiNeural',
+        tts_speed_ko: '+15%',
+        tts_speed_en: '+12%',
+        tts_speed_ja: '+10%',
+        tts_pitch_ko: '+5Hz',
+        subtitle_base_size_intro: 68,
+        subtitle_base_size_match: 54,
+        subtitle_font_ko: 'malgun.ttf',
+        winning_intros: [],
+        winning_ctas: [],
+        educational_intros: [],
+        educational_ctas: [],
+    });
+    const [videoLoading, setVideoLoading] = useState(false);
+    const [videoMessage, setVideoMessage] = useState('');
+
+    // Load Video Config
+    useEffect(() => {
+        if (activeTab === 'video') {
+            setVideoLoading(true);
+            fetch(`${API}/api/admin/video-config`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                setVideoConfig({
+                    ...data,
+                    winning_intros: Array.isArray(data.winning_intros) ? data.winning_intros : [],
+                    winning_ctas: Array.isArray(data.winning_ctas) ? data.winning_ctas : [],
+                    educational_intros: Array.isArray(data.educational_intros) ? data.educational_intros : [],
+                    educational_ctas: Array.isArray(data.educational_ctas) ? data.educational_ctas : [],
+                });
+            })
+            .catch(err => console.error(err))
+            .finally(() => setVideoLoading(false));
+        }
+    }, [activeTab, API]);
+
+    const handleVideoSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setVideoLoading(true);
+        setVideoMessage('');
+        try {
+            const res = await fetch(`${API}/api/admin/video-config`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                },
+                body: JSON.stringify(videoConfig)
+            });
+            if (!res.ok) throw new Error('Failed to save video config');
+            setVideoMessage('비디오 설정이 성공적으로 저장되었습니다!');
+        } catch (err) {
+            setVideoMessage('비디오 설정 저장에 실패했습니다.');
+            console.error(err);
+        } finally {
+            setVideoLoading(false);
+        }
+    };
 
     // Initial Config Load
     useEffect(() => {
@@ -258,6 +340,7 @@ export default function AdminPage() {
                 <div className="flex flex-wrap mb-6 border-b border-[var(--border-subtle)]">
                     <div onClick={() => setActiveTab('config')} className={tabClasses('config')}>시스템 설정</div>
                     <div onClick={() => setActiveTab('sns')} className={tabClasses('sns')}>SNS 발행</div>
+                    <div onClick={() => setActiveTab('video')} className={tabClasses('video')}>비디오/마케팅 설정</div>
                     <div onClick={() => setActiveTab('users')} className={tabClasses('users')}>회원 관리</div>
                     <div onClick={() => setActiveTab('payments')} className={tabClasses('payments')}>결제 내역</div>
                     <div onClick={() => setActiveTab('accuracy')} className={tabClasses('accuracy')}>AI 검증</div>
@@ -496,6 +579,130 @@ export default function AdminPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Tab 6: Video Config */}
+                {activeTab === 'video' && (
+                    <div className="space-y-6">
+                        <div className="glass-card p-6">
+                            <h2 className="text-lg font-bold mb-4 flex justify-between items-center" style={{ color: 'var(--text-primary)' }}>
+                                🎬 비디오 콘텐츠 & 디자인 설정
+                            </h2>
+                            {videoMessage && (
+                                <div className="p-4 mb-4 rounded-xl text-sm font-medium"
+                                    style={videoMessage.includes('성공')
+                                        ? { background: 'rgba(34,197,94,0.1)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }
+                                        : { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
+                                    }>
+                                    {videoMessage}
+                                </div>
+                            )}
+
+                            {videoLoading ? (
+                                <div className="py-10 text-center" style={{ color: 'var(--text-secondary)' }}>설정을 불러오는 중...</div>
+                            ) : (
+                                <form onSubmit={handleVideoSubmit} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        {/* TTS Voice 설정 */}
+                                        <div className="space-y-4 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                                            <h3 className="text-sm font-bold text-[var(--accent-primary)]">🗣️ Edge-TTS 성우 ID 설정</h3>
+                                            <div>
+                                                <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>한국어 성우 (ko)</label>
+                                                <input type="text" value={videoConfig.tts_voice_ko} onChange={(e) => setVideoConfig(prev => ({...prev, tts_voice_ko: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>영어 성우 (en)</label>
+                                                <input type="text" value={videoConfig.tts_voice_en} onChange={(e) => setVideoConfig(prev => ({...prev, tts_voice_en: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>일본어 성우 (ja)</label>
+                                                <input type="text" value={videoConfig.tts_voice_ja} onChange={(e) => setVideoConfig(prev => ({...prev, tts_voice_ja: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                            </div>
+                                        </div>
+
+                                        {/* TTS 속도 & 자막 스타일 */}
+                                        <div className="space-y-4 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                                            <h3 className="text-sm font-bold text-[var(--accent-primary)]">🎨 자막 디자인 & TTS 속도</h3>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>속도 (ko)</label>
+                                                    <input type="text" value={videoConfig.tts_speed_ko} onChange={(e) => setVideoConfig(prev => ({...prev, tts_speed_ko: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>속도 (en)</label>
+                                                    <input type="text" value={videoConfig.tts_speed_en} onChange={(e) => setVideoConfig(prev => ({...prev, tts_speed_en: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>속도 (ja)</label>
+                                                    <input type="text" value={videoConfig.tts_speed_ja} onChange={(e) => setVideoConfig(prev => ({...prev, tts_speed_ja: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2 pt-2">
+                                                <div>
+                                                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>소개글 자막 크기</label>
+                                                    <input type="number" value={videoConfig.subtitle_base_size_intro} onChange={(e) => setVideoConfig(prev => ({...prev, subtitle_base_size_intro: parseInt(e.target.value) || 0}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>본문 자막 크기</label>
+                                                    <input type="number" value={videoConfig.subtitle_base_size_match} onChange={(e) => setVideoConfig(prev => ({...prev, subtitle_base_size_match: parseInt(e.target.value) || 0}))} className="w-full px-3 py-2 rounded-lg text-xs" style={inputStyle} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 대본 템플릿 설정 */}
+                                    <div className="space-y-4 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                                        <h3 className="text-sm font-bold text-[var(--accent-primary)]">📝 적중 인증(Winning) 대본 템플릿</h3>
+                                        <div>
+                                            <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>인트로 멘트 (한 줄씩 작성, 랜덤 선택)</label>
+                                            <textarea 
+                                                value={videoConfig.winning_intros.join('\n')} 
+                                                onChange={(e) => setVideoConfig(prev => ({...prev, winning_intros: e.target.value.split('\n')}))} 
+                                                className="w-full px-3 py-2 rounded-lg text-xs resize-none" 
+                                                style={{ ...inputStyle, minHeight: '80px' }} 
+                                                placeholder="템플릿을 줄바꿈으로 구분해 작성하세요."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>마무리 CTA 멘트 (한 줄씩 작성)</label>
+                                            <textarea 
+                                                value={videoConfig.winning_ctas.join('\n')} 
+                                                onChange={(e) => setVideoConfig(prev => ({...prev, winning_ctas: e.target.value.split('\n')}))} 
+                                                className="w-full px-3 py-2 rounded-lg text-xs resize-none" 
+                                                style={{ ...inputStyle, minHeight: '80px' }} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+                                        <h3 className="text-sm font-bold text-[var(--accent-primary)]">📝 가치 투자 교육(Educational) 대본 템플릿</h3>
+                                        <div>
+                                            <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>인트로 멘트 (한 줄씩 작성)</label>
+                                            <textarea 
+                                                value={videoConfig.educational_intros.join('\n')} 
+                                                onChange={(e) => setVideoConfig(prev => ({...prev, educational_intros: e.target.value.split('\n')}))} 
+                                                className="w-full px-3 py-2 rounded-lg text-xs resize-none" 
+                                                style={{ ...inputStyle, minHeight: '80px' }} 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>마무리 CTA 멘트 (한 줄씩 작성)</label>
+                                            <textarea 
+                                                value={videoConfig.educational_ctas.join('\n')} 
+                                                onChange={(e) => setVideoConfig(prev => ({...prev, educational_ctas: e.target.value.split('\n')}))} 
+                                                className="w-full px-3 py-2 rounded-lg text-xs resize-none" 
+                                                style={{ ...inputStyle, minHeight: '80px' }} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" disabled={videoLoading} className="btn-primary w-full py-3 text-sm font-bold disabled:opacity-50">
+                                        {videoLoading ? '저장 중...' : '💾 비디오 설정 저장 및 적용'}
+                                    </button>
+                                </form>
+                            )}
+                        </div>
                     </div>
                 )}
 

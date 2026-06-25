@@ -178,6 +178,40 @@ def _dummy():
     ]
 
 
+# ─── Firestore 비디오 설정 로드 헬퍼 ────────────────────────
+def load_video_settings():
+    try:
+        from app.models.config_db import get_video_config
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                from app.db.firestore import get_firestore_db
+                db = get_firestore_db()
+                doc = db.collection("system_config").document("video_config").get()
+                if doc.exists:
+                    return doc.to_dict()
+        except RuntimeError:
+            return asyncio.run(get_video_config())
+    except Exception as e:
+        print(f"  [!] Failed to load remote video config, using defaults: {e}")
+    
+    return {
+        "tts_voice_ko": "ko-KR-SunHiNeural",
+        "tts_voice_en": "en-US-EmmaNeural",
+        "tts_voice_ja": "ja-JP-NanamiNeural",
+        "tts_speed_ko": "+15%",
+        "tts_speed_en": "+12%",
+        "tts_speed_ja": "+10%",
+        "tts_pitch_ko": "+5Hz",
+        "tts_pitch_en": "+0Hz",
+        "tts_pitch_ja": "+0Hz",
+        "subtitle_base_size_intro": 68,
+        "subtitle_base_size_match": 54,
+        "subtitle_font_ko": "malgun.ttf",
+        "subtitle_font_bold_ko": "malgunbd.ttf",
+    }
+
+
 # ─── 대본 (매번 다른 템플릿) ──────────────────────────────
 def build_script(matches, mode="membership"):
     """
@@ -189,6 +223,7 @@ def build_script(matches, mode="membership"):
     - top_picks: 오늘 밤 가장 신뢰도가 급증한 경기 TOP 3를 요약 소개하며 사이트 유도
     """
     import random
+    cfg = load_video_settings()
     today = datetime.datetime.now().strftime("%m월 %d일")
     hour = datetime.datetime.now().strftime("%H시")
 
@@ -217,14 +252,16 @@ def build_script(matches, mode="membership"):
         a_score = m1.get('away_score', 0)
         conf = m1.get('confidence', 0)
 
-        intros = [
+        intros = cfg.get("winning_intros") or [
             f"대박! 스코어닉스 AI의 무시무시한 예측 정확도, 숫자로 직접 증명합니다. {today} 적중 결과 리포트 시작합니다.",
             f"다들 주목하세요! 어제 AI가 예측한 빅매치가 또 한 번 완벽하게 맞아떨어졌습니다. {today} 적중 현황 공개합니다."
         ]
-        intro_caps = [
+        intro_caps = cfg.get("winning_intro_caps") or [
             f"[HIT REPORT]\n{today} AI 예측\n실제 적중 성과",
             f"[AI ACCURACY]\n데이터가 증명한\n실시간 적중 인증"
         ]
+        intros = [i.replace("{today}", today) for i in intros]
+        intro_caps = [c.replace("{today}", today) for c in intro_caps]
         intro_idx = random.randint(0, len(intros) - 1)
 
         m1_tts = f"적중의 주인공은 바로 {h1} 대 {a1} 경기였습니다! AI는 이 경기를 {conf:.0f}%의 신뢰도로 {rec_ko}을 예측했었는데요."
@@ -236,11 +273,11 @@ def build_script(matches, mode="membership"):
         m3_tts = "감정에 치우치는 촉 베팅은 결국 잃을 수밖에 없습니다. 철저한 통계와 기대값으로 무장한 AI 분석만이 유일한 해결책입니다."
         m3_cap = "감에 의존하는 토토는 끝!\n\n데이터 통계로 스마트하게 📈"
 
-        ctas = [
+        ctas = cfg.get("winning_ctas") or [
             "네이버에 스코어닉스를 검색하고 홈페이지에 접속해 보세요! 매일 쏟아지는 경기들의 AI 정밀 분석 픽과 리포트가 전면 무료로 공개되어 있습니다. 지금 바로 확인해 보세요!",
             "구독과 좋아요를 누르고 스코어닉스 닷컴(scorenix.com)에 로그인하시면 모든 예정 경기의 7-Factor 승률 카드를 무제한으로 보실 수 있습니다. 프로필 링크를 클릭해 보세요!"
         ]
-        cta_caps = [
+        cta_caps = cfg.get("winning_cta_caps") or [
             "네이버 검색창에 [ 스코어닉스 ]\n\nscorenix.com 전면 무료!",
             "7-Factor 실시간 분석 카드\n\n프로필 링크 클릭 시 즉시 확인"
         ]
@@ -255,14 +292,16 @@ def build_script(matches, mode="membership"):
         ]
 
     elif mode == "educational":
-        intros = [
+        intros = cfg.get("educational_intros") or [
             "아직도 느낌과 감으로 경기 결과를 찍고 계신가요? 스포츠 투자로 절대 잃지 않는 핵심 가치 투자 법칙 1가지를 알려드릴게요.",
             "잠깐! 좋아하는 팀을 응원하는 마음으로 베팅하고 있다면 이 영상을 꼭 보세요. 돈을 벌기 위해 반드시 알아야 할 데이터 공식입니다."
         ]
-        intro_caps = [
+        intro_caps = cfg.get("educational_intro_caps") or [
             "[INVESTMENT MIND]\n스포츠 투자의 패러다임\n감에서 데이터로 바꾸기",
             "[DATA FORMULA]\n돈 버는 투자자들이\n비밀리에 쓰는 분석 원칙"
         ]
+        intros = [i.replace("{today}", today) for i in intros]
+        intro_caps = [c.replace("{today}", today) for c in intro_caps]
         intro_idx = random.randint(0, len(intros) - 1)
 
         topic_idx = random.randint(0, 1)
@@ -276,16 +315,11 @@ def build_script(matches, mode="membership"):
         m2_tts = "감정이나 팬심은 철저히 배제하고, 수학적 기대값이 유리할 때 기계적으로 진입하는 것. 이것이 스포츠 베팅이 아닌 진짜 데이터 투자의 시작입니다."
         m2_cap = "팬심과 감정은 0%!\n\n철저하게 숫자로만 진입 📉"
 
-        m3_tts = "스코어닉스 닷컴(scorenix.com)에서는 이 모든 기대값 분석 결과를 가입 즉시 전면 무료로 실시간 공개하고 있습니다."
-        m3_cap = "이 모든 기대값 데이터가\n\nscorenix.com 에서 100% 무료!"
-
-        ctas = [
-            "네이버 검색창에 스코어닉스를 검색하고 프로필 링크를 확인하세요! 똑똑하게 수익을 쌓아가는 데이터 투자의 신세계를 지금 바로 무료로 시작해 보세요.",
-            "구독과 좋아요 누르고 네이버에 스코어닉스를 검색해 보세요. 매일 업데이트되는 AI 밸류 픽을 통해 베팅의 기준을 완전히 바꾸실 수 있습니다!"
+        ctas = cfg.get("educational_ctas") or [
+            "스코어닉스 닷컴(scorenix.com)에서는 이 모든 기대값 분석 결과를 가입 즉시 전면 무료로 실시간 공개하고 있습니다."
         ]
-        cta_caps = [
-            "데이터 기반 스마트 투자\n\n네이버에 [ 스코어닉스 ] 검색!",
-            "구독 & 좋아요 누르고\n\n매일 최고의 밸류 픽 받기 🔥"
+        cta_caps = cfg.get("educational_cta_caps") or [
+            "이 모든 기대값 데이터가\n\nscorenix.com 에서 100% 무료!"
         ]
         cta_idx = random.randint(0, len(ctas) - 1)
 
@@ -293,10 +327,8 @@ def build_script(matches, mode="membership"):
             {"tts": intros[intro_idx], "caption": intro_caps[intro_idx], "scene": "intro"},
             {"tts": m1_tts, "caption": m1_cap, "scene": "match"},
             {"tts": m2_tts, "caption": m2_cap, "scene": "match"},
-            {"tts": m3_tts, "caption": m3_cap, "scene": "match"},
             {"tts": ctas[cta_idx], "caption": cta_caps[cta_idx], "scene": "cta"},
         ]
-
     elif mode == "top_picks":
         if not matches or len(matches) < 3:
             matches = _dummy()
@@ -489,23 +521,31 @@ def apply_audio_ducking(bgm_clip, speech_clip, duck_vol=0.03, normal_vol=0.12, t
 
 async def _tts_async(text, path, lang="ko"):
     import edge_tts
+    cfg = load_video_settings()
+    
     # 언어별 최적의 성우 지정
     voice_map = {
-        "ko": "ko-KR-SunHiNeural",
-        "en": "en-US-EmmaNeural",
-        "ja": "ja-JP-NanamiNeural"
+        "ko": cfg.get("tts_voice_ko", "ko-KR-SunHiNeural"),
+        "en": cfg.get("tts_voice_en", "en-US-EmmaNeural"),
+        "ja": cfg.get("tts_voice_ja", "ja-JP-NanamiNeural")
     }
     voice = voice_map.get(lang, "ko-KR-SunHiNeural")
     
     # 속도를 언어별로 튜닝
     rate_map = {
-        "ko": "+15%",
-        "en": "+12%",
-        "ja": "+10%"
+        "ko": cfg.get("tts_speed_ko", "+15%"),
+        "en": cfg.get("tts_speed_en", "+12%"),
+        "ja": cfg.get("tts_speed_ja", "+10%")
     }
     rate = rate_map.get(lang, "+15%")
     
-    pitch = "+5Hz" if lang == "ko" else "+0Hz"
+    # 피치 지정
+    pitch_map = {
+        "ko": cfg.get("tts_pitch_ko", "+5Hz"),
+        "en": cfg.get("tts_pitch_en", "+0Hz"),
+        "ja": cfg.get("tts_pitch_ja", "+0Hz")
+    }
+    pitch = pitch_map.get(lang, "+5Hz" if lang == "ko" else "+0Hz")
     
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(path)
@@ -535,13 +575,16 @@ def generate_tts(text, path, lang="ko"):
 # ─── 자막 이미지 렌더링 ─────────────────────────────────
 def render_caption(text, scene="match", mode="marketing"):
     """장면 유형별/테마별 디자인이 다른 자막 카드 생성 (자동 줄바꿈 + 폰트 자동 축소)"""
+    cfg = load_video_settings()
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
     # 폰트 로드 함수
     def load_font(size, bold=False):
         try:
-            name = "malgunbd.ttf" if bold else "malgun.ttf"
+            font_ko = cfg.get("subtitle_font_ko", "malgun.ttf")
+            font_bold_ko = cfg.get("subtitle_font_bold_ko", "malgunbd.ttf")
+            name = font_bold_ko if bold else font_ko
             return ImageFont.truetype(name, size)
         except Exception:
             return ImageFont.load_default()
@@ -550,7 +593,9 @@ def render_caption(text, scene="match", mode="marketing"):
     safe_w = int(WIDTH * 0.85)
 
     # 장면별 기본 폰트 크기
-    base_size = 68 if scene == "intro" else 54
+    base_size_intro = int(cfg.get("subtitle_base_size_intro", 68))
+    base_size_match = int(cfg.get("subtitle_base_size_match", 54))
+    base_size = base_size_intro if scene == "intro" else base_size_match
 
     # 자동 줄바꿈 + 폰트 크기 자동 축소
     font = load_font(base_size, bold=(scene == "intro"))
