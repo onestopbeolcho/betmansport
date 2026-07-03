@@ -102,6 +102,35 @@ export default function AdminPage() {
     const [videoLoading, setVideoLoading] = useState(false);
     const [videoMessage, setVideoMessage] = useState('');
 
+    const [triggerMode, setTriggerMode] = useState<string>('top_picks');
+    const [triggerAvatar, setTriggerAvatar] = useState<boolean>(false);
+    const [triggerLoading, setTriggerLoading] = useState<boolean>(false);
+    const [triggerResult, setTriggerResult] = useState<string>('');
+
+    const handleVideoTrigger = async () => {
+        setTriggerLoading(true);
+        setTriggerResult('');
+        try {
+            const res = await fetch(`${API}/api/scheduler/cron/distribute-video?mode=${triggerMode}&avatar=${triggerAvatar}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setTriggerResult(`✅ 성공: 비디오 생성 요청이 성공적으로 백그라운드 작업으로 등록되었습니다! (${data.status || ''})`);
+            } else {
+                setTriggerResult(`❌ 실패: ${data.detail || data.message || '알 수 없는 오류'}`);
+            }
+        } catch (err) {
+            setTriggerResult('❌ 에러 발생: 백엔드 연결을 확인하세요');
+            console.error(err);
+        } finally {
+            setTriggerLoading(false);
+        }
+    };
+
     // Load Video Config
     useEffect(() => {
         if (activeTab === 'video') {
@@ -702,6 +731,65 @@ export default function AdminPage() {
                                     </button>
                                 </form>
                             )}
+                        </div>
+
+                        {/* Trigger Video Section */}
+                        <div className="glass-card p-6 mt-8 border-l-4 border-l-[#3b82f6]">
+                            <h2 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                                📡 실시간 비디오 즉시 제작 & 배포 (Trigger Video)
+                            </h2>
+                            <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                                예약 스케줄러와 별개로, 관리자가 원할 때 언제든지 즉시 비디오 렌더링 및 자동 업로드를 수행합니다. Gemini 기반 AI 한글 대본이 적용됩니다.
+                            </p>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>비디오 테마 모드 (Mode)</label>
+                                        <select 
+                                            value={triggerMode} 
+                                            onChange={(e) => setTriggerMode(e.target.value)} 
+                                            className="w-full px-4 py-3 rounded-xl text-sm" 
+                                            style={inputStyle}
+                                        >
+                                            <option value="top_picks">🎯 Top Picks (오늘의 추천 분석 및 픽)</option>
+                                            <option value="winning">🏆 Winning (어제 경기 적중 내역 인증)</option>
+                                            <option value="educational">📚 Educational (가치 투자 기법 교육)</option>
+                                            <option value="marketing">📢 Marketing (홍보 및 공지 마케팅)</option>
+                                            <option value="membership">👑 Membership (멤버십 VIP 혜택 소개)</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center pt-6">
+                                        <label className="flex items-center cursor-pointer gap-3">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={triggerAvatar} 
+                                                onChange={(e) => setTriggerAvatar(e.target.checked)} 
+                                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500" 
+                                            />
+                                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                                                👤 AI 아바타(인물 영상) 포함 여부
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {triggerResult && (
+                                    <div className="p-4 border border-[var(--border-subtle)] rounded-xl text-sm font-medium mb-4" 
+                                        style={triggerResult.includes('✅') 
+                                            ? { background: 'rgba(34,197,94,0.1)', color: '#4ade80' } 
+                                            : { background: 'rgba(239,68,68,0.1)', color: '#f87171' }
+                                        }>
+                                        {triggerResult}
+                                    </div>
+                                )}
+                                <button 
+                                    onClick={handleVideoTrigger} 
+                                    disabled={triggerLoading} 
+                                    className="w-full py-4 rounded-xl text-sm font-bold text-white transition-all hover:scale-[1.02] disabled:opacity-50 shadow-lg" 
+                                    style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}
+                                >
+                                    {triggerLoading ? '비디오 파이프라인 트리거 중...' : '🎬 지금 즉시 비디오 제작 및 업로드 시작'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

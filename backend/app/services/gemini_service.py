@@ -825,3 +825,77 @@ def translate_text(text: str, target_lang: str) -> str:
         logger.error(f"Gemini translation error to {target_lang}: {e}")
     return text
 
+
+def generate_video_script_korean(matches: list, mode: str = "membership") -> list:
+    """
+    Gemini 2.5 Flash를 활용해 숏츠 영상용 앵커 대본(나레이션) 및 자막 목록을 실시간 작문(Generate)합니다.
+    JSON 형식의 리스트를 반환합니다.
+    """
+    if not _init_gemini():
+        logger.warning("Gemini not initialized. Cannot generate generative script.")
+        return []
+
+    # matches를 보기 쉽게 정리
+    matches_summary = ""
+    for idx, m in enumerate(matches):
+        home = m.get("home") or m.get("team_home", "홈팀")
+        away = m.get("away") or m.get("team_away", "원정팀")
+        pick = m.get("ai_pick") or m.get("recommendation", "HOME")
+        pick_ko = "홈팀 승리" if pick == "HOME" else "원정팀 승리" if pick == "AWAY" else "무승부"
+        win_prob = m.get("win_prob") or m.get("confidence", 50)
+        h_odds = m.get("home_odds", 1.5)
+        a_odds = m.get("away_odds", 3.0)
+        d_odds = m.get("draw_odds", 3.5)
+        reason = m.get("reason", "")
+        matches_summary += f"[{idx+1}번째 경기] {home} vs {away} / AI 픽: {pick_ko} (확률 {win_prob}%) / 배당(홈/무/원정): {h_odds} | {d_odds} | {a_odds} / 분석 데이터: {reason}\n"
+
+    # 모드에 따른 프롬프트 차별화
+    mode_instructions = {
+        "membership": "구독자(멤버십)용 영상 대본입니다. 3개 경기 모두 명확한 분석 근거와 승리 예상 픽을 숨김없이 공개하고, 통계적인 수치를 강조해 전문성을 보장하세요.",
+        "marketing": "마케팅(유입)용 영상 대본입니다. 첫 번째 경기는 정밀 분석과 픽을 시원하게 오픈하되, 두 번째와 세 번째 경기는 분석 정보가 있음을 알리며 '더 자세한 픽과 오늘 밤 고신뢰 매치는 프로필 링크의 스코어닉스 닷컴에서 확인하세요'라며 영리하게 홈페이지 가입/방문을 유도하세요.",
+        "winning": "적중 인증(자랑)용 영상 대본입니다. 어제 AI 예측이 성공한 결과(matches에 채점된 경기 기록)를 격정적이고 신뢰감 있게 자랑하며, 감정에 속지 않는 통계 투자의 중요성을 강하게 어필하세요.",
+        "educational": "가치 투자 교육용 영상 대본입니다. 감으로 베팅하는 토토의 폐해를 꼬집고, 배당 가치(EV) 및 7-Factor AI 수학적 확률에 기반한 기계적 투자의 법칙을 일반인도 이해하기 쉽게 논리적으로 연설하세요.",
+        "top_picks": "오늘의 고신뢰 경기 TOP 3를 요약해서 매끄럽게 전달하는 브리핑 영상 대본입니다. 각 매치의 핵심 포인트와 승리 확률을 요약하며, 사이트 방문을 유도하세요."
+    }
+    instruction = mode_instructions.get(mode, mode_instructions["membership"])
+
+    prompt = (
+        f"당신은 스포츠 데이터 투자 플랫폼 '스코어닉스(Scorenix)'의 최고 수석 스포츠 분석 아나운서입니다.\n"
+        f"제공된 경기 데이터를 활용해 숏츠 영상용 나레이션 대본(tts)과 화면에 띄울 자막 카드 문구(caption)를 작성해 주세요.\n\n"
+        f"--- 경기 데이터 ---\n"
+        f"{matches_summary}\n"
+        f"--- 영상 유형 지침 ---\n"
+        f"{instruction}\n\n"
+        f"--- 작성 규칙 (필수) ---\n"
+        f"1. 대본은 15초 내외의 장면(scene) 총 4~5개로 구성되어야 합니다. (전체 재생 시간 45초~60초 분량)\n"
+        f"2. 반환 형식은 반드시 JSON 배열이어야 합니다. 마크다운 기호 없이 순수한 JSON 텍스트만 출력하세요. 배열 내부 객체 스키마는 아래와 같아야 합니다:\n"
+        f"   [\n"
+        f"     {{\"tts\": \"성우가 읽을 멘트. 부드럽고 자연스럽게 구어체로 작성.\", \"caption\": \"화면에 표시될 짧은 요약 자막. 2~3줄 권장. 줄바꿈(\\n) 사용 가능.\", \"scene\": \"intro 또는 match 또는 cta\"}},\n"
+        f"     ...\n"
+        f"   ]\n"
+        f"3. 앵커 멘트(tts)는 오디오 파일로 바로 읽기 때문에 특수문자나 복잡한 표기법 대신 자연스러운 말소리로 쓰세요. (예: '7-Factor' -> '세븐 팩터', '78.5%' -> '78.5 퍼센트' 등)\n"
+        f"4. 화면 자막(caption)은 시인성을 높이기 위해 한 줄에 최대 10자 이내가 되도록 줄바꿈(\\n)을 적절히 섞어주세요.\n"
+        f"5. JSON 형식을 엄격히 지켜 오류 없이 파싱 가능하게 하세요."
+    )
+
+    try:
+        response = _client.generate_content(prompt)
+        if response and response.text:
+            text = response.text.strip()
+            # JSON만 추출하기 위한 안전 장치
+            if "```json" in text:
+                text = text.split("```json")[1].split("```")[0].strip()
+            elif "```" in text:
+                text = text.split("```")[1].split("```")[0].strip()
+            
+            import json
+            parsed = json.loads(text)
+            if isinstance(parsed, list) and len(parsed) >= 3:
+                logger.info(f"✅ Generative script generated via Gemini (mode: {mode}, scenes: {len(parsed)})")
+                return parsed
+    except Exception as e:
+        logger.error(f"❌ Gemini generate_video_script error (mode={mode}): {e}")
+    
+    # 실패 시 빈 배열 반환하여 폴백 호출하도록 함
+    return []
+

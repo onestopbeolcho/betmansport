@@ -227,6 +227,16 @@ def build_script(matches, mode="membership"):
     today = datetime.datetime.now().strftime("%m월 %d일")
     hour = datetime.datetime.now().strftime("%H시")
 
+    # ─── Gemini AI Generative Scriptwriting 시도 ───
+    try:
+        from app.services.gemini_service import generate_video_script_korean
+        ai_script = generate_video_script_korean(matches, mode)
+        if ai_script and isinstance(ai_script, list) and len(ai_script) >= 3:
+            print(f"  [AI] Generative Script successfully created by Gemini (mode: {mode})")
+            return ai_script
+    except Exception as ai_err:
+        print(f"  [!] Generative script error ({ai_err}) - falling back to template system")
+
     # 팀명 축약 (긴 이름이 박스를 넘기지 않도록)
     def short(name, max_len=8):
         if not name:
