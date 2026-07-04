@@ -85,14 +85,20 @@ class BufferService:
         """
         try:
             result = await self._graphql(query)
-            data = result.get("data", {})
-            account = data.get("account", {})
-            orgs = account.get("organizations", [])
+            if not result:
+                return []
+            if "errors" in result and result["errors"]:
+                logger.error(f"Buffer GraphQL query errors: {result['errors']}")
+            data = result.get("data") or {}
+            account = data.get("account") or {}
+            orgs = account.get("organizations") or []
 
             channels = []
             for org in orgs:
+                if not org:
+                    continue
                 self._org_id = org.get("id")
-                for ch in org.get("channels", []):
+                for ch in org.get("channels") or []:
                     channels.append({
                         "id": ch.get("id"),
                         "name": ch.get("name", ""),
