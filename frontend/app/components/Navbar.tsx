@@ -175,7 +175,7 @@ export default function Navbar() {
                                                 <span className="text-base">💼</span> {t.portfolio || 'Portfolio'}
                                             </a>
                                             <a href={`/${currentLang}/pricing`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all" onClick={() => setProfileOpen(false)}>
-                                                <span className="text-base">💎</span> {t.subscription || 'Manage Plan'}
+                                                <span className="text-base">☕</span> {currentLang === 'ko' ? '커피 한 잔 후원' : 'Support Server'}
                                             </a>
                                         </div>
                                         <div className="border-t border-[var(--border-subtle)] py-1">

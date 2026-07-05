@@ -42,28 +42,10 @@ async def _get_user_tier(user_id: str) -> str:
 
 def require_tier(minimum_tier: str = "pro"):
     """
-    Tier 강제 적용 의존성 팩토리.
-    
-    Usage:
-        @router.get("/premium-feature")
-        async def feature(user_id: str = Depends(require_tier("pro"))):
-            ...
+    Tier 강제 적용 의존성 팩토리. (100% 무료화 피벗: 로그인 유저 전체 허용)
     """
     async def _check_tier(user_id: str = Depends(require_current_user)) -> str:
-        user_tier = await _get_user_tier(user_id)
-        required_level = TIER_ORDER.get(minimum_tier, 1)
-        user_level = TIER_ORDER.get(user_tier, 0)
-
-        if user_level < required_level:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "message": f"이 기능은 {minimum_tier.upper()} 이상 멤버십이 필요합니다.",
-                    "current_tier": user_tier,
-                    "required_tier": minimum_tier,
-                    "upgrade_url": "/pricing",
-                },
-            )
+        # 모든 가입 유저에게 프리미엄/VIP 기능 전면 개방
         return user_id
 
     return _check_tier

@@ -1,299 +1,197 @@
 "use client";
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import DeadlineBanner from '../components/DeadlineBanner';
+import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { usePathname } from 'next/navigation';
 import { i18n } from '../lib/i18n-config';
-import { useDictionarySafe } from '../context/DictionaryContext';
 
 export default function PricingPage() {
-    const { user } = useAuth();
     const pathname = usePathname();
-    const dict = useDictionarySafe();
-    const tp = dict?.pricing || {} as any;
+    const { user } = useAuth();
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
-    const userTier = user?.tier || 'free';
 
-    const Check = ({ color = 'var(--accent-primary)' }: { color?: string }) => (
-        <span className="mr-3 flex-shrink-0" style={{ color }}>✓</span>
-    );
-    const Lock = () => (
-        <span className="mr-3 flex-shrink-0" style={{ color: 'var(--text-muted)', opacity: 0.4 }}>✗</span>
-    );
+    const isKo = currentLang === 'ko';
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
             <DeadlineBanner />
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center flex-grow">
-                <h1 className="text-4xl font-extrabold sm:text-5xl" style={{ color: 'var(--text-primary)' }}>
-                    {tp.headlinePre || 'Maximize data with'} <span className="gradient-text">{tp.headlineHighlight || 'Smart Analytics'}</span>
-                </h1>
-                <p className="mt-4 text-xl" style={{ color: 'var(--text-muted)' }}>
-                    {tp.subheadline || "Don't miss data-driven sports analysis opportunities."}
-                </p>
-
-                <div className="mt-16 grid gap-8 lg:grid-cols-3 lg:gap-x-8 text-left">
-
-                    {/* ── Free Plan ── */}
-                    <div className="glass-card relative p-8 flex flex-col">
-                        <div className="flex-1">
-                            <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Free</h3>
-                            <p className="absolute top-0 py-1.5 px-4 rounded-full text-xs font-semibold uppercase tracking-wide transform -translate-y-1/2"
-                                style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}>
-                                {tp.freeBadge || 'Trial'}
-                            </p>
-                            <p className="mt-4 flex items-baseline" style={{ color: 'var(--text-primary)' }}>
-                                <span className="text-5xl font-extrabold tracking-tight">{tp.freePrice || '$0'}</span>
-                                <span className="ml-1 text-xl font-semibold">/{tp.month || 'mo'}</span>
-                            </p>
-                            <p className="mt-6 text-sm" style={{ color: 'var(--text-muted)' }}>
-                                {tp.freeDesc || 'Try the service first'}
-                            </p>
-
-                            {/* Feature Category: 데이터 분석 */}
-                            <div className="mt-6">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
-                                    📊 {tp.catData || 'Data Analytics'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check />{tp.freeData1 || '3 daily value analyses'}</li>
-                                    <li className="flex"><Check />{tp.freeData2 || 'Basic odds comparison'}</li>
-                                    <li className="flex"><Check />{tp.freeData3 || 'Basic efficiency calculator'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: AI / 고급분석 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
-                                    🧠 {tp.catAI || 'AI · Advanced'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
-                                    <li className="flex"><Lock />{tp.freeAI1 || 'AI match prediction'}</li>
-                                    <li className="flex"><Lock />{tp.freeAI2 || 'Portfolio analysis'}</li>
-                                    <li className="flex"><Lock />{tp.freeAI3 || 'Combo optimization'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: 알림 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>
-                                    🔔 {tp.catAlert || 'Alerts · Support'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
-                                    <li className="flex"><Lock />{tp.freeAlert1 || 'Real-time alerts'}</li>
-                                    <li className="flex"><Lock />{tp.freeAlert2 || 'Custom alert rules'}</li>
-                                </ul>
-                            </div>
-                        </div>
-                        {user ? (
-                            <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
-                                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
-                                ✓ {tp.currentPlan || 'Current Plan'}
-                            </span>
-                        ) : (
-                            <a href={`/${currentLang}/register`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
-                                style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
-                                {tp.startFree || 'Start Free'}
-                            </a>
-                        )}
+            <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-grow">
+                {/* ── 무료화 선언 Hero Section ──────────────────── */}
+                <div className="text-center mb-12">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-6"
+                        style={{ 
+                            background: 'rgba(6,182,212,0.1)', 
+                            color: 'var(--accent-primary)', 
+                            border: '1px solid rgba(6,182,212,0.2)' 
+                        }}
+                    >
+                        🎉 100% Free Analytics · 전면 무료화 선언
                     </div>
-
-                    {/* ── Pro Plan ── */}
-                    <div className="glass-card relative p-8 flex flex-col ring-2" style={{ borderColor: 'var(--accent-primary)', boxShadow: '0 0 30px rgba(0,212,255,0.15)' }}>
-                        <div className="flex-1">
-                            <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Pro Analyst</h3>
-                            <p className="absolute top-0 py-1.5 px-4 rounded-full text-xs font-semibold uppercase tracking-wide text-white transform -translate-y-1/2"
-                                style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}>
-                                {tp.popular || 'Popular'}
-                            </p>
-                            <p className="mt-4 flex items-baseline" style={{ color: 'var(--text-primary)' }}>
-                                <span className="text-5xl font-extrabold tracking-tight gradient-text">{tp.proPrice || '$49'}</span>
-                                <span className="ml-1 text-xl font-semibold" style={{ color: 'var(--text-muted)' }}>/{tp.month || 'mo'}</span>
-                            </p>
-                            <p className="mt-6 text-sm" style={{ color: 'var(--text-muted)' }}>
-                                {tp.proDesc || 'Analytics plan for serious analysis'}
-                            </p>
-
-                            {/* Feature Category: 데이터 분석 */}
-                            <div className="mt-6">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>
-                                    📊 {tp.catData || 'Data Analytics'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check />{tp.proData1 || 'Unlimited value analyses'}</li>
-                                    <li className="flex"><Check />{tp.proData2 || 'Live odds comparison'}</li>
-                                    <li className="flex"><Check />{tp.proData3 || 'Auto efficiency gap calc'}</li>
-                                    <li className="flex"><Check />{tp.proData4 || 'Tax optimizer'}</li>
-                                    <li className="flex"><Check />{tp.proData5 || 'Kelly Criterion budget calc'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: AI / 고급분석 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>
-                                    🧠 {tp.catAI || 'AI · Advanced'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check />{tp.proAI1 || 'AI match prediction report'}</li>
-                                    <li className="flex"><Check />{tp.proAI2 || 'Deep single-match analysis'}</li>
-                                    <li className="flex"><Check />{tp.proAI3 || 'Portfolio performance stats'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: 알림 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>
-                                    🔔 {tp.catAlert || 'Alerts · Support'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check />{tp.proAlert1 || 'Real-time value alerts'}</li>
-                                    <li className="flex items-center">
-                                        <Lock />
-                                        <span style={{ color: 'var(--text-muted)', opacity: 0.6 }}>{tp.proAlert2 || 'Custom alert rules (VIP)'}</span>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* VIP 전용 잠금 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
-                                    👑 {tp.vipOnly || 'VIP Exclusive'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>
-                                    <li className="flex"><Lock />{tp.proVIP1 || 'Multi-match AI combo'}</li>
-                                    <li className="flex"><Lock />{tp.proVIP2 || 'Kelly auto allocation'}</li>
-                                    <li className="flex"><Lock />{tp.proVIP3 || 'Custom alert conditions'}</li>
-                                </ul>
-                            </div>
-                        </div>
-                        {userTier === 'pro' ? (
-                            <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
-                                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
-                                ✓ {tp.currentPlan || 'Current Plan'}
-                            </span>
+                    <h1 className="text-3xl sm:text-4xl font-black leading-tight text-white">
+                        {isKo ? (
+                            <>모든 AI 정밀 분석 서비스를 <span className="gradient-text">100% 무료</span>로 공개합니다</>
                         ) : (
-                            <a href={`/${currentLang}/payment/request?plan=pro`} className="btn-primary mt-8 block w-full py-3 text-sm font-semibold text-center">
-                                {tp.subscribePro || 'Subscribe Now'}
-                            </a>
+                            <>All AI Analytics is now <span className="gradient-text">100% Free</span> for Everyone</>
                         )}
-                    </div>
-
-                    {/* ── VIP Plan ── */}
-                    <div className="glass-card relative p-8 flex flex-col" style={{ border: '1px solid rgba(139,92,246,0.3)', boxShadow: '0 0 25px rgba(139,92,246,0.1)' }}>
-                        <div className="flex-1">
-                            <h3 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                👑 VIP
-                            </h3>
-                            <p className="absolute top-0 py-1.5 px-4 rounded-full text-xs font-semibold uppercase tracking-wide text-white transform -translate-y-1/2"
-                                style={{ background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}>
-                                {tp.premium || 'Premium'}
-                            </p>
-                            <p className="mt-4 flex items-baseline" style={{ color: 'var(--text-primary)' }}>
-                                <span className="text-5xl font-extrabold tracking-tight" style={{ color: '#a78bfa' }}>{tp.vipPrice || '$99'}</span>
-                                <span className="ml-1 text-xl font-semibold" style={{ color: 'var(--text-muted)' }}>/{tp.month || 'mo'}</span>
-                            </p>
-                            <p className="mt-6 text-sm" style={{ color: 'var(--text-muted)' }}>
-                                {tp.vipDesc || 'All-in-one analytics for pro investors'}
-                            </p>
-
-                            {/* Feature Category: 데이터 분석 (Pro 전체 포함) */}
-                            <div className="mt-6">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#a78bfa' }}>
-                                    📊 {tp.catDataPro || 'Data Analytics — All Pro included'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipData1 || 'Unlimited value analyses + live data'}</li>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipData2 || 'Efficiency gap + tax optimizer'}</li>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipData3 || 'Kelly Criterion budget calc'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: AI / 고급분석 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#a78bfa' }}>
-                                    🧠 {tp.catAIPro || 'AI · Advanced — All Pro included'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipAI1 || 'AI prediction + deep analysis'}</li>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipAI2 || 'Portfolio performance stats'}</li>
-                                </ul>
-                            </div>
-
-                            {/* Feature Category: VIP 전용 */}
-                            <div className="mt-5 p-4 rounded-xl" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#c084fc' }}>
-                                    👑 {tp.vipExclusive || 'VIP Exclusive Features'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex">
-                                        <Check color="#c084fc" />
-                                        <div>
-                                            <span className="font-semibold text-white">{tp.vipFeat1 || 'Multi-match AI combo optimization'}</span>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                                                {tp.vipFeat1Desc || 'Auto value combos + tax strategy'}
-                                            </p>
-                                        </div>
-                                    </li>
-                                    <li className="flex">
-                                        <Check color="#c084fc" />
-                                        <div>
-                                            <span className="font-semibold text-white">{tp.vipFeat2 || 'Kelly-based auto allocation'}</span>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                                                {tp.vipFeat2Desc || 'Optimal budget distribution by risk level'}
-                                            </p>
-                                        </div>
-                                    </li>
-                                    <li className="flex">
-                                        <Check color="#c084fc" />
-                                        <div>
-                                            <span className="font-semibold text-white">{tp.vipFeat3 || 'Custom alert conditions'}</span>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                                                {tp.vipFeat3Desc || 'Set your own rules like "Value gap 15%+"'}
-                                            </p>
-                                        </div>
-                                    </li>
-                                    <li className="flex">
-                                        <Check color="#c084fc" />
-                                        <div>
-                                            <span className="font-semibold text-white">{tp.vipFeat4 || 'Portfolio performance stats'}</span>
-                                            <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                                                {tp.vipFeat4Desc || 'Accuracy · Efficiency · Risk metrics'}
-                                            </p>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            {/* 지원 */}
-                            <div className="mt-5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#a78bfa' }}>
-                                    💬 {tp.catPremium || 'Premium Support'}
-                                </p>
-                                <ul className="space-y-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipSupport1 || 'Dedicated Telegram channel'}</li>
-                                    <li className="flex"><Check color="#a78bfa" />{tp.vipSupport2 || 'Priority customer support'}</li>
-                                </ul>
-                            </div>
-                        </div>
-                        {(userTier === 'vip' || userTier === 'premium') ? (
-                            <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
-                                style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
-                                ✓ {tp.currentPlan || 'Current Plan'}
-                            </span>
+                    </h1>
+                    <p className="mt-4 text-sm sm:text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                        {isKo ? (
+                            <>
+                                기존의 Pro 및 VIP 월간 구독 카드 결제 장벽을 완전히 걷어냈습니다.<br />
+                                이제 가입만 하면 Scorenix의 모든 머신러닝 분석 카드와 최적 조합기를 자유롭게 이용하실 수 있습니다.
+                            </>
                         ) : (
-                            <a href={`/${currentLang}/payment/request?plan=vip`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all"
-                                style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(99,102,241,0.2))', color: '#c084fc', border: '1px solid rgba(139,92,246,0.4)' }}>
-                                {tp.subscribeVip || 'Subscribe VIP'}
-                            </a>
+                            <>
+                                We have fully dismantled the paywall for Pro & VIP subscriptions.<br />
+                                Enjoy unlimited access to all machine learning cards, Expected Value analyses, and portfolio optimizers.
+                            </>
+                        )}
+                    </p>
+                </div>
+
+                {/* ── 후원안내 메인 카드 (Donation Card) ───────────────────── */}
+                <div className="glass-card p-8 rounded-2xl border border-[rgba(6,182,212,0.15)] shadow-[0_0_50px_rgba(6,182,212,0.05)] mb-12">
+                    <div className="text-center max-w-xl mx-auto space-y-6">
+                        <span className="text-5xl inline-block animate-bounce mb-2">☕</span>
+                        <h2 className="text-xl font-bold text-white">
+                            {isKo ? "AI 예측 서버 유지 및 지속적인 개발 후원" : "Support Our AI Infrastructure"}
+                        </h2>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                            {isKo ? (
+                                <>
+                                    감정 없이 숫자로만 계산하는 AI 분석 엔진의 실시간 피드 정보 수집 및 고성능 연산 서버(GPU) 유지를 위해 유저분들의 자발적인 커피 한 잔 후원을 기다립니다.<br />
+                                    모든 후원금은 24시간 실시간 배당 스캐너 동작 및 모델 재학습 서버 기여 비용으로 투명하게 활용됩니다.
+                                </>
+                            ) : (
+                                <>
+                                    We run high-compute GPU instances to refresh true probabilities and self-train our LightGBM models every night. If the analysis is valuable to your portfolio, consider buying us a cup of coffee to keep the servers running.
+                                </>
+                            )}
+                        </p>
+
+                        <hr className="border-[var(--border-subtle)] my-6" />
+
+                        {isKo ? (
+                            /* ── 한국어 전용 후원 계좌 ── */
+                            <div className="space-y-4">
+                                <div className="p-5 rounded-xl text-left bg-white/5 border border-white/10 space-y-2">
+                                    <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)]">계좌 이체 후원</span>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <div className="text-base font-black text-white">카카오뱅크</div>
+                                            <div className="text-sm font-bold text-gray-300 mt-1 select-all">3333-28-0955986</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs text-gray-400">예금주</span>
+                                            <div className="text-sm font-bold text-white">신승우</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <a 
+                                        href="https://toss.me/scorenix" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="flex-1"
+                                        id="toss-donation-btn"
+                                    >
+                                        <button className="w-full py-3.5 bg-[#0057ff] hover:bg-[#0047d1] text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2">
+                                            <span>⚡</span> 토스페이로 빠르게 송금하기
+                                        </button>
+                                    </a>
+                                </div>
+                            </div>
+                        ) : (
+                            /* ── 글로벌 후원 안내 (PayPal / Crypto / Support) ── */
+                            <div className="space-y-4">
+                                <div className="p-5 rounded-xl text-left bg-white/5 border border-white/10 space-y-2">
+                                    <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)]">Global Sponsorship</span>
+                                    <div className="text-xs text-gray-300 leading-relaxed">
+                                        For international sponsors who want to support Scorenix global sports intelligence, you can leverage direct transfers or contact our support team.
+                                    </div>
+                                </div>
+                                <a 
+                                    href="mailto:support@scorenix.com" 
+                                    className="block w-full"
+                                    id="email-support-btn"
+                                >
+                                    <button className="w-full py-3.5 bg-white/10 hover:bg-white/15 text-white font-bold text-xs rounded-xl transition">
+                                        ✉️ Contact Support for Global Sponsorship
+                                    </button>
+                                </a>
+                            </div>
                         )}
                     </div>
                 </div>
 
+                {/* ── 제공 기능 리스트 (Features Showcase) ─────────────────── */}
+                <div className="grid gap-6 sm:grid-cols-2 mb-12">
+                    {[
+                        { 
+                            icon: '📊', 
+                            title: isKo ? '실시간 Pinnacle 배당 효율 비교' : 'Pinnacle Odds Efficiency', 
+                            desc: isKo ? '해외 최대 배당판 흐름과 국내 배당 효율을 교차 실시간 검증합니다.' : 'Cross-verify local odds with pinnacle true probabilities.' 
+                        },
+                        { 
+                            icon: '🧠', 
+                            title: isKo ? '7-Factor AI 머신러닝 리포트' : '7-Factor Machine Learning', 
+                            desc: isKo ? '전력/최근폼/H2H/로스터/동기부여 등 7대 요소를 계량화하여 예측을 도출합니다.' : 'Structured analysis using LightGBM trained over 8,900+ matches.' 
+                        },
+                        { 
+                            icon: '🔮', 
+                            title: isKo ? 'AI 자동 조합 및 켈리 계산기' : 'AI Combination Optimizer', 
+                            desc: isKo ? '세금을 절세하고 분산 비중(Kelly Criterion)을 반영한 최적 조합을 찾습니다.' : 'Minimize tax rates and maximize expected values (EV) dynamically.' 
+                        },
+                        { 
+                            icon: '🤖', 
+                            title: isKo ? 'AI 데이터 분석 전용 챗봇' : 'Unrestricted AI Chatbot', 
+                            desc: isKo ? '질문 한 번으로 경기 순위, 부상 흐름, 상대 전적을 종합 브리핑합니다.' : 'Ask anything to get fully synthesized sports intelligence.' 
+                        },
+                    ].map((feat, idx) => (
+                        <div key={idx} className="glass-card p-5 flex items-start gap-4">
+                            <span className="text-2xl flex-shrink-0">{feat.icon}</span>
+                            <div>
+                                <h3 className="text-sm font-bold text-white">{feat.title}</h3>
+                                <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed">{feat.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* ── FAQ ──────────────────────────── */}
+                <div className="border-t border-[var(--border-subtle)] pt-12">
+                    <h3 className="text-lg font-bold text-center text-white mb-6">❓ {isKo ? "자주 묻는 질문" : "Frequently Asked Questions"}</h3>
+                    <div className="space-y-4">
+                        {[
+                            { 
+                                q: isKo ? '왜 모든 기능을 무료로 전환했나요?' : 'Why is the service completely free?', 
+                                a: isKo ? '보다 신뢰도 높은 인공지능 기반 분석 정보를 유저분들께 널리 전수하고 스포츠 가치 투자의 패러다임을 확립하기 위함입니다. 고성능 유지 비용은 채널 광고 및 자발적인 소액 후원을 기반으로 메꾸어 나가고 있습니다.' : 'We want to establish a truly data-driven paradigm for sports analysis. We monetize via YouTube automation and community sponsorships instead of hard paywalls.' 
+                            },
+                            { 
+                                q: isKo ? '결제했던 정기 구독권은 어떻게 되나요?' : 'What happens to existing active subscriptions?', 
+                                a: isKo ? '기존 결제 유저분들의 잔여 이용 기간은 전액 환불 및 전원 완전 무료 상태로 자동 전환되었습니다. 환불 문의는 공식 support 메일 혹은 마이페이지 고객지원 채널을 활용해 주십시오.' : 'All active paying subscribers have been migrated to the free plan. Please contact support@scorenix.com for refund settlements for any remaining active terms.' 
+                            }
+                        ].map((faq, idx) => (
+                            <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
+                                <h4 className="text-xs font-bold text-white">Q. {faq.q}</h4>
+                                <p className="text-xs leading-relaxed text-[var(--text-muted)]">A. {faq.a}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="text-center text-[10px] text-[var(--text-muted)] mt-12">
+                    <p>Scorenix AI Sports Data Lab | Email: support@scorenix.com</p>
+                    <p className="mt-1">© 2026 Scorenix. All Rights Reserved.</p>
+                </div>
             </main>
+            <Footer />
         </div>
     );
 }

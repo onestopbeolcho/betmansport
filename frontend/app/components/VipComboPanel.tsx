@@ -30,8 +30,8 @@ export default function VipComboPanel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // API 호출 전 권한 체크 (안전 장치)
-    if (!user || user.tier !== "vip") {
+    // API 호출 전 로그인 체크 (무료화 피벗 대응: tier 조건 제거)
+    if (!user) {
       setLoading(false);
       return;
     }
@@ -68,21 +68,21 @@ export default function VipComboPanel() {
     }
   }, [user, token]);
 
-  if (!user || user.tier !== "vip") {
+  if (!user) {
     return (
       <div className="relative rounded-2xl border border-gray-800 bg-gray-900/50 p-6 overflow-hidden">
         <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/40 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-600 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(251,191,36,0.5)]">
-            <svg className="w-8 h-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(6,182,212,0.5)]">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7z" />
             </svg>
           </div>
-          <h3 className="text-2xl font-bold font-outfit text-white mb-2">{t.portfolioTitle || "VIP 전용 AI 포트폴리오"}</h3>
+          <h3 className="text-2xl font-bold font-outfit text-white mb-2">{t.portfolioTitle || "AI 포트폴리오 추천"}</h3>
           <p className="text-gray-300 mb-6 max-w-md">
-            {t.portfolioIntro || "켈리 기준 금액 설정이 반영된 AI 최적화 조합을 확인하세요. 기대 가치(EV)를 동적으로 극대화할 수 있습니다."}
+            로그인하시면 최적화된 복수 경기 조합 추천과 자산 분배율(Kelly Criterion) 정밀 분석 결과를 실시간으로 받아보실 수 있습니다.
           </p>
-          <a href="/pricing" className="px-8 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold hover:shadow-[0_0_20px_rgba(251,191,36,0.4)] transition-all">
-            {t.upgradeVip || "VIP 등급으로 업그레이드"}
+          <a href="/register" className="px-8 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all">
+            로그인하고 무료로 이용하기
           </a>
         </div>
         
