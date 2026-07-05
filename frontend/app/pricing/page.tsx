@@ -77,35 +77,34 @@ export default function PricingPage() {
                         <hr className="border-[var(--border-subtle)] my-6" />
 
                         {isKo ? (
-                            /* ── 한국어 전용 후원 계좌 ── */
+                            /* ── 한국어 전용 간편 송금 ── */
                             <div className="space-y-4">
-                                <div className="p-5 rounded-xl text-left bg-white/5 border border-white/10 space-y-2">
-                                    <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)]">계좌 이체 후원</span>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <div className="text-base font-black text-white">카카오뱅크</div>
-                                            <div className="text-sm font-bold text-gray-300 mt-1 select-all">3333-28-0955986</div>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-xs text-gray-400">예금주</span>
-                                            <div className="text-sm font-bold text-white">신승우</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="grid gap-3 sm:grid-cols-2">
                                     <a 
                                         href="https://toss.me/scorenix" 
                                         target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="flex-1"
+                                        rel="noopener noreferrer"
                                         id="toss-donation-btn"
                                     >
-                                        <button className="w-full py-3.5 bg-[#0057ff] hover:bg-[#0047d1] text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2">
-                                            <span>⚡</span> 토스페이로 빠르게 송금하기
+                                        <button className="w-full py-4 bg-[#0057ff] hover:bg-[#0047d1] text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2">
+                                            <span>⚡</span> 토스아이디로 간편 송금
+                                        </button>
+                                    </a>
+
+                                    <a 
+                                        href="https://qr.kakaopay.com/share" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        id="kakao-donation-btn"
+                                    >
+                                        <button className="w-full py-4 bg-[#fee500] hover:bg-[#ebd300] text-[#191919] font-extrabold text-xs rounded-xl transition shadow-lg shadow-yellow-400/10 flex items-center justify-center gap-2">
+                                            <span>💬</span> 카카오페이 간편 송금
                                         </button>
                                     </a>
                                 </div>
+                                <p className="text-[10px] text-[var(--text-muted)] text-center">
+                                    ※ 위 버튼은 상업적 결제망(PG)을 거치지 않으며 개인 정보가 노출되지 않는 안전한 간편 송금 링크입니다.
+                                </p>
                             </div>
                         ) : (
                             /* ── 글로벌 후원 안내 (PayPal / Crypto / Support) ── */
