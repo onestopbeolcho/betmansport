@@ -738,19 +738,18 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
 
 
 @router.post("/cron/distribute-video")
-async def cron_distribute_video(background_tasks: BackgroundTasks, mode: str = "top_picks", avatar: bool = False):
+async def cron_distribute_video(mode: str = "top_picks", avatar: bool = False, lang: str = "all"):
     """
     유튜브 숏츠 + 구글 드라이브 동기화 + 텔레그램 알림 파이프라인 정기 실행 크론 엔드포인트
     """
-    async def run_job():
-        try:
-            from distribution_scheduler import run_distribution_pipeline
-            logger.info(f"⏰ Starting scheduled video distribution (mode: {mode}, avatar: {avatar})...")
-            result = await run_distribution_pipeline(mode, avatar)
-            logger.info(f"✅ Scheduled video distribution complete: {result}")
-        except Exception as e:
-            logger.error(f"❌ Scheduled video distribution failed: {e}", exc_info=True)
-
-    background_tasks.add_task(run_job)
-    return {"status": "Scheduled video distribution job triggered in background"}
+    try:
+        from distribution_scheduler import run_distribution_pipeline
+        logger.info(f"⏰ Starting scheduled video distribution (mode: {mode}, avatar: {avatar}, lang: {lang})...")
+        langs = ["ko", "en", "ja"] if lang == "all" else [lang]
+        result = await run_distribution_pipeline(mode, avatar, langs=langs)
+        logger.info(f"✅ Scheduled video distribution complete: {result}")
+        return {"status": "success", "result": result}
+    except Exception as e:
+        logger.error(f"❌ Scheduled video distribution failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 

@@ -58,11 +58,11 @@ def send_telegram_alert(message: str) -> bool:
         return False
 
 
-async def run_distribution_pipeline(mode: str, use_avatar: bool = False):
+async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: list = None):
     """
-    하이브리드 비디오 제작 및 플랫폼별 배포 자동화 파이프라인 실행 (다국어 일괄 처리)
+    하이브리드 비디오 제작 및 플랫폼별 배포 자동화 파이프라인 실행 (다국어 일괄 또는 개별 처리)
     """
-    logger.info(f"🚀 배포 파이프라인 트리거됨. 모드: {mode} (아바타 활성: {use_avatar})")
+    logger.info(f"🚀 배포 파이프라인 트리거됨. 모드: {mode} (아바타 활성: {use_avatar}, 대상 언어: {langs})")
     
     # 0. 환경변수 최신화 (Firestore 로딩)
     load_config_to_env()
@@ -70,8 +70,10 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False):
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_output")
     os.makedirs(output_dir, exist_ok=True)
     
+    if langs is None:
+        langs = ["ko", "en", "ja"]
+        
     results = {}
-    langs = ["ko", "en", "ja"]
     
     for lang in langs:
         logger.info(f"🌐 [{lang.upper()}] 다국어 숏츠 빌드 및 배포 시작...")

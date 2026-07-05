@@ -77,7 +77,7 @@ def fetch_top_matches():
             except Exception:
                 continue
         out.sort(key=lambda x: x["win_prob"], reverse=True)
-        return out[:3] if len(out) >= 3 else _dummy()
+        return out[:2] if len(out) >= 2 else _dummy()[:2]
     except Exception as e:
         print(f"  [!] Betman data load failed or empty: {e}")
         # --- Fallback: Fetch from AI Predictions API ---
@@ -121,7 +121,7 @@ def fetch_top_matches():
                 })
             
             out.sort(key=lambda x: x["win_prob"], reverse=True)
-            return out[:3] if len(out) >= 3 else _dummy()
+            return out[:2] if len(out) >= 2 else _dummy()[:2]
             
         except Exception as api_err:
             print(f"  [!] Fallback failed: {api_err}")
@@ -340,28 +340,28 @@ def build_script(matches, mode="membership"):
             {"tts": ctas[cta_idx], "caption": cta_caps[cta_idx], "scene": "cta"},
         ]
     elif mode == "top_picks":
-        if not matches or len(matches) < 3:
-            matches = _dummy()
-        m1, m2, m3 = matches
+        if not matches or len(matches) < 2:
+            matches = _dummy()[:2]
+        m1, m2 = matches[:2]
 
-        h1, h2, h3 = short(m1['home']), short(m2['home']), short(m3['home'])
-        a1, a2, a3 = short(m1['away']), short(m2['away']), short(m3['away'])
+        h1, h2 = short(m1['home']), short(m2['home'])
+        a1, a2 = short(m1['away']), short(m2['away'])
 
         intros = [
-            f"오늘 밤과 새벽! 절대 놓쳐선 안 될 해외 배당판 급변 매치! 스코어닉스 AI가 엄선한 초고신뢰도 경기 탑 쓰리 바로 브리핑합니다.",
-            f"주목하세요! {today} 배당 흐름 데이터가 폭발하고 있습니다. AI 신뢰도가 급증하고 있는 오늘의 추천 매치 TOP 3 대공개!"
+            f"오늘 밤과 새벽! 절대 놓쳐선 안 될 해외 배당판 급변 매치! 스코어닉스 AI가 엄선한 초고신뢰도 경기 탑 투 바로 브리핑합니다.",
+            f"주목하세요! {today} 배당 흐름 데이터가 폭발하고 있습니다. AI 신뢰도가 급증하고 있는 오늘의 추천 매치 TOP 2 대공개!"
         ]
         intro_caps = [
-            f"[HOT PICKS]\n{today} 배당 판도 변화\nAI 추천 매치 TOP 3",
-            f"[TODAY TOP 3]\n실시간 데이터 기반\n오늘의 신뢰도 상위 매치"
+            f"[HOT PICKS]\n{today} 배당 판도 변화\nAI 추천 매치 TOP 2",
+            f"[TODAY TOP 2]\n실시간 데이터 기반\n오늘의 신뢰도 상위 매치"
         ]
         intro_idx = random.randint(0, len(intros) - 1)
 
         m1_tts = f"첫 번째 경기는 {m1['home']} 대 {m1['away']}입니다. {m1['reason']} AI 환산 승률 무려 {m1['win_prob']}%로 어느 한쪽의 통계적 우위가 매우 뚜렷하게 관측됩니다."
         m1_cap = f"{h1}\nvs\n{a1}\n\n[AI 신뢰도] {m1['win_prob']}%\n배당 홈 {m1.get('home_odds', '?')}x"
 
-        m2_tts = f"그리고 두 번째 빅매치 {m2['home']} 대 {m2['away']} 경기와, 세 번째 초미의 관심사 {m3['home']} 대 {m3['away']}의 실시간 데이터 분석 결과와 최종 승리 추천 픽은요."
-        m2_cap = f"2순위: {h2} vs {a2}\n3순위: {h3} vs {a3}\n\n과연 AI가 선택한 최종 픽은?"
+        m2_tts = f"그리고 두 번째 빅매치 {m2['home']} 대 {m2['away']} 경기의 실시간 데이터 분석 결과와 최종 승리 추천 픽은요."
+        m2_cap = f"2순위: {h2} vs {a2}\n\n과연 AI가 선택한 최종 픽은?"
 
         m3_tts = "오직 스코어닉스 공식 웹사이트 scorenix.com 에서 100% 무료로 지금 즉시 공개하고 있습니다! 한발 빠르게 전체 대진표와 실시간 배당을 확인하러 접속하세요."
         m3_cap = "네이버에 [ 스코어닉스 ] 검색!\n\nscorenix.com 전면 무료 오픈!"
@@ -380,36 +380,36 @@ def build_script(matches, mode="membership"):
             {"tts": intros[intro_idx], "caption": intro_caps[intro_idx], "scene": "intro"},
             {"tts": m1_tts, "caption": m1_cap, "scene": "match"},
             {"tts": m2_tts, "caption": m2_cap, "scene": "match"},
-            {"tts": m3_tts, "caption": m3_cap, "scene": "match"},
-            {"tts": ctas[cta_idx], "caption": cta_caps[cta_idx], "scene": "cta"},
+            {"tts": m3_tts, "caption": m3_cap, "scene": "cta"},
         ]
 
     else:
-        m1, m2, m3 = matches
-        h1, h2, h3 = short(m1['home']), short(m2['home']), short(m3['home'])
-        a1, a2, a3 = short(m1['away']), short(m2['away']), short(m3['away'])
+        if not matches or len(matches) < 2:
+            matches = _dummy()[:2]
+        m1, m2 = matches[:2]
+        h1, h2 = short(m1['home']), short(m2['home'])
+        a1, a2 = short(m1['away']), short(m2['away'])
 
         if mode == "membership":
-            # 1. 멤버십(구독자용) 대본: 3개 경기 전체 완벽 정밀 분석 제공
+            # 1. 멤버십(구독자용) 대본: 2개 경기 전체 완벽 정밀 분석 제공
             intros = [
-                f"자, 집중! 스코어닉스 유튜브 멤버십 회원님들만을 위한 {today} AI 승률 예측 리포트입니다. 가장 확실한 꿀경기 세 개, 바로 정밀하게 뜯어볼게요.",
+                f"자, 집중! 스코어닉스 유튜브 멤버십 회원님들만을 위한 {today} AI 승률 예측 리포트입니다. 가장 확실한 꿀경기 두 개, 바로 정밀하게 뜯어볼게요.",
                 f"안녕하세요! {today} 스코어닉스 멤버십 회원 전용 리포트입니다. 정밀 분석한 AI 배당 흐름과 최종 승률 예측, 지금 바로 상세히 공개합니다.",
-                f"주목! 스코어닉스 VIP 멤버십 특별 브리핑입니다. {today} 배당 데이터와 정밀 통계를 심층 조합하여 엄선한 오늘의 분석 탑 쓰리 시작합니다."
+                f"주목! 스코어닉스 VIP 멤버십 특별 브리핑입니다. {today} 배당 데이터와 정밀 통계를 심층 조합하여 엄선한 오늘의 분석 탑 투 시작합니다."
             ]
             intro_captions = [
                 f"[MEMBERSHIP VIP]\n{today} VIP 전용\nAI 데이터 분석 리포트",
-                f"[PREMIUM ONLY]\n{today} 멤버십 전용\n정밀 배당 예측 TOP 3",
-                f"[VIP REPORT]\n{today} 실시간 분석\n승률 순위 탑 3"
+                f"[PREMIUM ONLY]\n{today} 멤버십 전용\n정밀 배당 예측 TOP 2",
+                f"[VIP REPORT]\n{today} 실시간 분석\n승률 순위 탑 2"
             ]
             intro_idx = random.randint(0, len(intros) - 1)
 
             def match_tts(m, order):
                 templates = [
                     f"{order} 분석 경기는, {m['home']} 대 {m['away']}입니다. {m['reason']} AI 데이터 환산 승률은 무려 {m['win_prob']}%로 홈팀 우위가 통계적으로 확실합니다.",
-                    f"{order} 순위는, {m['home']}과 {m['away']}의 격돌! {m['reason']} AI 정밀 예측 승률은 {m['win_prob']}%로 최종 분석되었습니다.",
-                    f"마지막 {order} 경기는 {m['home']} 대 {m['away']}입니다. {m['reason']} 통계적 승률 {m['win_prob']}%로 홈팀의 우세가 예상됩니다."
+                    f"{order} 순위는, {m['home']}과 {m['away']}의 격돌! {m['reason']} AI 정밀 예측 승률은 {m['win_prob']}%로 최종 분석되었습니다."
                 ]
-                idx = 0 if "첫" in order else (1 if "두" in order else 2)
+                idx = 0 if "첫" in order else 1
                 return templates[idx]
 
             def match_caption(m, h, a):
@@ -417,7 +417,7 @@ def build_script(matches, mode="membership"):
 
             ctas = [
                 "오늘 멤버십 전용 정밀 분석은 여기까지입니다! 스코어닉스 닷컴(scorenix.com)에 로그인하시면 모든 경기의 7-팩터 정밀 분석 데이터와 AI 자동 조합기를 무제한으로 사용하실 수 있습니다. 항상 감사드립니다!",
-                "구독자 회원님들을 위해 엄선한 3경기 완벽 분석이었습니다. 스코어닉스 닷컴에서 VIP 계정을 즉시 연동하시고 오늘 준비된 프리미엄 조합 픽을 바로 확인해보세요!"
+                "구독자 회원님들을 위해 엄선한 2경기 완벽 분석이었습니다. 스코어닉스 닷컴에서 VIP 계정을 즉시 연동하시고 오늘 준비된 프리미엄 조합 픽을 바로 확인해보세요!"
             ]
             cta_captions = [
                 "멤버십 회원 연동 완료\n\nscorenix.com 무제한 이용",
@@ -429,18 +429,17 @@ def build_script(matches, mode="membership"):
                 {"tts": intros[intro_idx], "caption": intro_captions[intro_idx], "scene": "intro"},
                 {"tts": match_tts(m1, "첫 번째"), "caption": match_caption(m1, h1, a1), "scene": "match"},
                 {"tts": match_tts(m2, "두 번째"), "caption": match_caption(m2, h2, a2), "scene": "match"},
-                {"tts": match_tts(m3, "세 번째"), "caption": match_caption(m3, h3, a3), "scene": "match"},
                 {"tts": ctas[cta_idx], "caption": cta_captions[cta_idx], "scene": "cta"},
             ]
 
         else:
-            # 2. 마케팅(유입/일반공개용) 대본: 1번째 경기 상세 오픈 + 2/3번째 경기 티저
+            # 2. 마케팅(유입/일반공개용) 대본: 1번째 경기 상세 오픈 + 2번째 경기 티저
             intros = [
-                f"자, 주목! {today} 스포츠 배당 데이터 분석! 스코어닉스 AI가 오늘 무조건 확인해야 할 승률 탑 쓰리 경기를 들고 왔습니다.",
-                f"다들 주목하세요! {today} 실시간 해외 배당판이 요동치고 있습니다. AI가 검증한 가장 확실한 오늘의 경기 TOP 3를 바로 공개합니다."
+                f"자, 주목! {today} 스포츠 배당 데이터 분석! 스코어닉스 AI가 오늘 무조건 확인해야 할 승률 탑 투 경기를 들고 왔습니다.",
+                f"다들 주목하세요! {today} 실시간 해외 배당판이 요동치고 있습니다. AI가 검증한 가장 확실한 오늘의 경기 TOP 2를 바로 공개합니다."
             ]
             intro_captions = [
-                f"[PUBLIC REPORT]\n{today} 실시간\nAI 추천 경기 TOP 3",
+                f"[PUBLIC REPORT]\n{today} 실시간\nAI 추천 경기 TOP 2",
                 f"[TODAY PICK]\n{today} 대박 예상 경기\n실시간 배당 분석"
             ]
             intro_idx = random.randint(0, len(intros) - 1)
@@ -448,8 +447,8 @@ def build_script(matches, mode="membership"):
             m1_tts = f"먼저, 승률이 가장 높은 첫 번째 대박 경기는 바로 {m1['home']} 대 {m1['away']}입니다. {m1['reason']} AI 환산 승률 무려 {m1['win_prob']}%로 홈팀이 엄청나게 유리한 구도입니다."
             m1_cap = f"{h1}\nvs\n{a1}\n\n[AI 추천] 승률 {m1['win_prob']}%\n배당 홈 {m1.get('home_odds', '?')}x"
 
-            m2_tts = f"그리고 두 번째로 예측되는 대박 매치인 {m2['home']} 대 {m2['away']} 경기와, 세 번째 매치인 {m3['home']} 대 {m3['away']}의 실시간 승리 예측 정보는요."
-            m2_cap = f"2순위: {h2} vs {a2}\n3순위: {h3} vs {a3}\n\n과연 AI의 최종 선택은?"
+            m2_tts = f"그리고 두 번째로 예측되는 대박 매치인 {m2['home']} 대 {m2['away']} 경기의 실시간 승리 예측 정보는요."
+            m2_cap = f"2순위: {h2} vs {a2}\n\n과연 AI의 최종 선택은?"
 
             m3_tts = "스코어닉스 닷컴 웹사이트에서 100% 전면 무료로 즉시 공개해 드리고 있습니다! 지금 바로 전체 대진표와 실시간 배당을 확인하러 오세요."
             m3_cap = "네이버에 [ 스코어닉스 ] 검색!\n\n scorenix.com 무료 확인"
@@ -468,8 +467,7 @@ def build_script(matches, mode="membership"):
                 {"tts": intros[intro_idx], "caption": intro_captions[intro_idx], "scene": "intro"},
                 {"tts": m1_tts, "caption": m1_cap, "scene": "match"},
                 {"tts": m2_tts, "caption": m2_cap, "scene": "match"},
-                {"tts": m3_tts, "caption": m3_cap, "scene": "match"},
-                {"tts": ctas[cta_idx], "caption": cta_captions[cta_idx], "scene": "cta"},
+                {"tts": m3_tts, "caption": m3_cap, "scene": "cta"},
             ]
 
 
@@ -1027,7 +1025,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                     print(f"    [!] Avatar clip failed: {e}")
 
         if not used_avatar:
-            # 기존 방식: 정적 배경 + Ken Burns
+            # 기존 방식: 정적 배경 (Ken Burns 제거하여 속도 최적화)
             if bg_is_video:
                 t0 = (sum(c.duration for c in clips)) % base_bg.duration
                 t1 = min(t0 + dur, base_bg.duration)
@@ -1035,24 +1033,13 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                 if bg_seg.duration < dur:
                     bg_seg = bg_seg.set_duration(dur)
             else:
-                zoom_start = 1.0 + i * 0.02
-                zoom_end = zoom_start + 0.06
-                bg_seg = ken_burns(base_bg, dur, zoom_start, zoom_end)
+                bg_seg = base_bg.set_duration(dur)
 
         bg_seg = bg_seg.set_audio(audio)
 
-        # 자막 카드 (아바타 모드일 때는 하단에 배치, Slide-up 애니메이션 적용)
+        # 자막 카드 (아바타 모드일 때는 하단에 배치, 일반 모드일 때는 중앙 또는 하단 고정)
         cap_arr = render_caption(seg["caption"], seg["scene"], mode=mode)
         
-        # 슬라이드 인 애니메이션 함수 (0.5초 동안 아래에서 위로 올라옴)
-        def slide_up(t):
-            # t가 0에서 0.5로 갈 때, offset이 100에서 0으로 줄어듦
-            progress = min(1.0, t * 2) 
-            # Ease-out 수식
-            ease = 1 - (1 - progress) * (1 - progress)
-            offset = 150 * (1 - ease)
-            return ("center", offset)
-            
         if used_avatar:
             # 아바타 영상 위에는 자막을 하단 고정 (위치 고정)
             cap_clip = (ImageClip(cap_arr)
@@ -1061,9 +1048,17 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
                         .crossfadein(0.3)
                         .crossfadeout(0.2))
         else:
+            # 일반 모드에서는 캡션을 화면 중앙 부근에 배치 (동적 애니메이션 함수 제거하여 속도 최적화)
+            if seg["scene"] == "intro":
+                y_pos = (HEIGHT - cap_arr.shape[0]) // 2
+            elif seg["scene"] == "cta":
+                y_pos = (HEIGHT - cap_arr.shape[0]) // 2 + 100
+            else:
+                y_pos = (HEIGHT - cap_arr.shape[0]) // 2 + 80
+                
             cap_clip = (ImageClip(cap_arr)
                         .set_duration(dur)
-                        .set_position(slide_up)
+                        .set_position(("center", y_pos))
                         .crossfadein(0.3)
                         .crossfadeout(0.2))
 
@@ -1111,12 +1106,12 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
     print("  [REC] Encoding final video (high quality)...")
     final.write_videofile(
         output_path,
-        fps=30,
+        fps=15,   # Cloud Run 환경에서의 성능 극대화 및 타임아웃 방지를 위해 15fps로 조율
         codec="libx264",
         audio_codec="aac",
         bitrate="8000k",   # 고화질 비트레이트
         threads=4,
-        preset="medium",   # ultrafast → medium 으로 품질 대폭 향상
+        preset="ultrafast",   # Cloud Run 환경에서의 타임아웃 방지를 위해 ultrafast로 유지
     )
 
     # 7) 임시 파일 정리
