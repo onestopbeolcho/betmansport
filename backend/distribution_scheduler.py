@@ -159,20 +159,9 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: 
         except Exception as yt_err:
             logger.error(f"❌ [{lang.upper()}] 유튜브 업로드 실패: {yt_err}")
 
-        # 3. 구글 드라이브 업로드
-        logger.info(f"📂 [{lang.upper()}] 구글 드라이브 백업 업로드 시작...")
+        # 3. 구글 드라이브 업로드 (사용자 요청으로 비활성화 - 유튜브 직접 다운로드 방식 사용)
+        logger.info(f"📂 [{lang.upper()}] 구글 드라이브 업로드 단계 생략")
         drive_link = None
-        try:
-            if google_drive_service.is_configured:
-                drive_link = google_drive_service.upload_video(rendered_path)
-                if drive_link:
-                    logger.info(f"✅ [{lang.upper()}] 구글 드라이브 업로드 성공. 링크: {drive_link}")
-                else:
-                    logger.warning(f"⚠️ [{lang.upper()}] 구글 드라이브 업로드 결과 링크를 받지 못했습니다.")
-            else:
-                logger.warning(f"⚠️ [{lang.upper()}] 구글 드라이브 서비스가 비활성화 상태입니다.")
-        except Exception as drive_err:
-            logger.error(f"❌ [{lang.upper()}] 구글 드라이브 업로드 중 오류 발생: {drive_err}")
 
         results[lang] = {
             "youtube_url": youtube_url,
