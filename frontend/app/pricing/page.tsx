@@ -30,102 +30,65 @@ export default function PricingPage() {
                             border: '1px solid rgba(6,182,212,0.2)' 
                         }}
                     >
-                        🎉 100% Free Analytics · 전면 무료화 선언
+                        ⚡ Premium Sports Tech · 100% 전면 무료화
                     </div>
                     <h1 className="text-3xl sm:text-4xl font-black leading-tight text-white">
                         {isKo ? (
-                            <>모든 AI 정밀 분석 서비스를 <span className="gradient-text">100% 무료</span>로 공개합니다</>
+                            <>Scorenix의 모든 AI 분석 리포트를 <span className="gradient-text">전면 무료</span>로 개방합니다</>
                         ) : (
-                            <>All AI Analytics is now <span className="gradient-text">100% Free</span> for Everyone</>
+                            <>All AI Sports Analytics is Now <span className="gradient-text">100% Free</span></>
                         )}
                     </h1>
                     <p className="mt-4 text-sm sm:text-base leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                         {isKo ? (
                             <>
-                                기존의 Pro 및 VIP 월간 구독 카드 결제 장벽을 완전히 걷어냈습니다.<br />
-                                이제 가입만 하면 Scorenix의 모든 머신러닝 분석 카드와 최적 조합기를 자유롭게 이용하실 수 있습니다.
+                                유료 멤버십 가입 장벽을 완전히 걷어냈습니다.<br />
+                                회원 가입만으로 수학적 기대값(EV) 분석, AI 복수 경기 조합 최적화 시뮬레이터까지 모든 도구를 무제한으로 사용하십시오.
                             </>
                         ) : (
                             <>
-                                We have fully dismantled the paywall for Pro & VIP subscriptions.<br />
-                                Enjoy unlimited access to all machine learning cards, Expected Value analyses, and portfolio optimizers.
+                                We have dismantled all paywall barriers. Enjoy unrestricted access to our Expected Value (EV) engine, AI combination optimizers, and machine learning models.
                             </>
                         )}
                     </p>
                 </div>
 
-                {/* ── 후원안내 메인 카드 (Donation Card) ───────────────────── */}
+                {/* ── 비즈니스 파트너십 및 광고 제휴 카드 ───────────────────── */}
                 <div className="glass-card p-8 rounded-2xl border border-[rgba(6,182,212,0.15)] shadow-[0_0_50px_rgba(6,182,212,0.05)] mb-12">
                     <div className="text-center max-w-xl mx-auto space-y-6">
-                        <span className="text-5xl inline-block animate-bounce mb-2">☕</span>
+                        <span className="text-5xl inline-block mb-2">🤝</span>
                         <h2 className="text-xl font-bold text-white">
-                            {isKo ? "AI 예측 서버 유지 및 지속적인 개발 후원" : "Support Our AI Infrastructure"}
+                            {isKo ? "비즈니스 제휴 및 광고 문의" : "Business Partnerships & Advertising"}
                         </h2>
                         <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                             {isKo ? (
                                 <>
-                                    감정 없이 숫자로만 계산하는 AI 분석 엔진의 실시간 피드 정보 수집 및 고성능 연산 서버(GPU) 유지를 위해 유저분들의 자발적인 커피 한 잔 후원을 기다립니다.<br />
-                                    모든 후원금은 24시간 실시간 배당 스캐너 동작 및 모델 재학습 서버 기여 비용으로 투명하게 활용됩니다.
+                                    Scorenix는 매일 자동 업로드되는 유튜브 쇼츠 영상 및 활발한 사이트 트래픽을 보유하고 있습니다.<br />
+                                    스포츠 미디어 제휴, 배너 및 영상 광고 게재, 머신러닝 데이터 API 활용 등 다양한 비즈니스 협업 제안을 환영합니다.
                                 </>
                             ) : (
                                 <>
-                                    We run high-compute GPU instances to refresh true probabilities and self-train our LightGBM models every night. If the analysis is valuable to your portfolio, consider buying us a cup of coffee to keep the servers running.
+                                    Scorenix leverages automated YouTube content distribution and high-retention platform traffic. We welcome data API licensing, banner ads, and strategic business collaborations.
                                 </>
                             )}
                         </p>
 
                         <hr className="border-[var(--border-subtle)] my-6" />
 
-                        {isKo ? (
-                            /* ── 한국어 전용 간편 송금 ── */
-                            <div className="space-y-4">
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    <a 
-                                        href="https://toss.me/scorenix" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        id="toss-donation-btn"
-                                    >
-                                        <button className="w-full py-4 bg-[#0057ff] hover:bg-[#0047d1] text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2">
-                                            <span>⚡</span> 토스아이디로 간편 송금
-                                        </button>
-                                    </a>
-
-                                    <a 
-                                        href="https://qr.kakaopay.com/share" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        id="kakao-donation-btn"
-                                    >
-                                        <button className="w-full py-4 bg-[#fee500] hover:bg-[#ebd300] text-[#191919] font-extrabold text-xs rounded-xl transition shadow-lg shadow-yellow-400/10 flex items-center justify-center gap-2">
-                                            <span>💬</span> 카카오페이 간편 송금
-                                        </button>
-                                    </a>
+                        <div className="p-6 rounded-xl text-left bg-white/5 border border-white/10 space-y-3">
+                            <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)]">Official Business Channel</span>
+                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                                <div>
+                                    <div className="text-sm font-bold text-gray-300">공식 제휴 문의 이메일</div>
+                                    <div className="text-base font-black text-white mt-1 select-all">support@scorenix.com</div>
                                 </div>
-                                <p className="text-[10px] text-[var(--text-muted)] text-center">
-                                    ※ 위 버튼은 상업적 결제망(PG)을 거치지 않으며 개인 정보가 노출되지 않는 안전한 간편 송금 링크입니다.
-                                </p>
-                            </div>
-                        ) : (
-                            /* ── 글로벌 후원 안내 (PayPal / Crypto / Support) ── */
-                            <div className="space-y-4">
-                                <div className="p-5 rounded-xl text-left bg-white/5 border border-white/10 space-y-2">
-                                    <span className="text-[10px] uppercase font-bold text-[var(--accent-primary)]">Global Sponsorship</span>
-                                    <div className="text-xs text-gray-300 leading-relaxed">
-                                        For international sponsors who want to support Scorenix global sports intelligence, you can leverage direct transfers or contact our support team.
-                                    </div>
-                                </div>
-                                <a 
-                                    href="mailto:support@scorenix.com" 
-                                    className="block w-full"
-                                    id="email-support-btn"
-                                >
-                                    <button className="w-full py-3.5 bg-white/10 hover:bg-white/15 text-white font-bold text-xs rounded-xl transition">
-                                        ✉️ Contact Support for Global Sponsorship
+                                <a href="mailto:support@scorenix.com" className="sm:self-center">
+                                    <button className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs rounded-lg transition shadow-md shadow-cyan-500/10">
+                                        ✉️ 제안서 보내기
                                     </button>
                                 </a>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
 
@@ -169,12 +132,12 @@ export default function PricingPage() {
                     <div className="space-y-4">
                         {[
                             { 
-                                q: isKo ? '왜 모든 기능을 무료로 전환했나요?' : 'Why is the service completely free?', 
-                                a: isKo ? '보다 신뢰도 높은 인공지능 기반 분석 정보를 유저분들께 널리 전수하고 스포츠 가치 투자의 패러다임을 확립하기 위함입니다. 고성능 유지 비용은 채널 광고 및 자발적인 소액 후원을 기반으로 메꾸어 나가고 있습니다.' : 'We want to establish a truly data-driven paradigm for sports analysis. We monetize via YouTube automation and community sponsorships instead of hard paywalls.' 
+                                q: isKo ? '왜 모든 기능을 무료로 제공하나요?' : 'Why is the service completely free?', 
+                                a: isKo ? '사용자 편의성을 극대화하여 스포츠 테크 플랫폼 시장에서의 트래픽 우위를 확보하고 구글 애드센스 광고 수익 및 제휴 비즈니스 모델로 운영비를 충당하기 위해 무료화를 전격 실행하였습니다.' : 'To capture platform traffic and build a global user base, we monetize via programmatic web advertising and enterprise partnership models instead of paywalls.' 
                             },
                             { 
-                                q: isKo ? '결제했던 정기 구독권은 어떻게 되나요?' : 'What happens to existing active subscriptions?', 
-                                a: isKo ? '기존 결제 유저분들의 잔여 이용 기간은 전액 환불 및 전원 완전 무료 상태로 자동 전환되었습니다. 환불 문의는 공식 support 메일 혹은 마이페이지 고객지원 채널을 활용해 주십시오.' : 'All active paying subscribers have been migrated to the free plan. Please contact support@scorenix.com for refund settlements for any remaining active terms.' 
+                                q: isKo ? '비즈니스 제휴 제안 프로세스는 어떻게 되나요?' : 'What is the partnership proposal process?', 
+                                a: isKo ? '공식 제안 이메일(support@scorenix.com)을 통해 회사(혹은 브랜드) 소개서 및 기획안을 송부해 주시면, 검토 후 담당자가 영업일 기준 3일 이내에 회신 및 미팅 협의를 도와드립니다.' : 'Please send your proposal and details to support@scorenix.com. Our partnerships director will review and reply within 3 business days.' 
                             }
                         ].map((faq, idx) => (
                             <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-1.5">
