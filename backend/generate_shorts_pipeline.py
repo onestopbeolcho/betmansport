@@ -580,6 +580,81 @@ def generate_tts(text, path, lang="ko"):
 
 
 
+# ─── 폰트 및 가상 캐릭터 헬퍼 ─────────────────────────────
+def get_font(size, bold=False):
+    # Try custom/system configurations or fallback paths
+    font_names = []
+    
+    # Platform-specific standard font names/paths
+    if os.name == 'nt':  # Windows
+        if bold:
+            font_names.extend(["malgunbd.ttf", "NanumGothicBold.ttf", "arialbd.ttf"])
+        else:
+            font_names.extend(["malgun.ttf", "NanumGothic.ttf", "arial.ttf"])
+    else:  # Linux (Cloud Run)
+        if bold:
+            font_names.extend([
+                "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
+                "/usr/share/fonts/truetype/nanum/NanumSquareB.ttf",
+                "/usr/share/fonts/truetype/nanum/NanumBarunGothicBold.ttf",
+                "DejaVuSans-Bold.ttf"
+            ])
+        else:
+            font_names.extend([
+                "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+                "/usr/share/fonts/truetype/nanum/NanumSquare.ttf",
+                "/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf",
+                "DejaVuSans.ttf"
+            ])
+
+    # Try loading each font
+    for name in font_names:
+        try:
+            return ImageFont.truetype(name, size)
+        except Exception:
+            continue
+
+    # Final fallback
+    try:
+        return ImageFont.load_default()
+    except Exception:
+        return ImageFont.load_default()
+
+
+def make_circular_presenter_image():
+    pres_path = os.path.join(os.path.dirname(__file__), "presenter.png")
+    if not os.path.exists(pres_path):
+        # try fallback directory
+        pres_path = os.path.join(os.path.dirname(__file__), "video", "presenter.png")
+        if not os.path.exists(pres_path):
+            return None
+    try:
+        img = Image.open(pres_path).convert("RGBA")
+        
+        # We want to crop it to a circle of size 400x400
+        size = 400
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+        
+        # Create mask
+        mask = Image.new("L", (size, size), 0)
+        draw_mask = ImageDraw.Draw(mask)
+        draw_mask.ellipse((10, 10, size - 10, size - 10), fill=255)
+        
+        # Apply mask
+        output = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        output.paste(img, (0, 0), mask=mask)
+        
+        # Draw a glowing neon cyan border
+        draw_out = ImageDraw.Draw(output)
+        draw_out.ellipse((6, 6, size - 6, size - 6), outline=(0, 255, 255, 220), width=6)
+        draw_out.ellipse((10, 10, size - 10, size - 10), outline=(255, 255, 255, 100), width=2)
+        
+        return np.array(output)
+    except Exception as e:
+        print(f"  [!] Failed to generate circular presenter: {e}")
+        return None
+
+
 # ─── 자막 이미지 렌더링 ─────────────────────────────────
 def render_caption(text, scene="match", mode="marketing"):
     """장면 유형별/테마별 디자인이 다른 자막 카드 생성 (자동 줄바꿈 + 폰트 자동 축소)"""
@@ -587,32 +662,22 @@ def render_caption(text, scene="match", mode="marketing"):
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # 폰트 로드 함수
-    def load_font(size, bold=False):
-        try:
-            font_ko = cfg.get("subtitle_font_ko", "malgun.ttf")
-            font_bold_ko = cfg.get("subtitle_font_bold_ko", "malgunbd.ttf")
-            name = font_bold_ko if bold else font_ko
-            return ImageFont.truetype(name, size)
-        except Exception:
-            return ImageFont.load_default()
-
     # 안전 영역: 화면 너비의 85%
     safe_w = int(WIDTH * 0.85)
 
-    # 장면별 기본 폰트 크기
-    base_size_intro = int(cfg.get("subtitle_base_size_intro", 68))
-    base_size_match = int(cfg.get("subtitle_base_size_match", 54))
+    # 장면별 기본 폰트 크기 (모바일 시인성 극대화)
+    base_size_intro = 80
+    base_size_match = 65
     base_size = base_size_intro if scene == "intro" else base_size_match
 
     # 자동 줄바꿈 + 폰트 크기 자동 축소
-    font = load_font(base_size, bold=(scene == "intro"))
+    font = get_font(base_size, bold=(scene == "intro"))
     wrapped = _wrap_text(draw, text, font, safe_w)
 
     # 줄이 너무 많으면 폰트 축소 (최소 36까지)
     while len(wrapped) > 9 and base_size > 36:
         base_size -= 4
-        font = load_font(base_size, bold=(scene == "intro"))
+        font = get_font(base_size, bold=(scene == "intro"))
         wrapped = _wrap_text(draw, text, font, safe_w)
 
     # 각 줄 크기 계산
@@ -629,18 +694,12 @@ def render_caption(text, scene="match", mode="marketing"):
         total_h += h + spacing
         line_data.append((line, w, h))
 
-    # 박스 크기
+    # UI 일관성을 위한 고정 너비(960px) 설정
     pad = 45
-    content_w = max((d[1] for d in line_data), default=0)
-    box_w = min(content_w + pad * 2, WIDTH - 60)
+    box_w = 960
 
-    # 장면별 Y 위치
-    if scene == "intro":
-        center_y = HEIGHT // 2
-    elif scene == "cta":
-        center_y = HEIGHT // 2 + 100
-    else:
-        center_y = HEIGHT // 2 + 80
+    # 자막 위치를 화면 하단(Y=1620)으로 고정하여 캐릭터와 겹치지 않고 모바일 가독성 최적화
+    center_y = 1620
 
     box_h = total_h + pad * 2
     box_x1 = (WIDTH - box_w) // 2
@@ -778,10 +837,7 @@ def _wrap_text(draw, text, font, max_width):
 def render_headline():
     img = Image.new("RGBA", (WIDTH, 160), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    try:
-        font = ImageFont.truetype("malgunbd.ttf", 38)
-    except Exception:
-        font = ImageFont.load_default()
+    font = get_font(38, bold=True)
 
     today = datetime.datetime.now().strftime("%m월 %d일")
     text = f"[ {today} ]  SCORENIX  AI  REPORT"
@@ -1037,36 +1093,33 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
 
         bg_seg = bg_seg.set_audio(audio)
 
-        # 자막 카드 (아바타 모드일 때는 하단에 배치, 일반 모드일 때는 중앙 또는 하단 고정)
+        # 자막 카드 (이미지 크기가 1080x1920이므로 (0, 0)에 정렬하여 내부에 계산된 center_y=1620 반영)
         cap_arr = render_caption(seg["caption"], seg["scene"], mode=mode)
-        
-        if used_avatar:
-            # 아바타 영상 위에는 자막을 하단 고정 (위치 고정)
-            cap_clip = (ImageClip(cap_arr)
-                        .set_duration(dur)
-                        .set_position(("center", HEIGHT - 500))
-                        .crossfadein(0.3)
-                        .crossfadeout(0.2))
-        else:
-            # 일반 모드에서는 캡션을 화면 중앙 부근에 배치 (동적 애니메이션 함수 제거하여 속도 최적화)
-            if seg["scene"] == "intro":
-                y_pos = (HEIGHT - cap_arr.shape[0]) // 2
-            elif seg["scene"] == "cta":
-                y_pos = (HEIGHT - cap_arr.shape[0]) // 2 + 100
-            else:
-                y_pos = (HEIGHT - cap_arr.shape[0]) // 2 + 80
-                
-            cap_clip = (ImageClip(cap_arr)
-                        .set_duration(dur)
-                        .set_position(("center", y_pos))
-                        .crossfadein(0.3)
-                        .crossfadeout(0.2))
+        cap_clip = (ImageClip(cap_arr)
+                    .set_duration(dur)
+                    .set_position((0, 0))
+                    .crossfadein(0.3)
+                    .crossfadeout(0.2))
+
+        # 1.2) 가상 캐릭터 (AI Anchor) 레이어 추가
+        pres_clip = None
+        if not used_avatar:
+            pres_arr = make_circular_presenter_image()
+            if pres_arr is not None:
+                # 400x400 크기의 캐릭터 이미지 클립 생성
+                pres_clip = ImageClip(pres_arr).set_duration(dur)
+                # 2초 주기로 2% 스케일이 늘었다 줄었다 하는 호흡 애니메이션 추가
+                pres_clip = pres_clip.resize(lambda t: 1.0 + 0.02 * np.sin(2.0 * np.pi * t / 2.0))
+                # 매 프레임마다 변경된 크기를 기준으로 정중앙 Y=950에 자동 정렬
+                pres_clip = pres_clip.set_position(("center", 950))
 
         layers = [bg_seg]
         if not used_avatar:
             layers.append(hl_clip.set_duration(dur))
             if logo_clip:
                 layers.append(logo_clip.set_duration(dur))
+            if pres_clip:
+                layers.append(pres_clip)
         layers.append(cap_clip)
 
         comp = CompositeVideoClip(layers)
