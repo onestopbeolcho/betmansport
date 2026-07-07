@@ -32,7 +32,7 @@ except ImportError:
 WIDTH, HEIGHT = 1080, 1920  # 쇼츠 9:16
 
 
-def fetch_top_matches():
+def fetch_top_matches(limit=7):
     if load_betman_data is None:
         return _dummy()
     try:
@@ -77,7 +77,7 @@ def fetch_top_matches():
             except Exception:
                 continue
         out.sort(key=lambda x: x["win_prob"], reverse=True)
-        return out[:2] if len(out) >= 2 else _dummy()[:2]
+        return out[:limit] if len(out) >= 2 else _dummy()[:limit]
     except Exception as e:
         print(f"  [!] Betman data load failed or empty: {e}")
         # --- Fallback: Fetch from AI Predictions API ---
@@ -121,7 +121,7 @@ def fetch_top_matches():
                 })
             
             out.sort(key=lambda x: x["win_prob"], reverse=True)
-            return out[:2] if len(out) >= 2 else _dummy()[:2]
+            return out[:limit] if len(out) >= 2 else _dummy()[:limit]
             
         except Exception as api_err:
             print(f"  [!] Fallback failed: {api_err}")
@@ -163,18 +163,34 @@ def _build_data_reason(h_odds, a_odds, d_odds, gap, league):
 
 def _dummy():
     return [
-        {"home": "맨시티", "away": "아스널", "ai_pick": "맨시티",
+        {"home": "맨시티", "away": "아스날", "ai_pick": "맨시티",
          "win_prob": 78, "home_odds": 1.32, "away_odds": 3.40, "draw_odds": 4.50,
          "odds_gap": 48.6, "league": "EPL", "is_betman": False,
-         "reason": "홈 배당 1.32배로 북메이커들도 홈 승리를 압도적으로 예상하고 있고요. AI 환산 승률 격차가 48.6%포인트나 벌어져 있어요."},
+         "reason": "홈 배당 1.32배로 북메이커도 홈 압승을 예도하고 있어. AI 연산 승률 격차가 48.6%p나 벌어져있어."},
         {"home": "레알마드리드", "away": "바르셀로나", "ai_pick": "레알마드리드",
          "win_prob": 72, "home_odds": 1.55, "away_odds": 2.80, "draw_odds": 3.60,
          "odds_gap": 28.9, "league": "La Liga", "is_betman": False,
-         "reason": "홈 배당 1.55 대 원정 배당 2.80으로 홈 팀이 확실히 유리한 구도예요. 승률 차이가 28.9%포인트로 데이터상 우위가 뚜렷해요."},
+         "reason": "홈 배당 1.55 대 원정 2.80, 홈팀 확실한 우위. 승률 차이 28.9%p로 우위가 뚜렷해요."},
         {"home": "바이에른뮌헨", "away": "도르트문트", "ai_pick": "바이에른뮌헨",
          "win_prob": 81, "home_odds": 1.25, "away_odds": 4.00, "draw_odds": 5.00,
          "odds_gap": 55.0, "league": "Bundesliga", "is_betman": False,
-         "reason": "홈 배당 1.25배로 북메이커들도 홈 승리를 압도적으로 예상하고 있고요. 무승부 배당이 높아서 승부가 한쪽으로 갈릴 가능성이 커요."},
+         "reason": "홈 배당 1.25배 압도적 우세. 무승부 배당 5.00으로 양자 대결 구도 명확."},
+        {"home": "파리SG", "away": "마르세유", "ai_pick": "파리SG",
+         "win_prob": 75, "home_odds": 1.45, "away_odds": 3.20, "draw_odds": 4.00,
+         "odds_gap": 35.0, "league": "Ligue 1", "is_betman": False,
+         "reason": "홈팀 배당 1.45배 확실한 유리. AI 가치 배당 갭 35%p로 매우 강력한 추천."},
+        {"home": "인터밀란", "away": "AC밀란", "ai_pick": "인터밀란",
+         "win_prob": 68, "home_odds": 1.75, "away_odds": 2.60, "draw_odds": 3.40,
+         "odds_gap": 18.0, "league": "Serie A", "is_betman": False,
+         "reason": "밀라노 더비, 인터밀란 홈 미세 우세. 배당 1.75 대 2.60으로 가치 베팅 구간."},
+        {"home": "첼시", "away": "리버풀", "ai_pick": "리버풀",
+         "win_prob": 65, "home_odds": 2.60, "away_odds": 1.95, "draw_odds": 3.30,
+         "odds_gap": 15.0, "league": "EPL", "is_betman": False,
+         "reason": "리버풀 원정 우세 예상. 원정 배당 1.95 대 홈 2.60, 원정팀 강세 구도."},
+        {"home": "아틀레티코마드리드", "away": "세비야", "ai_pick": "아틀레티코마드리드",
+         "win_prob": 70, "home_odds": 1.60, "away_odds": 2.90, "draw_odds": 3.80,
+         "odds_gap": 25.0, "league": "La Liga", "is_betman": False,
+         "reason": "홈 배당 1.60배로 안정적 우세. AI 승률 격차 25%p로 홈팀 유리한 구도."},
     ]
 
 
@@ -760,21 +776,70 @@ def render_caption(text, scene="match", mode="marketing"):
             accent = (0, 255, 255, 255)
             border = (0, 200, 255, 180)
 
-    # 그림자(Drop Shadow) 효과 추가
+    # ── 프리미엄 Glassmorphism + Cyber-Glow 멀티레이어 렌더링 ──────────────
     try:
         from PIL import ImageFilter
+
+        # Layer 0: 외곽 확산 글로우 (Outer Diffuse Glow)
+        glow_outer = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        gd = ImageDraw.Draw(glow_outer)
+        gr, gg, gb, _ = border
+        for expand in [16, 10, 6]:
+            alpha_g = max(5, int(50 - expand * 2))
+            gd.rounded_rectangle(
+                [box_x1 - expand, box_y1 - expand, box_x2 + expand, box_y2 + expand],
+                radius=25 + expand, fill=(gr, gg, gb, alpha_g)
+            )
+        glow_outer = glow_outer.filter(ImageFilter.GaussianBlur(12))
+        img = Image.alpha_composite(img, glow_outer)
+
+        # Layer 1: 딥 드롭 쉐도우 (Deep Drop Shadow)
         shadow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         shadow_draw = ImageDraw.Draw(shadow)
-        shadow_draw.rounded_rectangle([box_x1 + 15, box_y1 + 15, box_x2 + 15, box_y2 + 15], radius=30, fill=(0, 0, 0, 180))
-        shadow = shadow.filter(ImageFilter.GaussianBlur(15))
-        img.paste(shadow, (0, 0), shadow)
+        shadow_draw.rounded_rectangle(
+            [box_x1 + 12, box_y1 + 16, box_x2 + 12, box_y2 + 16],
+            radius=30, fill=(0, 0, 0, 200)
+        )
+        shadow = shadow.filter(ImageFilter.GaussianBlur(18))
+        img = Image.alpha_composite(img, shadow)
 
-        # 반투명 박스 + 테두리
+        # Layer 2: 프리미엄 글래스 본체 (Frosted Glass)
+        draw = ImageDraw.Draw(img)
         draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2], radius=25, fill=box_color)
-        draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2], radius=25, outline=border, width=3)
-        # 이너 글로우(Inner Glow) 느낌을 위한 얇은 추가 테두리
-        draw.rounded_rectangle([box_x1+2, box_y1+2, box_x2-2, box_y2-2], radius=23, outline=(255, 255, 255, 30), width=1)
+        # 상단 유리 반사 하이라이트
+        highlight_img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        hl_draw = ImageDraw.Draw(highlight_img)
+        hl_draw.rounded_rectangle(
+            [box_x1 + 4, box_y1 + 4, box_x2 - 4, box_y1 + (box_h // 3)],
+            radius=20, fill=(255, 255, 255, 18)
+        )
+        img = Image.alpha_composite(img, highlight_img)
+        draw = ImageDraw.Draw(img)
+
+        # Layer 3: 멀티레이어 Cyber-Glow Border
+        # 3-1. 외곽 넓은 글로우 (반투명)
+        draw.rounded_rectangle(
+            [box_x1 - 2, box_y1 - 2, box_x2 + 2, box_y2 + 2],
+            radius=27, outline=(gr, gg, gb, 60), width=4
+        )
+        # 3-2. 메인 사이버 테두리 (선명)
+        draw.rounded_rectangle(
+            [box_x1, box_y1, box_x2, box_y2],
+            radius=25, outline=(gr, gg, gb, 210), width=2
+        )
+        # 3-3. 이너 글로우 — 내부 밝은 선
+        draw.rounded_rectangle(
+            [box_x1 + 3, box_y1 + 3, box_x2 - 3, box_y2 - 3],
+            radius=22, outline=(255, 255, 255, 45), width=1
+        )
+        # 3-4. 최내층 — 액센트 라인
+        draw.rounded_rectangle(
+            [box_x1 + 5, box_y1 + 5, box_x2 - 5, box_y2 - 5],
+            radius=20, outline=(gr, gg, gb, 25), width=1
+        )
+
     except AttributeError:
+        draw = ImageDraw.Draw(img)
         draw.rectangle([box_x1, box_y1, box_x2, box_y2], fill=box_color)
 
     # 텍스트 렌더링 (그림자 추가)
@@ -834,6 +899,51 @@ def _wrap_text(draw, text, font, max_width):
 
 
 # ─── 헤드라인 바 ────────────────────────────────────────
+# ── Radial Vignette Overlay (원형 비네트 오버레이) ──────────────────────────
+def render_radial_vignette(width=1080, height=1920, strength=0.75):
+    """
+    화면 가장자리를 어둡게 만드는 방사형 비네트 오버레이 생성.
+    strength: 0.0 (없음) ~ 1.0 (매우 강함)
+    """
+    vignette = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    vig_arr = np.zeros((height, width, 4), dtype=np.uint8)
+
+    cx, cy = width / 2, height / 2
+    max_dist = (cx ** 2 + cy ** 2) ** 0.5
+
+    # 벡터화된 거리 계산
+    y_coords, x_coords = np.mgrid[0:height, 0:width]
+    dist = ((x_coords - cx) ** 2 + (y_coords - cy) ** 2) ** 0.5
+    normalized = np.clip(dist / max_dist, 0, 1)
+
+    # 비네트 알파: 가장자리일수록 어두움 (코사인 커브)
+    alpha = (normalized ** 1.8) * strength * 255
+    alpha = np.clip(alpha, 0, 200).astype(np.uint8)
+
+    vig_arr[:, :, 3] = alpha  # RGBA에서 A채널만 (RGB는 0=검정)
+
+    return Image.fromarray(vig_arr, "RGBA")
+
+
+
+# ── Radial Vignette Overlay (원형 비네트 오버레이) ───────────────────────
+def render_radial_vignette(width=1080, height=1920, strength=0.75):
+    """
+    화면 가장자리를 어둡게 만드는 방사형 비네트 오버레이.
+    strength: 0.0 (없음) ~ 1.0 (매우 강함)
+    """
+    vig_arr = np.zeros((height, width, 4), dtype=np.uint8)
+    cx, cy = width / 2, height / 2
+    max_dist = (cx ** 2 + cy ** 2) ** 0.5
+    y_coords, x_coords = np.mgrid[0:height, 0:width]
+    dist = ((x_coords - cx) ** 2 + (y_coords - cy) ** 2) ** 0.5
+    normalized = np.clip(dist / max_dist, 0, 1)
+    alpha = (normalized ** 1.8) * strength * 255
+    alpha = np.clip(alpha, 0, 200).astype(np.uint8)
+    vig_arr[:, :, 3] = alpha
+    return Image.fromarray(vig_arr, "RGBA")
+
+
 def render_headline():
     img = Image.new("RGBA", (WIDTH, 160), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -909,7 +1019,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
             print(f"  [!] Failed to load HIT predictions: {e}")
             matches = []
     else:
-        matches = fetch_top_matches()
+        matches = fetch_top_matches(limit=7)
 
     script = build_script(matches, mode=mode)
 
