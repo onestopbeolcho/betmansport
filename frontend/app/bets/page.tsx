@@ -7,8 +7,6 @@ import Navbar from '../components/Navbar';
 import PageHeader from '../components/PageHeader';
 import PremiumGate from '../components/PremiumGate';
 import { useCart } from '../../context/CartContext';
-import OnboardingTour, { TourRestartButton } from '../components/OnboardingTour';
-import { betsTourSteps } from '../lib/tourSteps';
 import { useDictionarySafe } from '../context/DictionaryContext';
 
 /* ───── Types ───── */
@@ -169,7 +167,6 @@ export default function BetsPage() {
     const [selectedSport, setSelectedSport] = useState<string>('ALL');
     const { addToCart, removeFromCart, cartItems } = useCart();
     const router = useRouter();
-    const [tourForceStart, setTourForceStart] = useState(false);
     const dict = useDictionarySafe();
     const tb = dict?.bets || {};
     const tc = dict?.common || {};
@@ -385,7 +382,7 @@ export default function BetsPage() {
                     />
 
                     {/* ━━━ AI ENGINE HERO ━━━ */}
-                    <div data-tour="tour-bets-intro" className="relative overflow-hidden rounded-2xl mb-6" style={{
+                    <div className="relative overflow-hidden rounded-2xl mb-6" style={{
                         background: 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(139,92,246,0.08) 50%, rgba(239,68,68,0.05) 100%)',
                         border: '1px solid rgba(0,212,255,0.15)',
                     }}>
@@ -540,7 +537,7 @@ export default function BetsPage() {
                     )}
 
                     {/* ━━━ SPORT FILTER + VIEW TOGGLE ━━━ */}
-                    <div data-tour="tour-bets-filter" className="flex flex-wrap items-center gap-2 mb-4">
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
                         <button
                             onClick={() => setSelectedSport('ALL')}
                             className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${selectedSport === 'ALL' ? 'text-white shadow-md shadow-cyan-500/20' : 'border border-white/10 hover:border-white/20'}`}
@@ -612,7 +609,7 @@ export default function BetsPage() {
                                     <p className="text-xs text-white/20 mt-1">{tb.noMatchesDetail || '경기 데이터가 수집되면 자동으로 AI 시뮬레이션이 시작됩니다'}</p>
                                 </div>
                             ) : (
-                                <div data-tour="tour-bets-table" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {sortedPredictions.map((pred, idx) => {
                                         const level = getConfidenceLevel(pred.confidence);
                                         const parts = pred.match_id.split('_');
@@ -917,7 +914,7 @@ export default function BetsPage() {
 
                 {/* ━━━ COMBO ANALYSIS FLOATING PANEL ━━━ */}
                 {selectedBets.size > 0 && (
-                    <div data-tour="tour-bets-cart" className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
+                    <div className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
                         style={{
                             background: 'rgba(12,12,20,0.92)',
                             backdropFilter: 'blur(20px)',
@@ -974,24 +971,6 @@ export default function BetsPage() {
                     </div>
                 )}
             </div>
-
-            {/* Tour Restart FAB */}
-            <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
-                <TourRestartButton
-                    tourId="bets"
-                    onRestart={() => setTourForceStart(true)}
-                    label={tb.guideTour || '이용 가이드'}
-                />
-            </div>
-
-            <OnboardingTour
-                steps={betsTourSteps}
-                tourId="bets"
-                delay={1500}
-                forceStart={tourForceStart}
-                onComplete={() => setTourForceStart(false)}
-                onSkip={() => setTourForceStart(false)}
-            />
         </>
     );
 }

@@ -1051,43 +1051,52 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         print(" [MIC] TTS: Edge TTS (free)")
     print("=" * 50)
 
-    # ─── 실시간 플랫폼 모바일 화면 자동 녹화 ───
-    if not use_avatar and mode in ("marketing", "winning", "educational", "top_picks"):
+
+    # ── 실시간 스코어닉스 /bets 화면 녹화 (모든 모드 적용) ────────────────────
+    # membership 포함 모든 모드에서 녹화 시도
+    if not use_avatar:
         if os.path.exists(bg_video_path):
             try:
                 os.remove(bg_video_path)
             except Exception:
                 pass
         try:
-            from app.services.browser_recorder import record_page
-            print(f"\n[>>] Real-time Browser Recording started for mode '{mode}'...")
-            
-            target_url = "https://scorenix.com"
+            from app.services.browser_recorder import record_scorenix_bets
+            print(f"\n[>>] Scorenix /bets screen recording started (mode: {mode}, lang: {lang})...")
+
             tmp_webm = os.path.join(os.path.dirname(__file__), "_tmp_record.webm")
-            
+
             import asyncio
-            success = asyncio.run(record_page(target_url, tmp_webm, duration=60.0))
-            
+            success = asyncio.run(
+                record_scorenix_bets(
+                    output_path=tmp_webm,
+                    duration=55.0,  # 55초 녹화 (Cloud Run 타임아웃 여유)
+                    viewport_width=540,
+                    viewport_height=960,
+                    lang=lang,  # 언어별 페이지 녹화
+                )
+            )
+
             if success and os.path.exists(tmp_webm):
-                print(f"  [+] Web screen recorded. Compiling silent background: {bg_video_path}")
+                print(f"  [+] /bets page recorded. Compiling background: {bg_video_path}")
                 bg_clip = VideoFileClip(tmp_webm)
                 bg_clip.without_audio().write_videofile(
                     bg_video_path,
                     codec="libx264",
                     audio=False,
                     preset="ultrafast",
-                    threads=4
+                    threads=4,
                 )
                 bg_clip.close()
                 try:
                     os.remove(tmp_webm)
                 except Exception:
                     pass
-                print("  [OK] Dynamic web screen background compiled successfully!")
+                print("  [OK] Dynamic Scorenix screen background ready!")
             else:
-                print("  [!] Browser recording failed. Falling back to static templates.")
+                print("  [!] Screen recording failed. Using static background.")
         except Exception as record_err:
-            print(f"  [FAIL] Browser recording error: {record_err}. Using fallback templates.")
+            print(f"  [FAIL] Recording error: {record_err}. Using static fallback.")
 
     # 1) 배경 준비
     bg_filename = "premium_bg.png"
