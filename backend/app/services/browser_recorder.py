@@ -1,292 +1,260 @@
 """
-Browser Recorder Service — 실시간 스코어닉스 화면 녹화
-=======================================================
-- Playwright (Headless Chromium) 기반 화면 캡처 & 비디오 녹화
-- 모바일 뷰포트 (540x960, 9:16 비율)
-- 투어/온보딩 오버레이 강제 비활성화 (localStorage 플래그 주입)
-- 페이지 로드 후 자연스러운 스크롤 시뮬레이션
-- /bets 경기 분석 페이지 녹화 → 영상 배경으로 활용
+Browser Recorder Service — 스코어닉스 경기 분석 화면 캡처
+================================================================
+/bets 페이지에서 각 경기 카드를 확장(더보기)하여 AI 분석 화면 스크린샷 캡처
+
+구조:
+  - /bets 리스트 → 카드 "더보기 ▼" 클릭 → 확장된 AI 분석 패널 스크린샷
+  - 확장 패널 내용: 확률 도넛, H/D/A 바, AI 분석 요소(7-Factor), 추천 방향
+  - /bets/view?id=X 는 사용하지 않음 (레거시)
 """
 import os
 import asyncio
 import logging
 import shutil
 import tempfile
+from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
-# 투어/온보딩 비활성화용 localStorage 키 목록
-# OnboardingTour.tsx의 tourId 기반으로 생성되는 키들
-TOUR_DISABLE_SCRIPT = """
-// 모든 투어 완료 처리 (OnboardingTour.tsx의 localStorage 키 패턴 매칭)
-const tourKeys = [
-    'scorenix_tour_bets_completed',
-    'scorenix_tour_market_completed',
-    'scorenix_tour_analysis_completed',
-    'scorenix_tour_home_completed',
-    'scorenix_tour_completed',
-    'toured_bets',
-    'toured_market',
-    'toured_home',
-    'tour_completed',
-    'onboarding_done',
-    'joyride_done',
-];
-tourKeys.forEach(k => {
-    try { localStorage.setItem(k, 'true'); } catch(e) {}
-});
-
-// Joyride/ReactJoyride가 사용하는 패턴도 처리
-try {
-    const allKeys = Object.keys(localStorage);
-    allKeys.forEach(k => {
-        if (k.includes('tour') || k.includes('onboard') || k.includes('joyride')) {
-            localStorage.setItem(k, 'true');
+DISABLE_TOUR_JS = """
+(() => {
+    const keys = [
+        'scorenix_tour_bets_completed', 'scorenix_tour_market_completed',
+        'scorenix_tour_home_completed', 'scorenix_tour_completed',
+        'toured_bets', 'toured_market', 'toured_home',
+        'tour_completed', 'onboarding_done', 'joyride_done'
+    ];
+    keys.forEach(k => { try { localStorage.setItem(k, 'true'); } catch(e) {} });
+    const style = document.createElement('style');
+    style.textContent = `
+        [class*="joyride"], [class*="tour"], [class*="spotlight"],
+        [class*="overlay"], [class*="onboarding"], .__floater,
+        .react-joyride__overlay, .react-joyride__spotlight,
+        .react-joyride__tooltip {
+            display: none !important; opacity: 0 !important;
+            pointer-events: none !important;
         }
-    });
-} catch(e) {}
-
-// CSS로 오버레이/스포트라이트 강제 숨김
-const style = document.createElement('style');
-style.id = 'scorenix-recorder-override';
-style.textContent = `
-    [class*="joyride"],
-    [class*="tour"],
-    [class*="spotlight"],
-    [class*="overlay"],
-    [class*="onboarding"],
-    [data-tour],
-    .__floater,
-    .react-joyride__overlay,
-    .react-joyride__spotlight,
-    .react-joyride__tooltip {
-        display: none !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        z-index: -9999 !important;
-    }
-`;
-document.head.appendChild(style);
-console.log('[Recorder] Tour overlays disabled.');
+    `;
+    document.head.appendChild(style);
+})();
 """
 
-# 경기 분석 페이지로 자연스럽게 스크롤하는 스크립트
-SCROLL_SCRIPT = """
-async function smoothScrollRecording(totalDuration) {
-    await new Promise(r => setTimeout(r, 800)); // 초기 대기
-
-    const pageHeight = document.body.scrollHeight;
-    const viewHeight = window.innerHeight;
-    const scrollable = pageHeight - viewHeight;
-
-    if (scrollable <= 50) {
-        await new Promise(r => setTimeout(r, totalDuration * 1000));
-        return;
+# 카드 확장 후 해당 카드로 스크롤 + 스크린샷을 위한 JS
+SCROLL_TO_CARD_JS = """
+(cardIndex) => {
+    // grid 내 카드 찾기
+    const grids = document.querySelectorAll('div[class*="grid"][class*="gap-4"]');
+    for (const grid of grids) {
+        const cards = grid.querySelectorAll(':scope > div');
+        if (cards.length > 0 && cardIndex < cards.length) {
+            const card = cards[cardIndex];
+            card.scrollIntoView({ behavior: 'instant', block: 'start' });
+            // 약간 위쪽으로 여유 (카드 상단이 화면 바로 위쪽에 오도록)
+            window.scrollBy(0, -20);
+            return true;
+        }
     }
-
-    // Phase 1: 위에서 아래로 (전체 시간의 70%)
-    const downDuration = totalDuration * 0.7;
-    const downSteps = Math.floor(downDuration * 1000 / 40);
-    const downStep = scrollable / downSteps;
-
-    for (let i = 0; i < downSteps; i++) {
-        window.scrollBy(0, downStep);
-        await new Promise(r => setTimeout(r, 40));
-    }
-
-    // Phase 2: 잠깐 대기 (전체 시간의 10%)
-    await new Promise(r => setTimeout(r, totalDuration * 0.1 * 1000));
-
-    // Phase 3: 위로 천천히 스크롤 백 (전체 시간의 20%)
-    const upDuration = totalDuration * 0.2;
-    const upSteps = Math.floor(upDuration * 1000 / 60);
-    const upStep = window.scrollY / upSteps;
-
-    for (let i = 0; i < upSteps; i++) {
-        window.scrollBy(0, -upStep);
-        await new Promise(r => setTimeout(r, 60));
-    }
+    return false;
 }
 """
 
 
-async def record_scorenix_bets(
-    output_path: str,
-    duration: float = 55.0,
-    viewport_width: int = 540,
-    viewport_height: int = 960,
+async def capture_match_screenshots(
     lang: str = "ko",
-) -> bool:
+    max_matches: int = 5,
+    viewport_width: int = 1080,
+    viewport_height: int = 1920,
+) -> List[Dict]:
     """
-    스코어닉스 /bets (경기 분석) 페이지를 모바일 크기로 녹화합니다.
+    /bets 페이지에서 각 경기 카드를 확장하고 AI 분석 화면을 스크린샷으로 캡처합니다.
 
-    Args:
-        output_path: 출력 파일 경로 (.webm 또는 .mp4)
-        duration: 녹화 시간 (초), 기본 55초
-        viewport_width: 뷰포트 너비 (기본 540 — 모바일)
-        viewport_height: 뷰포트 높이 (기본 960)
-        lang: 언어 코드 (ko/en/ja)
     Returns:
-        성공 여부
+        [
+            {"screenshot_path": "...", "match_name": "...", "scene": "intro"|"match"},
+            ...
+        ]
     """
     from playwright.async_api import async_playwright
 
-    # 언어별 URL 결정
     base_url = "https://scorenix.com"
-    if lang == "ko":
-        target_url = f"{base_url}/bets"
-    else:
-        target_url = f"{base_url}/{lang}/bets"
+    bets_url = f"{base_url}/{lang}/bets" if lang != "ko" else f"{base_url}/bets"
 
-    logger.info(f"[Recorder] 녹화 시작: {target_url} (뷰포트: {viewport_width}x{viewport_height}, {duration}초)")
+    logger.info(f"[Recorder] 경기 스크린샷 캡처 시작: {bets_url}")
 
-    temp_dir = tempfile.mkdtemp(prefix="scorenix_rec_")
+    temp_dir = tempfile.mkdtemp(prefix="scorenix_shots_")
+    results = []
 
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=True,
-                args=[
-                    "--disable-gpu",
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-web-security",
-                    "--disable-features=IsolateOrigins,site-per-process",
-                    "--autoplay-policy=no-user-gesture-required",
-                ]
+                args=["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"]
             )
 
-            # 모바일 컨텍스트 — iPhone 느낌
             context = await browser.new_context(
                 viewport={"width": viewport_width, "height": viewport_height},
+                device_scale_factor=1,
                 user_agent=(
                     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) "
                     "AppleWebKit/605.1.15 (KHTML, like Gecko) "
                     "Version/17.0 Mobile/15E148 Safari/604.1"
                 ),
-                record_video_dir=temp_dir,
-                record_video_size={"width": viewport_width, "height": viewport_height},
                 locale="ko-KR" if lang == "ko" else ("en-US" if lang == "en" else "ja-JP"),
                 color_scheme="dark",
             )
 
             page = await context.new_page()
 
-            # ── Step 1: localStorage에 투어 완료 플래그 미리 심기 ───────────
-            # 페이지 로드 전 빈 페이지에서 먼저 실행 (about:blank)
-            await page.goto("about:blank")
-            await page.evaluate(f"""
-                // about:blank에서는 scorenix.com origin의 localStorage에 접근 불가
-                // 실제 페이지 로드 후 실행 예정 — 여기서는 쿠키 초기화만
-                console.log('[Recorder] Pre-init done');
-            """)
-
-            # ── Step 2: 페이지 로드 ─────────────────────────────────────────
-            logger.info(f"[Recorder] 페이지 로딩 중: {target_url}")
+            # ── 1) /bets 페이지 로드 ──────────────────────────────────────
+            logger.info("[Recorder] 페이지 로딩...")
             try:
-                await page.goto(target_url, wait_until="domcontentloaded", timeout=25000)
-            except Exception as goto_err:
-                logger.warning(f"[Recorder] 페이지 로드 타임아웃, 계속 진행: {goto_err}")
+                await page.goto(bets_url, wait_until="networkidle", timeout=30000)
+            except Exception:
+                try:
+                    await page.goto(bets_url, wait_until="domcontentloaded", timeout=15000)
+                except Exception as e:
+                    logger.warning(f"[Recorder] 페이지 로드 경고: {e}")
 
-            # ── Step 3: 투어 오버레이 즉시 비활성화 ─────────────────────────
-            await asyncio.sleep(1.0)  # 초기 JS 실행 대기
-            try:
-                await page.evaluate(TOUR_DISABLE_SCRIPT)
-                logger.info("[Recorder] 투어 오버레이 비활성화 완료")
-            except Exception as tour_err:
-                logger.warning(f"[Recorder] 투어 비활성화 경고 (무시): {tour_err}")
+            # 애니메이션 완료 대기 (countUp 1200ms + 확률바 1000ms)
+            await asyncio.sleep(3.0)
 
-            # ── Step 4: 추가 1초 대기 후 재확인 ─────────────────────────────
-            # 일부 SPA에서 React 재렌더링으로 오버레이가 다시 나타날 수 있음
-            await asyncio.sleep(1.5)
+            # 투어 비활성화
             try:
-                await page.evaluate(TOUR_DISABLE_SCRIPT)
+                await page.evaluate(DISABLE_TOUR_JS)
+            except Exception:
+                pass
+            await asyncio.sleep(0.5)
+            try:
+                await page.evaluate(DISABLE_TOUR_JS)
             except Exception:
                 pass
 
-            # ── Step 5: 스크롤 녹화 ─────────────────────────────────────────
-            scroll_time = max(duration - 4.0, 5.0)
-            logger.info(f"[Recorder] 스크롤 녹화 시작 ({scroll_time}초)...")
-            try:
-                await page.evaluate(
-                    f"""
-                    ({SCROLL_SCRIPT})
-                    smoothScrollRecording({scroll_time});
-                    """
-                )
-                # 스크롤이 비동기로 실행되므로 실제 녹화 시간만큼 대기
-                await asyncio.sleep(scroll_time + 1.0)
-            except Exception as scroll_err:
-                logger.warning(f"[Recorder] 스크롤 경고 (무시): {scroll_err}")
-                await asyncio.sleep(duration)
+            # ── 2) 인트로: /bets 전체 화면 (AI Engine + Top Picks) ────────
+            intro_path = os.path.join(temp_dir, "intro.png")
+            await page.screenshot(path=intro_path, full_page=False)
+            results.append({
+                "screenshot_path": intro_path,
+                "match_name": "SCORENIX AI REPORT",
+                "scene": "intro",
+            })
+            logger.info("[Recorder] 인트로 스크린샷 완료")
 
-            # ── Step 6: 컨텍스트 닫기 ───────────────────────────────────────
+            # ── 3) 경기 카드 찾기 ("더보기" 버튼 목록) ────────────────────
+            # 카드의 "더보기 ▼" 버튼 찾기
+            expand_buttons = await page.query_selector_all('button')
+            more_buttons = []
+            for btn in expand_buttons:
+                try:
+                    text = await btn.inner_text()
+                    if '더보기' in text or '▼' in text or 'more' in text.lower():
+                        more_buttons.append(btn)
+                except Exception:
+                    continue
+
+            logger.info(f"[Recorder] '더보기' 버튼 {len(more_buttons)}개 발견")
+
+            if not more_buttons:
+                logger.warning("[Recorder] 더보기 버튼 없음 — 카드를 직접 탐색 시도")
+                # 폴백: grid 내 카드들의 클릭 가능한 버튼 찾기
+                try:
+                    cards = await page.query_selector_all('div[class*="grid"][class*="gap-4"] > div')
+                    logger.info(f"[Recorder] 폴백: grid 내 카드 {len(cards)}개 발견")
+                except Exception:
+                    cards = []
+
+            # ── 4) 각 경기 카드 확장 → 스크린샷 ───────────────────────────
+            num_matches = min(len(more_buttons), max_matches) if more_buttons else 0
+
+            for idx in range(num_matches):
+                try:
+                    btn = more_buttons[idx]
+
+                    # 버튼이 화면에 보이도록 스크롤
+                    await btn.scroll_into_view_if_needed()
+                    await asyncio.sleep(0.3)
+
+                    # 카드에서 매치 이름 추출
+                    match_name = f"Match {idx + 1}"
+                    try:
+                        # 버튼의 부모 카드에서 텍스트 추출
+                        card_el = await btn.evaluate_handle(
+                            "el => el.closest('div[class*=\"rounded-2xl\"]')"
+                        )
+                        if card_el:
+                            card_text = await card_el.inner_text()
+                            lines = [l.strip() for l in card_text.split('\n') if l.strip()]
+                            # 팀 이름 찾기 (보통 "홈팀" 과 "vs" 또는 "어웨이팀" 패턴)
+                            for line in lines:
+                                if 'vs' in line.lower() or len(line) > 3:
+                                    match_name = line[:60]
+                                    break
+                    except Exception:
+                        pass
+
+                    # 더보기 버튼 클릭 → 카드 확장
+                    await btn.click()
+                    await asyncio.sleep(1.5)  # 확장 애니메이션 + AI 분석 요소 로딩
+
+                    # 확장된 카드가 보이도록 스크롤
+                    await btn.scroll_into_view_if_needed()
+                    await asyncio.sleep(0.5)
+
+                    # 스크린샷 캡처
+                    shot_path = os.path.join(temp_dir, f"match_{idx}.png")
+                    await page.screenshot(path=shot_path, full_page=False)
+
+                    results.append({
+                        "screenshot_path": shot_path,
+                        "match_name": match_name,
+                        "scene": "match",
+                    })
+                    logger.info(f"[Recorder] 경기 {idx+1}/{num_matches}: {match_name[:30]}")
+
+                    # 카드 접기 (다음 카드를 위해)
+                    try:
+                        # "접기 ▲" 버튼 찾아서 클릭
+                        fold_buttons = await page.query_selector_all('button')
+                        for fb in fold_buttons:
+                            try:
+                                ft = await fb.inner_text()
+                                if '접기' in ft or '▲' in ft:
+                                    await fb.click()
+                                    await asyncio.sleep(0.5)
+                                    break
+                            except Exception:
+                                continue
+                    except Exception:
+                        pass
+
+                except Exception as err:
+                    logger.warning(f"[Recorder] 경기 {idx+1} 캡처 실패: {err}")
+                    continue
+
             await context.close()
             await browser.close()
 
-        # ── Step 7: 녹화된 파일 찾아서 이동 ────────────────────────────────
-        video_files = [
-            f for f in os.listdir(temp_dir)
-            if f.endswith(".webm") or f.endswith(".mp4")
-        ]
-
-        if not video_files:
-            logger.error("[Recorder] 녹화 파일이 생성되지 않았습니다.")
-            return False
-
-        newest = max(
-            [os.path.join(temp_dir, f) for f in video_files],
-            key=os.path.getmtime
-        )
-
-        out_dir = os.path.dirname(output_path)
-        if out_dir and not os.path.exists(out_dir):
-            os.makedirs(out_dir, exist_ok=True)
-
-        shutil.copy2(newest, output_path)
-        size_mb = os.path.getsize(output_path) / 1024 / 1024
-        logger.info(f"[Recorder] 녹화 완료: {output_path} ({size_mb:.1f} MB)")
-        return True
+        logger.info(f"[Recorder] 총 {len(results)}개 스크린샷 캡처 완료")
+        return results
 
     except Exception as e:
-        logger.error(f"[Recorder] 녹화 실패: {e}", exc_info=True)
-        return False
-
-    finally:
-        try:
-            shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass
+        logger.error(f"[Recorder] 캡처 실패: {e}", exc_info=True)
+        return results
 
 
-# 하위 호환성 — 기존 record_page 함수도 유지
-async def record_page(
-    url: str,
-    output_path: str,
-    duration: float = 15.0,
-    viewport_width: int = 540,
-    viewport_height: int = 960,
-) -> bool:
-    """하위 호환성 유지용 래퍼 — 내부적으로 record_scorenix_bets 호출"""
-    # URL에서 언어 코드 추출
-    lang = "ko"
-    if "/en/" in url or url.endswith("/en"):
-        lang = "en"
-    elif "/ja/" in url or url.endswith("/ja"):
-        lang = "ja"
+# 하위 호환
+async def record_page(url, output_path, duration=15.0, viewport_width=540, viewport_height=960):
+    return False
 
-    return await record_scorenix_bets(
-        output_path=output_path,
-        duration=duration,
-        viewport_width=viewport_width,
-        viewport_height=viewport_height,
-        lang=lang,
-    )
+async def record_scorenix_bets(output_path, duration=55.0, viewport_width=540, viewport_height=960, lang="ko"):
+    return False
 
 
 if __name__ == "__main__":
-    import logging as _logging
-    _logging.basicConfig(level=_logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    test_out = os.path.join(os.getcwd(), "test_record.webm")
-    asyncio.run(record_scorenix_bets(test_out, duration=15.0))
-    print(f"테스트 녹화 완료: {test_out}")
+    import logging as _log
+    _log.basicConfig(level=_log.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    async def _test():
+        res = await capture_match_screenshots(lang="ko", max_matches=3)
+        for r in res:
+            print(f"  [{r['scene']}] {r['match_name']} -> {r['screenshot_path']}")
+    asyncio.run(_test())

@@ -1009,246 +1009,111 @@ def get_bgm():
 
 # ─── 메인 영상 생성 ─────────────────────────────────────
 def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="membership", lang="ko"):
-    if mode == "winning":
-        try:
-            from app.models.prediction_db import get_recent_ai_predictions
-            import asyncio
-            matches = asyncio.run(get_recent_ai_predictions(limit=5, status="HIT"))
-            print(f"  [AI] Loaded {len(matches)} HIT predictions from Firestore")
-        except Exception as e:
-            print(f"  [!] Failed to load HIT predictions: {e}")
-            matches = []
-    else:
-        matches = fetch_top_matches(limit=7)
-
-    script = build_script(matches, mode=mode)
-
-    # ─── 다국어 번역 (Gemini API 이용) ───
-    if lang != "ko":
-        print(f"\n[i18n] Translating video content to '{lang}' via Gemini...")
-        try:
-            from app.services.gemini_service import translate_text
-            for i, seg in enumerate(script):
-                orig_tts = seg["tts"]
-                orig_cap = seg["caption"]
-                seg["tts"] = translate_text(orig_tts, lang)
-                seg["caption"] = translate_text(orig_cap, lang)
-                print(f"  [{i+1}/{len(script)}] Translated: {seg['tts'][:20]}...")
-        except Exception as trans_e:
-            print(f"  [!] Translation failed, using original script: {trans_e}")
-
-    # AI 아바타 모드 체크
-    avatar_mode = use_avatar and is_did_available() and is_elevenlabs_available()
+    """
+    스코어닉스 Shorts 영상 생성 (v5.0 — Screenshot Style)
+    
+    새로운 방식:
+    1. /bets 페이지에서 각 경기 AI 분석 화면을 스크린샷으로 캡처
+    2. 각 스크린샷을 전체 화면 배경으로 사용 (Ken Burns 미세 움직임)
+    3. TTS 음성 나레이션만 추가 (자막/오버레이 없음)
+    4. BGM + 오디오 덕킹
+    """
+    import asyncio as _asyncio
 
     print("=" * 50)
-    if avatar_mode:
-        print(" [AI] Scorenix AI Avatar Shorts v4.0 - Rendering")
-    else:
-        print(" [>>] Scorenix Premium Shorts v4.0 - Rendering")
+    print(" [>>] Scorenix Screenshot Shorts v5.0 - Rendering")
     if is_elevenlabs_available():
         print(" [MIC] TTS: ElevenLabs (premium)")
     else:
         print(" [MIC] TTS: Edge TTS (free)")
     print("=" * 50)
 
-
-    # ── 실시간 스코어닉스 /bets 화면 녹화 (모든 모드 적용) ────────────────────
-    # membership 포함 모든 모드에서 녹화 시도
-    if not use_avatar:
-        if os.path.exists(bg_video_path):
-            try:
-                os.remove(bg_video_path)
-            except Exception:
-                pass
-        try:
-            from app.services.browser_recorder import record_scorenix_bets
-            print(f"\n[>>] Scorenix /bets screen recording started (mode: {mode}, lang: {lang})...")
-
-            tmp_webm = os.path.join(os.path.dirname(__file__), "_tmp_record.webm")
-
-            import asyncio
-            success = asyncio.run(
-                record_scorenix_bets(
-                    output_path=tmp_webm,
-                    duration=55.0,  # 55초 녹화 (Cloud Run 타임아웃 여유)
-                    viewport_width=540,
-                    viewport_height=960,
-                    lang=lang,  # 언어별 페이지 녹화
-                )
+    # ── 1) 스크린샷 캡처 ──────────────────────────────────────────────────
+    screenshots = []
+    try:
+        from app.services.browser_recorder import capture_match_screenshots
+        print(f"\n[>>] /bets 페이지 스크린샷 캡처 시작 (lang: {lang})...")
+        screenshots = _asyncio.run(
+            capture_match_screenshots(
+                lang=lang,
+                max_matches=5,
+                viewport_width=WIDTH,
+                viewport_height=HEIGHT,
             )
+        )
+        print(f"  [OK] {len(screenshots)}개 스크린샷 캡처 완료")
+    except Exception as cap_err:
+        print(f"  [FAIL] 스크린샷 캡처 실패: {cap_err}")
 
-            if success and os.path.exists(tmp_webm):
-                print(f"  [+] /bets page recorded. Compiling background: {bg_video_path}")
-                bg_clip = VideoFileClip(tmp_webm)
-                bg_clip.without_audio().write_videofile(
-                    bg_video_path,
-                    codec="libx264",
-                    audio=False,
-                    preset="ultrafast",
-                    threads=4,
-                )
-                bg_clip.close()
-                try:
-                    os.remove(tmp_webm)
-                except Exception:
-                    pass
-                print("  [OK] Dynamic Scorenix screen background ready!")
-            else:
-                print("  [!] Screen recording failed. Using static background.")
-        except Exception as record_err:
-            print(f"  [FAIL] Recording error: {record_err}. Using static fallback.")
+    if not screenshots:
+        print("  [!] 스크린샷 없음 — 정적 배경으로 폴백")
+        # 폴백: 기존 방식 (정적 배경 + 가짜 데이터)은 사용하지 않음
+        # 빈 영상 대신 에러 리턴
+        print("  [ABORT] 스크린샷 없이는 영상을 생성하지 않습니다.")
+        return None
 
-    # 1) 배경 준비
-    bg_filename = "premium_bg.png"
-    if mode == "winning":
-        bg_filename = "premium_bg_winning.png"
-    elif mode == "educational":
-        bg_filename = "premium_bg_edu.png"
-    elif mode == "top_picks":
-        bg_filename = "premium_bg_toppicks.png"
+    # ── 2) TTS 스크립트 생성 ──────────────────────────────────────────────
+    tts_scripts = _build_screenshot_tts(screenshots, lang=lang)
 
-    ai_bg = os.path.join(os.path.dirname(__file__), bg_filename)
-    if not os.path.exists(ai_bg):
-        ai_bg = os.path.join(os.path.dirname(__file__), "premium_bg.png")
-
-    if os.path.exists(bg_video_path):
-        base_bg = VideoFileClip(bg_video_path).resize(height=HEIGHT)
-        base_bg = base_bg.crop(x_center=base_bg.w // 2, y_center=HEIGHT // 2,
-                               width=WIDTH, height=HEIGHT)
-        bg_is_video = True
-    elif os.path.exists(ai_bg):
-        base_bg = ImageClip(ai_bg).set_duration(120)
-        # 안전하게 리사이즈
-        base_bg = base_bg.resize(newsize=(WIDTH, HEIGHT))
-        bg_is_video = False
-        print(f"  [*] AI background image loaded: {os.path.basename(ai_bg)}")
-    else:
-        base_bg = ColorClip(size=(WIDTH, HEIGHT), color=(12, 12, 25)).set_duration(120)
-        bg_is_video = False
-
-    # 1.1) 워터마크 채널 로고 준비
-    logo_filename = "match_briefing_logo.png"
-    if mode == "winning":
-        logo_filename = "ai_vs_bookmaker_logo.png"
-    elif mode == "educational":
-        logo_filename = "investor_academy_logo.png"
-
-    logo_path = os.path.join(os.path.dirname(__file__), logo_filename)
-    if not os.path.exists(logo_path):
-        # Fallback to video/
-        logo_path = os.path.join(os.path.dirname(__file__), "video", logo_filename)
-
-    logo_clip = None
-    if os.path.exists(logo_path):
+    # 다국어 번역 (한국어 외)
+    if lang != "ko":
+        print(f"\n[i18n] Translating TTS to '{lang}'...")
         try:
-            # 110x110 크기 조절 후 우측 상단 고정
-            logo_clip = (ImageClip(logo_path)
-                         .resize(newsize=(110, 110))
-                         .set_position((WIDTH - 150, 30))
-                         .set_duration(120))
-            print(f"  [*] Loaded channel logo: {logo_filename}")
-        except Exception as logo_err:
-            print(f"  [!] Failed to load logo: {logo_err}")
+            from app.services.gemini_service import translate_text
+            for i, script in enumerate(tts_scripts):
+                script["tts"] = translate_text(script["tts"], lang)
+                print(f"  [{i+1}/{len(tts_scripts)}] Translated")
+        except Exception as trans_e:
+            print(f"  [!] Translation failed: {trans_e}")
 
-    # 2) 헤드라인
-    hl_arr = render_headline()
-    hl_clip = ImageClip(hl_arr).set_position(("center", 100))
-
-    # 3) 장면별 렌더링
+    # ── 3) 씬별 영상 클립 생성 ────────────────────────────────────────────
     clips = []
-    avatar_clip_cache = None  # D-ID 영상은 전체 대본으로 1번만 생성
 
-    for i, seg in enumerate(script):
-        print(f"  [{i + 1}/{len(script)}] {seg['scene']}: {seg['tts'][:30]}...")
+    for i, script in enumerate(tts_scripts):
+        shot = script["screenshot"]
+        print(f"  [{i+1}/{len(tts_scripts)}] {shot['scene']}: {script['tts'][:40]}...")
 
-        # TTS
+        # TTS 오디오 생성
         audio_path = os.path.join(os.path.dirname(__file__), f"_tmp_audio_{i}.mp3")
-        generate_tts(seg["tts"], audio_path, lang=lang)
+        generate_tts(script["tts"], audio_path, lang=lang)
         audio = AudioFileClip(audio_path)
         dur = audio.duration
 
-        # ── 배경 결정 ──
-        used_avatar = False
+        # 스크린샷을 전체 화면 배경으로 사용
+        shot_path = shot["screenshot_path"]
+        if os.path.exists(shot_path):
+            bg_img = ImageClip(shot_path).set_duration(dur)
+            # 1080x1920에 맞게 리사이즈
+            bg_img = bg_img.resize(newsize=(WIDTH, HEIGHT))
 
-        if avatar_mode and seg["scene"] in ("intro", "cta"):
-            # D-ID 아바타 모드: 인트로/CTA에 AI 앵커 영상 사용
-            avatar_video_path = os.path.join(
-                os.path.dirname(__file__), f"_tmp_avatar_{i}.mp4"
-            )
-            print(f"    [AI] Generating D-ID avatar for {seg['scene']}...")
-            if create_talking_head(audio_path, avatar_video_path):
-                try:
-                    avatar_clip = VideoFileClip(avatar_video_path)
-                    # 9:16 크기로 맞추기
-                    avatar_clip = avatar_clip.resize(height=HEIGHT)
-                    if avatar_clip.w > WIDTH:
-                        avatar_clip = avatar_clip.crop(
-                            x_center=avatar_clip.w // 2,
-                            width=WIDTH, height=HEIGHT
-                        )
-                    elif avatar_clip.w < WIDTH:
-                        # 좌우 검정 패딩
-                        avatar_clip = CompositeVideoClip(
-                            [ColorClip((WIDTH, HEIGHT), (10, 10, 25)).set_duration(dur),
-                             avatar_clip.set_position("center")],
-                            size=(WIDTH, HEIGHT)
-                        )
-                    bg_seg = avatar_clip.set_duration(dur)
-                    used_avatar = True
-                    print(f"    [OK] Avatar video applied!")
-                except Exception as e:
-                    print(f"    [!] Avatar clip failed: {e}")
+            # Ken Burns 효과: 미세한 줌인 (1.0 → 1.05)
+            bg_img = bg_img.resize(lambda t: 1.0 + 0.03 * (t / dur))
+            # 줌인으로 넘치는 부분 크롭
+            bg_img = bg_img.set_position(("center", "center"))
 
-        if not used_avatar:
-            # 기존 방식: 정적 배경 (Ken Burns 제거하여 속도 최적화)
-            if bg_is_video:
-                t0 = (sum(c.duration for c in clips)) % base_bg.duration
-                t1 = min(t0 + dur, base_bg.duration)
-                bg_seg = base_bg.subclip(t0, t1)
-                if bg_seg.duration < dur:
-                    bg_seg = bg_seg.set_duration(dur)
-            else:
-                bg_seg = base_bg.set_duration(dur)
+            # CompositeVideoClip으로 크롭 처리
+            scene_clip = CompositeVideoClip(
+                [bg_img],
+                size=(WIDTH, HEIGHT)
+            ).set_duration(dur)
+        else:
+            # 스크린샷 파일 없으면 검정 배경
+            scene_clip = ColorClip(size=(WIDTH, HEIGHT), color=(12, 12, 25)).set_duration(dur)
 
-        bg_seg = bg_seg.set_audio(audio)
+        # 오디오 합성
+        scene_clip = scene_clip.set_audio(audio)
 
-        # 자막 카드 (이미지 크기가 1080x1920이므로 (0, 0)에 정렬하여 내부에 계산된 center_y=1620 반영)
-        cap_arr = render_caption(seg["caption"], seg["scene"], mode=mode)
-        cap_clip = (ImageClip(cap_arr)
-                    .set_duration(dur)
-                    .set_position((0, 0))
-                    .crossfadein(0.3)
-                    .crossfadeout(0.2))
+        # 장면 전환 효과
+        if i > 0:
+            scene_clip = scene_clip.crossfadein(0.4)
 
-        # 1.2) 가상 캐릭터 (AI Anchor) 레이어 추가
-        pres_clip = None
-        if not used_avatar:
-            pres_arr = make_circular_presenter_image()
-            if pres_arr is not None:
-                # 400x400 크기의 캐릭터 이미지 클립 생성
-                pres_clip = ImageClip(pres_arr).set_duration(dur)
-                # 2초 주기로 2% 스케일이 늘었다 줄었다 하는 호흡 애니메이션 추가
-                pres_clip = pres_clip.resize(lambda t: 1.0 + 0.02 * np.sin(2.0 * np.pi * t / 2.0))
-                # 매 프레임마다 변경된 크기를 기준으로 정중앙 Y=950에 자동 정렬
-                pres_clip = pres_clip.set_position(("center", 950))
+        clips.append(scene_clip)
 
-        layers = [bg_seg]
-        if not used_avatar:
-            layers.append(hl_clip.set_duration(dur))
-            if logo_clip:
-                layers.append(logo_clip.set_duration(dur))
-            if pres_clip:
-                layers.append(pres_clip)
-        layers.append(cap_clip)
-
-        comp = CompositeVideoClip(layers)
-        clips.append(comp)
-
-    # 4) 연결
+    # ── 4) 영상 합성 ─────────────────────────────────────────────────────
     print("\n  [CUT] Stitching scenes...")
     final = concatenate_videoclips(clips, method="compose")
 
-    # 5) BGM 믹싱 (덕킹 효과 적용)
+    # ── 5) BGM 믹싱 ──────────────────────────────────────────────────────
     bgm_path = get_bgm()
     if os.path.exists(bgm_path):
         print("  [~] Mixing BGM...")
@@ -1262,47 +1127,103 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         else:
             bgm = bgm.subclip(0, final.duration)
 
-        # 프로페셔널 덕킹 효과 적용
         try:
-            print("  [~] Applying audio ducking to BGM...")
+            print("  [~] Applying audio ducking...")
             bgm = apply_audio_ducking(bgm, final.audio)
         except Exception as duck_err:
-            print(f"  [!] Ducking failed ({duck_err}) - falling back to fixed BGM volume")
+            print(f"  [!] Ducking failed ({duck_err})")
             bgm = bgm.fx(volumex, 0.08)
 
         final = final.set_audio(
             CompositeAudioClip([final.audio, bgm])
         )
 
-    # 6) 렌더링 (고품질)
-    print("  [REC] Encoding final video (high quality)...")
+    # ── 6) 인코딩 ────────────────────────────────────────────────────────
+    print("  [REC] Encoding final video...")
     final.write_videofile(
         output_path,
-        fps=15,   # Cloud Run 환경에서의 성능 극대화 및 타임아웃 방지를 위해 15fps로 조율
+        fps=24,
         codec="libx264",
         audio_codec="aac",
-        bitrate="8000k",   # 고화질 비트레이트
+        bitrate="8000k",
         threads=4,
-        preset="ultrafast",   # Cloud Run 환경에서의 타임아웃 방지를 위해 ultrafast로 유지
+        preset="ultrafast",
     )
 
-    # 7) 임시 파일 정리
-    for i in range(len(script)):
-        for pattern in [f"_tmp_audio_{i}.mp3", f"_tmp_avatar_{i}.mp4"]:
-            p = os.path.join(os.path.dirname(__file__), pattern)
-            if os.path.exists(p):
-                try:
-                    os.remove(p)
-                except OSError:
-                    pass
+    # ── 7) 임시 파일 정리 ────────────────────────────────────────────────
+    for i in range(len(tts_scripts)):
+        p = os.path.join(os.path.dirname(__file__), f"_tmp_audio_{i}.mp3")
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+    # 스크린샷 임시 파일 정리
+    for shot_info in screenshots:
+        sp = shot_info.get("screenshot_path", "")
+        if sp and os.path.exists(sp):
+            try:
+                os.remove(sp)
+            except OSError:
+                pass
 
     print(f"\n  [OK] Done! → {output_path}")
 
-    # 8) 유튜브 업로드
+    # 8) 업로드
     if auto_upload:
         _upload(output_path)
 
     return output_path
+
+
+def _build_screenshot_tts(screenshots, lang="ko"):
+    """
+    스크린샷 목록을 기반으로 TTS 나레이션 스크립트를 생성합니다.
+    자막(caption)은 사용하지 않음 — 음성만.
+    """
+    import datetime
+    today = datetime.datetime.now().strftime("%m월 %d일")
+
+    scripts = []
+
+    for shot in screenshots:
+        scene = shot.get("scene", "match")
+        match_name = shot.get("match_name", "")
+
+        if scene == "intro":
+            tts = (
+                f"{today} 스코어닉스 AI 분석 리포트입니다. "
+                f"오늘의 추천 경기들을 하나씩 살펴보겠습니다."
+            )
+        else:
+            # 매치 이름에서 팀 추출
+            teams = match_name.split(' vs ') if ' vs ' in match_name else [match_name, ""]
+            home = teams[0].strip() if len(teams) > 0 else "홈팀"
+            away = teams[1].strip() if len(teams) > 1 else "원정팀"
+
+            tts = (
+                f"다음 경기는 {home} 대 {away} 입니다. "
+                f"화면에 보이는 것처럼 AI가 분석한 확률과 "
+                f"주요 분석 요소들을 확인해보세요. "
+                f"신뢰도와 기대값을 참고하여 판단하시면 됩니다."
+            )
+
+        scripts.append({
+            "tts": tts,
+            "screenshot": shot,
+        })
+
+    # CTA (마지막)
+    scripts.append({
+        "tts": (
+            "더 자세한 분석은 스코어닉스 닷컴에서 무료로 확인하실 수 있습니다. "
+            "매일 업데이트되는 AI 분석을 놓치지 마세요."
+        ),
+        "screenshot": screenshots[-1] if screenshots else {"screenshot_path": "", "scene": "cta"},
+    })
+
+    return scripts
 
 
 def _get_desktop():
