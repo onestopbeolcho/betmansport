@@ -1085,13 +1085,9 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
             bg_img = ImageClip(shot_path).set_duration(dur)
             # 1080x1920에 맞게 리사이즈
             bg_img = bg_img.resize(newsize=(WIDTH, HEIGHT))
+            bg_img = bg_img.set_position("center")
 
-            # Ken Burns 효과: 미세한 줌인 (1.0 → 1.05)
-            bg_img = bg_img.resize(lambda t: 1.0 + 0.03 * (t / dur))
-            # 줌인으로 넘치는 부분 크롭
-            bg_img = bg_img.set_position(("center", "center"))
-
-            # CompositeVideoClip으로 크롭 처리
+            # CompositeVideoClip으로 처리
             scene_clip = CompositeVideoClip(
                 [bg_img],
                 size=(WIDTH, HEIGHT)
