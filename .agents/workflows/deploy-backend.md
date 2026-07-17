@@ -12,7 +12,7 @@ description: 백엔드를 Cloud Run(scorenix-backend)에 배포합니다
 
 1. gcloud PATH 설정 및 Cloud Run 배포를 실행합니다.
 ```powershell
-$env:PATH += ";C:\Users\청솔\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin"; gcloud run deploy scorenix-backend --source . --region asia-northeast3 --project smart-proto-inv-2026 --allow-unauthenticated --memory 512Mi --timeout 300 --clear-base-image 2>&1 | Out-File -FilePath "c:\Smart_Proto_Investor_Plan\deploy_log.txt" -Encoding utf8
+$env:PATH += ";C:\Users\청솔\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin"; gcloud run deploy scorenix-backend --source . --region asia-northeast3 --project smart-proto-inv-2026 --allow-unauthenticated --cpu 4 --memory 4Gi --timeout 900 --clear-base-image 2>&1 | Out-File -FilePath "c:\Smart_Proto_Investor_Plan\deploy_log.txt" -Encoding utf8
 ```
 작업 디렉토리: `c:\Smart_Proto_Investor_Plan\backend`
 

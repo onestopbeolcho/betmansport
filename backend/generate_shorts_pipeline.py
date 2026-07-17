@@ -1099,15 +1099,12 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         # 오디오 합성
         scene_clip = scene_clip.set_audio(audio)
 
-        # 장면 전환 효과
-        if i > 0:
-            scene_clip = scene_clip.crossfadein(0.4)
-
+        # 단순 씬 추가 (크로스페이드 제거로 알파 합성 연산 병목 방지)
         clips.append(scene_clip)
 
     # ── 4) 영상 합성 ─────────────────────────────────────────────────────
     print("\n  [CUT] Stitching scenes...")
-    final = concatenate_videoclips(clips, method="compose")
+    final = concatenate_videoclips(clips, method="chain")
 
     # ── 5) BGM 믹싱 ──────────────────────────────────────────────────────
     bgm_path = get_bgm()
