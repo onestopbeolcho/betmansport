@@ -112,33 +112,33 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: 
             
             # 제목 및 캡션 다국어 템플릿
             title_templates = {
-                "ko": f"[AI 예측] {now.strftime('%m/%d')} 데이터가 말하는 오늘의 경기 #shorts",
+                "ko": f"[AI 예측] {now.strftime('%m/%d')} 데이터가 말하는 오늘의 추천 경기 #shorts",
                 "en": f"[AI Predict] {now.strftime('%m/%d')} Today's Match Predictions by Data #shorts",
-                "ja": f"[AI予測] {now.strftime('%m/%d')} データが語る今日の勝敗予想 #shorts"
+                "ja": f"【AI勝敗予想】{now.strftime('%m/%d')} データが導く本日の本命カード #shorts"
             }
             title = title_templates.get(lang, title_templates["ko"])
             
             description_templates = {
                 "ko": (
                     f"✦ {now.strftime('%Y년 %m월 %d일')} 기준 AI 데이터 분석\n\n"
-                    "7-Factor AI 알고리즘으로 분석한 기대값 리포트입니다.\n"
+                    "7-Factor AI 알고리즘으로 분석한 기대값 최고 리포트입니다.\n"
                     "※ 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
                     "👉 전체 분석 리포트 확인: https://scorenix.com\n\n"
-                    "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts"
+                    "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts #스코어닉스"
                 ),
                 "en": (
                     f"✦ AI Data Analysis as of {now.strftime('%b %d, %Y')}\n\n"
                     "Expectation value report analyzed by 7-Factor AI algorithm.\n"
                     "* This video is a data analysis result and is not an investment recommendation.\n\n"
                     "👉 Check all analysis reports: https://scorenix.com\n\n"
-                    "#sportsanalytics #AIprediction #oddsanalysis #dataanalysis #shorts"
+                    "#sportsanalytics #AIprediction #oddsanalysis #dataanalysis #shorts #scorenix"
                 ),
                 "ja": (
                     f"✦ {now.strftime('%Y年%m月%d日')} 基準 AIデータ分析\n\n"
-                    "7-Factor AIアルゴリズムで分析した期待値レポートです。\n"
+                    "7-Factor AIアルゴリズムで分析した期待値最高カードのレポートです。\n"
                     "※ 本動画はデータ分析結果であり、投資勧誘ではありません。\n\n"
-                    "👉 全分析レポートを確認: https://scorenix.com\n\n"
-                    "#スポーツ分析 #AI分析 #配当分析 #データ分析 #shorts"
+                    "👉 詳細分析レポート（無料）: https://scorenix.com/ja/bets\n\n"
+                    "#AI予想 #サッカー予想 #ブックメーカー #スポーツ分析 #shorts #スコアニック"
                 )
             }
             description = description_templates.get(lang, description_templates["ko"])
@@ -146,7 +146,7 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: 
             tags_map = {
                 "ko": ["스포츠분석", "AI분석", "배당분석", "데이터분석", "shorts", "스코어닉스"],
                 "en": ["sportsanalytics", "AIprediction", "oddsanalysis", "dataanalysis", "shorts", "scorenix"],
-                "ja": ["スポーツ分析", "AI分析", "配当分析", "データ分析", "shorts", "スコアニック"]
+                "ja": ["AI予想", "サッカー予想", "ブックメーカー", "スポーツ分析", "海外サッカー", "shorts", "スコアニック"]
             }
             tags = tags_map.get(lang, tags_map["ko"])
             

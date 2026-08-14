@@ -162,7 +162,7 @@ async def get_scheduler_status():
             "api_key_configured": bool(pinnacle_service.api_key),
             "requests_remaining": pinnacle_service._requests_remaining,
             "requests_used": pinnacle_service._requests_used,
-            "target_sports": pinnacle_service.target_sports,
+            "target_sports": list(getattr(pinnacle_service, "target_leagues", {}).keys()),
         },
 
         "settlement": {
