@@ -20,7 +20,7 @@ _publish_history: list = []
 class PublishRequest(BaseModel):
     post_index: Optional[int] = None  # 특정 게시물만 발행 (0-based). None이면 전체.
     scheduled_at: Optional[str] = None  # ISO 8601 예약 발행 시간
-    with_image: bool = True  # 분석 카드 이미지 자동 첨부
+    with_image: bool = False  # 텍스트 전용 초고속 발행 (기본값 False)
 
 
 class ManualPostRequest(BaseModel):
@@ -133,7 +133,6 @@ async def publish_sns_content(req: PublishRequest = PublishRequest()):
             if req.with_image:
                 try:
                     from app.services.card_generator import generate_card_and_upload
-                    # 원본 예측 데이터에서 해당 경기 매칭
                     match_pred = None
                     for p in pred_dicts:
                         pid = p.get("match_id", "")
@@ -209,7 +208,7 @@ async def publish_manual_post(req: ManualPostRequest):
 
 class RotationPublishRequest(BaseModel):
     post_type: Optional[str] = None  # preview, winning, educational, top_picks, generic
-    with_image: bool = True
+    with_image: bool = False  # 텍스트 전용 초고속 발행 (기본값 False)
 
 
 @router.post("/publish_rotation")
@@ -240,18 +239,12 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
         post_type = req.post_type
         if not post_type:
-            # 08:00 - 10:59 -> top_picks
-            if 8 <= hour < 11:
-                post_type = "top_picks"
-            # 12:00 - 14:59 -> educational
-            elif 12 <= hour < 15:
-                post_type = "educational"
-            # 16:00 - 18:59 -> winning
-            elif 16 <= hour < 19:
-                post_type = "winning"
-            # 그 외 시간대 -> preview
+            # 짝수 시 -> prediction (어디가 이길 것 같은지: 승리 예상 픽)
+            # 홀수 시 -> winning (지난 예측 결과는 어땠는지: 지난 AI 완벽 적중 인증)
+            if hour % 2 == 0:
+                post_type = "prediction"
             else:
-                post_type = "preview"
+                post_type = "winning"
 
         logger.info(f"📱 SNS Rotation triggering: type={post_type} (KST Hour: {hour})")
 
@@ -267,50 +260,32 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
         predictions = ai_pred_module._predictions_cache
         pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
 
-        if post_type == "top_picks":
-            # 상위 3개 고신뢰도 리스트
-            high_conf = [p for p in pred_dicts if p.get("confidence", 0) >= 55]
-            if high_conf:
-                text = await generate_top_picks_sns(high_conf)
-                match_id = "top_picks"
-            else:
-                post_type = "educational"  # 경기가 없으면 교육글로 대체
-
-        if post_type == "educational":
-            # 정보성/브랜드 빌딩 칼럼
-            text = await generate_educational_sns()
-            match_id = "educational"
-
-        elif post_type == "winning":
-            # 적중 인증형
+        # A. 지난 예측 결과 (적중 인증)
+        if post_type in ["winning", "winning_proof"]:
             try:
                 hits = await get_recent_ai_predictions(limit=5, status="HIT")
                 if hits:
                     text = await generate_winning_proof_sns(hits)
-                    # 가장 최근 적중된 경기의 카드 생성 시도
+                    best_hit = hits[0]
                     if req.with_image:
-                        from app.services.card_generator import generate_card_and_upload
-                        # hits[0]를 card_generator 형식으로 변환/전달
-                        best_hit = hits[0]
-                        # factors가 없으면 기본으로 넣어줌
-                        if "factors" not in best_hit:
-                            best_hit["factors"] = [{"name": "AI 예측 적중", "score": best_hit.get("confidence", 80)}]
-                        image_url = await generate_card_and_upload(best_hit)
-                    match_id = f"hit_{hits[0].get('match_id', '')}"
-                    confidence = hits[0].get("confidence", 0)
+                        from app.services.card_generator import generate_winning_card_and_upload
+                        image_url = await generate_winning_card_and_upload(best_hit)
+                    match_id = f"hit_{best_hit.get('match_id', '')}"
+                    confidence = best_hit.get("confidence", 80)
                 else:
-                    post_type = "preview"  # 적중 이력이 없으면 경기 프리뷰로 대체
+                    logger.info("No HIT history found, falling back to match prediction...")
+                    post_type = "prediction"  # 적중 이력이 아직 없으면 승리 예상 픽으로 자동 대체
             except Exception as e:
                 logger.error(f"Winning proof rotation error: {e}")
-                post_type = "preview"
+                post_type = "prediction"
 
-        if post_type == "preview":
-            # 개별 경기 상세 분석형 (호기심 유발)
-            high_conf = [p for p in pred_dicts if p.get("confidence", 0) >= 55]
-            if high_conf:
+        # B. 어디가 이길 것 같은지 (오늘/내일 승리 예상 픽)
+        if post_type in ["prediction", "top_picks", "preview"] or not text:
+            post_type = "prediction"
+            if pred_dicts:
                 import random
-                high_conf = sorted(high_conf, key=lambda x: x.get("confidence", 0), reverse=True)[:20]
-                selected_pred = random.choice(high_conf)
+                top_candidates = sorted(pred_dicts, key=lambda x: x.get("confidence", 0), reverse=True)[:10]
+                selected_pred = random.choice(top_candidates) if top_candidates else pred_dicts[0]
                 
                 posts = await generate_sns_content([selected_pred])
                 if posts:
@@ -322,12 +297,9 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                         from app.services.card_generator import generate_card_and_upload
                         image_url = await generate_card_and_upload(selected_pred)
             else:
-                post_type = "generic"
-
-        if post_type == "generic" or not text:
-            # 최종 폴백: 일반 홍보글
-            text = await generate_generic_promo()
-            match_id = "generic_promo"
+                # 데이터가 아예 없는 예외 케이스
+                text = await generate_generic_promo()
+                match_id = "generic_promo"
 
         # 3. Buffer 실제 발행
         if not text:

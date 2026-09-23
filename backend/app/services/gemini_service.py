@@ -353,23 +353,18 @@ _※ AI 예측 결과이며, 최종 판단은 본인의 판단이 중요합니�
 # Phase 5: SNS 마케팅 콘텐츠 자동 생성
 # ═══════════════════════════════════════════════════
 
-SNS_MARKETING_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어와 영어 혼용으로 작성하세요.
+SNS_MARKETING_PROMPT = """당신은 Scorenix의 최고 수석 SNS 마케팅 전문 AI 분석관입니다. 한국어로 정확하고 명확하게 작성하세요.
 
 역할:
-- AI 예측 데이터를 받아 사용자가 웹사이트를 클릭하고 싶게 만드는(Click-Through) 호기심 유발 SNS 게시물을 생성합니다.
-- 데이터 기반 분석의 전문성을 부각하되, 도박 조장은 절대 하지 마세요.
+- AI 경기 예측 데이터(날짜, 리그, 팀명, 예상 승리팀, AI 신뢰도/승률, 7-Factor 핵심 산출 근거)를 받아 쓰레드(Threads) 및 SNS 유저들이 한눈에 신뢰할 수 있는 텍스트 전용 마케팅 글을 생성합니다.
 
-规则 (매우 중요):
-1. [호기심 자극] 절대로 '누가 이길 것'인지 최종 예측 결과(추천 팀)를 본문에 쓰지 마세요.
-   (나쁜 예: "AI는 레알 마드리드 승리를 예상합니다.")
-   (좋은 예: "AI는 이 경기에서 81% 확률로 엄청난 결과를 예상했습니다. 누가 이길까요?")
-2. 280자 이내로 작성하세요 (X/Twitter 호환).
-3. 이모지를 적극 활용하세요.
-4. 해시태그 3-5개를 포함하세요 (#Scorenix #AI분석 등).
-5. "분석", "예측", "데이터" 등 합법적 용어만 사용하세요.
-6. 반드시 각 경기 데이터에 함께 주어지는 `url_path` 값을 활용해 본문 맨 마지막에 상세 링크를 추가하세요!
-   👉 상세 분석 보기: https://scorenix.com/ko/match/[제공된 url_path]?utm_source=sns&utm_medium=auto_post
-   (단, 인스타그램용으로 사용할 수 있도록 "인스타는 프로필 링크 확인!" 이라는 문구도 살짝 덧붙이세요.)
+규칙 (필수 준수 - 5대 핵심 요소 포함):
+1. **[정확한 경기 날짜 & 시각]**: `📅 일시: [경기 날짜 및 시간]` 형태 포함.
+2. **[정확한 팀명 및 리그]**: `📍 [리그명] [홈팀] vs [원정팀]` 명시.
+3. **[명확한 예상 승리팀 & AI 수치]**: `🎯 AI 예상 승리: [예상 승리팀] (AI 신뢰도 [신뢰도]%)` 명시.
+4. **[AI 산출 근거 2~3가지]**: 주어지는 `factors_summary` 데이터 기반으로 `💡 AI 산출 근거:` 항목을 Bullet Point(•)로 2개 이상 명확히 요약 작성하세요! (허황된 소설 금지, 실제 데이터 기반).
+5. **[상세 링크]**: 본문 하단에 제공된 `url_path` 기반 링크 첨부:
+   👉 상세 분석 리포트: https://scorenix.com/ko/match/[제공된 url_path]?utm_source=sns&utm_medium=auto_post
 
 출력 형식:
 각 경기별 게시물을 ---로 구분하여 작성하세요.
@@ -384,7 +379,7 @@ async def generate_sns_content(predictions: list) -> list:
     if not predictions:
         return []
 
-    # 고신뢰 순 정렬 → Top 5 (하루 10건 목표: 스케줄러 2회 × 5건)
+    # 고신뢰 순 정렬 → Top 5
     sorted_preds = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)
     top_picks = sorted_preds[:5]
 
@@ -395,7 +390,6 @@ async def generate_sns_content(predictions: list) -> list:
             for p in top_picks:
                 match_id = p.get("match_id", "")
                 
-                # Fetch route path elements
                 from app.api.endpoints.ai_predictions import get_slug
                 slug = get_slug(p)
                 match_time_raw = p.get("match_time") or ""
@@ -407,11 +401,17 @@ async def generate_sns_content(predictions: list) -> list:
                 else:
                     date_param = match_time_raw
                 
+                rec = p.get("recommendation", "HOME")
+                rec_ko = p.get("team_home_ko", p.get("team_home", "홈팀")) if rec == "HOME" else (p.get("team_away_ko", p.get("team_away", "원정팀")) if rec == "AWAY" else "무승부")
+
                 match_summaries.append({
                     "match_id": match_id,
+                    "date": date_param,
                     "url_path": f"{date_param}/{slug}",
-                    "match": f"{p.get('team_home_ko', p.get('team_home', ''))} vs {p.get('team_away_ko', p.get('team_away', ''))}",
-                    "league": p.get("league", ""),
+                    "league": p.get("league", "축구"),
+                    "home_team": p.get("team_home_ko", p.get("team_home", "")),
+                    "away_team": p.get("team_away_ko", p.get("team_away", "")),
+                    "ai_pick": rec_ko,
                     "confidence": p.get("confidence", 0),
                     "home_prob": p.get("home_win_prob", 0),
                     "draw_prob": p.get("draw_prob", 0),
@@ -426,7 +426,6 @@ async def generate_sns_content(predictions: list) -> list:
             text = response.text.strip()
 
             if text:
-                # Parse individual posts separated by ---
                 posts = [p.strip() for p in text.split("---") if p.strip()]
                 results = []
                 for i, post_text in enumerate(posts):
@@ -443,7 +442,6 @@ async def generate_sns_content(predictions: list) -> list:
         except Exception as e:
             logger.error(f"SNS content generation error: {e}")
 
-    # Fallback: simple template
     return _generate_sns_fallback(top_picks)
 
 
@@ -454,8 +452,10 @@ def _generate_sns_fallback(predictions: list) -> list:
         home = p.get("team_home_ko", p.get("team_home", "홈"))
         away = p.get("team_away_ko", p.get("team_away", "원정"))
         conf = p.get("confidence", 0)
-        league = p.get("league", "")
+        league = p.get("league", "축구")
         match_id = p.get("match_id", "")
+        rec = p.get("recommendation", "HOME")
+        rec_ko = f"{home} 승리" if rec == "HOME" else (f"{away} 승리" if rec == "AWAY" else "무승부")
 
         from app.api.endpoints.ai_predictions import get_slug
         slug = get_slug(p)
@@ -468,16 +468,28 @@ def _generate_sns_fallback(predictions: list) -> list:
         else:
             date_param = match_time_raw
 
+        factors = p.get("factors", [])
+        factor_lines = ""
+        if factors:
+            for f in factors[:2]:
+                fname = f.get("name", "")
+                if fname:
+                    factor_lines += f"• {fname}\n"
+        if not factor_lines:
+            factor_lines = "• 7-Factor AI 알고리즘 연산 결과 가치 베팅 포지션 포착\n• 해외 Pinnacle 대비 국내 배당 효율 검증 완료\n"
+
         fire = "🔥🔥" if conf >= 70 else "🔥" if conf >= 55 else "⚡"
 
         text = (
-            f"{fire} {league}\n"
-            f"{home} vs {away}\n\n"
-            f"🧠 AI가 {conf:.0f}%의 신뢰도로 예측한 깜짝 결과는?!\n"
-            f"절대 놓치지 마세요. 7-Factor AI 데이터 분석으로 찾아낸 가치 베팅 픽!\n\n"
-            f"👉 확인하기: https://scorenix.com/ko/match/{date_param}/{slug}?utm_source=sns&utm_medium=auto_post_fallback\n"
-            f"(인스타는 프로필 링크 누르고 '{home}' 검색!)\n\n"
-            f"#Scorenix #AI분석 #스포츠분석 #{league.replace(' ', '')}"
+            f"{fire} [{league}] AI 경기 분석 리포트\n"
+            f"📅 일시: {date_param}\n"
+            f"📍 매치: {home} vs {away}\n\n"
+            f"🎯 AI 예상 승리: {rec_ko} (AI 신뢰도 {conf:.0f}%)\n\n"
+            f"💡 AI 핵심 산출 근거:\n"
+            f"{factor_lines}\n"
+            f"👉 실시간 상세 분석 리포트: https://scorenix.com/ko/match/{date_param}/{slug}?utm_source=sns&utm_medium=auto_post\n"
+            f"(인스타는 프로필 링크 확인!)\n\n"
+            f"#Scorenix #AI예측 #스포츠분석 #{league.replace(' ', '')}"
         )
         results.append({
             "match_id": match_id,
@@ -487,20 +499,16 @@ def _generate_sns_fallback(predictions: list) -> list:
         })
     return results
 
-SNS_GENERIC_MARKETING_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어와 영어 혼용으로 트렌디하게 작성하세요.
+SNS_GENERIC_MARKETING_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 작성하세요.
 
 역할:
-- 오늘 당장 분석할 뚜렷한 경기가 없더라도, 사용자가 Scorenix(스코어닉스) 웹사이트를 방문하고 싶게 만드는 강력한 호기심 유발 마케팅 게시물을 생성하세요.
-- 데이터 기반 분석의 전문성을 부각하되, 무리한 배팅 등 도박 조장은 절대 하지 마세요.
+- 오늘 당장 분석할 뚜렷한 경기가 없더라도, 사용자가 Scorenix(스코어닉스) 웹사이트를 방문하고 싶게 만드는 마케팅 게시물을 생성하세요.
 
-규칙 (매우 중요):
-1. **반드시 SCORENIX.COM 도메인을 언급하고 클릭을 유도하세요**. (예: scorenix.com 에서 확인하세요!)
-2. 280자 이내로 콤팩트하고 눈에 띄게 작성하세요 (X/Twitter 호환).
-3. 이모지를 적극 활용하세요 (🔥, ⚽, 🚀, 🤖 등).
-4. 해시태그 3-5개를 반드시 포함하세요 (#Scorenix #AI예측 #스포츠데이터).
-5. **매 번 생성할 때마다 첫 줄 인사말이나 어조, 이모지 배치를 완전히 다르게 해서 (중복 방지) 써주세요.**
-6. 본문 끝에는 항상 메인 홈페이지 링크를 첨부하세요:
-   👉 플랫폼 구경하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic
+규칙:
+1. 반드시 SCORENIX.COM 도메인을 언급하고 클릭을 유도하세요.
+2. 280자 이내로 눈에 띄게 작성하세요.
+3. 본문 끝에는 홈페이지 링크를 첨부하세요:
+   👉 스코어닉스 바로가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic
    (인스타는 프로필 링크 확인!)
 """
 
@@ -515,69 +523,45 @@ async def generate_generic_promo() -> Optional[str]:
             text = response.text.strip()
             if text:
                 logger.info(f"✅ Generic SNS promo generated ({len(text)} chars)")
-                return f"{text}\\n\\n[Ref: {stamp}]"
+                return f"{text}\n\n[Ref: {stamp}]"
         except Exception as e:
             logger.error(f"Generic SNS promo generation error: {e}")
             
-    # Fallback if Gemini fails
     return (
-        "🔥 스포츠 투자의 새로운 기준, Scorenix! 📈\\n\\n"
-        "감에 의존하는 투자는 이제 그만. 🤖 배당률 분석과 7-Factor AI 알고리즘으로 매일 가장 가치 있는 정보만 선별해 드립니다.\\n\\n"
-        "지금 바로 SCORENIX.COM 에서 놀라운 예측 결과를 확인하세요!\\n\\n"
-        "👉 플랫폼 구경하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic\\n"
-        "(인스타는 프로필 링크 확인!)\\n\\n"
-        f"#Scorenix #AI예측 #스포츠분석 #가치투자\\n\\n[Ref: {stamp}]"
+        "🔥 스포츠 투자의 새로운 기준, Scorenix! 📈\n\n"
+        "감에 의존하는 투자는 그만. 🤖 배당률 분석과 7-Factor AI 알고리즘으로 매일 승리 예측과 가치 정보만 선별해 드립니다.\n\n"
+        "지금 바로 SCORENIX.COM 에서 놀라운 예측 결과를 확인하세요!\n\n"
+        "👉 실시간 분석 보러가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic\n"
+        "(인스타는 프로필 링크 확인!)\n\n"
+        f"#Scorenix #AI예측 #스포츠분석 #가치투자\n\n[Ref: {stamp}]"
     )
 
-# ═══════════════════════════════════════════════════
-# Phase 5-2: 다양한 SNS 콘텐츠 타입 확장 (적중 인증, 브랜드 교육, 오늘의 TOP 3)
-# ═══════════════════════════════════════════════════
-
-SNS_WINNING_PROOF_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어와 영어 혼용으로 트렌디하게 작성하세요.
+SNS_WINNING_PROOF_PROMPT = """당신은 Scorenix의 최고 수석 SNS 마케팅 전문 AI 분석관입니다. 한국어로 작성하세요.
 
 역할:
-- 최근 AI가 성공적으로 예측 적중(HIT)한 경기 데이터들을 유저들에게 보여주고, AI의 신뢰성을 어필하는 마케팅 게시물을 생성합니다.
-- 단순 자랑이 아닌, "데이터가 증명한 결과"임을 강조하세요.
+- 최근 AI가 성공적으로 예측 적중(HIT)한 경기 데이터(경기 날짜, 리그, 팀명, 예상 승리팀, 최종 스코어, AI 산출 근거)를 유저들에게 공개하고, "지난 AI 예측 완벽 적중"을 증명하는 마케팅 게시물을 생성합니다.
 
-규칙 (매우 중요):
-1. **적중 결과 정보 포함**: 제공된 경기 이름, AI 예측 추천 방향(recommendation), 최종 스코어를 본문에 자연스럽게 녹여내세요.
-   (예: 어제 78% 확률로 예측한 A vs B 경기, 정확히 'A 승리' 적중! 스코어 3:1)
-2. 280자 이내로 작성하세요 (X/Twitter 호환).
-3. 이모지(🎉, ✅, 🤖, 📈 등)를 적극 활용하세요.
-4. 해시태그 3-5개를 포함하세요 (#Scorenix #적중인증 #AI분석 등).
-5. 본문 맨 마지막에는 항상 메인 홈페이지 링크를 첨부하세요:
-   👉 적중률 검증하러 가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning
-   (인스타는 프로필 링크 확인!)
-"""
-
-SNS_EDUCATIONAL_PROMPT = """당신은 Scorenix의 SNS 마케팅 및 스포츠 데이터 교육 AI입니다. 한국어로 작성하세요.
-
-역할:
-- 스포츠 데이터 투자 관련 지식 중 하나를 선택해 일반인도 이해하기 쉽고 흥미로운 1줄 지식과 함께, Scorenix의 강점을 홍보하는 SNS 게시물을 생성합니다.
-
-규칙 (매우 중요):
-1. **제공된 주제**를 바탕으로 쉽고 통찰력 있는 스포츠 데이터 투자 관련 지식을 작성하세요.
-2. 280자 이내로 콤팩트하게 작성하세요 (X/Twitter 호환).
-3. 이모지를 활용해 가독성을 높이세요.
-4. 해시태그 3-5개를 포함하세요 (#Scorenix #스포츠데이터 #가치투자 #배당분석).
-5. 본문 끝에는 항상 메인 홈페이지 링크를 첨부하세요:
-   👉 데이터 분석 시작하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_edu
+규칙 (필수 준수):
+1. **[경기 정보 & 날짜]**: `📅 경기 날짜: [날짜]` 및 `📍 [리그명] [홈팀] vs [원정팀]` 명시.
+2. **[예상 승리팀 & 최종 스코어]**: `🎯 AI 추천 픽: [예상 승리팀] (신뢰도 [신뢰도]%)` ➔ `⚽ 최종 스코어: [홈스코어] : [원정스코어] 완벽 적중! ✅` 명시.
+3. **[AI 적중 근거]**: `💡 AI 연산 분석 근거:` 요약 명시.
+4. **[검증 링크]**:
+   👉 AI 적중률 실시간 검증: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning
    (인스타는 프로필 링크 확인!)
 """
 
 SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 트렌디하게 작성하세요.
 
 역할:
-- 오늘 밤/새벽 예정된 경기 중 AI 신뢰도(Confidence)가 가장 높은 상위 경기 리스트(최대 3개)를 받아, 오늘 놓치지 말아야 할 'AI 추천 매치 리스트'를 요약 소개합니다.
+- 오늘 예정된 상위 AI 추천 경기 리스트를 바탕으로 "어디가 이길 것인지" AI 추천 픽과 신뢰도를 명확하게 요약 브리핑합니다.
 
 규칙 (매우 중요):
-1. **호기심 유도 (스포일러 금지)**: 각 경기의 최종 추천 결과(누가 이길 것인가)는 **절대로 적지 마세요**. 대신 신뢰도 수치와 관전 포인트를 어필하세요.
-   (나쁜 예: "A vs B 경기 A 승리 추천")
-   (좋은 예: "🔥 A vs B: AI 신뢰도 82%! 역대급 전술적 상성 포착, 과연 결과는?")
-2. 280자 이내로 콤팩트하게 작성하세요 (X/Twitter 호환).
+1. **[추천 승리 팀 및 수치 공개]**: 각 경기의 AI 추천 승리 팀(홈/원정/무승부)과 승률 확률(%)을 당당히 명시하세요!
+   (예시: "🔥 1. 맨시티 vs 아스날: AI 추천 [맨시티 승] (신뢰도 81%)")
+2. 280자 이내로 콤팩트하게 작성하세요.
 3. 이모지(🔥, ⚽, 🚀 등)를 적극 활용하세요.
-4. 해시태그 3-5개를 포함하세요 (#Scorenix #오늘의경기 #AI예측 #분석리스트).
-5. 본문 맨 마지막에는 항상 메인 홈페이지 링크를 첨부하세요:
+4. 해시태그 3-5개를 포함하세요 (#Scorenix #오늘의경기 #AI예측 #승리분석).
+5. 본문 끝에는 홈페이지 링크를 첨부하세요:
    👉 오늘 밤 AI 픽 전체보기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_top3
    (인스타는 프로필 링크 확인!)
 """
