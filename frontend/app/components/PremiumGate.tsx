@@ -2,71 +2,128 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { i18n, type Locale } from '../lib/i18n-config';
+import { i18n } from '../lib/i18n-config';
 import { useDictionarySafe } from '../context/DictionaryContext';
 
 interface PremiumGateProps {
-    /** Content to show (Always visible now for SEO and Global Traffic) */
     children: React.ReactNode;
     /** Feature name shown in the overlay */
     featureName?: string;
     /** Tier required: 'pro' | 'vip' */
     requiredTier?: string;
-    /** If true, shows a teaser instead of full blur (Deprecated, ignored now) */
+    /** If true, unlocks this specific instance as the daily 1-match free sample */
+    isFreeSample?: boolean;
     showTeaser?: boolean;
 }
 
-/**
- * PremiumGate — 글로벌 무료화 피벗 대응 컴포넌트
- * 
- * 기존: 유료 멤버십 등급에 따라 콘텐츠 블러 및 결제 창 안내
- * 현재: 콘텐츠 100% 공개 (SEO 인덱싱 극대화) + 하단 은은한 AI 기부(Donation) 안내 카드 노출
- */
+const TIER_LEVELS: Record<string, number> = {
+    free: 0,
+    basic: 1,
+    pro: 2,
+    vip: 3,
+    premium: 3,
+    admin: 99,
+};
+
 export default function PremiumGate({
     children,
-    featureName = "AI Premium Feature",
+    featureName = "AI 정밀 분석 리포트",
     requiredTier = "pro",
-    showTeaser = true,
+    isFreeSample = false,
 }: PremiumGateProps) {
     const { user } = useAuth();
-    const pathname = usePathname();
+    const pathname = usePathname() || '';
     const dict = useDictionarySafe();
     const tp = dict?.premiumGate || {};
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
+    const userTierKey = user?.role === 'admin' ? 'admin' : (user?.tier || 'free').toLowerCase();
+    const userLevel = TIER_LEVELS[userTierKey] ?? 0;
+    const reqLevel = TIER_LEVELS[requiredTier.toLowerCase()] ?? 2;
+    const hasAccess = userLevel >= reqLevel;
+
+    // 1. 유료 구독자(Pro / VIP / Admin) → 전체 공개
+    if (hasAccess) {
+        return <div className="relative w-full">{children}</div>;
+    }
+
+    // 2. 무료 회원의 '일일 1경기 무료 샘플' → 샘플 배지와 함께 공개
+    if (isFreeSample) {
+        return (
+            <div className="relative w-full">
+                <div className="mb-2 px-3 py-1.5 rounded-lg flex items-center justify-between text-[11px]"
+                    style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.25)' }}>
+                    <span className="font-bold text-cyan-300">🎁 오늘의 무료 AI 분석 리포트 체험 (일일 1건 제공)</span>
+                    <a href={`/${currentLang}/pricing`} className="font-black text-cyan-400 hover:underline">
+                        전 경기 무제한 열람 →
+                    </a>
+                </div>
+                {children}
+            </div>
+        );
+    }
+
+    // 3. 권한 미달 시 → 블러 프리뷰 + 구독 유도 오버레이
+    const isVipGate = reqLevel >= 3;
+    const badgeLabel = isVipGate ? '👑 VIP ELITE 전용' : '🔒 PRO ANALYST 전용';
+    const planParam = isVipGate ? 'vip' : 'pro';
+    const priceLabel = isVipGate ? 'VIP Elite (105,000원/월)' : 'Pro Analyst (55,000원/월)';
+
     return (
-        <div className="relative w-full">
-            {/* 100% Open & SEO Friendly Content (No blur) */}
-            <div className="w-full">
+        <div className="relative w-full overflow-hidden rounded-xl">
+            {/* Blurred teaser content */}
+            <div
+                className="w-full select-none pointer-events-none"
+                style={{ filter: 'blur(7px)', opacity: 0.35 }}
+                aria-hidden="true"
+            >
                 {children}
             </div>
 
-            {/* Bottom Donation Card Prompt */}
-            <div className="mt-4 p-4 rounded-xl text-center max-w-full mx-auto space-y-3"
+            {/* Lock overlay */}
+            <div
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center p-5 text-center"
                 style={{
-                    background: 'rgba(15,15,25,0.7)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(0,212,255,0.12)',
+                    background: 'linear-gradient(180deg, rgba(13,19,33,0.72) 0%, rgba(13,19,33,0.95) 100%)',
+                    backdropFilter: 'blur(4px)',
                 }}
             >
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-                    <div className="flex items-center space-x-3">
-                        <span className="text-2xl animate-bounce">☕</span>
-                        <div>
-                            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                                <span className="w-1.5 h-3 bg-cyan-400 rounded-full"></span>
-                                {featureName} {tp.freeNotice || '(100% 무료 공개)'}
-                            </h4>
-                            <p className="text-[10px] text-[var(--text-muted)] leading-relaxed mt-0.5">
-                                {tp.description || 'This AI feature is supported by donations.'}
-                            </p>
-                        </div>
-                    </div>
-                    <a href={`/${currentLang}/pricing`} className="w-full sm:w-auto">
-                        <button className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-[10px] font-black text-white rounded-lg transition shadow-md shadow-cyan-500/10">
-                            💖 {tp.upgrade || 'Support AI Server'}
-                        </button>
+                <span
+                    className="text-[10px] font-black px-2.5 py-1 rounded-full mb-2 tracking-wider"
+                    style={{
+                        background: isVipGate ? 'rgba(245,158,11,0.18)' : 'rgba(0,212,255,0.15)',
+                        color: isVipGate ? '#fbbf24' : '#00d4ff',
+                        border: isVipGate ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(0,212,255,0.3)',
+                    }}
+                >
+                    {badgeLabel}
+                </span>
+
+                <h4 className="text-sm sm:text-base font-black text-white mb-1">
+                    {featureName} 잠금
+                </h4>
+                <p className="text-xs text-white/60 max-w-md mb-4 leading-relaxed">
+                    {tp.lockedDesc || '무료 체험 등급은 일일 1건의 AI 샘플 리포트만 열람 가능합니다. 3-Pillar 7-Factor 정밀 분석·신뢰도 게이지·AI TOP PICK을 무제한으로 확인하세요.'}
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                    <a
+                        href={`/${currentLang}/payment/request?plan=${planParam}&billing=monthly`}
+                        className="px-5 py-2.5 rounded-xl text-xs font-black text-white transition-all hover:scale-105 shadow-lg"
+                        style={{
+                            background: isVipGate
+                                ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                                : 'linear-gradient(135deg, #00d4ff, #8b5cf6)',
+                        }}
+                    >
+                        💳 {priceLabel} 구독하기
+                    </a>
+                    <a
+                        href={`/${currentLang}/pricing`}
+                        className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/70 hover:text-white border border-white/15 hover:bg-white/5 transition-all"
+                    >
+                        요금제 혜택 비교
                     </a>
                 </div>
             </div>

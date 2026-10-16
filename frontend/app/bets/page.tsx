@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader';
 import PremiumGate from '../components/PremiumGate';
 import { useCart } from '../../context/CartContext';
 import { useDictionarySafe } from '../context/DictionaryContext';
+import { useAuth } from '../context/AuthContext';
 
 /* ───── Types ───── */
 interface MatchBet {
@@ -161,11 +162,15 @@ export default function BetsPage() {
     const [aiLoading, setAiLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedBets, setSelectedBets] = useState<Map<string, { match: MatchBet; type: BetType; odds: number }>>(new Map());
-    const [expandedCard, setExpandedCard] = useState<string | null>(null);
+    const [expandedCard, setExpandedCard] = useState<string | null>('ai-0');
     const [saving, setSaving] = useState(false);
     const [viewMode, setViewMode] = useState<'ai' | 'odds'>('ai');
     const [selectedSport, setSelectedSport] = useState<string>('ALL');
     const { addToCart, removeFromCart, cartItems } = useCart();
+    const { user } = useAuth();
+    const isProOrAbove = Boolean(
+        user && (['pro', 'vip', 'premium', 'admin'].includes((user.tier || '').toLowerCase()) || user.role === 'admin')
+    );
     const router = useRouter();
     const dict = useDictionarySafe();
     const tb = dict?.bets || {};
@@ -211,7 +216,7 @@ export default function BetsPage() {
         });
         return ['SOCCER', 'BASKETBALL', 'BASEBALL', 'ICEHOCKEY']
             .map(s => ({ key: s, icon: iconMap[s] || '🏟️', label: labelMap[s] || s, count: counts[s] || 0 }));
-    }, [aiPredictions]);
+    }, [aiPredictions, tc]);
 
     /* Sport-filtered predictions */
     const sportFilteredPredictions = useMemo(() => {
@@ -239,8 +244,18 @@ export default function BetsPage() {
         });
     }, [matches, selectedSport]);
 
-    /* Sorted predictions by EV and Confidence */
-    const sortedPredictions = useMemo(() => {
+    /* Free Tier: first 3 leagues allowed in Odds Comparison view */
+    const freeAllowedLeagues = useMemo(() => {
+        const s = new Set<string>();
+        for (const m of sportFilteredMatches) {
+            if (m.league) s.add(m.league);
+            if (s.size >= 3) break;
+        }
+        return s;
+    }, [sportFilteredMatches]);
+
+    /* Base sorted predictions by EV and Confidence */
+    const baseSortedPredictions = useMemo(() => {
         return [...sportFilteredPredictions].map(pred => {
             let ev = 0;
             const parts = pred.match_id.split('_');
@@ -270,12 +285,34 @@ export default function BetsPage() {
         });
     }, [sportFilteredPredictions, matches]);
 
-    /* Top AI picks — sorted by EV and confidence */
+    /* Top AI picks — sorted by EV and confidence (Pro/VIP exclusive) */
     const topPicks = useMemo(() => {
-        return sortedPredictions
+        return baseSortedPredictions
             .filter(p => p.confidence >= 60)
             .slice(0, 3);
-    }, [sortedPredictions]);
+    }, [baseSortedPredictions]);
+
+    /* 1 Daily Free Sample Match (picked outside Top 3 so Top Picks remain strictly Pro-exclusive) */
+    const freeSampleMatchId = useMemo(() => {
+        const topIds = new Set(topPicks.map(tp => tp.match_id));
+        const candidate = baseSortedPredictions.find(p => !topIds.has(p.match_id) && p.confidence >= 65 && p.confidence < 85)
+            || baseSortedPredictions.find(p => !topIds.has(p.match_id))
+            || baseSortedPredictions[0];
+        return candidate?.match_id || '';
+    }, [baseSortedPredictions, topPicks]);
+
+    /* Final sorted predictions with 1 Free Sample floated to index 0 for Free users */
+    const sortedPredictions = useMemo(() => {
+        const list = [...baseSortedPredictions];
+        if (!isProOrAbove && freeSampleMatchId) {
+            const sampleIdx = list.findIndex(p => p.match_id === freeSampleMatchId);
+            if (sampleIdx > 0) {
+                const [sampleItem] = list.splice(sampleIdx, 1);
+                list.unshift(sampleItem);
+            }
+        }
+        return list;
+    }, [baseSortedPredictions, isProOrAbove, freeSampleMatchId]);
 
     /* Stats (based on sport-filtered) */
     const totalMatches = sportFilteredPredictions.length;
@@ -469,12 +506,40 @@ export default function BetsPage() {
                         </div>
                     </div>
 
-                    {/* ━━━ TOP PICKS HERO ━━━ */}
+                    {/* ━━━ FREE TIER NOTICE BANNER ━━━ */}
+                    {!isProOrAbove && (
+                        <div className="mb-5 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                            style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(139,92,246,0.12) 100%)', border: '1px solid rgba(0,212,255,0.25)' }}>
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">🎁</span>
+                                <div>
+                                    <div className="text-xs sm:text-sm font-black text-white">
+                                        무료 체험 모드: <span className="text-cyan-400">일일 AI 분석 리포트 1건 + 실시간 배당 비교 3개 리그</span> 제공 중
+                                    </div>
+                                    <div className="text-[11px] text-white/60 mt-0.5">
+                                        🔥 AI TOP PICK 3선 · 전 경기 신뢰도 게이지 & EV 분석 · 조합 시뮬레이터는 Pro Analyst 구독 시 무제한 해금됩니다.
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="/ko/payment/request?plan=pro&billing=monthly"
+                                className="shrink-0 px-4 py-2 rounded-xl text-xs font-black text-white transition hover:scale-105 shadow-md"
+                                style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
+                                💳 Pro 구독하기 (55,000원/월) →
+                            </a>
+                        </div>
+                    )}
+
+                    {/* ━━━ TOP PICKS HERO (PRO EXCLUSIVE) ━━━ */}
                     {topPicks.length > 0 && (
                         <div className="mb-6">
                             <h2 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-3 flex items-center">
                                 <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
                                 🔥 {tb.topPick || '오늘의 AI 분석 하이라이트'}
+                                {!isProOrAbove && (
+                                    <span className="ml-2 text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                                        🔒 PRO 전용 잠금
+                                    </span>
+                                )}
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {topPicks.map((pick, i) => {
@@ -485,7 +550,9 @@ export default function BetsPage() {
                                     const home = pick.team_home_ko ? `${pick.team_home_ko} (${homeEng})` : homeEng;
                                     const away = pick.team_away_ko ? `${pick.team_away_ko} (${awayEng})` : awayEng;
                                     return (
-                                        <div key={i} className="relative overflow-hidden rounded-2xl transition-all hover:scale-[1.02] cursor-pointer group"
+                                        <div key={i}
+                                            onClick={() => { if (!isProOrAbove) router.push('/pricing'); }}
+                                            className="relative overflow-hidden rounded-2xl transition-all hover:scale-[1.02] cursor-pointer group"
                                             style={{
                                                 background: 'var(--bg-card)',
                                                 border: `1px solid ${level.color}33`,
@@ -505,29 +572,38 @@ export default function BetsPage() {
                                                         <div className="text-sm font-bold text-white">{home}</div>
                                                         <div className="text-xs text-white/40">vs {away}</div>
                                                     </div>
-                                                    <div className="flex flex-col items-center">
+                                                    <div className="flex flex-col items-center" style={!isProOrAbove ? { filter: 'blur(6px)', opacity: 0.4 } : {}}>
                                                         <ProbDonut home={pick.home_win_prob} draw={pick.draw_prob} away={pick.away_win_prob} size={64} />
                                                     </div>
                                                 </div>
 
                                                 {/* Recommendation */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-xs font-black px-2.5 py-1 rounded-lg"
-                                                            style={{ background: level.bg, color: level.color }}>
-                                                            {level.icon} {getRecommendationKo(pick.recommendation)}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                            style={{ background: level.bg, color: level.color }}>
-                                                            {level.label}
-                                                        </span>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-lg font-black" style={{ color: level.color }}>
-                                                            {pick.confidence.toFixed(1)}%
+                                                {isProOrAbove ? (
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-xs font-black px-2.5 py-1 rounded-lg"
+                                                                style={{ background: level.bg, color: level.color }}>
+                                                                {level.icon} {getRecommendationKo(pick.recommendation)}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                                style={{ background: level.bg, color: level.color }}>
+                                                                {level.label}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-black" style={{ color: level.color }}>
+                                                                {pick.confidence.toFixed(1)}%
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                                        <span className="text-xs font-bold text-red-400">🔒 AI TOP PICK 잠금</span>
+                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white">
+                                                            PRO 열람 →
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -579,7 +655,7 @@ export default function BetsPage() {
                                 onClick={() => setViewMode('odds')}
                                 className={`px-4 py-2 text-xs font-bold transition-all ${viewMode === 'odds' ? 'text-white' : 'text-white/30 hover:text-white/50'}`}
                                 style={viewMode === 'odds' ? { background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' } : {}}>
-                                📊 {tb.oddsCompare || '배당률 비교'}
+                                📊 {tb.oddsCompare || '배당률 비교'} {!isProOrAbove && '(무료 3개 리그)'}
                             </button>
                         </div>
                         <div className="text-[10px] text-white/20">
@@ -600,7 +676,7 @@ export default function BetsPage() {
                                 <div className="py-20 text-center text-white/40">
                                     <div className="animate-spin inline-block w-10 h-10 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-4" />
                                     <p className="text-sm">{tb.aiAnalyzing || 'AI 시뮬레이션 분석 중...'}</p>
-                                    <p className="text-[10px] text-white/20 mt-1">{tb.aiAnalyzingDetail || 'LightGBM 모델이 각 경기 데이터를 시뮬레이션하고 있습니다'}</p>
+                                    <p className="text-[10px] text-white/20 mt-1">{tb.aiAnalyzingDetail || '3-Pillar 하이브리드 퀀트 모델이 각 경기 데이터를 시뮬레이션하고 있습니다'}</p>
                                 </div>
                             ) : sportFilteredPredictions.length === 0 ? (
                                 <div className="py-20 text-center text-white/30 rounded-2xl" style={{ background: 'var(--bg-card)' }}>
@@ -621,14 +697,29 @@ export default function BetsPage() {
                                         const isExpanded = expandedCard === matchKey;
                                         const oddsMatch = pred.oddsMatch;
                                         const ev = pred.calculatedEv;
+                                        const isSampleCard = idx === 0 && pred.match_id === freeSampleMatchId;
+                                        const isCardUnlocked = isProOrAbove || isSampleCard;
 
                                         return (
                                             <div key={idx} className="rounded-2xl overflow-hidden transition-all hover:translate-y-[-2px]"
                                                 style={{
                                                     background: 'var(--bg-card)',
-                                                    border: `1px solid ${pred.confidence >= 70 ? level.color + '22' : 'var(--border-subtle)'}`,
-                                                    boxShadow: pred.confidence >= 80 ? `0 4px 20px ${level.glow}` : 'none',
+                                                    border: isSampleCard && !isProOrAbove
+                                                        ? '1px solid rgba(0,212,255,0.45)'
+                                                        : `1px solid ${pred.confidence >= 70 && isCardUnlocked ? level.color + '22' : 'var(--border-subtle)'}`,
+                                                    boxShadow: isSampleCard && !isProOrAbove
+                                                        ? '0 4px 24px rgba(0,212,255,0.18)'
+                                                        : (pred.confidence >= 80 && isCardUnlocked ? `0 4px 20px ${level.glow}` : 'none'),
                                                 }}>
+
+                                                {/* Free Daily 1-Match Sample Ribbon */}
+                                                {isSampleCard && !isProOrAbove && (
+                                                    <div className="px-4 py-1.5 text-[11px] font-black flex items-center justify-between"
+                                                        style={{ background: 'linear-gradient(90deg, rgba(0,212,255,0.2), rgba(139,92,246,0.2))', color: '#00d4ff', borderBottom: '1px solid rgba(0,212,255,0.2)' }}>
+                                                        <span>🎁 오늘의 무료 AI 분석 샘플 (일일 1건 공개)</span>
+                                                        <span className="text-[10px] text-white/70">전체 7-Factor 열람 가능</span>
+                                                    </div>
+                                                )}
 
                                                 {/* Card header */}
                                                 <div className="p-4 pb-0">
@@ -640,27 +731,33 @@ export default function BetsPage() {
                                                             <span className="text-[10px] text-white/30">{pred.league || ''}</span>
                                                             {pred.match_time && <span className="text-[10px] text-white/20">{formatTime(pred.match_time)}</span>}
                                                         </div>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                            style={{ background: level.bg, color: level.color }}>
-                                                            {level.icon} {level.label}
-                                                        </span>
+                                                        {isCardUnlocked ? (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                                style={{ background: level.bg, color: level.color }}>
+                                                                {level.icon} {level.label}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10">
+                                                                🔒 PRO 전용
+                                                            </span>
+                                                        )}
                                                     </div>
 
                                                     {/* Teams */}
                                                     <div className="flex items-center justify-between mt-2">
                                                         <div className="flex-1">
-                                                            <div className={`text-base font-bold flex items-center gap-2 ${pred.recommendation === 'HOME' ? 'text-white' : 'text-white/60'}`}>
+                                                            <div className={`text-base font-bold flex items-center gap-2 ${isCardUnlocked && pred.recommendation === 'HOME' ? 'text-white' : 'text-white/80'}`}>
                                                                 {home}
-                                                                {pred.recommendation === 'HOME' && (
+                                                                {isCardUnlocked && pred.recommendation === 'HOME' && (
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                                 {pred.oddsMatch?.has_betman && (
                                                                     <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[rgba(0,212,255,0.12)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)]">DOMESTIC</span>
                                                                 )}
                                                             </div>
-                                                            <div className={`text-sm mt-0.5 flex items-center gap-2 ${pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/40'}`}>
+                                                            <div className={`text-sm mt-0.5 flex items-center gap-2 ${isCardUnlocked && pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/50'}`}>
                                                                 vs {away}
-                                                                {pred.recommendation === 'AWAY' && (
+                                                                {isCardUnlocked && pred.recommendation === 'AWAY' && (
                                                                     <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>Focus</span>
                                                                 )}
                                                                 {!pred.recommendation.includes('HOME') && pred.oddsMatch?.has_betman && (
@@ -668,13 +765,15 @@ export default function BetsPage() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <ProbDonut home={pred.home_win_prob} draw={pred.draw_prob} away={pred.away_win_prob} size={72} />
+                                                        <div style={!isCardUnlocked ? { filter: 'blur(6px)', opacity: 0.35 } : {}}>
+                                                            <ProbDonut home={pred.home_win_prob} draw={pred.draw_prob} away={pred.away_win_prob} size={72} />
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Probability bars */}
                                                 <div className="px-4 py-3">
-                                                    <div className="space-y-2">
+                                                    <div className="space-y-2" style={!isCardUnlocked ? { filter: 'blur(5px)', opacity: 0.4, userSelect: 'none' } : {}}>
                                                         {/* Home */}
                                                         <div className="flex items-center space-x-3">
                                                             <span className="text-[10px] font-bold text-blue-400 w-6 text-right">{tb.homeShort || '홈'}</span>
@@ -713,37 +812,57 @@ export default function BetsPage() {
 
                                                 {/* Confidence + EV + action row */}
                                                 <div className="px-4 pb-3">
-                                                    <ConfidenceGauge value={pred.confidence} label={tb.confidence || '신뢰도'} />
+                                                    {isCardUnlocked ? (
+                                                        <ConfidenceGauge value={pred.confidence} label={tb.confidence || '신뢰도'} />
+                                                    ) : (
+                                                        <div className="w-full">
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-[10px] text-white/40 uppercase tracking-wider">{tb.confidence || '신뢰도 게이지'}</span>
+                                                                <span className="text-[11px] font-bold text-cyan-400">🔒 PRO 전용 제한</span>
+                                                            </div>
+                                                            <div className="w-full h-2 rounded-full overflow-hidden bg-white/5">
+                                                                <div className="h-full w-1/2 rounded-full bg-white/10" />
+                                                            </div>
+                                                        </div>
+                                                    )}
 
                                                     <div className="flex items-center justify-between mt-3">
                                                         <div className="flex items-center space-x-3">
-                                                            {/* Efficiency index badge */}
-                                                            {ev !== 0 && (
-                                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${ev > 0 ? 'text-green-400' : 'text-red-400'}`}
-                                                                    style={{ background: ev > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)' }}>
-                                                                    효율 {ev > 0 ? '+' : ''}{ev.toFixed(1)}%
-                                                                </span>
-                                                            )}
-                                                            {/* Odds badge if available */}
-                                                            {oddsMatch && (
-                                                                <span className="text-[10px] text-white/30">
-                                                                    {tb.odds || '배당률'} {fmtOdds(pred.recommendation === 'HOME' ? oddsMatch.home_odds :
-                                                                        pred.recommendation === 'AWAY' ? oddsMatch.away_odds : oddsMatch.draw_odds)}
-                                                                </span>
+                                                            {isCardUnlocked ? (
+                                                                <>
+                                                                    {/* Efficiency index badge */}
+                                                                    {ev !== 0 && (
+                                                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-lg ${ev > 0 ? 'text-green-400' : 'text-red-400'}`}
+                                                                            style={{ background: ev > 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)' }}>
+                                                                            효율 {ev > 0 ? '+' : ''}{ev.toFixed(1)}%
+                                                                        </span>
+                                                                    )}
+                                                                    {/* Odds badge if available */}
+                                                                    {oddsMatch && (
+                                                                        <span className="text-[10px] text-white/30">
+                                                                            {tb.odds || '배당률'} {fmtOdds(pred.recommendation === 'HOME' ? oddsMatch.home_odds :
+                                                                                pred.recommendation === 'AWAY' ? oddsMatch.away_odds : oddsMatch.draw_odds)}
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <a href="/ko/pricing" className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition">
+                                                                    🔒 EV(기대값) & 추천픽 열람 (PRO)
+                                                                </a>
                                                             )}
                                                         </div>
                                                         <button
                                                             onClick={() => setExpandedCard(isExpanded ? null : matchKey)}
                                                             className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
                                                             style={{ background: isExpanded ? 'rgba(0,212,255,0.12)' : 'rgba(255,255,255,0.04)', color: isExpanded ? '#00d4ff' : 'rgba(255,255,255,0.4)' }}>
-                                                            {isExpanded ? `${tb.collapse || '접기'} ▲` : `${tb.expand || '더보기'} ▼`}
+                                                            {isExpanded ? `${tb.collapse || '접기'} ▲` : (isCardUnlocked ? `${tb.expand || '더보기'} ▼` : '🔒 7-Factor 분석 ▼')}
                                                         </button>
                                                     </div>
                                                 </div>
 
                                                 {/* Expandable detail panel */}
                                                 {isExpanded && (
-                                                    <PremiumGate featureName={tb.aiDetailAnalysis || 'AI Detailed Analysis'} requiredTier="pro">
+                                                    <PremiumGate featureName={tb.aiDetailAnalysis || 'AI 7-Factor 정밀 분석'} requiredTier="pro" isFreeSample={isSampleCard}>
                                                         <div className="px-4 pb-4 pt-1" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-subtle)' }}>
 
                                                             {/* Top factors */}
@@ -818,7 +937,7 @@ export default function BetsPage() {
                         </div>
                     )}
 
-                    {/* ━━━ ODDS COMPARISON VIEW (existing bet365 style) ━━━ */}
+                    {/* ━━━ ODDS COMPARISON VIEW (3 Leagues Free, Unlimited for Pro/VIP) ━━━ */}
                     {viewMode === 'odds' && (
                         <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                             {loading && matches.length === 0 ? (
@@ -847,9 +966,13 @@ export default function BetsPage() {
                                         const away = parts[1] || '';
                                         const matchId = `odds-${idx}`;
                                         const aiPred = predictionMap.get(`${home}_${away}`) || predictionMap.get(m.match_name);
+                                        const isLeagueAllowed = isProOrAbove || freeAllowedLeagues.has(m.league || '');
+
+                                        if (!isLeagueAllowed && idx > 15) return null;
 
                                         return (
-                                            <div key={idx} className="border-b border-white/5 last:border-0">
+                                            <div key={idx} className="border-b border-white/5 last:border-0"
+                                                style={!isLeagueAllowed ? { filter: 'blur(5px)', opacity: 0.35, pointerEvents: 'none', userSelect: 'none' } : {}}>
                                                 <div className={`grid grid-cols-[40px_1fr_80px_80px_80px_60px] sm:grid-cols-[50px_1fr_100px_100px_100px_70px] items-center px-2 transition hover:bg-white/[0.02] ${m.has_betman ? '' : 'opacity-50'}`}>
                                                     <div className="py-3 text-center text-[11px] text-white/20 font-mono">{idx + 1}</div>
                                                     <div className="py-3 pl-2">
@@ -865,7 +988,7 @@ export default function BetsPage() {
                                                                 <div className="text-xs text-white/40 leading-tight">{away}</div>
                                                             </div>
                                                         </div>
-                                                        {m.has_betman && m.best_ev > 85 && (
+                                                        {isProOrAbove && m.has_betman && m.best_ev > 85 && (
                                                             <div className="mt-1 ml-14">
                                                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.best_ev >= 100 ? 'text-red-400' : m.best_ev >= 95 ? 'text-cyan-400' : 'text-white/30'}`}
                                                                     style={{ background: m.best_ev >= 100 ? 'rgba(239,68,68,0.12)' : m.best_ev >= 95 ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.04)' }}>
@@ -892,7 +1015,7 @@ export default function BetsPage() {
                                                     })}
                                                     {/* AI recommendation mini badge */}
                                                     <div className="py-3 text-center">
-                                                        {aiPred ? (
+                                                        {isProOrAbove && aiPred ? (
                                                             <div className="text-center">
                                                                 <div className="text-[10px] font-black" style={{ color: getConfidenceLevel(aiPred.confidence).color }}>
                                                                     {getRecommendationKo(aiPred.recommendation).replace(' ', '')}
@@ -900,13 +1023,29 @@ export default function BetsPage() {
                                                                 <div className="text-[9px] text-white/30">{aiPred.confidence.toFixed(0)}%</div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-[10px] text-white/15">-</span>
+                                                            <span className="text-[10px] text-cyan-400 font-bold">🔒 PRO</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                         );
                                     })}
+
+                                    {/* 3-League Free Limit Upgrade Footer */}
+                                    {!isProOrAbove && (
+                                        <div className="p-6 text-center border-t border-white/10"
+                                            style={{ background: 'linear-gradient(180deg, rgba(13,19,33,0.85), rgba(13,19,33,0.98))' }}>
+                                            <div className="text-xs font-black text-cyan-400 mb-1">🔒 실시간 데이터 비교 (무료 3개 리그 제한)</div>
+                                            <p className="text-xs text-white/60 mb-4">
+                                                전 세계 17개 리그({sportFilteredMatches.length}개 경기) 전체 배당 비교 및 AI 추천 매칭은 Pro Analyst 구독 시 무제한 열람 가능합니다.
+                                            </p>
+                                            <a href="/ko/payment/request?plan=pro&billing=monthly"
+                                                className="inline-block px-6 py-2.5 rounded-xl text-xs font-black text-white transition hover:scale-105"
+                                                style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
+                                                💳 Pro Analyst 시작하기 (55,000원/월)
+                                            </a>
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -917,11 +1056,11 @@ export default function BetsPage() {
                     </div>
                 </main>
 
-                {/* ━━━ COMBO ANALYSIS FLOATING PANEL ━━━ */}
+                {/* ━━━ COMBO ANALYSIS FLOATING PANEL (PRO EXCLUSIVE FOR 2+ FOLDS) ━━━ */}
                 {selectedBets.size > 0 && (
                     <div className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
                         style={{
-                            background: 'rgba(12,12,20,0.92)',
+                            background: 'rgba(12,12,20,0.94)',
                             backdropFilter: 'blur(20px)',
                             borderTop: '1px solid rgba(0,212,255,0.2)',
                             borderRadius: '20px 20px 0 0',
@@ -929,11 +1068,16 @@ export default function BetsPage() {
                         <div className="max-w-7xl mx-auto px-4 py-4">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-white flex items-center">
-                                    🎯 {tb.comboBetting || '조합 분석'}
+                                    🎯 {tb.comboBetting || '조합 시뮬레이터'}
                                     <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
                                         style={{ background: 'rgba(0,212,255,0.12)', color: '#00d4ff' }}>
                                         {selectedBets.size} {tb.matches || '경기'}
                                     </span>
+                                    {!isProOrAbove && (
+                                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400">
+                                            🔒 PRO 전용
+                                        </span>
+                                    )}
                                 </h3>
                                 <button onClick={() => setSelectedBets(new Map())}
                                     className="text-xs text-white/30 hover:text-white/60 transition">
@@ -957,21 +1101,34 @@ export default function BetsPage() {
                                 })}
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <span className="text-xs text-white/40">{tb.totalOdds || '총 조합 배율'}</span>
-                                    <span className="text-lg font-black ml-2 font-mono gradient-text">{comboOdds.toFixed(2)}</span>
-                                    <span className="text-xs text-white/30 ml-3">
-                                        {selectedBets.size}개 경기 조합
-                                    </span>
+                            {isProOrAbove ? (
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <span className="text-xs text-white/40">{tb.totalOdds || '총 조합 배율'}</span>
+                                        <span className="text-lg font-black ml-2 font-mono gradient-text">{comboOdds.toFixed(2)}</span>
+                                        <span className="text-xs text-white/30 ml-3">
+                                            {selectedBets.size}개 경기 조합
+                                        </span>
+                                    </div>
+                                    <button onClick={handleSaveCombo}
+                                        disabled={saving || selectedBets.size < 2}
+                                        className={`text-sm px-6 py-2.5 rounded-xl font-bold transition-all ${saving ? 'opacity-50' : 'hover:scale-105'}`}
+                                        style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>
+                                        {saving ? (tb.saving || '저장 중...') : `💾 ${tb.saveCombo || '조합 저장 →'}`}
+                                    </button>
                                 </div>
-                                <button onClick={handleSaveCombo}
-                                    disabled={saving || selectedBets.size < 2}
-                                    className={`text-sm px-6 py-2.5 rounded-xl font-bold transition-all ${saving ? 'opacity-50' : 'hover:scale-105'}`}
-                                    style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>
-                                    {saving ? (tb.saving || '저장 중...') : `💾 ${tb.saveCombo || '조합 저장 →'}`}
-                                </button>
-                            </div>
+                            ) : (
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-white/10">
+                                    <div className="text-xs text-white/60">
+                                        🔒 다폴더 조합 확률 시뮬레이션 및 포트폴리오 저장은 <strong className="text-cyan-400">Pro Analyst</strong> 전용 기능입니다.
+                                    </div>
+                                    <a href="/ko/payment/request?plan=pro&billing=monthly"
+                                        className="text-xs px-5 py-2.5 rounded-xl font-black text-white transition-all hover:scale-105"
+                                        style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
+                                        💳 Pro 구독하고 조합 분석 잠금해제 →
+                                    </a>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

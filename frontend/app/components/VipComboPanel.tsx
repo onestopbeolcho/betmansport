@@ -29,9 +29,11 @@ export default function VipComboPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isVip = Boolean(user && (user.tier === "vip" || user.tier === "premium" || user.role === "admin"));
+
   useEffect(() => {
     // API 호출 전 권한 체크 (안전 장치)
-    if (!user || user.tier !== "vip") {
+    if (!isVip) {
       setLoading(false);
       return;
     }
@@ -66,9 +68,9 @@ export default function VipComboPanel() {
     if (token) {
       fetchCombos();
     }
-  }, [user, token]);
+  }, [user, token, isVip]);
 
-  if (!user || user.tier !== "vip") {
+  if (!isVip) {
     return (
       <div className="relative rounded-2xl border border-gray-800 bg-gray-900/50 p-6 overflow-hidden">
         <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/40 flex flex-col items-center justify-center p-6 text-center">

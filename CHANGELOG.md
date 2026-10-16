@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.1 - Subscription Funnel & Tier Gating Alignment (Free / Pro Analyst / VIP Elite)
+- **Strict Tier Gating (`PremiumGate.tsx`, `VipComboPanel.tsx`)**:
+    - Replaced the free-open coffee donation component in `PremiumGate.tsx` with true subscription tier enforcement (`free: 0, basic: 1, pro: 2, vip: 3, premium: 3, admin: 99`) and glassmorphism Pro/VIP upgrade CTAs linking directly to `/payment/request?plan=pro&billing=monthly`.
+    - Fixed `VipComboPanel.tsx` tier check to accept both `"vip"` and `"premium"` (which `payments.py` assigns on VIP subscription completion).
+- **1 Daily Free AI Analysis Sample + Locked Top Picks & Confidence Gauges (`/analysis`, `/bets`)**:
+    - **Daily 1-Match Free Sample (`🤖 AI 분석 리포트 일일 1건`)**: Automatically selects 1 non-Top-Pick match per day (`freeSampleMatchId`), floats it to `idx === 0` with a `🎁 오늘의 무료 AI 분석 샘플 (일일 1건 공개)` ribbon, and auto-expands the full 3-Pillar 7-Factor report so visitors can experience Scorenix's analytical quality.
+    - **AI TOP PICK Locked (`✕ AI TOP PICK 잠금`)**: Top 3 high-confidence picks show league, team names, and match time as a teaser, while blurring probabilities and locking recommendation & confidence behind `🔒 PRO 전용 잠금`.
+    - **Remaining Matches & Confidence Gauges Locked (`✕ 신뢰도 게이지 제한`)**: Matches at `idx >= 1` blur probability bars/donuts, replace Confidence Gauges with `🔒 PRO 전용 제한`, mask EV/recommendation badges, and lock the expandable detail view with `PremiumGate`.
+    - **3-League Real-Time Odds Comparison Limit (`📊 실시간 데이터 비교 (3개 리그)`)**: In `/bets` (`viewMode === 'odds'`), Free users can view the first 3 leagues while remaining leagues are blurred with a Pro upgrade CTA.
+    - **Combo Simulator Locked (`✕ 조합 분석 잠금`)**: In `/bets`, Free users selecting matches see a locked combo multiplier and `🔒 PRO 구독하고 조합 분석 열기` upgrade button.
+
 ## v0.7.0 - 3-Pillar Hybrid Quant Engine, Fast Multi-Sport Data Pipeline & PortOne/KG Inicis Payment Restoration
 - **PortOne V2 + KG Inicis (`MOI1846444`) Card Payment & Tier Gating Restoration**:
     - Restored `pricing`, `payment/request`, `payment/complete`, `refund`, `PremiumGate`, `Navbar`, `VipComboPanel`, and `tier_guard.py` from commit `bfceb63` with Pro (55,000 KRW/mo) and VIP (105,000 KRW/mo) plans.
