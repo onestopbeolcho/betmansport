@@ -90,7 +90,7 @@ async def get_plans():
     """사용 가능한 요금제 목록"""
     return {
         "plans": PLANS,
-        "store_id": PORTONE_STORE_ID,
+        "store_id": os.getenv("PORTONE_STORE_ID", PORTONE_STORE_ID),
     }
 
 
@@ -114,13 +114,14 @@ async def verify_payment(
     if not plan:
         raise HTTPException(400, f"유효하지 않은 요금제: {req.plan_id}")
 
+    api_secret = os.getenv("PORTONE_API_SECRET", PORTONE_API_SECRET)
     try:
         # PortOne V2 API로 결제 내역 조회
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{PORTONE_API_BASE}/payments/{req.payment_id}",
                 headers={
-                    "Authorization": f"PortOne {PORTONE_API_SECRET}",
+                    "Authorization": f"PortOne {api_secret}",
                     "Content-Type": "application/json",
                 },
             )

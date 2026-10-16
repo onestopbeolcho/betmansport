@@ -1,0 +1,12 @@
+﻿python : C:\Smart_Proto_Investor_Plan\scratch\get_logs.py:12: DeprecationWarning: datetime.datetime.utcnow() is depreca
+ted and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.d
+atetime.now(datetime.UTC).
+위치 줄:1 문자:1
++ python scratch/get_logs.py 2>&1 | Out-File -Encoding UTF8 "c:\Smart_P ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Smart_Proto_...(datetime.UTC).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  now_utc = datetime.utcnow()
+Querying logs from 2026-07-16T18:57:33Z to 2026-07-16T19:42:33Z...
+Loaded 0 log entries.

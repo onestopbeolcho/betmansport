@@ -68,28 +68,31 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
         if doc.exists:
             data = doc.to_dict()
             matches = data.get("matches", [])
-            _predictions_cache = matches
-            _last_prediction_time = data.get("updated_at", datetime.now(timezone.utc).isoformat())
-            
-            logger.info(f"📊 Serving {len(matches)} predictions from daily_portfolios")
-            
-            # Save predictions to ai_prediction_history in the background to ensure it is populated!
-            if background_tasks:
-                background_tasks.add_task(_save_predictions_background, matches)
-            else:
-                import asyncio
-                asyncio.create_task(_save_predictions_background(matches))
+            if len(matches) > 5:
+                _predictions_cache = matches
+                _last_prediction_time = data.get("updated_at", datetime.now(timezone.utc).isoformat())
+                
+                logger.info(f"📊 Serving {len(matches)} predictions from daily_portfolios")
+                
+                # Save predictions to ai_prediction_history in the background to ensure it is populated!
+                if background_tasks:
+                    background_tasks.add_task(_save_predictions_background, matches)
+                else:
+                    import asyncio
+                    asyncio.create_task(_save_predictions_background(matches))
 
-            return PredictionResponse(
-                predictions=matches,
-                last_updated=_last_prediction_time,
-                data_sources=["Firestore (daily_portfolios)", "LightGBM ML Engine"],
-            ).model_dump()
+                return PredictionResponse(
+                    predictions=matches,
+                    last_updated=_last_prediction_time,
+                    data_sources=["Firestore (daily_portfolios)", "3-Pillar Hybrid Quant Engine", "ESPN/DraftKings Odds & Standings"],
+                ).model_dump()
+            else:
+                logger.info(f"⚠️ Ignoring stale 5-item mock cache in daily_portfolios ({len(matches)} matches). Refreshing...")
     except Exception as e:
         logger.warning(f"daily_portfolios read failed: {e}")
 
     # 2. 2순위: 데이터가 없는 경우 실시간 추론 (Cold Start)
-    logger.info("daily_portfolios not found. Falling back to real-time inference.")
+    logger.info("Running real-time 3-Pillar Hybrid Quant inference across all sports.")
     odds_data = await pinnacle_service.fetch_odds()
     if not odds_data:
         return PredictionResponse(
@@ -99,23 +102,16 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
         ).model_dump()
 
     from app.services.ml_service import ml_inference_service
+    from app.services.soccer_stats_service import soccer_stats_service
     matches_dict = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in odds_data]
     
-    soccer_matches = [m for m in matches_dict if m.get("sport", "Soccer").lower() == "soccer"]
-    baseball_matches = [m for m in matches_dict if m.get("sport", "Soccer").lower() == "baseball"]
-    
-    from app.services.soccer_stats_service import soccer_stats_service
-    
-    soccer_teams = set()
-    for m in soccer_matches:
-        if m.get("team_home"): soccer_teams.add(m.get("team_home"))
-        if m.get("team_away"): soccer_teams.add(m.get("team_away"))
+    all_teams = set()
+    for m in matches_dict:
+        if m.get("team_home"): all_teams.add(m.get("team_home"))
+        if m.get("team_away"): all_teams.add(m.get("team_away"))
         
-    stats_db = await soccer_stats_service.fetch_team_stats(list(soccer_teams))
-    soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
-    baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
-    
-    predictions = soccer_preds + baseball_preds
+    stats_db = await soccer_stats_service.fetch_team_stats(list(all_teams))
+    predictions = ml_inference_service.predict_matches("all", matches_dict, stats_db)
     
     # Fallback to odds-only if ML fails to produce results
     if not predictions:
@@ -177,7 +173,7 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
     except Exception as e_task:
         logger.warning(f"Could not handle background task: {e_task}")
 
-    sources = ["LightGBM ML Engine (Real-time fallback)"]
+    sources = ["3-Pillar Hybrid Quant Engine", "ESPN/DraftKings Market Odds & Standings"]
     if football_stats and getattr(football_stats, 'api_key', None):
         sources.append("API-Football")
         
@@ -265,32 +261,32 @@ async def get_match_prediction(match_id: str):
         doc = doc_ref.get()
         if doc.exists:
             matches = doc.to_dict().get("matches", [])
-            _predictions_cache = matches  # 메모리에 캐싱
-            for pred in matches:
-                if pred.get("match_id") == match_id:
-                    logger.info(f"Loaded {match_id} from daily_portfolios on demand.")
-                    return pred
+            if len(matches) > 5:
+                _predictions_cache = matches  # 메모리에 캐싱
+                for pred in matches:
+                    if pred.get("match_id") == match_id:
+                        logger.info(f"Loaded {match_id} from daily_portfolios on demand.")
+                        return pred
     except Exception as e:
         logger.warning(f"daily_portfolios read failed in get_match_prediction: {e}")
 
-    # 3. 3순위: Firestore에도 없다면 개별 실시간 추론 (Fallback)
+    # 3. 3순위: Firestore에도 없다면 3-Pillar 하이브리드 퀀트 엔진 개별 실시간 추론
     odds_data = await pinnacle_service.fetch_odds()
     for odds in odds_data:
         mid = f"{odds.team_home}_{odds.team_away}"
         if mid == match_id:
-            if ml_predictor.is_ml_ready:
-                ml_result = await ml_predictor.predict(
-                    home_team=odds.team_home,
-                    away_team=odds.team_away,
-                    league=odds.league or "",
-                    home_odds=odds.home_odds,
-                    draw_odds=odds.draw_odds,
-                    away_odds=odds.away_odds,
-                )
-                return ml_result
-            else:
-                pred = ai_predictor.predict_match(odds)
-                return pred.model_dump()
+            try:
+                from app.services.ml_service import ml_inference_service
+                from app.services.soccer_stats_service import soccer_stats_service
+                m_dict = odds.model_dump() if hasattr(odds, 'model_dump') else odds.__dict__
+                stats_db = await soccer_stats_service.fetch_team_stats([odds.team_home, odds.team_away])
+                preds = ml_inference_service.predict_matches(odds.sport or "Soccer", [m_dict], stats_db)
+                if preds:
+                    return preds[0]
+            except Exception as e_ml:
+                logger.warning(f"Hybrid quant single match prediction failed, falling back: {e_ml}")
+            pred = ai_predictor.predict_match(odds)
+            return pred.model_dump()
 
     raise HTTPException(status_code=404, detail="Match not found")
 
@@ -368,6 +364,11 @@ async def get_standings(sport: str):
     if sport in cached:
         return {"sport": sport, "standings": cached[sport]}
 
+    # Try ESPN fast service standings cache
+    from app.services.espn_fast_service import espn_fast_service
+    if sport in espn_fast_service._standings_cache:
+        return {"sport": sport, "standings": espn_fast_service._standings_cache[sport]}
+
     return {"sport": sport, "standings": [], "message": "데이터 수집 필요 (/api/ai/collect-stats)"}
 
 
@@ -387,6 +388,12 @@ async def get_all_standings():
     cached = league_standings.get_cached()
     for league_key, teams in cached.items():
         if league_key not in all_standings:
+            all_standings[league_key] = teams
+
+    # ESPN fast service cache — 빠진 리그 보충
+    from app.services.espn_fast_service import espn_fast_service
+    for league_key, teams in espn_fast_service._standings_cache.items():
+        if league_key not in all_standings and teams:
             all_standings[league_key] = teams
 
     return {

@@ -1,0 +1,150 @@
+﻿2026-07-08T10:10:38.783144Z	INFO:     169.254.169.126:52104 - "GET /api/ai/match-list HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:38.764709Z	
+2026-07-08T10:10:37.502557Z	INFO:     169.254.169.126:52090 - "GET /api/ai/match-list HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:37.485644Z	
+2026-07-08T10:10:34.527787Z	INFO:     169.254.169.126:54920 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:34.524466Z	
+2026-07-08T10:10:34.338833Z	INFO:     169.254.169.126:54908 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:34.314017Z	
+2026-07-08T10:10:34.084324Z	INFO:     169.254.169.126:54902 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:34.081501Z	
+2026-07-08T10:10:33.895863Z	INFO:     169.254.169.126:54886 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:33.892487Z	
+2026-07-08T10:10:33.707784Z	INFO:     169.254.169.126:54876 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:33.704540Z	
+2026-07-08T10:10:33.519898Z	INFO:     169.254.169.126:54870 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:33.501172Z	
+2026-07-08T10:10:33.316926Z	INFO:     169.254.169.126:54868 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:33.313900Z	
+2026-07-08T10:10:33.129085Z	INFO:     169.254.169.126:54866 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:33.125836Z	
+2026-07-08T10:10:33.092887Z	    For further information visit https://errors.pydantic.dev/2.12/v/string_type
+2026-07-08T10:10:33.092884Z	  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+2026-07-08T10:10:33.092880Z	form
+2026-07-08T10:10:33.092869Z	  ?? API-Football error (0.8s): 1 validation error for TeamStats
+2026-07-08T10:10:32.940531Z	INFO:     169.254.169.126:54854 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:32.936932Z	
+2026-07-08T10:10:32.749692Z	INFO:     169.254.169.126:54840 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:32.745863Z	
+2026-07-08T10:10:32.530649Z	INFO:     169.254.169.126:54826 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:32.527003Z	
+2026-07-08T10:10:32.341841Z	INFO:     169.254.169.126:54822 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:32.156049Z	
+2026-07-08T10:10:31.970961Z	INFO:     169.254.169.126:54808 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.967080Z	
+2026-07-08T10:10:31.782383Z	INFO:     169.254.169.126:54798 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.764136Z	
+2026-07-08T10:10:31.579746Z	INFO:     169.254.169.126:54786 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.576519Z	
+2026-07-08T10:10:31.391481Z	INFO:     169.254.169.126:54770 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.378675Z	
+2026-07-08T10:10:31.193370Z	INFO:     169.254.169.126:54766 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.190209Z	
+2026-07-08T10:10:31.005391Z	INFO:     169.254.169.126:54760 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:31.000487Z	
+2026-07-08T10:10:30.795396Z	INFO:     169.254.169.126:54758 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:30.792691Z	
+2026-07-08T10:10:30.606057Z	INFO:     169.254.169.126:54750 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:30.602519Z	
+2026-07-08T10:10:30.534158Z	  return query.where(field_path, op_string, value)
+2026-07-08T10:10:30.534134Z	/usr/local/lib/python3.10/site-packages/google/cloud/firestore_v1/base_collection.py:317: UserWarning: Detected filter using positional arguments. Prefer using the 'filter' keyword argument instead.
+2026-07-08T10:10:30.417658Z	INFO:     169.254.169.126:54748 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:30.414036Z	
+2026-07-08T10:10:30.229006Z	INFO:     169.254.169.126:54742 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:30.221411Z	
+2026-07-08T10:10:30.036619Z	INFO:     169.254.169.126:54730 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:30.029913Z	
+2026-07-08T10:10:29.841899Z	INFO:     169.254.169.126:54718 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:29.838144Z	
+2026-07-08T10:10:29.653232Z	INFO:     169.254.169.126:54710 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:29.649582Z	
+2026-07-08T10:10:29.463892Z	INFO:     169.254.169.126:54700 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:29.454483Z	
+2026-07-08T10:10:29.233025Z	INFO:     169.254.169.126:54694 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:29.229190Z	
+2026-07-08T10:10:29.044297Z	INFO:     169.254.169.126:54684 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:29.041116Z	
+2026-07-08T10:10:28.856629Z	INFO:     169.254.169.126:54678 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:28.852675Z	
+2026-07-08T10:10:28.667803Z	INFO:     169.254.169.126:54666 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:28.664418Z	
+2026-07-08T10:10:28.479404Z	INFO:     169.254.169.126:54654 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:28.474864Z	
+2026-07-08T10:10:28.289955Z	INFO:     169.254.169.126:54648 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:28.282777Z	
+2026-07-08T10:10:28.097878Z	INFO:     169.254.169.126:54632 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:28.095100Z	
+2026-07-08T10:10:27.910126Z	INFO:     169.254.169.126:54616 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:27.907074Z	
+2026-07-08T10:10:27.699270Z	INFO:     169.254.169.126:54608 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:27.616192Z	
+2026-07-08T10:10:27.431486Z	INFO:     169.254.169.126:54606 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:27.428033Z	
+2026-07-08T10:10:27.243248Z	INFO:     169.254.169.126:54592 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:27.239721Z	
+2026-07-08T10:10:27.054871Z	INFO:     169.254.169.126:54588 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:27.037427Z	
+2026-07-08T10:10:26.852467Z	INFO:     169.254.169.126:54584 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:26.849585Z	
+2026-07-08T10:10:26.663144Z	INFO:     169.254.169.126:33896 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:26.638546Z	
+2026-07-08T10:10:26.453300Z	INFO:     169.254.169.126:33894 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:26.450271Z	
+2026-07-08T10:10:26.265433Z	INFO:     169.254.169.126:33892 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:26.257754Z	
+2026-07-08T10:10:26.047097Z	INFO:     169.254.169.126:33888 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:26.044250Z	
+2026-07-08T10:10:25.857915Z	INFO:     169.254.169.126:33876 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:25.847980Z	
+2026-07-08T10:10:25.662371Z	INFO:     169.254.169.126:33872 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:25.658975Z	
+2026-07-08T10:10:25.473632Z	INFO:     169.254.169.126:33862 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:25.470448Z	
+2026-07-08T10:10:25.284918Z	INFO:     169.254.169.126:33848 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:25.281518Z	
+2026-07-08T10:10:25.095592Z	INFO:     169.254.169.126:33832 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:25.092598Z	
+2026-07-08T10:10:24.907728Z	INFO:     169.254.169.126:33820 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:24.903629Z	
+2026-07-08T10:10:24.718700Z	INFO:     169.254.169.126:33806 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:24.714769Z	
+2026-07-08T10:10:24.508679Z	INFO:     169.254.169.126:33794 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:24.505137Z	
+2026-07-08T10:10:24.319548Z	INFO:     169.254.169.126:33782 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:24.294489Z	
+2026-07-08T10:10:24.109750Z	INFO:     169.254.169.126:33766 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:24.106072Z	
+2026-07-08T10:10:23.920844Z	INFO:     169.254.169.126:33754 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:23.917660Z	
+2026-07-08T10:10:23.732476Z	INFO:     169.254.169.126:33748 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:23.729375Z	
+2026-07-08T10:10:23.543305Z	INFO:     169.254.169.126:33732 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:23.528156Z	
+2026-07-08T10:10:23.341845Z	INFO:     169.254.169.126:33730 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:23.338724Z	
+2026-07-08T10:10:23.153362Z	INFO:     169.254.169.126:33724 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:23.140606Z	
+2026-07-08T10:10:22.934719Z	INFO:     169.254.169.126:33710 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:22.931045Z	
+2026-07-08T10:10:22.745955Z	INFO:     169.254.169.126:33706 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:22.742907Z	
+2026-07-08T10:10:22.558055Z	INFO:     169.254.169.126:33702 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:22.555419Z	
+2026-07-08T10:10:22.370034Z	INFO:     169.254.169.126:33690 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:22.366644Z	
+2026-07-08T10:10:22.182175Z	INFO:     169.254.169.126:33678 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:22.179455Z	
+2026-07-08T10:10:21.993461Z	INFO:     169.254.169.126:33676 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.982773Z	
+2026-07-08T10:10:21.797946Z	INFO:     169.254.169.126:33664 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.794458Z	
+2026-07-08T10:10:21.610082Z	INFO:     169.254.169.126:33650 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.603132Z	
+2026-07-08T10:10:21.390569Z	INFO:     169.254.169.126:33636 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.387617Z	
+2026-07-08T10:10:21.201508Z	INFO:     169.254.169.126:33622 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.198292Z	
+2026-07-08T10:10:21.013920Z	INFO:     169.254.169.126:33618 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:21.010451Z	
+2026-07-08T10:10:20.825087Z	INFO:     169.254.169.126:33612 - "GET /api/ai/predictions/undefined HTTP/1.1" 429 Too Many Requests
+2026-07-08T10:10:20.821779Z	

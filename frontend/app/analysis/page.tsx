@@ -274,7 +274,7 @@ export default function AnalysisPage() {
     const strongPicks = sportFiltered.filter(p => p.confidence >= 85).length;
     const recommendedPicks = sportFiltered.filter(p => p.confidence >= 70 && p.confidence < 85).length;
     const avgConfidence = totalMatches > 0 ? sportFiltered.reduce((s, p) => s + p.confidence, 0) / totalMatches : 0;
-    const isMLEngine = dataSources.some(s => s.includes('LightGBM'));
+    const isMLEngine = dataSources.some(s => s.includes('LightGBM') || s.includes('Quant'));
 
     /* Animated stats */
     const animatedTotal = useCountUp(totalMatches);
@@ -331,7 +331,7 @@ export default function AnalysisPage() {
                             <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-[rgba(139,92,246,0.3)] bg-[rgba(139,92,246,0.06)] text-xs mb-6 animate-fade-up">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6] mr-2 animate-pulse" />
                                 <span style={{ color: '#8b5cf6' }}>
-                                    {isMLEngine ? '● LightGBM ML 엔진 가동 중' : '● 6-팩터 분석 엔진 가동 중'}
+                                    {isMLEngine ? '● 3-Pillar 하이브리드 퀀트 ML 엔진 가동 중' : '● 6-팩터 분석 엔진 가동 중'}
                                 </span>
                             </div>
 

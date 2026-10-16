@@ -615,42 +615,30 @@ async def cron_update_predictions(background_tasks: BackgroundTasks):
             matches = await retry_async(pinnacle_service.refresh_odds)
             matches_dict = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in matches]
             
-            # Separate by sports
-            soccer_matches = [m for m in matches_dict if m.get("sport", "").lower() == "soccer"]
-            baseball_matches = [m for m in matches_dict if m.get("sport", "").lower() == "baseball"]
+            logger.info(f"Fetched {len(matches_dict)} total matches across all sports.")
             
-            logger.info(f"Fetched {len(soccer_matches)} soccer and {len(baseball_matches)} baseball matches.")
-            
-            # 2. Fetch soccer specific advanced stats (with retry)
+            # 2. Fetch team stats across all teams
             from app.services.soccer_stats_service import soccer_stats_service
             
-            soccer_teams = set()
-            for m in soccer_matches:
-                if m.get("team_home"): soccer_teams.add(m.get("team_home"))
-                if m.get("team_away"): soccer_teams.add(m.get("team_away"))
+            all_teams = set()
+            for m in matches_dict:
+                if m.get("team_home"): all_teams.add(m.get("team_home"))
+                if m.get("team_away"): all_teams.add(m.get("team_away"))
                 
             stats_db = {}
-            if soccer_teams:
+            if all_teams:
                 try:
-                    stats_db = await retry_async(soccer_stats_service.fetch_team_stats, list(soccer_teams))
+                    stats_db = await retry_async(soccer_stats_service.fetch_team_stats, list(all_teams))
                 except Exception as e:
-                    logger.error(f"Failed to fetch soccer team stats after retries: {e}")
-                    # Continue without stats_db (fallback to default logic or empty)
+                    logger.error(f"Failed to fetch team stats after retries: {e}")
             
-            # 2 & 3. Feature Engineering & Predict (with separate try/except)
-            soccer_preds = []
+            # 3. 3-Pillar Hybrid Quant Feature Engineering & Predict across all sports
+            all_preds = []
             try:
-                soccer_preds = ml_inference_service.predict_matches("soccer", soccer_matches, stats_db)
+                all_preds = ml_inference_service.predict_matches("all", matches_dict, stats_db)
+                all_preds.sort(key=lambda p: p.get("confidence", 0), reverse=True)
             except Exception as e:
-                logger.error(f"Soccer prediction pipeline failed entirely: {e}", exc_info=True)
-                
-            baseball_preds = []
-            try:
-                baseball_preds = ml_inference_service.predict_matches("baseball", baseball_matches, stats_db)
-            except Exception as e:
-                logger.error(f"Baseball prediction pipeline failed entirely: {e}", exc_info=True)
-            
-            all_preds = soccer_preds + baseball_preds
+                logger.error(f"All-sports prediction pipeline failed: {e}", exc_info=True)
             
             # Sub-slice if array exceeds max size to prevent 1MiB crash (hard limit: 600)
             if len(all_preds) > 600:

@@ -1,0 +1,12 @@
+﻿Total: 997 lines
+L10: import OnboardingTour, { TourRestartButton } from '../components/OnboardingTour';
+L11: import { betsTourSteps } from '../lib/tourSteps';
+L172:     const [tourForceStart, setTourForceStart] = useState(false);
+L388:                     <div data-tour="tour-bets-intro" className="relative overflow-hidden rounded-2xl mb-6" style={{
+L543:                     <div data-tour="tour-bets-filter" className="flex flex-wrap items-center gap-2 mb-4">
+L615:                                 <div data-tour="tour-bets-table" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+L920:                     <div data-tour="tour-bets-cart" className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
+L980:                 <TourRestartButton
+L987:             <OnboardingTour
+L988:                 steps={betsTourSteps}
+L991:                 forceStart={tourForceStart}

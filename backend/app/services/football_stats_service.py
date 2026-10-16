@@ -479,15 +479,36 @@ class FootballStatsService:
         is_free_plan = plan.lower() == "free"
         
         if is_free_plan:
-            logger.info("⚠️ [API-Football] Free Plan detected. Scaling down to Top 5 European leagues to protect 100 req/day limit.")
-            target_leagues = {
-                "soccer_epl": 39,
-                "soccer_spain_la_liga": 140,
-                "soccer_germany_bundesliga": 78,
-                "soccer_italy_serie_a": 135,
-                "soccer_france_ligue_one": 61,
-            }
-            self._daily_limit = 100
+            logger.info("ℹ️ [API-Football] Free Plan detected (2026 season restricted). Loading real standings via ESPN Fast Service.")
+            result = {"standings": {}, "injuries": {}, "predictions": [], "h2h": {}}
+            try:
+                from app.services.espn_fast_service import espn_fast_service
+                if not espn_fast_service.standings_by_league:
+                    await espn_fast_service.fetch_all_standings()
+                for lg_key, entries in espn_fast_service.standings_by_league.items():
+                    result["standings"][lg_key] = [
+                        TeamStats(
+                            team_name=e["team_name"],
+                            league=lg_key,
+                            season=str(CURRENT_SEASON),
+                            rank=e["rank"],
+                            played=e["played"],
+                            wins=e["wins"],
+                            draws=e["draws"],
+                            losses=e["losses"],
+                            goals_for=e["goals_for"],
+                            goals_against=e["goals_against"],
+                            goal_diff=e["goal_diff"],
+                            points=e["points"],
+                            form=e.get("form", ""),
+                        ).model_dump()
+                        for e in entries
+                    ]
+            except Exception as e_espn:
+                logger.warning(f"ESPN standings fallback in collect_all failed: {e_espn}")
+            self._last_fetch = datetime.now(timezone.utc).isoformat()
+            self._cache = result
+            return result
         else:
             self._daily_limit = 75000
 

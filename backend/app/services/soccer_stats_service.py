@@ -1,211 +1,159 @@
 import os
 import time
-import httpx
 import logging
-import difflib
-import hashlib
 from typing import Dict, Any, List
+from app.services.espn_fast_service import espn_fast_service
 
 logger = logging.getLogger(__name__)
 
+
 class SoccerStatsService:
+    """
+    실제 순위표(ESPN Standings / Football-Data.org) 및 Understat xG 데이터를 결합하여
+    팀별 실제 경기당 득점/실점, 최근 5경기 폼, 순위, 승점 지표를 제공하는 서비스.
+    (기존 팀명 MD5 해시 기반 가짜 데이터 생성 로직 완전 폐기)
+    """
     def __init__(self):
         self.api_key = os.getenv("API_FOOTBALL_KEY")
-        self.base_url = "https://v3.football.api-sports.io"
-        self.headers = {
-            "x-apisports-key": self.api_key,
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        
-        # Target League IDs (World Cup, EPL, La Liga, Bundesliga, Serie A, K League, J League, MLS)
-        self.target_leagues = [1, 39, 140, 78, 135, 292, 98, 253]
-        self.current_season = 2026 
-        
-        # Cache memory
-        # team_mapping_cache: name -> {"team_id": 33, "league_id": 39}
-        self.team_mapping_cache = {}
-        # stats_cache: team_name -> (timestamp, dict)
-        self.stats_cache = {}
-        self.cache_ttl = 86400  # 24 hours
-        
-        self._mapping_initialized = False
-
-    async def _ensure_mapping(self):
-        if self._mapping_initialized or not self.api_key:
-            return
-            
-        logger.info("Initializing Top 4 Leagues Team Mappings from API-Football...")
-        async with httpx.AsyncClient() as client:
-            for league_id in self.target_leagues:
-                try:
-                    resp = await client.get(
-                        f"{self.base_url}/teams",
-                        headers=self.headers,
-                        params={"league": league_id, "season": self.current_season},
-                        timeout=10.0
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        for item in data.get("response", []):
-                            team = item.get("team", {})
-                            t_id = team.get("id")
-                            t_name = team.get("name")
-                            if t_name and t_id:
-                                # save mapped by lowercase
-                                self.team_mapping_cache[t_name.lower()] = {
-                                    "team_id": t_id,
-                                    "league_id": league_id
-                                }
-                except Exception as e:
-                    logger.error(f"Failed to fetch teams for league {league_id}: {e}")
-            
-            self._mapping_initialized = True
-            logger.info(f"Team mappings initialized successfully. Cached {len(self.team_mapping_cache)} teams.")
-
-    def _find_mapped_team(self, team_name: str):
-        if not team_name: return None
-        normalized = team_name.lower()
-        # Direct match
-        if normalized in self.team_mapping_cache:
-            return self.team_mapping_cache[normalized]
-        # Fuzzy match
-        keys = list(self.team_mapping_cache.keys())
-        matches = difflib.get_close_matches(normalized, keys, n=1, cutoff=0.5)
-        if matches:
-            return self.team_mapping_cache[matches[0]]
-        return None
-
-    def _generate_deterministic_mock(self, team_name: str) -> Dict[str, Any]:
-        """Fallbacks to deterministic mock when API fails or team unmapped."""
-        hash_val = int(hashlib.md5(team_name.encode('utf-8')).hexdigest(), 16)
-        base_strength = (hash_val % 100) / 100.0
-        
-        return {
-            "avg_xG_for": round(1.0 + (base_strength * 1.5), 2),
-            "avg_xG_against": round(2.0 - (base_strength * 1.2), 2),
-            "avg_home_xG_for": round((1.0 + (base_strength * 1.5)) * 1.15, 2),
-            "avg_away_xG_for": round((1.0 + (base_strength * 1.5)) * 0.85, 2),
-            "form_index": round((hash_val % 200) / 100.0, 2),
-            "possession_avg": round(40.0 + (base_strength * 25.0), 1),
-            "matches_last_14_days": (hash_val % 4) + 1,
-            "injury_impact_score": round((hash_val % 15) / 10.0, 2)
-        }
+        self.stats_cache: Dict[str, Any] = {}
+        self.cache_ttl = 3600  # 1 hour
 
     def _calculate_form_index(self, form_str: str) -> float:
         if not form_str:
-            return 1.0 # Average
-        # form_str is like 'WWDLD'
-        score = 0
-        games_counted = len(form_str[-5:])
-        if games_counted == 0:
             return 1.0
-            
-        for char in form_str[-5:]: # Look at the latest up to 5 games
-            if char == 'W': score += 2
-            elif char == 'D': score += 1
-            
-        # Max score for 5 games is 10, min is 0 -> map to 0.0 ~ 2.0
-        return round((score / (games_counted * 2)) * 2.0, 2)
+        recent = [c for c in form_str.upper() if c in ("W", "D", "L")][-5:]
+        if not recent:
+            return 1.0
+        # 최근 경기일수록 가중치 부여
+        weights = [0.8, 0.9, 1.0, 1.1, 1.2][-len(recent):]
+        score = 0.0
+        max_score = 0.0
+        for ch, w in zip(recent, weights):
+            max_score += 2.0 * w
+            if ch == "W":
+                score += 2.0 * w
+            elif ch == "D":
+                score += 0.8 * w
+        return round((score / max(max_score, 1.0)) * 2.0, 2)
 
     async def fetch_team_stats(self, team_names: List[str]) -> Dict[str, Dict[str, Any]]:
-        results = {}
+        results: Dict[str, Dict[str, Any]] = {}
         now = time.time()
-        
-        await self._ensure_mapping()
-        
-        # Understat 데이터 미리 가져오기 (성능 최적화)
-        from app.services.understat_xg_service import understat_service
-        understat_data = understat_service.get_cached()
-        if not understat_data:
-            await understat_service.collect_all_leagues()
-            understat_data = understat_service.get_cached()
 
-        async with httpx.AsyncClient() as client:
-            for team in team_names:
-                if not team: continue
-                
-                # 1. Check cache
-                if team in self.stats_cache:
-                    ts, data = self.stats_cache[team]
-                    if now - ts < self.cache_ttl:
-                        results[team] = data
-                        continue
-                
-                # 2. Base data (API-Football or Mock)
-                stats_obj = {}
-                if not self.api_key:
-                    stats_obj = self._generate_deterministic_mock(team)
-                else:
-                    mapping = self._find_mapped_team(team)
-                    if not mapping:
-                        stats_obj = self._generate_deterministic_mock(team)
-                    else:
-                        t_id = mapping["team_id"]
-                        l_id = mapping["league_id"]
-                        try:
-                            resp = await client.get(
-                                f"{self.base_url}/teams/statistics",
-                                headers=self.headers,
-                                params={"season": self.current_season, "team": t_id, "league": l_id},
-                                timeout=8.0
-                            )
-                            if resp.status_code == 200:
-                                data = resp.json().get("response", {})
-                                if data:
-                                    goals = data.get("goals", {})
-                                    g_for = goals.get("for", {}).get("average", {}).get("total", "1.0")
-                                    g_against = goals.get("against", {}).get("average", {}).get("total", "1.0")
-                                    hg_for = goals.get("for", {}).get("average", {}).get("home", "1.0")
-                                    ag_for = goals.get("for", {}).get("average", {}).get("away", "1.0")
-                                    form_str = data.get("form", "")
-                                    
-                                    stats_obj = {
-                                        "avg_xG_for": float(g_for) if g_for else 1.0,
-                                        "avg_xG_against": float(g_against) if g_against else 1.0,
-                                        "avg_home_xG_for": float(hg_for) if hg_for else 1.0,
-                                        "avg_away_xG_for": float(ag_for) if ag_for else 1.0,
-                                        "form_index": self._calculate_form_index(form_str),
-                                        "possession_avg": 50.0,
-                                        "matches_last_14_days": 2, 
-                                        "injury_impact_score": 0.5
-                                    }
-                                else:
-                                    stats_obj = self._generate_deterministic_mock(team)
-                            else:
-                                stats_obj = self._generate_deterministic_mock(team)
-                        except Exception as e:
-                            logger.warning(f"Error fetching stats for '{team}': {e}")
-                            stats_obj = self._generate_deterministic_mock(team)
+        # 1. ESPN 전체 리그 순위표가 비어있다면 즉시 로드 (약 0.8초)
+        if not espn_fast_service.team_stats_cache:
+            try:
+                await espn_fast_service.fetch_all_standings()
+            except Exception as e:
+                logger.warning(f"Failed to preload ESPN standings: {e}")
 
-                # 3. Enrich with Understat (Advanced Metrics)
-                # Try to find team in understat data
-                enriched = False
-                for league_key, teams in understat_data.items():
-                    for u_name, u_stats in teams.items():
-                        if team.lower() in u_name.lower() or u_name.lower() in team.lower():
-                            stats_obj["xg_per_match"] = u_stats.get("xG_per_match", stats_obj.get("avg_xG_for", 1.0))
-                            stats_obj["xga_per_match"] = u_stats.get("xGA_per_match", stats_obj.get("avg_xG_against", 1.0))
-                            stats_obj["ppda_avg"] = u_stats.get("ppda_avg", 10.0)
-                            stats_obj["deep_completions"] = u_stats.get("deep_completions", 0)
-                            stats_obj["xg_overperformance"] = u_stats.get("xG_overperformance", 0.0)
-                            enriched = True
-                            break
-                    if enriched: break
-                
-                # Default values for advanced metrics if not found
-                if not enriched:
-                    stats_obj["xg_per_match"] = stats_obj.get("avg_xG_for", 1.0)
-                    stats_obj["xga_per_match"] = stats_obj.get("avg_xG_against", 1.0)
-                    stats_obj["ppda_avg"] = 10.0
-                    stats_obj["deep_completions"] = 5
-                    stats_obj["xg_overperformance"] = 0.0
+        # 2. Understat xG 캐시 확인 (블로킹 방지를 위해 캐시된 경우에만 즉시 활용)
+        understat_data = {}
+        try:
+            from app.services.understat_xg_service import understat_service
+            understat_data = understat_service.get_cached() or {}
+        except Exception:
+            understat_data = {}
 
-                # 4. Save to cache
-                self.stats_cache[team] = (now, stats_obj)
-                results[team] = stats_obj
-                    
+        for team in team_names:
+            if not team:
+                continue
+
+            if team in self.stats_cache:
+                ts, cached_val = self.stats_cache[team]
+                if now - ts < self.cache_ttl:
+                    results[team] = cached_val
+                    continue
+
+            espn_stat = espn_fast_service.get_team_stat(team)
+            if espn_stat:
+                avg_gf = float(espn_stat.get("avg_gf", 1.35) or 1.35)
+                avg_ga = float(espn_stat.get("avg_ga", 1.35) or 1.35)
+                form_str = espn_stat.get("form", "")
+                rank = int(espn_stat.get("rank", 0) or 0)
+                total_teams = int(espn_stat.get("total_teams", 20) or 20)
+                wins = int(espn_stat.get("wins", 0) or 0)
+                draws = int(espn_stat.get("draws", 0) or 0)
+                losses = int(espn_stat.get("losses", 0) or 0)
+                played = int(espn_stat.get("played", wins + draws + losses) or 0)
+                goal_diff = int(espn_stat.get("goal_diff", 0) or 0)
+                points = int(espn_stat.get("points", 0) or 0)
+
+                # 순위 및 득실 기반 점유율 추정 (상위권일수록 점유율 우위)
+                rank_ratio = (total_teams - rank + 1) / max(total_teams, 1) if rank > 0 else 0.5
+                est_poss = round(43.0 + rank_ratio * 16.0, 1)
+
+                stats_obj = {
+                    "avg_xG_for": round(avg_gf, 2),
+                    "avg_xG_against": round(avg_ga, 2),
+                    "avg_home_xG_for": round(avg_gf * 1.12, 2),
+                    "avg_away_xG_for": round(avg_gf * 0.88, 2),
+                    "form_index": self._calculate_form_index(form_str),
+                    "form_str": form_str,
+                    "possession_avg": est_poss,
+                    "matches_last_14_days": 2,
+                    "injury_impact_score": 0.0,
+                    "rank": rank,
+                    "total_teams": total_teams,
+                    "played": played,
+                    "wins": wins,
+                    "draws": draws,
+                    "losses": losses,
+                    "goal_diff": goal_diff,
+                    "points": points,
+                    "goals_for": int(espn_stat.get("goals_for", 0) or 0),
+                    "goals_against": int(espn_stat.get("goals_against", 0) or 0),
+                }
+            else:
+                # 순위표에 없는 컵대회/하위리그 팀은 중립 베이스라인 사용 (가짜 해시 편향 금지)
+                stats_obj = {
+                    "avg_xG_for": 1.35,
+                    "avg_xG_against": 1.35,
+                    "avg_home_xG_for": 1.48,
+                    "avg_away_xG_for": 1.22,
+                    "form_index": 1.0,
+                    "form_str": "",
+                    "possession_avg": 50.0,
+                    "matches_last_14_days": 2,
+                    "injury_impact_score": 0.0,
+                    "rank": 0,
+                    "total_teams": 20,
+                    "played": 0,
+                    "wins": 0,
+                    "draws": 0,
+                    "losses": 0,
+                    "goal_diff": 0,
+                    "points": 0,
+                    "goals_for": 0,
+                    "goals_against": 0,
+                }
+
+            # Understat 고급 지표 병합
+            enriched = False
+            for _, teams_dict in understat_data.items():
+                for u_name, u_stats in teams_dict.items():
+                    if team.lower() in u_name.lower() or u_name.lower() in team.lower():
+                        stats_obj["xg_per_match"] = u_stats.get("xG_per_match", stats_obj["avg_xG_for"])
+                        stats_obj["xga_per_match"] = u_stats.get("xGA_per_match", stats_obj["avg_xG_against"])
+                        stats_obj["ppda_avg"] = u_stats.get("ppda_avg", 10.0)
+                        stats_obj["deep_completions"] = u_stats.get("deep_completions", 6)
+                        stats_obj["xg_overperformance"] = u_stats.get("xG_overperformance", 0.0)
+                        enriched = True
+                        break
+                if enriched:
+                    break
+
+            if not enriched:
+                stats_obj["xg_per_match"] = stats_obj["avg_xG_for"]
+                stats_obj["xga_per_match"] = stats_obj["avg_xG_against"]
+                stats_obj["ppda_avg"] = 10.0
+                stats_obj["deep_completions"] = 6
+                stats_obj["xg_overperformance"] = 0.0
+
+            self.stats_cache[team] = (now, stats_obj)
+            results[team] = stats_obj
+
         return results
-                    
-        return results
+
 
 soccer_stats_service = SoccerStatsService()

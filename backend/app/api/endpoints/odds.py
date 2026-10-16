@@ -86,16 +86,55 @@ async def get_all_bets():
             logger.warning("No Pinnacle data even after fetch_odds fallback")
             return []
 
-        # 2. 결과 빌드
+        # 2. AI 예측 확률 매핑 (캐시된 3-Pillar Hybrid Quant 결과 활용)
+        from app.api.endpoints.ai_predictions import _predictions_cache
+        from app.core.calculator import calculate_kelly_percentage
+        pred_map = {
+            pred.get("match_id"): pred
+            for pred in (_predictions_cache or [])
+            if isinstance(pred, dict) and pred.get("match_id")
+        }
+
+        # 3. 결과 빌드
         results = []
         for p in pinnacle_data:
             if not p.home_odds or not p.away_odds or p.home_odds <= 1.0:
                 continue
 
-            # Simulate standard domestic odds (90% payout equivalent)
-            h_odds = round(p.home_odds * 0.90, 2)
-            d_odds = round(p.draw_odds * 0.90, 2) if p.draw_odds and p.draw_odds > 1.0 else 0.0
-            a_odds = round(p.away_odds * 0.90, 2)
+            # Simulate standard domestic odds (94% payout equivalent)
+            h_odds = round(p.home_odds * 0.94, 2)
+            d_odds = round(p.draw_odds * 0.94, 2) if p.draw_odds and p.draw_odds > 1.0 else 0.0
+            a_odds = round(p.away_odds * 0.94, 2)
+
+            mid = f"{p.team_home}_{p.team_away}"
+            pred = pred_map.get(mid)
+            if pred:
+                prob_h = float(pred.get("home_win_prob", 0)) / 100.0
+                prob_d = float(pred.get("draw_prob", 0)) / 100.0
+                prob_a = float(pred.get("away_win_prob", 0)) / 100.0
+            else:
+                raw_h = 1.0 / p.home_odds
+                raw_d = (1.0 / p.draw_odds) if p.draw_odds and p.draw_odds > 1.0 else 0.0
+                raw_a = 1.0 / p.away_odds
+                tot = raw_h + raw_d + raw_a or 1.0
+                prob_h, prob_d, prob_a = raw_h / tot, raw_d / tot, raw_a / tot
+
+            # Use AI recommendation (or highest-probability outcome) for best_bet_type
+            rec = pred.get("recommendation", "") if pred else ""
+            if rec == "HOME":
+                best_type, best_prob, best_odds = "Home", prob_h, p.home_odds
+            elif rec == "AWAY":
+                best_type, best_prob, best_odds = "Away", prob_a, p.away_odds
+            elif rec == "DRAW" and d_odds > 1.0:
+                best_type, best_prob, best_odds = "Draw", prob_d, p.draw_odds
+            else:
+                if prob_h >= prob_a:
+                    best_type, best_prob, best_odds = "Home", prob_h, p.home_odds
+                else:
+                    best_type, best_prob, best_odds = "Away", prob_a, p.away_odds
+
+            best_eff = round(best_prob * best_odds * 100, 1)
+            kelly = calculate_kelly_percentage(best_odds, best_prob) if best_odds > 1.0 else 0.0
 
             results.append(MatchBetSummary(
                 match_name=f"{p.team_home} vs {p.team_away}",
@@ -107,14 +146,14 @@ async def get_all_bets():
                 pin_home_odds=p.home_odds,
                 pin_draw_odds=p.draw_odds,
                 pin_away_odds=p.away_odds,
-                best_bet_type="Home",
-                best_ev=90.0,
-                best_kelly=0.0,
+                best_bet_type=best_type,
+                best_ev=best_eff,
+                best_kelly=round(kelly, 2),
                 has_betman=True,
             ))
 
-        # 정렬
-        results.sort(key=lambda x: -x.pin_home_odds)
+        # 정렬: 배당 효율(EV) 높은 순
+        results.sort(key=lambda x: -x.best_ev)
 
         logger.info(f"Bets v4: {len(results)} matches")
         return results

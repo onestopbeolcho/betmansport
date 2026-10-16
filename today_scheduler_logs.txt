@@ -1,0 +1,8 @@
+﻿python.exe : ERROR: (gcloud.logging.read) INVALID_ARGUMENT: Unparseable filter: syntax error at line 1, column 114, tok
+en ':'
+위치 C:\Users\청솔\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.ps1:114 문자:3
++   & "$cloudsdk_python" $run_args_array
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: (gcloud.... 114, token ':':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

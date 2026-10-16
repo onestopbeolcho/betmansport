@@ -1,0 +1,19 @@
+﻿python : Traceback (most recent call last):
+위치 줄:1 문자:1
++ python -c "
++ ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "<string>", line 7, in <module>
+    print(f'L{i}: {repr(l)}')
+    ~~~~~^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp949' codec can't encode character '\U0001f4be' in position 81: illegal multibyte sequence
+L959: '                                    <span className="text-xs text-white/30 ml-3">\n'
+L960: '                                        {selectedBets.size}개 경기 조합\n'
+L961: '                                    </span>\n'
+L962: '                                </div>\n'
+L963: '                                <button onClick={handleSaveCombo}\n'
+L964: '                                    disabled={saving || selectedBets.size < 2}\n'
+L965: "                                    className={`text-sm px-6 py-2.5 rounded-xl font-bold transition-all ${saving ? 'opacity-50' : 'hover:scale-105'}`}\n"
+L966: "                                    style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>\n"

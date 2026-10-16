@@ -221,3 +221,127 @@ async def generate_cards_for_predictions(predictions: list) -> list:
             "image_url": url,
         })
     return results
+
+
+def _create_winning_card(hit_data: Dict, width: int = 1080, height: int = 1080) -> bytes:
+    """
+    적중 인증 카드 이미지 생성 (지난 예측 결과).
+    Returns: PNG bytes
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        logger.error("Pillow not installed")
+        return b""
+
+    home = hit_data.get("team_home_ko") or hit_data.get("team_home", "홈팀")
+    away = hit_data.get("team_away_ko") or hit_data.get("team_away", "원정팀")
+    league = hit_data.get("league", "축구 분석")
+    rec = hit_data.get("recommendation", "HOME")
+    rec_text = f"{home} 승리" if rec == "HOME" else (f"{away} 승리" if rec == "AWAY" else "무승부")
+    h_score = hit_data.get("home_score", 0)
+    a_score = hit_data.get("away_score", 0)
+    confidence = hit_data.get("confidence", 80)
+
+    img = Image.new("RGB", (width, height), color=(10, 20, 15))
+    draw = ImageDraw.Draw(img)
+
+    font_path_regular = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+    font_path_bold = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+
+    if not os.path.exists(font_path_regular):
+        tmp_font = "/tmp/NanumGothic.ttf"
+        if os.path.exists(tmp_font):
+            font_path_regular = tmp_font
+            font_path_bold = tmp_font
+
+    try:
+        font_xl = ImageFont.truetype(font_path_bold, 72)
+        font_lg = ImageFont.truetype(font_path_bold, 48)
+        font_md = ImageFont.truetype(font_path_regular, 36)
+        font_sm = ImageFont.truetype(font_path_regular, 28)
+        font_xs = ImageFont.truetype(font_path_regular, 22)
+    except Exception:
+        font_xl = font_lg = font_md = font_sm = font_xs = ImageFont.load_default()
+
+    # 에메랄드 네온 배경 그라데이션
+    for y in range(height):
+        r = int(10 + (15 - 10) * y / height)
+        g = int(25 + (40 - 25) * y / height)
+        b = int(20 + (30 - 20) * y / height)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+    # 헤더 바 (네온 에메랄드)
+    for y in range(0, 80):
+        ratio = y / 80
+        r = int(16 + (0 - 16) * ratio)
+        g = int(185 + (200 - 185) * ratio)
+        b = int(129 + (150 - 129) * ratio)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+    draw.text((40, 20), "SCORENIX", fill=(255, 255, 255), font=font_lg)
+    draw.text((380, 30), "AI PREDICTION HIT PROOF ✅", fill=(220, 255, 230), font=font_sm)
+
+    # 리그 정보
+    draw.text((40, 110), f"🏆 {league} — 적중 완료 리포트", fill=(160, 230, 180), font=font_md)
+
+    # 경기 & 최종 스코어 영역
+    draw.rounded_rectangle([(40, 180), (1040, 420)], radius=20, fill=(20, 35, 28))
+    draw.text((80, 210), home, fill=(255, 255, 255), font=font_lg)
+    draw.text((700, 210), away, fill=(255, 255, 255), font=font_lg)
+
+    score_text = f"{h_score}  :  {a_score}"
+    draw.text((420, 290), score_text, fill=(0, 230, 118), font=font_xl)
+
+    # HIT 적중 뱃지
+    draw.rounded_rectangle([(180, 460), (900, 600)], radius=20, fill=(0, 200, 100))
+    draw.text((230, 490), "✅ AI 예측 완벽 적중 (HIT!)", fill=(255, 255, 255), font=font_lg)
+
+    # AI 예측 상세
+    draw.rounded_rectangle([(40, 640), (1040, 820)], radius=16, fill=(25, 45, 35))
+    draw.text((80, 670), f"📌 AI 추천 방향: {rec_text}", fill=(200, 255, 220), font=font_md)
+    draw.text((80, 730), f"🎯 당시 AI 신뢰도: {confidence:.0f}%  |  전력 7-Factor 데이터 검증 완료", fill=(160, 230, 180), font=font_sm)
+
+    # 하단 워터마크
+    draw.rounded_rectangle([(0, height - 70), (width, height)], radius=0, fill=(15, 30, 22))
+    draw.text((40, height - 55), "scorenix.com — 데이터로 증명하는 AI 적중률", fill=(0, 230, 118), font=font_sm)
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+async def generate_winning_card_and_upload(hit_data: Dict) -> Optional[str]:
+    """
+    적중 인증 카드를 생성하고 Firebase Storage에 업로드.
+    Returns: 공개 URL 또는 None
+    """
+    try:
+        png_bytes = _create_winning_card(hit_data)
+        if not png_bytes:
+            return None
+
+        from google.cloud import storage as gcs
+        bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "smart-proto-inv-2026-sns-assets")
+        client = gcs.Client()
+        bucket = client.bucket(bucket_name)
+
+        match_id = hit_data.get("match_id", "hit")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        blob_path = f"marketing/winning_cards/{timestamp}_{match_id}.png"
+
+        blob = bucket.blob(blob_path)
+        blob.upload_from_string(png_bytes, content_type="image/png")
+
+        try:
+            blob.make_public()
+            public_url = blob.public_url
+        except Exception:
+            public_url = f"https://storage.googleapis.com/{bucket_name}/{blob_path}"
+
+        logger.info(f"✅ Winning Card uploaded: {public_url}")
+        return public_url
+    except Exception as e:
+        logger.error(f"Winning Card generation/upload error: {e}")
+        return None
+

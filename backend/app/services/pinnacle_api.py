@@ -90,18 +90,15 @@ class PinnacleService(BaseOddsProvider):
 
     async def fetch_odds(self, db=None, force_fresh: bool = False) -> List[OddsItem]:
         """
-        사용자 요청용 — Firestore/메모리 캐시에서만 읽기.
-        절대로 외부 API를 호출하지 않습니다.
-        토큰 소모: 0
+        사용자 요청용 — 메모리 캐시 → Firestore 캐시 → 실시간 고속 수집(ESPN/Multi-source) 순으로 반환.
         """
-        if not self.api_key or self.api_key.strip() == "":
-            logger.info("No API Key configured. Using Mock Data.")
-            return self._get_mock_data()
-
         cache_key = "odds_snapshot"
 
+        if force_fresh:
+            return await self.refresh_odds()
+
         # 1. Try in-memory cache first (fastest)
-        if self._cache and len(self._cache) > 0:
+        if self._cache and len(self._cache) > 5:
             logger.info(f"Serving from in-memory cache ({len(self._cache)} items)")
             return self._cache
 
@@ -109,76 +106,91 @@ class PinnacleService(BaseOddsProvider):
         try:
             cached_data = await get_market_cache(cache_key)
             if cached_data and cached_data.get("data"):
-                # 캐시 만료 시간 체크 (24시간)
                 updated_at = cached_data.get("updated_at")
+                is_expired = False
                 if updated_at:
                     if isinstance(updated_at, str):
                         try:
                             updated_at = datetime.datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
                         except Exception:
                             pass
-                    
                     if isinstance(updated_at, datetime.datetime):
                         age_seconds = (datetime.datetime.now(datetime.timezone.utc) - updated_at).total_seconds()
-                        # 외부 API 만료 및 장애 시 대비: 최대 72시간(3일) 동안 캐시 보존 연장
-                        if age_seconds > 259200: # 72시간 초과 시에만 폐기
-                            logger.warning(f"Firestore cache is expired ({age_seconds}s > 72h). Ignoring.")
-                            return self._get_mock_data()
-                        elif age_seconds > 86400:
-                            logger.warning(f"Firestore cache is aged ({age_seconds}s > 24h). Serving aged cache as fallback.")
-                            
-                logger.info("Serving from Firestore cache")
-                try:
-                    data = json.loads(cached_data["data"])
-                    parsed = self._parse_firestore_cache_odds(data)
-                    # Populate in-memory cache for next request
-                    self._cache = parsed
-                    self._last_fetch_time = time.time()
-                    return parsed
-                except Exception as e:
-                    logger.warning(f"Failed to parse Firestore cache: {e}")
+                        if age_seconds > 43200:  # 12시간 초과 시 새로 수집
+                            logger.info(f"Firestore cache aged ({age_seconds:.0f}s > 12h). Triggering fresh collection.")
+                            is_expired = True
+
+                if not is_expired:
+                    try:
+                        data = json.loads(cached_data["data"])
+                        parsed = self._parse_firestore_cache_odds(data)
+                        if parsed and len(parsed) > 5:
+                            logger.info(f"Serving {len(parsed)} matches from Firestore cache")
+                            self._cache = parsed
+                            self._last_fetch_time = time.time()
+                            return parsed
+                    except Exception as e:
+                        logger.warning(f"Failed to parse Firestore cache: {e}")
         except Exception as e:
             logger.warning(f"Firestore cache unavailable: {e}")
 
-        # 3. No cache available — return mock data
-        logger.warning("No cached odds available. Returning mock data.")
-        return self._get_mock_data()
+        # 3. Cache miss or expired — trigger fast live collection (1~2s via ESPN + multi-source)
+        logger.info("Cache empty or expired — running fast live odds collection...")
+        return await self.refresh_odds()
 
     async def refresh_odds(self) -> List[OddsItem]:
         """
-        스케줄러 전용 — API-Football에서 최신 배당을 가져와 Firestore에 저장.
-        이 메서드만 외부 API를 호출합니다.
+        스케줄러 및 콜드스타트 복구용 —
+        1) ESPN 초고속 멀티스포츠 수집기 (축구 14개 리그 + MLB + NBA + NHL, 1~2초 병렬 수집)
+        2) API-Football 유료 플랜 활성화 시 Pinnacle/Bet365 배당 병합
+        3) The Odds API 잔여 쿼터 존재 시 병합
         """
-        if not self.api_key or self.api_key.strip() == "":
-            logger.warning("No API Key configured. Cannot refresh odds. Using Mock Data.")
-            return self._get_mock_data()
-
         cache_key = "odds_snapshot"
-        logger.info("🔄 [Scheduler] Refreshing odds from API-Football...")
+        logger.info("🔄 [Scheduler] Refreshing odds from multi-source fast pipeline...")
 
-        raw_odds = []
+        raw_odds_map: Dict[str, Dict] = {}
+
+        # 1. ESPN Fast Multi-Sport Collector (무료·무제한·초고속 1~2초)
         try:
-            # API-Football에서 배당 수집
-            from app.services.football_stats_service import FootballStatsService
-            fs = FootballStatsService()
-            raw_odds = await fs.fetch_all_odds()
-        except Exception as e_fs:
-            logger.warning(f"⚠️ [Scheduler] API-Football fetch failed: {e_fs}")
+            from app.services.espn_fast_service import espn_fast_service
+            espn_odds = await espn_fast_service.fetch_fast_odds_and_context(days_ahead=5)
+            for o in espn_odds:
+                key = f"{o.get('home_team')}_{o.get('away_team')}"
+                raw_odds_map[key] = o
+            logger.info(f"⚡ [ESPN Fast] Loaded {len(espn_odds)} real upcoming matches across Soccer/MLB/NBA/NHL")
+        except Exception as e_espn:
+            logger.warning(f"⚠️ [ESPN Fast] fetch failed: {e_espn}")
+
+        # 2. API-Football (유료 플랜일 때만 호출하여 무료 플랜 시즌 차단 오류 방지)
+        if self.api_key and self.api_key.strip():
+            try:
+                from app.services.football_stats_service import FootballStatsService
+                fs = FootballStatsService()
+                plan = await fs.get_plan_status()
+                if plan.lower() != "free":
+                    af_odds = await fs.fetch_all_odds()
+                    for o in af_odds:
+                        key = f"{o.get('home_team')}_{o.get('away_team')}"
+                        raw_odds_map[key] = o
+                    logger.info(f"✅ [API-Football Paid] Merged {len(af_odds)} odds")
+                else:
+                    logger.info("ℹ️ [API-Football] Free plan detected (2026 season restricted) — using ESPN Fast + Football-Data.org pipeline")
+            except Exception as e_fs:
+                logger.warning(f"⚠️ [Scheduler] API-Football check failed: {e_fs}")
+
+        raw_odds = list(raw_odds_map.values())
 
         if raw_odds:
             try:
-                # API-Football 데이터를 OddsItem으로 파싱
                 parsed = self._parse_api_football_odds(raw_odds)
-                # Update in-memory cache
                 self._cache = parsed
                 self._last_fetch_time = time.time()
-                # Save to Firestore for persistence across cold starts
                 try:
                     await set_market_cache(cache_key, json.dumps(raw_odds))
-                    logger.info("✅ Saved to Firestore cache")
+                    logger.info(f"✅ Saved {len(raw_odds)} matches to Firestore market_cache/odds_snapshot")
                 except Exception as e:
                     logger.warning(f"Firestore cache save failed: {e}")
-                # Save odds history snapshots for chart
+
                 try:
                     from app.models.bets_db import save_odds_snapshots_batch
                     snapshot_items = [
@@ -190,49 +202,19 @@ class PinnacleService(BaseOddsProvider):
                             "away_odds": p.away_odds,
                             "league": p.league or "",
                         }
-                        for p in parsed
+                        for p in parsed[:100]
                     ]
                     await save_odds_snapshots_batch(snapshot_items)
-                    logger.info(f"📊 Saved {len(snapshot_items)} odds history snapshots")
                 except Exception as e:
                     logger.warning(f"History snapshot save failed (non-critical): {e}")
-                logger.info(f"✅ [Scheduler] Refreshed {len(parsed)} odds from API-Football")
+
+                logger.info(f"✅ [Scheduler] Refreshed {len(parsed)} total real matches")
                 return parsed
             except Exception as e:
-                logger.error(f"❌ [Scheduler] API-Football parsing Error: {e}")
+                logger.error(f"❌ [Scheduler] Odds parsing Error: {e}")
                 traceback.print_exc()
 
-        # ─── FREE TIER FALLBACK: API-Football 실패 시 The-Odds-Api로 배당 조회 ───
-        logger.warning("⚠️ API-Football odds unavailable (Free tier or limit). Falling back to The-Odds-Api...")
-        try:
-            ref_odds = await self.fetch_reference_odds()
-            if ref_odds:
-                self._cache = ref_odds
-                self._last_fetch_time = time.time()
-                # Firestore 캐싱을 위해 API-Football 구조와 호환되게 직렬화
-                try:
-                    serialized = []
-                    for item in ref_odds:
-                        serialized.append({
-                            "home_team": item.team_home,
-                            "away_team": item.team_away,
-                            "home_odds": item.home_odds,
-                            "draw_odds": item.draw_odds,
-                            "away_odds": item.away_odds,
-                            "match_time": item.match_time,
-                            "league": item.league,
-                            "sport": item.sport,
-                            "bookmaker": item.provider,
-                        })
-                    await set_market_cache(cache_key, json.dumps(serialized))
-                    logger.info("✅ Saved The-Odds-Api fallback reference odds to Firestore cache")
-                except Exception as e_save:
-                    logger.warning(f"Failed to save fallback reference odds to Firestore: {e_save}")
-                return ref_odds
-        except Exception as e_ref:
-            logger.error(f"❌ [Scheduler] Reference Odds fallback failed: {e_ref}")
-
-        logger.warning("All API fetches failed. Returning mock data.")
+        logger.warning("All live fetches failed. Returning fallback mock data.")
         return self._get_mock_data()
 
     def _parse_api_football_odds(self, raw_odds: List[Dict]) -> List[OddsItem]:

@@ -251,14 +251,14 @@ export default function BetsPage() {
 
             const oddsMatch = matches.find(m => {
                 const mp = m.match_name.split(' vs ');
-                return mp[0] === home || mp[1] === away || m.match_name.includes(home);
+                return mp[0] === homeEng || mp[1] === awayEng || mp[0] === home || mp[1] === away || m.match_name.includes(homeEng);
             });
 
             if (oddsMatch) {
                 const recProb = pred.recommendation === 'HOME' ? pred.home_win_prob :
                     pred.recommendation === 'AWAY' ? pred.away_win_prob : pred.draw_prob;
-                const recOdds = pred.recommendation === 'HOME' ? oddsMatch.home_odds :
-                    pred.recommendation === 'AWAY' ? oddsMatch.away_odds : oddsMatch.draw_odds;
+                const recOdds = pred.recommendation === 'HOME' ? (oddsMatch.pin_home_odds || oddsMatch.home_odds) :
+                    pred.recommendation === 'AWAY' ? (oddsMatch.pin_away_odds || oddsMatch.away_odds) : (oddsMatch.pin_draw_odds || oddsMatch.draw_odds);
                 if (recOdds > 1) {
                     ev = ((recProb / 100) * recOdds - 1) * 100;
                 }
@@ -281,7 +281,7 @@ export default function BetsPage() {
     const totalMatches = sportFilteredPredictions.length;
     const strongPicks = sportFilteredPredictions.filter(p => p.confidence >= 70).length;
     const avgConfidence = totalMatches > 0 ? sportFilteredPredictions.reduce((s, p) => s + p.confidence, 0) / totalMatches : 0;
-    const isMLEngine = dataSources.some(s => s.includes('LightGBM'));
+    const isMLEngine = dataSources.some(s => s.includes('LightGBM') || s.includes('Quant'));
 
     /* Animated stats */
     const animatedTotal = useCountUp(totalMatches);
@@ -749,23 +749,28 @@ export default function BetsPage() {
                                                             {/* Top factors */}
                                                             {pred.factors && pred.factors.length > 0 && (
                                                                 <div className="mb-3">
-                                                                    <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider mb-2">{tb.aiFactors || 'AI 분석 요소'}</div>
-                                                                    <div className="space-y-2">
-                                                                        {pred.factors.slice(0, 4).map((f, fi) => (
-                                                                            <div key={fi} className="flex items-center justify-between">
-                                                                                <div className="flex items-center space-x-2 flex-1">
-                                                                                    <span className="text-[10px] font-bold text-white/50 w-5">#{fi + 1}</span>
-                                                                                    <span className="text-xs text-white/70">{f.name}</span>
-                                                                                </div>
-                                                                                <div className="flex items-center space-x-2">
-                                                                                    <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                                                                        <div className="h-full rounded-full" style={{
-                                                                                            width: `${Math.min(Math.abs(f.score || f.weight * 10), 100)}%`,
-                                                                                            background: 'var(--accent-gradient)',
-                                                                                        }} />
+                                                                    <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider mb-2">{tb.aiFactors || 'AI 분석 요소 (3-Pillar 7-Factor)'}</div>
+                                                                    <div className="space-y-2.5">
+                                                                        {pred.factors.slice(0, 7).map((f, fi) => (
+                                                                            <div key={fi}>
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <div className="flex items-center space-x-2 flex-1">
+                                                                                        <span className="text-[10px] font-bold text-white/50 w-5">#{fi + 1}</span>
+                                                                                        <span className="text-xs text-white/80 font-medium">{f.name}</span>
                                                                                     </div>
-                                                                                    <span className="text-[10px] text-white/40 w-8 text-right">{f.score || Math.round(f.weight * 100)}%</span>
+                                                                                    <div className="flex items-center space-x-2">
+                                                                                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                                                                            <div className="h-full rounded-full" style={{
+                                                                                                width: `${Math.min(Math.abs(f.score || f.weight * 10), 100)}%`,
+                                                                                                background: 'var(--accent-gradient)',
+                                                                                            }} />
+                                                                                        </div>
+                                                                                        <span className="text-[10px] text-white/40 w-8 text-right">{f.score || Math.round(f.weight * 100)}%</span>
+                                                                                    </div>
                                                                                 </div>
+                                                                                {f.detail && (
+                                                                                    <div className="text-[10px] text-white/35 mt-0.5 pl-7">{f.detail}</div>
+                                                                                )}
                                                                             </div>
                                                                         ))}
                                                                     </div>

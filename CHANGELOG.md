@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.7.0 - 3-Pillar Hybrid Quant Engine, Fast Multi-Sport Data Pipeline & PortOne/KG Inicis Payment Restoration
+- **PortOne V2 + KG Inicis (`MOI1846444`) Card Payment & Tier Gating Restoration**:
+    - Restored `pricing`, `payment/request`, `payment/complete`, `refund`, `PremiumGate`, `Navbar`, `VipComboPanel`, and `tier_guard.py` from commit `bfceb63` with Pro (55,000 KRW/mo) and VIP (105,000 KRW/mo) plans.
+    - Re-enabled `/api/payments` router in `backend/app/main.py` and synchronized `PORTONE_STORE_ID`, `PORTONE_API_SECRET`, `PORTONE_CHANNEL_KEY`, `PORTONE_WEBHOOK_SECRET`, and `KG_INICIS_MID` to Firestore `system_config/main_config`.
+- **Ultra-Fast Multi-Sport Match, Odds & Standings Pipeline (`espn_fast_service.py`, `pinnacle_api.py`)**:
+    - Built parallel 2.5s collector across 17 leagues/sports (14 Soccer leagues + MLB + NBA + NHL) fetching 5-day fixtures, DraftKings moneyline/spread/total odds, recent 5-match form (`W/D/L`), and full league standings.
+    - Eliminated 5-item mock fallback trap caused by API-Football Free plan season/next restrictions and exhausted The Odds API credits.
+    - Added Cloud Scheduler job `scorenix-update-predictions` (`0 */2 * * *` KST) to automatically refresh `market_cache/odds_snapshot`, `daily_portfolios`, and `value_picks`.
+- **3-Pillar Hybrid Quant Win Prediction Engine (`ml_service.py`, `soccer_stats_service.py`)**:
+    - Removed deterministic MD5 team-name hash fake stats in `soccer_stats_service.py`.
+    - Established the **3-Pillar Hybrid Quant Engine**:
+        - **Pillar 1 (45%)**: Power De-vigged Market Implied Probability (`k=1.05`).
+        - **Pillar 2 (30%)**: Dixon-Coles Low-Score Adjusted Bivariate Poisson Model (Soccer) / Pythagorean Log5 Win Expectancy (MLB/NBA/NHL).
+        - **Pillar 3 (25%)**: 7-Factor Tactical & Momentum Scoring with Korean analytical evidence (`배당 내재 확률`, `전력 및 순위 지수`, `기대득실(xG/포아송)`, `최근 경기 흐름`, `배당 흐름·핸디캡`, `홈/원정 구장 이점`, `종합 매치업 밸런스`).
+- **Frontend `/bets` & `/analysis` Fixes**:
+    - Fixed Korean/English team name matching in `frontend/app/bets/page.tsx` so EV badges, market odds, and Home/Draw/Away cart selection buttons render on all AI cards.
+
 ## v0.6.3 - YouTube Shorts Multi-Mode & WordPress Auto-Publishing
 - **Shorts Generator Upgrades** (`generate_shorts_pipeline.py`):
     - Added parallel multi-video generation: Creates separate **Membership (Subscriber)** deep analytical videos and **Marketing (Funnel)** teasers.

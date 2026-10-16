@@ -1,0 +1,42 @@
+﻿2026-07-08T10:22:35.167373Z	Card generation/upload error: 'NoneType' object has no attribute 'split'
+2026-07-08T10:09:46.679973Z	?? No LIVE_SCORE_API_KEY/SECRET ? live scores via fallback only
+2026-07-08T08:40:48.197519Z	Card generation/upload error: 'NoneType' object has no attribute 'split'
+2026-07-08T08:30:23.731237Z	Card generation/upload error: 'NoneType' object has no attribute 'split'
+2026-07-08T02:42:12.762244Z	Moviepy - Writing video /app/video_output/scorenix_shorts_top_picks_ja_20260708_024204.mp4
+2026-07-08T02:42:11.495002Z	MoviePy - Writing audio in scorenix_shorts_top_picks_ja_20260708_024204TEMP_MPY_wvf_snd.mp4
+2026-07-08T02:42:11.495Z	Moviepy - Building video /app/video_output/scorenix_shorts_top_picks_ja_20260708_024204.mp4.
+2026-07-08T02:42:11.494997Z	  [REC] Encoding final video (high quality)...
+2026-07-08T02:42:11.494980Z	    [!] Edge TTS failed (No audio was received. Please verify that your parameters are correct.), falling back to gTTS
+2026-07-08T02:42:11.494960Z	  [FAIL] Recording error: No module named 'playwright'. Using static fallback.
+2026-07-08T02:42:11.494957Z	[>>] Scorenix /bets screen recording started (mode: top_picks, lang: ja)...
+2026-07-08T02:42:11.494946Z	 [>>] Scorenix Premium Shorts v4.0 - Rendering
+2026-07-08T02:42:11.494923Z	[i18n] Translating video content to 'ja' via Gemini...
+2026-07-08T02:42:11.494919Z	  [OK] Done! ? /app/video_output/scorenix_shorts_top_picks_en_20260708_023712.mp4
+2026-07-08T02:42:11.494914Z	Moviepy - video ready /app/video_output/scorenix_shorts_top_picks_en_20260708_023712.mp4
+2026-07-08T02:42:05.009586Z	02:42:05 [ERROR] ? Gemini generate_video_script error (mode=top_picks): 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+2026-07-08T02:42:01.879904Z	02:42:01 [INFO] ? YouTube ??? ??: [AI Predict] 07/08 Today's Match Predictions by Data #shorts
+2026-07-08T02:42:01.868522Z	02:42:01 [INFO] ? [EN] ??? ??? ??: /app/video_output/scorenix_shorts_top_picks_en_20260708_023712.mp4
+2026-07-08T02:40:05.593031Z	02:40:05 [ERROR] Card generation/upload error: 'NoneType' object has no attribute 'split'
+2026-07-08T02:37:39.006085Z	Moviepy - Writing video /app/video_output/scorenix_shorts_top_picks_en_20260708_023712.mp4
+2026-07-08T02:37:38.363073Z	MoviePy - Writing audio in scorenix_shorts_top_picks_en_20260708_023712TEMP_MPY_wvf_snd.mp4
+2026-07-08T02:37:38.363066Z	Moviepy - Building video /app/video_output/scorenix_shorts_top_picks_en_20260708_023712.mp4.
+2026-07-08T02:37:38.363059Z	  [REC] Encoding final video (high quality)...
+2026-07-08T02:37:38.363015Z	  [FAIL] Recording error: No module named 'playwright'. Using static fallback.
+2026-07-08T02:37:38.363011Z	[>>] Scorenix /bets screen recording started (mode: top_picks, lang: en)...
+2026-07-08T02:37:38.362998Z	 [>>] Scorenix Premium Shorts v4.0 - Rendering
+2026-07-08T02:37:38.362976Z	[i18n] Translating video content to 'en' via Gemini...
+2026-07-08T02:37:38.362967Z	  [OK] Done! ? /app/video_output/scorenix_shorts_top_picks_ko_20260708_023007.mp4
+2026-07-08T02:37:38.362961Z	Moviepy - video ready /app/video_output/scorenix_shorts_top_picks_ko_20260708_023007.mp4
+2026-07-08T02:37:08.822786Z	02:37:08 [INFO] ? YouTube ??? ??: [AI ??] 07/08 ???? ??? ??? ?? #shorts
+2026-07-08T02:37:08.165144Z	02:37:08 [INFO] ? [KO] ??? ??? ??: /app/video_output/scorenix_shorts_top_picks_ko_20260708_023007.mp4
+2026-07-08T02:30:51.885969Z	02:30:51 [WARNING] ?? No LIVE_SCORE_API_KEY/SECRET ? live scores via fallback only
+2026-07-08T02:30:27.282439Z	Moviepy - Writing video /app/video_output/scorenix_shorts_top_picks_ko_20260708_023007.mp4
+2026-07-08T02:30:26.069708Z	MoviePy - Writing audio in scorenix_shorts_top_picks_ko_20260708_023007TEMP_MPY_wvf_snd.mp4
+2026-07-08T02:30:26.069704Z	Moviepy - Building video /app/video_output/scorenix_shorts_top_picks_ko_20260708_023007.mp4.
+2026-07-08T02:30:26.069699Z	  [REC] Encoding final video (high quality)...
+2026-07-08T02:30:26.069657Z	  [FAIL] Recording error: No module named 'playwright'. Using static fallback.
+2026-07-08T02:30:26.069653Z	[>>] Scorenix /bets screen recording started (mode: top_picks, lang: ko)...
+2026-07-08T02:30:26.069638Z	 [>>] Scorenix Premium Shorts v4.0 - Rendering
+2026-07-08T02:30:07.857992Z	02:30:07 [INFO] ? Starting scheduled video distribution (mode: top_picks, avatar: False, lang: all)...
+2026-07-08T02:11:05.293711Z	Card generation/upload error: 'NoneType' object has no attribute 'split'
+2026-07-08T00:45:05.271923Z	?? No LIVE_SCORE_API_KEY/SECRET ? live scores via fallback only
