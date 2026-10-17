@@ -773,7 +773,7 @@ async def ssr_seo_verification_dashboard():
       {blogger_rows_html}
     </div>
 
-    <h2 style="font-size:18px;color:#fff;margin:28px 0 12px;">3️⃣ SNS 3대 채널(X · 인스타그램 · 페이스북) 1080×1080 카드뉴스 자동 발행 내역</h2>
+    <h2 style="font-size:18px;color:#fff;margin:28px 0 12px;">3️⃣ SNS 채널(인스타그램 · 스레드 Threads) 1080×1080 카드뉴스 자동 발행 내역</h2>
     <div class="card">
       {sns_html_block}
     </div>

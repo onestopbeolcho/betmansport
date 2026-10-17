@@ -106,13 +106,21 @@ class BufferService:
                 ch_list = (ch_res.get("data") or {}).get("channels") or []
                 for ch in ch_list:
                     ch_name = ch.get("name", "")
-                    is_scorenix = "scorenix" in ch_name.lower()
+                    ch_service = (ch.get("service") or "").lower()
+                    # 페이스북 제외 및 비공식 계정(jisanpan) 제외 — 인스타그램(instagram) 및 스레드(threads) 우선 활성화
+                    if ch_service == "facebook" or "jisanpan" in ch_name.lower():
+                        is_enabled = False
+                    elif ch_service in ("instagram", "threads") or "scorenix" in ch_name.lower():
+                        is_enabled = True
+                    else:
+                        is_enabled = False
+
                     channels.append({
                         "id": ch.get("id"),
                         "name": ch_name,
                         "service": ch.get("service", ""),
                         "avatar": ch.get("avatar", ""),
-                        "disabled": not is_scorenix,
+                        "disabled": not is_enabled,
                         "org_id": self._org_id,
                     })
 
@@ -126,17 +134,28 @@ class BufferService:
             return []
 
     def _compact_for_twitter(self, text: str) -> str:
-        """Twitter/X 280자(한글 가중치 고려 시 약 130자 + 링크) 제한에 맞춰 핵심 요약본 자동 생성"""
+        """Twitter/X 280자 제한에 맞춰 핵심 요약본 자동 생성"""
         lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
         if not lines:
             return "⚡ Scorenix AI 스포츠 승률 분석 리포트 👉 https://scorenix.com/ko/analysis"
-        # 첫 3~4줄(헤드라인 + 승률 요약) 추출 및 링크 보장
         core = "\n".join(lines[:4])
         if len(core) > 115:
             core = core[:112] + "..."
         if "scorenix.com" not in core:
             core += "\n👉 https://scorenix.com/ko/analysis"
         return core
+
+    def _compact_for_threads(self, text: str) -> str:
+        """Threads(스레드) 500자 제한에 맞춰 핵심 분석 + 링크 보존"""
+        clean = (text or "").strip()
+        if not clean:
+            return "⚡ Scorenix AI 스포츠 승률 분석 리포트\n오늘의 1순위 무료 샘플 분석 확인하기 👇\nhttps://scorenix.com/ko/analysis"
+        if len(clean) <= 480:
+            if "scorenix.com" not in clean:
+                clean = clean[:430] + "\n👉 https://scorenix.com/ko/analysis"
+            return clean
+        trimmed = clean[:430].rsplit("\n", 1)[0] + "...\n👉 https://scorenix.com/ko/analysis"
+        return trimmed
 
     async def publish_post(
         self,
@@ -148,17 +167,17 @@ class BufferService:
     ) -> Dict:
         """
         Buffer GraphQL createPost mutation으로 SNS 채널에 실제 발행.
-        채널별로 개별 게시물 생성 (Twitter, Facebook, Instagram 동시 지원).
+        채널별로 개별 게시물 생성 (Instagram, Threads 동시 지원).
         """
         if not self.is_configured:
             return {"success": False, "error": "BUFFER_ACCESS_TOKEN not configured"}
 
-        # 채널 ID가 없으면 전체 활성 채널
+        # 채널 ID가 없으면 전체 활성 채널 (disabled=False인 채널만)
         if not channel_ids:
-            channels = await self.get_channels()
+            channels = await self.get_channels(force_refresh=True)
             channel_ids = [c["id"] for c in channels if not c.get("disabled")]
             if not channel_ids:
-                return {"success": False, "error": "No active Buffer channels found"}
+                return {"success": False, "error": "No active Buffer channels found (Instagram/Threads)"}
 
         # createPost mutation
         mutation = """
@@ -199,7 +218,12 @@ class BufferService:
                 continue
 
             share_mode = "customScheduled" if scheduled_at else "shareNow"
-            channel_text = self._compact_for_twitter(text) if service == "twitter" else text
+            if service == "twitter":
+                channel_text = self._compact_for_twitter(text)
+            elif service == "threads":
+                channel_text = self._compact_for_threads(text)
+            else:
+                channel_text = text
 
             post_input: Dict = {
                 "text": channel_text,
@@ -210,11 +234,11 @@ class BufferService:
                 "assets": [{"image": {"url": image_url}}] if image_url else [],
             }
 
-            # 채널별 metadata (type 필수)
-            if service == "facebook":
-                post_input["metadata"] = {"facebook": {"type": "post"}}
-            elif service == "instagram":
+            # 채널별 metadata
+            if service == "instagram":
                 post_input["metadata"] = {"instagram": {"type": "post", "shouldShareToFeed": True}}
+            elif service == "threads":
+                post_input["metadata"] = {"threads": {"type": "post"}}
 
             # 예약 발행 시간
             if scheduled_at:
