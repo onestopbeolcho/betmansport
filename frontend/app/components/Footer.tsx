@@ -44,8 +44,9 @@ export default function Footer({ lang }: { lang?: string }) {
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.info || '이용안내 & 공식 채널'}</h4>
                         <ul className="space-y-2 text-xs">
                             <li><a href={`/${currentLang}/manual`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.userGuide || '📖 분석 모델 가이드'}</a></li>
-                            <li><a href="https://www.youtube.com/@scorenix" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🎬 공식 유튜브 (일일 쇼츠 브리핑)</a></li>
-                            <li><a href="https://www.instagram.com/scorenix_official/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>📸 공식 인스타그램</a></li>
+                            <li><a href="https://www.instagram.com/scorenix_official/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>📸 공식 인스타그램 (@scorenix_official)</a></li>
+                            <li><a href="https://www.threads.com/@scorenix_official" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🧵 공식 쓰레드 (Threads)</a></li>
+                            <li><a href="https://official-scorenix.blogspot.com" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>✍️ 공식 AI 분석 블로그</a></li>
                         </ul>
                     </div>
 
