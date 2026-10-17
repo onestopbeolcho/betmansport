@@ -76,10 +76,45 @@ async def get_users_list(limit: int = 100, admin_id: str = Depends(require_admin
     """가입된 전체 회원 목록 조회"""
     from app.models.user_db import get_all_users
     users = await get_all_users(limit=limit)
+    # password_hash 등 민감 필드 제외
+    safe_users = []
+    for u in users:
+        u_copy = {k: v for k, v in u.items() if k not in ("password_hash", "hashed_password")}
+        safe_users.append(u_copy)
     return {
-        "count": len(users),
-        "users": users
+        "count": len(safe_users),
+        "users": safe_users
     }
+
+
+class UpdateUserTierSchema(BaseModel):
+    tier: str  # "free", "pro", "premium", "admin"
+    days: Optional[int] = 30
+
+
+@router.post("/users/{user_id}/tier")
+async def update_user_tier(user_id: str, body: UpdateUserTierSchema, admin_id: str = Depends(require_admin)):
+    """관리자 수동 회원 등급(tier/role) 변경"""
+    from datetime import datetime, timedelta
+    from app.models.user_db import update_user
+    tier = body.tier.lower().strip()
+    if tier not in ("free", "pro", "premium", "admin"):
+        raise HTTPException(status_code=400, detail="유효하지 않은 등급입니다.")
+    updates = {
+        "tier": tier,
+        "role": tier,
+    }
+    if tier in ("pro", "premium"):
+        updates["subscription_plan"] = "vip" if tier == "premium" else "pro"
+        updates["subscription_expires_at"] = (datetime.utcnow() + timedelta(days=body.days or 30)).isoformat()
+    elif tier == "free":
+        updates["subscription_plan"] = None
+        updates["subscription_expires_at"] = None
+
+    updated = await update_user(user_id, updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail="회원을 찾을 수 없습니다.")
+    return {"success": True, "user_id": user_id, "tier": tier}
 
 
 @router.get("/payments")
