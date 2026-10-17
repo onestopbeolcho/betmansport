@@ -26,6 +26,7 @@ from app.api.endpoints import vip_combo, vip_alerts, vip_portfolio, vip_market
 from app.api.endpoints import backtest
 from app.api.endpoints import marketing
 from app.api.endpoints import video
+from app.api.endpoints import seo_ssr
 from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,9 @@ app.include_router(wordpress.router, prefix="/api/wordpress", tags=["wordpress"]
 
 # Video Auto-Generation
 app.include_router(video.router, prefix="/api/video", tags=["video"])
+
+# Real-Time Dynamic SSR SEO (sitemap.xml, /ko/date/*, /ko/match/*, /ko/seo-check)
+app.include_router(seo_ssr.router, tags=["seo-ssr"])
 
 
 async def _auto_collect_stats():

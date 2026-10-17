@@ -39,18 +39,30 @@ async def trigger_daily_blogger_post():
             logger.warning("No matches found to post on Blogger.")
             return {"status": "error", "message": "No matches found"}
             
-        # Filter valid matches (e.g. valid names)
-        valid = [m for m in matches if m.get("team_home_ko") and m.get("team_away_ko")]
-        if not valid:
-            valid = matches
+        # Filter valid matches
+        from app.services.team_mapper import TeamMapper
+        mapper = TeamMapper()
+        for m in matches:
+            th = m.get("team_home") or ""
+            ta = m.get("team_away") or ""
+            if not m.get("team_home_ko") or m.get("team_home_ko") == th:
+                m["team_home_ko"] = mapper.get_korean_name(th) or th
+            if not m.get("team_away_ko") or m.get("team_away_ko") == ta:
+                m["team_away_ko"] = mapper.get_korean_name(ta) or ta
+
+        valid = [m for m in matches if m.get("team_home") and m.get("team_away")]
+        valid.sort(key=lambda x: float(x.get("confidence", 0) or 0), reverse=True)
 
         from firebase_admin import firestore
         published_count = 0
         skipped_count = 0
+        max_per_run = 8
         urls = []
 
-        # Loop through ALL valid matches of today to post each one individually
+        # Loop through top matches of today to post each one individually
         for match in valid:
+            if published_count >= max_per_run:
+                break
             match_id = match.get("match_id")
             if not match_id:
                 t_home = match.get("team_home") or "home"
@@ -74,16 +86,18 @@ async def trigger_daily_blogger_post():
                 date_param = match_time
 
             import re
-            def to_slug(name: str) -> str:
+            def to_en_slug(name: str) -> str:
                 if not name:
-                    return "unknown"
-                name = re.sub(r'[^a-zA-Z0-9가-힣\s-]', '', name)
+                    return "team"
+                name = re.sub(r'[^a-zA-Z0-9\s-]', '', name.lower().strip())
                 name = re.sub(r'[\s]+', '-', name)
-                return name.lower()
+                return name.strip('-') or "team"
 
-            t_home_ko = match.get("team_home_ko") or match.get("team_home")
-            t_away_ko = match.get("team_away_ko") or match.get("team_away")
-            slug = f"{to_slug(t_home_ko)}-vs-{to_slug(t_away_ko)}"
+            t_home_en = match.get("team_home") or "home"
+            t_away_en = match.get("team_away") or "away"
+            t_home_ko = match.get("team_home_ko") or t_home_en
+            t_away_ko = match.get("team_away_ko") or t_away_en
+            slug = f"{to_en_slug(t_home_en)}-vs-{to_en_slug(t_away_en)}"
             url_path = f"{date_param}/{slug}"
 
             # Generate SEO HTML via Gemini
@@ -93,7 +107,7 @@ async def trigger_daily_blogger_post():
                 logger.error(f"Failed to generate HTML content from Gemini for {slug}")
                 continue
 
-            # Format SEO title exactly as requested: [YYYY년 MM월 DD일] 홈팀 vs 원정팀 경기 분석 및 AI 승률 예측
+            # Format SEO title: [YYYY년 MM월 DD일] 홈팀 vs 원정팀 경기 분석 및 AI 승률 예측
             try:
                 date_obj = datetime.strptime(date_param, "%Y-%m-%d")
                 formatted_date = f"{date_obj.year}년 {date_obj.month}월 {date_obj.day}일"
@@ -101,8 +115,6 @@ async def trigger_daily_blogger_post():
                 formatted_date = date_param
             
             seo_title = f"[{formatted_date}] {t_home_ko} vs {t_away_ko} 경기 분석 및 AI 승률 예측"
-            
-            # Update Gemini response title to our standard format
             content_res["title"] = seo_title
 
             # Post to blogger
@@ -115,7 +127,6 @@ async def trigger_daily_blogger_post():
             if res:
                 published_url = res.get("url", "")
                 logger.info(f"Successfully posted to blogger. URL: {published_url}")
-                # Save to Firestore to prevent future duplicates
                 pub_doc_ref.set({
                     "match_id": match_id,
                     "published_at": firestore.SERVER_TIMESTAMP,

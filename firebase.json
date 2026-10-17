@@ -19,9 +19,46 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "sitemap.xml",
+      "ko/match/**"
     ],
     "rewrites": [
+      {
+        "source": "/sitemap.xml",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/ko/date/**",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/ko/match/**",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/ko/seo-check**",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
+      {
+        "source": "/api/seo/**",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
       {
         "source": "/api/**",
         "function": "api",
