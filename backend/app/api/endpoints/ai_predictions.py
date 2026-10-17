@@ -218,22 +218,43 @@ async def get_match_list():
         match_slug = f"{home_slug}-vs-{away_slug}"
         
         date_str = str(odds.match_time)[:10] if odds.match_time else "today"
+        if " " in date_str:
+            date_str = date_str.split(" ")[0]
+        if "T" in date_str:
+            date_str = date_str.split("T")[0]
+            
+        ho = float(getattr(odds, "home_odds", 0) or 0)
+        do = float(getattr(odds, "draw_odds", 0) or 0)
+        ao = float(getattr(odds, "away_odds", 0) or 0)
+        
+        inv_h = (1.0 / ho) if ho > 1.0 else 0.45
+        inv_d = (1.0 / do) if do > 1.0 else 0.0
+        inv_a = (1.0 / ao) if ao > 1.0 else 0.45
+        tot = inv_h + inv_d + inv_a
+        if tot > 0:
+            h_prob = round((inv_h / tot) * 100, 1)
+            d_prob = round((inv_d / tot) * 100, 1)
+            a_prob = round(100.0 - h_prob - d_prob, 1)
+        else:
+            h_prob, d_prob, a_prob = 45.0, 25.0, 30.0
         
         result.append({
             "date": date_str,
             "slug": match_slug,
             "match_id": f"{odds.team_home}_{odds.team_away}",
+            "match_time": getattr(odds, "match_time", ""),
             "home": odds.team_home,
             "away": odds.team_away,
-            "home_ko": odds.team_home_ko or "",
-            "away_ko": odds.team_away_ko or "",
-            "home_odds": odds.home_odds,
-            "draw_odds": odds.draw_odds,
-            "away_odds": odds.away_odds,
-            "home_prob": odds.home_win_prob,
-            "draw_prob": odds.draw_prob,
-            "away_prob": odds.away_win_prob,
-            "league": odds.league
+            "home_ko": getattr(odds, "team_home_ko", "") or odds.team_home,
+            "away_ko": getattr(odds, "team_away_ko", "") or odds.team_away,
+            "home_odds": ho,
+            "draw_odds": do,
+            "away_odds": ao,
+            "home_prob": h_prob,
+            "draw_prob": d_prob,
+            "away_prob": a_prob,
+            "league": getattr(odds, "league", ""),
+            "sport": getattr(odds, "sport", "Soccer"),
         })
         
     return {"matches": result}

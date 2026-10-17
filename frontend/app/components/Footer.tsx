@@ -30,39 +30,42 @@ export default function Footer({ lang }: { lang?: string }) {
 
                     {/* 서비스 / Services */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.services || 'Services'}</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.services || '핵심 서비스'}</h4>
                         <ul className="space-y-2 text-xs">
-                            <li><a href={`/${currentLang}/bets`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.valueBet || 'Value Analysis'}</a></li>
-                            <li><a href={`/${currentLang}/pricing`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.plans || 'Plans'}</a></li>
+                            <li><a href={`/${currentLang}/analysis`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🤖 3-Pillar AI 매치 리포트</a></li>
+                            <li><a href={`/${currentLang}/bets`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.valueBet || '📊 실시간 배당 & 벨류 분석'}</a></li>
+                            <li><a href={`/${currentLang}/vip/portfolio`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🏆 켈리 공식 자금 배분 계산기</a></li>
+                            <li><a href={`/${currentLang}/pricing`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.plans || '💎 구독 플랜 안내'}</a></li>
                         </ul>
                     </div>
 
-                    {/* 안내 / Info */}
+                    {/* 안내 & 공식 채널 / Info & Channels */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.info || 'Info'}</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.info || '이용안내 & 공식 채널'}</h4>
                         <ul className="space-y-2 text-xs">
-                            <li><a href={`/${currentLang}/manual`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.userGuide || 'User Guide'}</a></li>
-                            <li><a href={`/${currentLang}/pricing`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.membership || 'Membership'}</a></li>
+                            <li><a href={`/${currentLang}/manual`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.userGuide || '📖 분석 모델 가이드'}</a></li>
+                            <li><a href="https://www.youtube.com/@scorenix" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🎬 공식 유튜브 (일일 쇼츠 브리핑)</a></li>
+                            <li><a href="https://www.instagram.com/scorenix_official/" target="_blank" rel="noopener noreferrer" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>📸 공식 인스타그램</a></li>
                         </ul>
                     </div>
 
                     {/* 법적 고지 / Legal */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.legal || 'Legal'}</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.legal || '약관 및 정책'}</h4>
                         <ul className="space-y-2 text-xs">
-                            <li><a href={`/${currentLang}/terms`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.terms || 'Terms of Service'}</a></li>
-                            <li><a href={`/${currentLang}/privacy`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.privacy || 'Privacy Policy'}</a></li>
-                            <li><a href={`/${currentLang}/refund`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.refund || 'Refund Policy'}</a></li>
-                            <li><a href={`/${currentLang}/disclaimer`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.disclaimer || 'Risk Disclaimer'}</a></li>
+                            <li><a href={`/${currentLang}/terms`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.terms || '이용약관'}</a></li>
+                            <li><a href={`/${currentLang}/privacy`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.privacy || '개인정보처리방침'}</a></li>
+                            <li><a href={`/${currentLang}/refund`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.refund || '환불 및 해지 정책'}</a></li>
+                            <li><a href={`/${currentLang}/disclaimer`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.disclaimer || '면책 공고'}</a></li>
                         </ul>
                     </div>
 
                     {/* 고객 지원 / Support */}
                     <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.support || 'Support'}</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.support || '고객 지원'}</h4>
                         <ul className="space-y-2 text-xs">
                             <li><a href="mailto:scorenix@gmail.com" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>scorenix@gmail.com</a></li>
-                            <li><span style={{ color: 'var(--text-muted)' }}>{t.counseling || 'Responsible Use Helpline: 1336'}</span></li>
+                            <li><span style={{ color: 'var(--text-muted)' }}>{t.counseling || '건전 이용 상담: 1336'}</span></li>
                         </ul>
                     </div>
                 </div>

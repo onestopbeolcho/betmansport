@@ -553,16 +553,17 @@ SNS_WINNING_PROOF_PROMPT = """당신은 Scorenix의 최고 수석 SNS 마케팅 
 SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 트렌디하게 작성하세요.
 
 역할:
-- 오늘 예정된 상위 AI 추천 경기 리스트를 바탕으로 "어디가 이길 것인지" AI 추천 픽과 신뢰도를 명확하게 요약 브리핑합니다.
+- 오늘의 '무료 공개 AI 분석 샘플 1경기'의 핵심 수치(승률 및 추천 방향)를 시원하게 공개하여 분석력을 증명하고,
+- 가장 신뢰도가 높은 '🔥 오늘의 AI TOP PICK 3경기'는 대진(팀명)과 신뢰도만 공개한 뒤 최종 승리 예측은 스코어닉스 본진에서 확인하도록 강한 호기심(FOMO)을 유발합니다.
 
 규칙 (매우 중요):
-1. **[추천 승리 팀 및 수치 공개]**: 각 경기의 AI 추천 승리 팀(홈/원정/무승부)과 승률 확률(%)을 당당히 명시하세요!
-   (예시: "🔥 1. 맨시티 vs 아스날: AI 추천 [맨시티 승] (신뢰도 81%)")
-2. 280자 이내로 콤팩트하게 작성하세요.
-3. 이모지(🔥, ⚽, 🚀 등)를 적극 활용하세요.
-4. 해시태그 3-5개를 포함하세요 (#Scorenix #오늘의경기 #AI예측 #승리분석).
-5. 본문 끝에는 홈페이지 링크를 첨부하세요:
-   👉 오늘 밤 AI 픽 전체보기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_top3
+1. **[🎁 오늘의 무료 AI 분석 샘플 1건 공개]**: 제공된 샘플 경기(또는 4번째 경기) 1건은 AI 추천 승리 팀과 승률(%)을 명확히 공개하세요.
+2. **[🔒 오늘의 AI TOP PICK 3경기 티저]**: 상위 3경기는 대진과 AI 신뢰도(%)만 공개하고 최종 추천 결과는 '[🔒 PRO 전용]'으로 표시해 클릭을 유도하세요.
+3. 280자 이내로 콤팩트하게 작성하세요.
+4. 이모지(🔥, 🎁, 🔒, 📊 등)를 적극 활용하세요.
+5. 해시태그 3-5개를 포함하세요 (#Scorenix #스포츠데이터 #AI승률분석 #해외배당 #프로토분석).
+6. 본문 끝에는 홈페이지 링크를 첨부하세요:
+   👉 무료 샘플 & AI TOP PICK 확인: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_top3
    (인스타는 프로필 링크 확인!)
 """
 
@@ -592,21 +593,21 @@ async def generate_winning_proof_sns(hits: list) -> Optional[str]:
     h_score = hit.get("home_score", 0)
     a_score = hit.get("away_score", 0)
     return (
-        f"🎉 [AI 적중 인증] {home} vs {away} 경기 예측 성공! ✅\\n\\n"
-        f"AI가 예측한 포지션({rec})이 스코어 {h_score}:{a_score}로 정확히 맞아떨어졌습니다! 🤖📈\\n"
-        f"감에 의존하는 투자가 아닌, 철저히 숫자로만 승부하는 AI 데이터 분석의 결과입니다.\\n\\n"
-        f"👉 적중률 검증하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning\\n"
-        f"(인스타는 프로필 링크 확인!)\\n\\n"
+        f"🎉 [AI 적중 인증] {home} vs {away} 데이터 예측 적중! ✅\n\n"
+        f"3-Pillar 퀀트 엔진이 지목한 포지션({rec})이 스코어 {h_score}:{a_score}로 정확히 적중했습니다! 🤖📈\n"
+        f"감에 의존하는 판단이 아닌, 피나클 디비깅(De-vig)과 포아송 기대득점 모델의 결과입니다.\n\n"
+        f"👉 오늘의 무료 샘플 1건 & 적중률 검증: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_winning\n"
+        f"(인스타는 프로필 링크 확인!)\n\n"
         f"#Scorenix #적중인증 #스포츠데이터 #AI분석"
     )
 
 async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]:
     """스포츠 데이터 투자 교육용 콘텐츠 생성"""
     topics = [
-        "7-Factor AI 모델: 배당률 흐름, 최근 순위 및 폼, 전술 상성, 라인업 임팩트, 동기부여 등 7개 요소를 종합 분석하여 과학적인 승률을 도출합니다.",
-        "기대값(Expected Value) 투자: 스포츠 분석에서 이기는 팀을 찍는 것은 초보입니다. 핵심은 '배당 대비 이길 확률'이 높아 기대 가치(EV)가 플러스인 포지션에 진입하는 것입니다.",
-        "해외 배당 효율 분석: 세계 최고 수준인 Pinnacle의 배당 데이터와 국내 Betman 배당 효율을 실시간 교차 검증하여 해외보다 유리한 밸류 픽을 선별합니다.",
-        "데이터 기반의 이성적 베팅: 응원하는 마음과 인간의 감정은 제외하세요. 감정 없는 기계학습 모델이 철저하게 승률을 역추적합니다."
+        "3-Pillar 하이브리드 퀀트 엔진: ① 글로벌 배당 마진 제거(Power De-vig) 45% + ② 포아송 기대득점(xG)/피타고라스 기대승률 30% + ③ 7대 전술·폼 팩터 25%를 결합해 순수 승률을 도출합니다.",
+        "기대값(Expected Value) 분석: 단순히 강팀을 고르는 것은 초보입니다. 핵심은 '배당 내재 확률 대비 실제 승리 확률'이 높은 플러스 기대값(+EV) 구간을 포착하는 것입니다.",
+        "켈리 공식(Kelly Criterion) 자금 배분: 아무리 승률이 높아도 자금 관리가 없으면 무너집니다. Scorenix는 기대값과 변동성에 맞춰 경기별 최적 비중(%)을 수학적으로 계산합니다.",
+        "데이터 기반의 이성적 분석: 응원하는 마음과 인간의 확증편향은 배제하세요. 8,960경기로 검증된 퀀트 모델이 객관적인 확률만 제시합니다."
     ]
     import random
     selected_topic = topic or random.choice(topics)
@@ -625,26 +626,32 @@ async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]
             
     # Fallback
     return (
-        f"💡 [스포츠 데이터 1분 지식] 🧠\\n\\n"
-        f"{selected_topic}\\n\\n"
-        f"Scorenix AI 분석 플랫폼에서는 매일 철저하게 가공된 기대값 데이터를 유저분들께 제공해 드립니다. 감으로 하는 투자는 이제 그만!\\n\\n"
-        f"👉 데이터 확인하기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_edu\\n"
-        f"(인스타는 프로필 링크 확인!)\\n\\n"
-        f"#Scorenix #스포츠데이터 #가치투자 #배당분석"
+        f"💡 [스포츠 퀀트 1분 지식] 🧠\n\n"
+        f"{selected_topic}\n\n"
+        f"Scorenix에서는 매일 '무료 AI 분석 샘플 1건(7대 지표 전체 오픈)'을 누구나 체험할 수 있습니다!\n\n"
+        f"👉 무료 분석 리포트 보기: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_edu\n"
+        f"(인스타는 프로필 링크 확인!)\n\n"
+        f"#Scorenix #스포츠데이터 #퀀트분석 #배당분석"
     )
 
 async def generate_top_picks_sns(predictions: list) -> Optional[str]:
-    """오늘 밤의 TOP 3 고신뢰 예측 리스트를 소개하는 종합 마케팅 콘텐츠 생성"""
+    """오늘 밤의 무료 샘플 1건 오픈 + TOP 3 고신뢰 티저 마케팅 콘텐츠 생성"""
     if not predictions:
         return None
         
-    top_3 = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)[:3]
+    sorted_preds = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)
+    top_3 = sorted_preds[:3]
+    free_sample = sorted_preds[3] if len(sorted_preds) > 3 else sorted_preds[0]
     
     if _init_gemini() and _client is not None:
         try:
             import json
-            prompt = SNS_TOP_PICKS_PROMPT + "\n\n오늘의 상위 추천 경기 데이터:\n" + json.dumps(top_3, ensure_ascii=False, indent=2)
-            prompt += "\n\n위 경기 목록을 바탕으로 호기심을 유발하는 종합 추천 매치 리스트를 작성하세요."
+            payload = {
+                "free_sample_match": free_sample,
+                "locked_top_3_matches": top_3,
+            }
+            prompt = SNS_TOP_PICKS_PROMPT + "\n\n오늘의 경기 데이터:\n" + json.dumps(payload, ensure_ascii=False, indent=2)
+            prompt += "\n\n위 데이터를 바탕으로 무료 샘플 1건은 결과를 공개하고, TOP 3는 호기심을 유발하는 게시글을 작성하세요."
             response = _client.generate_content(prompt)
             text = response.text.strip()
             if text:
@@ -654,61 +661,64 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
             logger.error(f"Top picks SNS generation error: {e}")
             
     # Fallback
+    s_home = free_sample.get("team_home_ko") or free_sample.get("team_home", "홈")
+    s_away = free_sample.get("team_away_ko") or free_sample.get("team_away", "원정")
+    s_rec = free_sample.get("recommendation", "HOME")
+    s_rec_ko = f"{s_home} 승" if s_rec == "HOME" else (f"{s_away} 승" if s_rec == "AWAY" else "무승부")
+    s_conf = free_sample.get("confidence", 62)
+
     matches_text = ""
     for i, p in enumerate(top_3):
         home = p.get("team_home_ko") or p.get("team_home", "홈")
         away = p.get("team_away_ko") or p.get("team_away", "원정")
         conf = p.get("confidence", 0)
         league = p.get("league", "")
-        matches_text += f"{i+1}. [{league}] {home} vs {away} (AI 신뢰도 {conf:.0f}%)\\n"
+        matches_text += f"🔥 TOP {i+1}. [{league}] {home} vs {away} (신뢰도 {conf:.0f}% · 🔒PRO)\n"
         
     return (
-        f"🔥 [오늘의 AI 추천 경기 TOP 3] 🔥\\n\\n"
-        f"오늘 밤 예정된 주요 매치 중 AI가 가장 강력하게 지목한 가치 분석 경기 목록입니다!\\n\\n"
-        f"{matches_text}\\n"
-        f"과연 이 경기들의 최종 승자는 누가 될까요? Scorenix AI 리포트에서 지금 바로 확인해 보세요!\\n\\n"
-        f"👉 AI 픽 전체 확인: https://scorenix.com?utm_source=sns&utm_medium=auto_post_top3\\n"
-        f"(인스타는 프로필 링크 확인!)\\n\\n"
-        f"#Scorenix #스포츠분석 #AI예측 #오늘의경기"
+        f"🎁 [오늘의 무료 AI 분석 샘플 공개]\n"
+        f"⚽ {s_home} vs {s_away} → AI 예측: [{s_rec_ko}] (신뢰도 {s_conf:.0f}%)\n\n"
+        f"🚨 [오늘 밤 AI TOP PICK 3경기 포착]\n"
+        f"{matches_text}\n"
+        f"7대 팩터 무료 리포트와 TOP PICK 3경기의 최종 승자는 스코어닉스에서 확인하세요!\n\n"
+        f"👉 지금 확인하기: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_top3\n"
+        f"#Scorenix #스포츠분석 #AI예측 #해외배당"
     )
 
 # ═══════════════════════════════════════════════════
-# Phase 6: Blogger SEO 콘텐츠 자동 생성
+# Phase 6: Blogger / WordPress SEO 콘텐츠 자동 생성
 # ═══════════════════════════════════════════════════
 
-BLOGGER_SEO_PROMPT = """당신은 Scorenix의 최고급 SEO 마케팅 및 스포츠 칼럼니스트 AI입니다. 한국어로 작성하세요.
+BLOGGER_SEO_PROMPT = """당신은 Scorenix의 수석 스포츠 퀀트 칼럼니스트이자 SEO 마케팅 전문 AI입니다. 한국어로 작성하세요.
 
 역할:
-- 제공된 AI 매치 분석 JSON 데이터를 사용하여 구글 블로거(Blogger) 연동용 HTML 마케팅 게시글을 작성합니다.
+- 제공된 3-Pillar AI 매치 분석 JSON 데이터를 사용하여 구글 블로거(Blogger) 및 워드프레스(WordPress) 검색 상위 노출용 HTML 칼럼을 작성합니다.
 - HTML 태그만 출력하세요. 마크다운 기호(```html) 등은 제외하고 순수 HTML 구조만 텍스트로 응답하세요.
 
 규칙 (매우 중요):
-1. **타이틀 최적화:** <h1> 태그에 검색 포털 노출에 유리한 키워드를 넣어 매혹적인 제목 형식을 구성하세요 (예: [스코어닉스 분석] 팀A vs 팀B 전력 비교 및 AI 승률 데이터 검증).
-2. **SEO 및 분량 최적화:** 구글 검색 노출(SEO)을 위해 반드시 글의 분량을 1,500자 이상으로 매우 길고 상세하게 작성하세요. 내용이 빈약하면 안 됩니다.
-3. **풍부한 경기 정보 제공:** 제공된 데이터를 바탕으로 아래 내용을 반드시 상세히 서술하여 유저 체류 시간을 늘리세요:
-   - 양 팀의 최근 흐름 및 전력 비교 (상세히)
-   - 주요 관전 포인트 (예상 라인업, 결장자, 혹은 전술적 특징 등 데이터 기반 서술)
-   - 배당률 추이나 AI가 바라보는 데이터 상의 특이점 (수치적 접근)
-4. **구조화:** <h2>, <h3> 요소를 적절히 사용하여 단락을 확실히 나누고, 스키머(Skimmer)들이 읽기 편하도록 <ul>, <li>, <strong>, <blockquote> 태그를 적극 활용하세요.
-5. **핵심 차단:** 결과에 대한 확실성, '도박', '베팅', '추천픽', '수익' 등의 단어는 절대 사용하지 마세요. 오직 '데이터 관점의 가치 분석' 위주로 서술해야 합니다.
-6. **마지막 유도 (3단 연동 링크):** 본문 맨 하단에는 반드시 공식 웹사이트, 인스타그램, 유튜브로 연결하는 Call to Action 링크들을 아래 HTML 태그 구조로 정확히 넣으세요.
-   - 스코어닉스 공식 웹사이트: 제공된 매치 상세 링크 파라미터를 사용하세요.
-   - 스코어닉스 인스타그램 공식 계정: https://www.instagram.com/scorenix_official/
-   - 스코어닉스 유튜브 공식 채널: https://www.youtube.com/@scorenix
-   - 템플릿:
-     <div style="margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-       <h3 style="margin-top: 0; color: #111;">🔍 더 깊은 AI 분석 결과가 궁금하다면?</h3>
-       <p style="color: #555; margin-bottom: 20px;">스코어닉스 공식 플랫폼에서 AI의 구체적인 확률 예측과 가치 투자의 방향을 확인하세요!</p>
-       <a href="https://scorenix.com/ko/match/2026-03-21/team-a-vs-team-b?utm_source=blogger" style="display:inline-block; margin: 8px; padding: 14px 28px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; transition: 0.3s;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
-       <br/>
-       <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 8px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램</a>
-       <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 8px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브</a>
+1. **타이틀 최적화:** <h1> 태그에 검색 포털(구글/네이버) 노출에 유리한 키워드를 넣어 작성하세요 (예: [2026년 10월 17일] 맨체스터 시티 vs 아스널 해외배당 흐름 및 3-Pillar AI 승률 예측).
+2. **SEO 및 분량 최적화:** 검색엔진 상위 노출을 위해 반드시 분량을 1,500자 이상으로 상세하게 작성하세요.
+3. **3-Pillar 퀀트 데이터 중심 서술:**
+   - **Pillar 1 (글로벌 배당 마진 제거 내재 확률):** 해외 배당(Pinnacle/DraftKings) 흐름과 북메이커 마진을 제거한 순수 내재 확률 비교
+   - **Pillar 2 (포아송 기대득점 xG / 피타고라스 기대승률):** 양 팀의 공수 효율 및 기대득실 시뮬레이션 해설
+   - **Pillar 3 (7대 핵심 팩터 교차 검증):** 리그 순위, 최근 5경기 흐름(W/D/L), 홈 구장 어드밴티지 등 세부 지표 분석
+4. **전환 퍼널(Teaser & Paywall Hook):**
+   - 이 경기의 기초 전력과 팩터 데이터는 상세히 설명하되, **"오늘 가장 신뢰도가 높은 🔥 AI TOP PICK 3경기와 켈리 공식(Kelly Criterion) 최적 자금 배분 비중은 스코어닉스 공식 플랫폼에서 확인할 수 있습니다"**라는 안내를 자연스럽게 포함하세요.
+   - 또한 **"스코어닉스에서는 매일 1경기의 7대 핵심 팩터 AI 리포트를 100% 무료 샘플로 공개하고 있습니다"**라고 강조하여 무료 방문을 유도하세요.
+5. **용어 준수:** '도박', '베팅', '토토'라는 단어는 사용하지 말고 '스포츠 데이터 분석', '퀀트 리포트', '기대값(EV)', '포트폴리오 배분'이라는 전문 용어를 사용하세요.
+6. **하단 CTA 박스 (필수 포함):** 본문 맨 하단에는 아래 HTML 구조로 공식 웹사이트(`/ko/analysis` 및 매치 상세 링크)로 연결되는 버튼을 넣으세요:
+     <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #0b1120, #1e293b); border: 1px solid #334155; border-radius: 16px; text-align: center; color: #f8fafc;">
+       <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,0.2); color: #34d399; border-radius: 999px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">🎁 일일 1건 AI 심층 리포트 무료 공개 중</div>
+       <h3 style="margin-top: 0; color: #ffffff; font-size: 20px;">🔥 오늘 밤 AI 신뢰도 80%+ 'TOP PICK 3경기'가 궁금하다면?</h3>
+       <p style="color: #94a3b8; font-size: 14px; margin-bottom: 22px;">8,960경기를 학습한 3-Pillar 하이브리드 퀀트 엔진의 실시간 승률 예측과 켈리 포트폴리오 최적 비중을 지금 바로 확인하세요.</p>
+       <a href="https://scorenix.com/ko/analysis?utm_source=blogger&utm_medium=cta_analysis" style="display:inline-block; margin: 6px; padding: 14px 28px; background: linear-gradient(135deg, #00d4ff, #8b5cf6); color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">👉 오늘의 무료 AI 샘플 & TOP PICK 확인하기</a>
+       <a href="https://scorenix.com/ko/vip/portfolio?utm_source=blogger&utm_medium=cta_portfolio" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">🏆 켈리 공식 자금 배분 계산기</a>
      </div>
 """
 
 async def generate_blogger_content(match_data: dict, match_url_path: str) -> Optional[dict]:
     """
-    Generate an SEO-optimized HTML article for Google Blogger.
+    Generate an SEO-optimized HTML article for Google Blogger / WordPress.
     Returns: {"title": str, "html": str}
     """
     if _init_gemini() and _client is not None:
@@ -729,11 +739,10 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
             text = text.strip()
             
             # Extract intuitive title (First h1)
-            title = f"[Scorenix AI 분석] {match_data.get('team_home_ko', '')} vs {match_data.get('team_away_ko', '')} 데이터 브리핑"
+            title = f"[Scorenix AI 분석] {match_data.get('team_home_ko', '')} vs {match_data.get('team_away_ko', '')} 해외배당 및 3-Pillar 승률 예측"
             import re
             match = re.search(r'<h1>(.*?)</h1>', text, re.IGNORECASE)
             if match:
-                # Strip HTML tags inside h1 if any
                 inner_text = re.sub(r'<[^>]+>', '', match.group(1))
                 title = inner_text.strip()
                 
@@ -747,35 +756,53 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
 
 def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
     """Fallback HTML for Blogger when Gemini API fails."""
-    home = match_data.get('team_home_ko', match_data.get('team_home', '홈팀'))
-    away = match_data.get('team_away_ko', match_data.get('team_away', '원정팀'))
+    home = match_data.get('team_home_ko') or match_data.get('team_home', '홈팀')
+    away = match_data.get('team_away_ko') or match_data.get('team_away', '원정팀')
+    league = match_data.get('league', '주요 리그')
+    h_prob = match_data.get('home_win_prob', 48.0)
+    d_prob = match_data.get('draw_prob', 24.0)
+    a_prob = match_data.get('away_win_prob', 28.0)
+    ho = match_data.get('home_odds', 1.95)
+    ao = match_data.get('away_odds', 3.40)
+    factors = match_data.get('factors', [])
     
-    title = f"[Scorenix 데이터 분석] {home} vs {away} 핵심 승률 및 배당 정보"
-    
+    title = f"[Scorenix 3-Pillar 분석] {home} vs {away} ({league}) 해외배당 흐름 및 AI 승률 리포트"
     url = f"https://scorenix.com/ko/match/{match_url_path}?utm_source=blogger&utm_medium=auto_post_fallback"
     
+    factors_html = ""
+    for f in factors[:5]:
+        factors_html += f"<li><strong>{f.get('name', '핵심 팩터')} ({f.get('score', 50)}점):</strong> {f.get('detail', '')}</li>"
+    if not factors_html:
+        factors_html = f"<li><strong>배당 내재 확률:</strong> 글로벌 배당 홈 {ho} / 원정 {ao} 기반 순수 승률 산출</li>"
+
     html = f"""
     <h1>{title}</h1>
-    <p>안녕하세요. 데이터 기반 스포츠 예측 플랫폼 <strong>Scorenix</strong>입니다.</p>
-    <p>이번 경기는 <strong>{home}</strong>와(과) <strong>{away}</strong>의 치열한 데이터 접전이 예상됩니다. 
-    해외 배당(Pinnacle)과 국내 배당(Betman)의 효율성을 분석한 결과, 흥미로운 배당 가치(Value)가 포착되었습니다.</p>
+    <p>안녕하세요. 3-Pillar 하이브리드 스포츠 퀀트 분석 플랫폼 <strong>Scorenix(스코어닉스)</strong>입니다.</p>
+    <p>오늘 분석할 경기는 <strong>{league}</strong>의 <strong>{home}</strong> 대 <strong>{away}</strong> 맞대결입니다. 
+    글로벌 배당 마진 제거(Power De-vig) 내재 확률과 포아송 기대득점(xG)/피타고라스 기대승률, 그리고 7대 전술·폼 지표를 결합한 데이터 브리핑을 공개합니다.</p>
     
-    <h2>📊 매치 데이터 개요</h2>
+    <h2>📊 1. 글로벌 배당 및 3-Pillar 기초 지표</h2>
     <ul>
-      <li><strong>홈팀:</strong> {home}</li>
-      <li><strong>원정팀:</strong> {away}</li>
-      <li><strong>분석 엔진:</strong> 7-Factor AI 알고리즘 적용 (해외/국내 데이터 교차 검증)</li>
+      <li><strong>매치업:</strong> {home} (홈) vs {away} (원정)</li>
+      <li><strong>글로벌 기준 배당:</strong> 홈 {ho} / 원정 {ao}</li>
+      <li><strong>AI 기초 확률 분포:</strong> 홈 {h_prob}% | 무승부 {d_prob}% | 원정 {a_prob}%</li>
     </ul>
 
-    <h2>💡 진짜 가치 있는 선택은?</h2>
-    <p>Scorenix의 기계학습 모델이 산출한 구체적인 승/무/패 예측 모델 확률과 배당 가치 기대값(EV) 비교를 확인해보세요! 
-    배당 흐름의 미세한 변화를 포착하여 어느 쪽 배당이 더 유리한 위치에 있는지 확인하실 수 있습니다.</p>
+    <h2>🔬 2. 7대 핵심 팩터 교차 검증 요약</h2>
+    <ul>
+      {factors_html}
+    </ul>
+
+    <h2>💡 3. 오늘의 무료 샘플 1건 & AI TOP PICK 3경기 안내</h2>
+    <p>단순히 정배당 팀을 선택하는 것이 아니라, <strong>실제 승리 확률이 배당 내재 확률을 상회하는 플러스 기대값(+EV) 구간</strong>을 포착하는 것이 핵심입니다. 
+    현재 스코어닉스 공식 웹사이트에서는 <strong>매일 1경기의 7대 지표 전체 리포트를 무료 샘플로 공개</strong>하고 있으며, 가장 신뢰도가 높은 <strong>AI TOP PICK 3경기</strong>와 <strong>켈리 공식 최적 자금 배분 계산기</strong>를 제공하고 있습니다.</p>
     
-    <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; text-align: center;">
-      <h3 style="margin-top: 0; color: #333;">📢 스코어닉스 공식 채널 연동</h3>
-      <a href="{url}" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #0E2954; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">👉 AI 예측 상세 리포트 보러가기 (공식 웹사이트)</a>
-      <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">📸 공식 인스타그램 팔로우</a>
-      <a href="https://www.youtube.com/@scorenix" style="display:inline-block; margin: 5px; padding: 12px 24px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px;">🎬 공식 유튜브 채널 구독</a>
+    <div style="margin-top: 36px; padding: 28px; background: linear-gradient(135deg, #0b1120, #1e293b); border: 1px solid #334155; border-radius: 16px; text-align: center; color: #f8fafc;">
+      <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,0.2); color: #34d399; border-radius: 999px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">🎁 일일 1건 AI 심층 리포트 무료 공개 중</div>
+      <h3 style="margin-top: 0; color: #ffffff; font-size: 20px;">🔥 오늘 밤 AI 신뢰도 80%+ 'TOP PICK 3경기'가 궁금하다면?</h3>
+      <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">스코어닉스 공식 플랫폼에서 실시간 배당 급변 알림과 AI 최종 추천 포지션을 확인하세요!</p>
+      <a href="https://scorenix.com/ko/analysis?utm_source=blogger&utm_medium=cta_analysis" style="display:inline-block; margin: 6px; padding: 14px 28px; background: linear-gradient(135deg, #00d4ff, #8b5cf6); color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">👉 무료 AI 샘플 & TOP PICK 보러가기</a>
+      <a href="{url}" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">📊 이 경기 전용 리포트 열기</a>
     </div>
     """
     return {"title": title, "html": html}

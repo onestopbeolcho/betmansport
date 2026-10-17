@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.7.3 - SEO Match Landing Pages (161 Matches) & Marketing Funnel Automation
+- **Fixed `/api/ai/match-list` & Static Match SEO Page Generator (`ai_predictions.py`, `generate-seo.mjs`)**:
+    - Resolved `AttributeError: 'PinnacleOddsItem' object has no attribute 'home_win_prob'` in `GET /api/ai/match-list` by computing de-vigged probabilities (`home_prob`, `draw_prob`, `away_prob`) and including `match_time`, `home_ko`, `away_ko`, and `league`.
+    - Upgraded `frontend/scripts/generate-seo.mjs` with rate-limit retry logic, `SportsEvent` + `FAQPage` Schema.org JSON-LD structured data, and a high-converting Free Sample + Locked AI TOP PICK CTA box across all 161 individual match pages (`/ko/match/[date]/[slug]/`) and `sitemap.xml` (172 URLs).
+- **SNS & Blogger/WordPress Marketing Funnel Alignment (`gemini_service.py`, `Footer.tsx`)**:
+    - Updated `SNS_TOP_PICKS_PROMPT` and `generate_top_picks_sns` to showcase the 1 Daily Free AI Analysis Sample while teasing the Top 3 high-confidence matches (`🔒PRO 전용`) to drive clicks to `/ko/analysis`.
+    - Upgraded `BLOGGER_SEO_PROMPT` and `_generate_blogger_fallback` to write 3-Pillar quant articles with direct CTAs to `/ko/analysis` and `/ko/vip/portfolio`.
+    - Added direct links to 3-Pillar AI Match Reports, Kelly Portfolio Calculator, and Official YouTube/Instagram channels in `Footer.tsx`.
+
 ## v0.7.2 - AI Portfolio Dashboard (`/mypage`) & Kelly Criterion Portfolio Optimizer (`/vip/portfolio`) Full Integration
 - **3-Pillar Backtest Calibration & Caching (`backtest_engine.py`, `ml_service.py`)**:
     - Added 15-minute in-memory cache and parallel query execution to `BacktestEngine`, plus live 3-Pillar Hybrid Quant calibration across 8 major leagues (`overall.accuracy_pct: 73.3%`, `by_confidence 75%+: 82.1%`, `league_performance`, `weak_patterns`, `strong_patterns`).
