@@ -20,7 +20,7 @@ _publish_history: list = []
 class PublishRequest(BaseModel):
     post_index: Optional[int] = None  # 특정 게시물만 발행 (0-based). None이면 전체.
     scheduled_at: Optional[str] = None  # ISO 8601 예약 발행 시간
-    with_image: bool = False  # 텍스트 전용 초고속 발행 (기본값 False)
+    with_image: bool = True  # Instagram/Facebook/X 카드뉴스 이미지 기본 포함 (True)
 
 
 class ManualPostRequest(BaseModel):
@@ -208,13 +208,13 @@ async def publish_manual_post(req: ManualPostRequest):
 
 class RotationPublishRequest(BaseModel):
     post_type: Optional[str] = None  # preview, winning, educational, top_picks, generic
-    with_image: bool = False  # 텍스트 전용 초고속 발행 (기본값 False)
+    with_image: bool = True  # Instagram/Facebook/X 1080x1080 카드뉴스 이미지 기본 포함
 
 
 @router.post("/publish_rotation")
 async def publish_rotation_post(req: RotationPublishRequest = RotationPublishRequest()):
     """
-    시간대별/지정 타입별 SNS 로테이션 발행 실행.
+    시간대별/지정 타입별 SNS 로테이션 발행 실행 (X/Twitter + Facebook + Instagram 동시 발행).
     """
     from app.services.buffer_service import buffer_service
     from app.services.gemini_service import (
@@ -239,8 +239,6 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
         post_type = req.post_type
         if not post_type:
-            # 짝수 시 -> prediction (어디가 이길 것 같은지: 승리 예상 픽)
-            # 홀수 시 -> winning (지난 예측 결과는 어땠는지: 지난 AI 완벽 적중 인증)
             if hour % 2 == 0:
                 post_type = "prediction"
             else:
@@ -260,6 +258,17 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
         predictions = ai_pred_module._predictions_cache
         pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
 
+        # 한글 팀명 보강
+        from app.services.team_mapper import TeamMapper
+        mapper = TeamMapper()
+        for p in pred_dicts:
+            th = p.get("team_home") or ""
+            ta = p.get("team_away") or ""
+            if not p.get("team_home_ko") or p.get("team_home_ko") == th:
+                p["team_home_ko"] = mapper.get_korean_name(th) or th
+            if not p.get("team_away_ko") or p.get("team_away_ko") == ta:
+                p["team_away_ko"] = mapper.get_korean_name(ta) or ta
+
         # A. 지난 예측 결과 (적중 인증)
         if post_type in ["winning", "winning_proof"]:
             try:
@@ -274,7 +283,7 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                     confidence = best_hit.get("confidence", 80)
                 else:
                     logger.info("No HIT history found, falling back to match prediction...")
-                    post_type = "prediction"  # 적중 이력이 아직 없으면 승리 예상 픽으로 자동 대체
+                    post_type = "prediction"
             except Exception as e:
                 logger.error(f"Winning proof rotation error: {e}")
                 post_type = "prediction"
@@ -297,7 +306,6 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                         from app.services.card_generator import generate_card_and_upload
                         image_url = await generate_card_and_upload(selected_pred)
             else:
-                # 데이터가 아예 없는 예외 케이스
                 text = await generate_generic_promo()
                 match_id = "generic_promo"
 
@@ -310,15 +318,26 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
             image_url=image_url,
         )
 
-        # 이력 저장
-        _publish_history.append({
+        # 이력 저장 (메모리 + Firestore 영구 기록)
+        pub_entry = {
             "match_id": match_id,
-            "text": text[:100] + "...",
+            "text": text[:140] + ("..." if len(text) > 140 else ""),
+            "image_url": image_url or "",
             "published_at": datetime.now(timezone.utc).isoformat(),
             "success": result.get("success", False),
             "channels": result.get("published", 0),
+            "posts": result.get("posts", []),
             "rotation_type": post_type,
-        })
+        }
+        _publish_history.append(pub_entry)
+
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            doc_id = f"{datetime.now(KST).strftime('%Y%m%d_%H%M%S')}_{match_id[:30]}"
+            db.collection("sns_published").document(doc_id).set(pub_entry)
+        except Exception as e_db:
+            logger.warning(f"Failed to save sns_published to Firestore: {e_db}")
 
         return {
             "success": result.get("success", False),
@@ -337,7 +356,23 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
 @router.get("/history")
 async def get_publish_history():
-    """최근 발행 이력 (최신 20건)"""
+    """최근 발행 이력 (Firestore + 메모리 병합 최신 20건)"""
+    try:
+        from app.db.firestore import get_firestore_db
+        from google.cloud import firestore as gc_firestore
+        db = get_firestore_db()
+        docs = list(
+            db.collection("sns_published")
+            .order_by("published_at", direction=gc_firestore.Query.DESCENDING)
+            .limit(20)
+            .stream()
+        )
+        if docs:
+            items = [d.to_dict() for d in docs]
+            return {"history": items, "total": len(items)}
+    except Exception as e:
+        logger.warning(f"Firestore sns_published read error: {e}")
+
     return {
         "history": _publish_history[-20:][::-1],
         "total": len(_publish_history),

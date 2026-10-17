@@ -66,45 +66,53 @@ class BufferService:
                 (datetime.now(timezone.utc) - self._cache_time).seconds < 3600):
             return self._channels_cache
 
-        query = """
-        query GetChannels {
+        org_query = """
+        query GetOrgs {
             account {
                 id
                 organizations {
                     id
                     name
-                    channels {
-                        id
-                        name
-                        service
-                        avatar
-                    }
                 }
             }
         }
         """
+        ch_query = """
+        query GetCh($org: OrganizationId!) {
+            channels(input: { organizationId: $org }) {
+                id
+                name
+                service
+                avatar
+            }
+        }
+        """
         try:
-            result = await self._graphql(query)
+            result = await self._graphql(org_query)
             if not result:
                 return []
             if "errors" in result and result["errors"]:
-                logger.error(f"Buffer GraphQL query errors: {result['errors']}")
+                logger.error(f"Buffer GraphQL org query errors: {result['errors']}")
             data = result.get("data") or {}
             account = data.get("account") or {}
             orgs = account.get("organizations") or []
 
             channels = []
             for org in orgs:
-                if not org:
+                if not org or not org.get("id"):
                     continue
                 self._org_id = org.get("id")
-                for ch in org.get("channels") or []:
+                ch_res = await self._graphql(ch_query, {"org": self._org_id})
+                ch_list = (ch_res.get("data") or {}).get("channels") or []
+                for ch in ch_list:
+                    ch_name = ch.get("name", "")
+                    is_scorenix = "scorenix" in ch_name.lower()
                     channels.append({
                         "id": ch.get("id"),
-                        "name": ch.get("name", ""),
+                        "name": ch_name,
                         "service": ch.get("service", ""),
                         "avatar": ch.get("avatar", ""),
-                        "disabled": False,
+                        "disabled": not is_scorenix,
                         "org_id": self._org_id,
                     })
 
@@ -117,6 +125,19 @@ class BufferService:
             logger.error(f"Buffer channels error: {e}")
             return []
 
+    def _compact_for_twitter(self, text: str) -> str:
+        """Twitter/X 280자(한글 가중치 고려 시 약 130자 + 링크) 제한에 맞춰 핵심 요약본 자동 생성"""
+        lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+        if not lines:
+            return "⚡ Scorenix AI 스포츠 승률 분석 리포트 👉 https://scorenix.com/ko/analysis"
+        # 첫 3~4줄(헤드라인 + 승률 요약) 추출 및 링크 보장
+        core = "\n".join(lines[:4])
+        if len(core) > 115:
+            core = core[:112] + "..."
+        if "scorenix.com" not in core:
+            core += "\n👉 https://scorenix.com/ko/analysis"
+        return core
+
     async def publish_post(
         self,
         text: str,
@@ -127,7 +148,7 @@ class BufferService:
     ) -> Dict:
         """
         Buffer GraphQL createPost mutation으로 SNS 채널에 실제 발행.
-        채널별로 개별 게시물 생성.
+        채널별로 개별 게시물 생성 (Twitter, Facebook, Instagram 동시 지원).
         """
         if not self.is_configured:
             return {"success": False, "error": "BUFFER_ACCESS_TOKEN not configured"}
@@ -148,6 +169,10 @@ class BufferService:
                         id
                         text
                         status
+                        externalLink
+                        error {
+                            message
+                        }
                     }
                 }
                 ... on MutationError {
@@ -173,15 +198,16 @@ class BufferService:
                 errors.append({"channel_id": ch_id, "error": "Instagram requires an image"})
                 continue
 
-            # schedulingType + mode + metadata 모두 필수
-            # mode: shareNow(즉시) | addToQueue(큐) | customScheduled(예약)
             share_mode = "customScheduled" if scheduled_at else "shareNow"
+            channel_text = self._compact_for_twitter(text) if service == "twitter" else text
 
             post_input: Dict = {
-                "text": text,
+                "text": channel_text,
                 "channelId": ch_id,
                 "schedulingType": "automatic",
                 "mode": share_mode,
+                "needsApproval": False,
+                "assets": [{"image": {"url": image_url}}] if image_url else [],
             }
 
             # 채널별 metadata (type 필수)
@@ -194,43 +220,47 @@ class BufferService:
             if scheduled_at:
                 post_input["dueAt"] = scheduled_at
 
-            # 이미지 첨부
             if image_url:
-                post_input["assets"] = {"image": {"url": image_url}}
-                logger.info(f"📸 Attaching image to channel {ch_id}: {image_url[:80]}...")
+                logger.info(f"📸 Attaching image to channel {ch_id} ({service}): {image_url[:80]}...")
 
             variables = {"input": post_input}
 
             try:
                 result = await self._graphql(mutation, variables)
-                logger.info(f"createPost result for {ch_id}: {str(result)[:500]}")
+                logger.info(f"createPost result for {ch_id} ({service}): {str(result)[:500]}")
 
                 if "errors" in result and result["errors"]:
                     error_msg = result["errors"][0].get("message", "Unknown error")
                     logger.error(f"Buffer publish error (ch={ch_id}): {error_msg}")
-                    errors.append({"channel_id": ch_id, "error": error_msg})
+                    errors.append({"channel_id": ch_id, "service": service, "error": error_msg})
                     continue
 
-                data = result.get("data", {}).get("createPost", {})
+                data = (result.get("data") or {}).get("createPost") or {}
 
                 # MutationError 체크
                 if "message" in data:
                     logger.error(f"Buffer mutation error (ch={ch_id}): {data['message']}")
-                    errors.append({"channel_id": ch_id, "error": data["message"]})
+                    errors.append({"channel_id": ch_id, "service": service, "error": data["message"]})
                     continue
 
                 post = data.get("post", {})
                 post_id = post.get("id", "")
-                logger.info(f"✅ Published to channel {ch_id}: post_id={post_id}")
+                post_status = post.get("status", "")
+                ext_link = post.get("externalLink") or ""
+                post_err = (post.get("error") or {}).get("message") if isinstance(post.get("error"), dict) else None
+                logger.info(f"✅ Published to channel {ch_id} ({service}): post_id={post_id} status={post_status} link={ext_link}")
                 results.append({
                     "channel_id": ch_id,
+                    "service": service,
                     "post_id": post_id,
-                    "status": post.get("status", ""),
+                    "status": post_status,
+                    "external_link": ext_link,
+                    "error": post_err,
                 })
 
             except Exception as e:
                 logger.error(f"Buffer publish error (ch={ch_id}): {e}")
-                errors.append({"channel_id": ch_id, "error": str(e)})
+                errors.append({"channel_id": ch_id, "service": service, "error": str(e)})
 
         if results:
             return {

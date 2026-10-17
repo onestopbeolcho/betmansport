@@ -606,6 +606,31 @@ async def get_seo_status_json():
     except Exception as e:
         logger.warning(f"Failed to read blogger_published in seo status: {e}")
 
+    # 최근 SNS(Buffer) 자동 발행 기록 조회
+    recent_sns = []
+    try:
+        from app.db.firestore import get_firestore_db
+        from google.cloud import firestore as gc_firestore
+        db = get_firestore_db()
+        sns_docs = list(
+            db.collection("sns_published")
+            .order_by("published_at", direction=gc_firestore.Query.DESCENDING)
+            .limit(6)
+            .stream()
+        )
+        for doc in sns_docs:
+            item = doc.to_dict()
+            recent_sns.append({
+                "id": doc.id,
+                "match_id": item.get("match_id", ""),
+                "text": item.get("text", ""),
+                "image_url": item.get("image_url", ""),
+                "published_at": str(item.get("published_at", "")),
+                "posts": item.get("posts", []),
+            })
+    except Exception as e:
+        logger.warning(f"Failed to read sns_published in seo status: {e}")
+
     date_summary = [
         {
             "date": d,
@@ -625,6 +650,7 @@ async def get_seo_status_json():
         "total_date_hub_pages": len(by_date),
         "dates": date_summary,
         "recent_blogger_posts": recent_blogger,
+        "recent_sns_posts": recent_sns,
     }
 
 
@@ -632,7 +658,7 @@ async def get_seo_status_json():
 @router.get("/ko/seo-check/", response_class=HTMLResponse)
 @router.get("/api/seo/dashboard", response_class=HTMLResponse)
 async def ssr_seo_verification_dashboard():
-    """사용자가 북마크하여 언제든 1초 만에 날짜별 스포츠 경기 검색노출 상태를 확인하는 관제 대시보드"""
+    """사용자가 북마크하여 언제든 1초 만에 날짜별 스포츠 경기 검색노출 및 SNS 배포 상태를 확인하는 관제 대시보드"""
     status_data = await get_seo_status_json()
     checked_at = status_data["checked_at_kst"]
     total_matches = status_data["total_live_match_pages"]
@@ -668,12 +694,33 @@ async def ssr_seo_verification_dashboard():
         for b in status_data["recent_blogger_posts"]
     ) or '<div style="color:#94a3b8;font-size:13px;">발행 내역 로드 중...</div>'
 
+    sns_rows_html = []
+    for s in status_data.get("recent_sns_posts", []):
+        img_btn = (
+            f'<a href="{s["image_url"]}" target="_blank" class="pill-btn" style="margin-left:8px;">🖼️ 카드뉴스 이미지 보기</a>'
+            if s.get("image_url")
+            else ""
+        )
+        sns_rows_html.append(f"""
+        <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <strong style="color:#38bdf8;">📱 경기 ID: {html.escape(s['match_id'])}</strong>
+            <div>
+              <span style="color:#64748b;font-size:12px;">{html.escape(s['published_at'][:19])}</span>
+              {img_btn}
+            </div>
+          </div>
+          <div style="color:#cbd5e1;font-size:12px;">{html.escape(s['text'])}</div>
+        </div>
+        """)
+    sns_html_block = "".join(sns_rows_html) or '<div style="color:#94a3b8;font-size:13px;">최근 SNS 발행 내역이 표시됩니다.</div>'
+
     html_doc = f"""<!DOCTYPE html>
 <html lang="ko" class="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Scorenix 실시간 무인 SEO &amp; 검색노출 관제 대시보드</title>
+  <title>Scorenix 실시간 무인 SEO &amp; SNS 배포 관제 대시보드</title>
   <meta name="robots" content="noindex, nofollow" />
   <style>
     body {{ margin:0; background:#080b12; color:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,'Pretendard','Malgun Gothic',sans-serif; line-height:1.6; }}
@@ -689,8 +736,8 @@ async def ssr_seo_verification_dashboard():
 </head>
 <body>
   <div class="wrap">
-    <h1 style="margin:0 0 6px;font-size:24px;color:#fff;">📡 Scorenix 24/7 무인 검색노출(SEO) 실시간 관제 대시보드</h1>
-    <p style="margin:0;color:#94a3b8;font-size:13px;">마지막 실시간 점검 시각: <strong>{checked_at}</strong> · 수동 배포 없이 매일 2시간 주기로 날짜별/경기별 SSR 페이지와 사이트맵이 자동 생성됩니다.</p>
+    <h1 style="margin:0 0 6px;font-size:24px;color:#fff;">📡 Scorenix 24/7 무인 검색노출(SEO) &amp; SNS 배포 관제 대시보드</h1>
+    <p style="margin:0;color:#94a3b8;font-size:13px;">마지막 실시간 점검 시각: <strong>{checked_at}</strong> · 수동 배포 없이 매일 2시간 주기로 날짜별/경기별 SSR 페이지, 구글 블로그, SNS 카드뉴스가 자동 배포됩니다.</p>
 
     <div class="kpi-grid">
       <div class="kpi">
@@ -704,9 +751,9 @@ async def ssr_seo_verification_dashboard():
         <div style="font-size:11px;color:#34d399;">/ko/date/[YYYY-MM-DD]</div>
       </div>
       <div class="kpi">
-        <div style="font-size:12px;color:#94a3b8;">백그라운드 자동 갱신 주기</div>
-        <div class="num">매 2시간</div>
-        <div style="font-size:11px;color:#34d399;">Cloud Scheduler (ENABLED)</div>
+        <div style="font-size:12px;color:#94a3b8;">SNS &amp; 블로그 무인 스케줄러</div>
+        <div class="num">일 4회 자동</div>
+        <div style="font-size:11px;color:#34d399;">09:30 / 11:00 / 13:30 / 17:30 KST</div>
       </div>
     </div>
 
@@ -715,7 +762,7 @@ async def ssr_seo_verification_dashboard():
       <a href="https://search.google.com/test/rich-results?url={quote('https://scorenix.com/ko/date/' + (status_data['dates'][0]['date'] if status_data['dates'] else '2026-10-17'), safe='')}" target="_blank" class="ext-btn">🔍 구글 검색로봇(Rich Results) 실시간 테스트</a>
       <a href="https://www.google.com/search?q=site:scorenix.com" target="_blank" class="ext-btn">🌐 구글 site:scorenix.com 색인 확인</a>
       <a href="https://www.google.com/search?q=site:official-scorenix.blogspot.com" target="_blank" class="ext-btn">✍️ 구글 블로그 색인 확인</a>
-      <a href="/api/seo/status" target="_blank" class="ext-btn" style="background:#1e293b;">⚙️ 원본 JSON 데이터 보기</a>
+      <a href="https://publish.buffer.com/channels" target="_blank" class="ext-btn" style="background:#059669;">📱 Buffer SNS 채널 관리</a>
     </div>
 
     <h2 style="font-size:18px;color:#fff;margin:24px 0 12px;">1️⃣ 날짜별 자동 생성된 경기 분석 페이지 (클릭 시 실제 SSR 페이지 확인)</h2>
@@ -724,6 +771,11 @@ async def ssr_seo_verification_dashboard():
     <h2 style="font-size:18px;color:#fff;margin:28px 0 12px;">2️⃣ 구글 블로그(official-scorenix.blogspot.com) 매일 11:00 KST 자동 발행 내역</h2>
     <div class="card">
       {blogger_rows_html}
+    </div>
+
+    <h2 style="font-size:18px;color:#fff;margin:28px 0 12px;">3️⃣ SNS 3대 채널(X · 인스타그램 · 페이스북) 1080×1080 카드뉴스 자동 발행 내역</h2>
+    <div class="card">
+      {sns_html_block}
     </div>
   </div>
 </body>
