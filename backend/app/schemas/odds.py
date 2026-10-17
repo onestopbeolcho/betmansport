@@ -30,6 +30,10 @@ class ValueBetOpportunity(BaseModel):
 class MatchBetSummary(BaseModel):
     """One row per match — contains all 3 odds + best bet info."""
     match_name: str
+    team_home: Optional[str] = None
+    team_away: Optional[str] = None
+    team_home_ko: Optional[str] = None
+    team_away_ko: Optional[str] = None
     league: str = ""
     match_time: str = ""
     # Domestic (Betman) odds

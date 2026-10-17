@@ -136,8 +136,15 @@ async def get_all_bets():
             best_eff = round(best_prob * best_odds * 100, 1)
             kelly = calculate_kelly_percentage(best_odds, best_prob) if best_odds > 1.0 else 0.0
 
+            h_ko = p.team_home_ko or _mapper.get_korean_name(p.team_home) or p.team_home
+            a_ko = p.team_away_ko or _mapper.get_korean_name(p.team_away) or p.team_away
+
             results.append(MatchBetSummary(
                 match_name=f"{p.team_home} vs {p.team_away}",
+                team_home=p.team_home,
+                team_away=p.team_away,
+                team_home_ko=h_ko,
+                team_away_ko=a_ko,
                 league=p.league or "",
                 match_time=p.match_time or "",
                 home_odds=h_odds,

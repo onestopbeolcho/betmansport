@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
 import PremiumGate from '../components/PremiumGate';
+import { mapTeamName, formatTeamDisplay } from '../lib/teamNames';
 
 
 /* ───── Types ───── */
@@ -34,24 +35,6 @@ interface AIResponse {
 }
 
 /* ───── Helpers ───── */
-const TEAM_NAME_MAP: Record<string, string> = {
-    "Arsenal": "아스널", "Aston Villa": "애스턴 빌라", "Bournemouth": "본머스", "Brentford": "브렌트포드", "Brighton": "브라이튼", "Burnley": "번리", "Chelsea": "첼시", "Crystal Palace": "크리스탈 팰리스", "Everton": "에버턴", "Fulham": "풀럼", "Liverpool": "리버풀", "Luton": "루턴", "Luton Town": "루턴 타운", "Manchester City": "맨시티", "Man City": "맨시티", "Manchester United": "맨유", "Man Utd": "맨유", "Newcastle": "뉴캐슬", "Nottingham Forest": "노팅엄", "Sheffield United": "셰필드", "Tottenham": "토트넘", "Spurs": "토트넘", "West Ham": "웨스트햄", "Wolves": "울버햄튼", "Wolverhampton": "울버햄튼",
-    "Real Madrid": "레알 마드리드", "Barcelona": "바르셀로나", "Atletico Madrid": "아틀레티코", "Girona": "지로나", "Athletic Club": "빌바오", "Real Sociedad": "소시에다드", "Real Betis": "베티스", "Valencia": "발렌시아", "Villarreal": "비야레알", "Sevilla": "세비야", "Osasuna": "오사수나", "Mallorca": "마요르카", "Celta Vigo": "셀타 비고",
-    "Bayern Munich": "바이에른 뮌헨", "Bayer Leverkusen": "레버쿠젠", "Stuttgart": "슈투트가르트", "RB Leipzig": "라이프치히", "Borussia Dortmund": "도르트문트", "Dortmund": "도르트문트", "Eintracht Frankfurt": "프랑크푸르트", "Freiburg": "프라이부르크",
-    "Inter": "인테르", "Juventus": "유벤투스", "AC Milan": "AC밀란", "Roma": "로마", "Atalanta": "아탈란타", "Bologna": "볼로냐", "Napoli": "나폴리", "Fiorentina": "피오렌티나", "Lazio": "라치오", "Torino": "토리노",
-    "PSG": "파리 생제르맹", "Paris SG": "파리 생제르맹", "Monaco": "모나코", "Marseille": "마르세유", "Lille": "릴", "Lens": "랑스", "Nice": "니스", "Rennes": "렌", "Lyon": "리옹",
-    "LALIGA": "라리가", "PREMIER LEAGUE": "프리미어리그", "SERIE A": "세리에 A", "BUNDESLIGA": "분데스리가", "LIGUE 1": "리그 1"
-};
-
-const mapTeamName = (engName: string) => {
-    if (!engName) return '';
-    if (TEAM_NAME_MAP[engName]) return TEAM_NAME_MAP[engName];
-    const upperEng = engName.toUpperCase();
-    for (const [key, val] of Object.entries(TEAM_NAME_MAP)) {
-        if (upperEng.includes(key.toUpperCase())) return val;
-    }
-    return engName; 
-};
 
 const formatTime = (iso: string) => {
     if (!iso) return '';
@@ -529,10 +512,8 @@ export default function AnalysisPage() {
                                     const parts = pick.match_id.split('_');
                                     const homeEng = pick.team_home || parts[0] || '';
                                     const awayEng = pick.team_away || parts.slice(1).join(' ') || '';
-                                    const mappedHomeKo = pick.team_home_ko || mapTeamName(homeEng);
-                                    const mappedAwayKo = pick.team_away_ko || mapTeamName(awayEng);
-                                    const home = mappedHomeKo && mappedHomeKo !== homeEng ? `${mappedHomeKo} (${homeEng})` : homeEng;
-                                    const away = mappedAwayKo && mappedAwayKo !== awayEng ? `${mappedAwayKo} (${awayEng})` : awayEng;
+                                    const home = formatTeamDisplay(homeEng, pick.team_home_ko);
+                                    const away = formatTeamDisplay(awayEng, pick.team_away_ko);
                                     return (
                                         <div key={i}
                                             onClick={() => { if (!isProOrAbove) window.location.href = '/ko/pricing'; }}
@@ -666,10 +647,8 @@ export default function AnalysisPage() {
                                 const parts = pred.match_id.split('_');
                                 const homeEng = pred.team_home || parts[0] || '';
                                 const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
-                                const mappedHomeKo = pred.team_home_ko || mapTeamName(homeEng);
-                                const mappedAwayKo = pred.team_away_ko || mapTeamName(awayEng);
-                                const home = mappedHomeKo && mappedHomeKo !== homeEng ? `${mappedHomeKo} (${homeEng})` : homeEng;
-                                const away = mappedAwayKo && mappedAwayKo !== awayEng ? `${mappedAwayKo} (${awayEng})` : awayEng;
+                                const home = formatTeamDisplay(homeEng, pred.team_home_ko);
+                                const away = formatTeamDisplay(awayEng, pred.team_away_ko);
                                 const matchKey = `analysis-${idx}`;
                                 const isExpanded = expandedCard === matchKey;
                                 const isSampleCard = idx === 0 && pred.match_id === freeSampleMatchId;

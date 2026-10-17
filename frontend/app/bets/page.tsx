@@ -9,10 +9,15 @@ import PremiumGate from '../components/PremiumGate';
 import { useCart } from '../../context/CartContext';
 import { useDictionarySafe } from '../context/DictionaryContext';
 import { useAuth } from '../context/AuthContext';
+import { mapTeamName, formatTeamDisplay } from '../lib/teamNames';
 
 /* ───── Types ───── */
 interface MatchBet {
     match_name: string;
+    team_home?: string;
+    team_away?: string;
+    team_home_ko?: string;
+    team_away_ko?: string;
     league: string;
     match_time: string;
     home_odds: number;
@@ -547,8 +552,8 @@ export default function BetsPage() {
                                     const parts = pick.match_id.split('_');
                                     const homeEng = pick.team_home || parts[0] || '';
                                     const awayEng = pick.team_away || parts.slice(1).join(' ') || '';
-                                    const home = pick.team_home_ko ? `${pick.team_home_ko} (${homeEng})` : homeEng;
-                                    const away = pick.team_away_ko ? `${pick.team_away_ko} (${awayEng})` : awayEng;
+                                    const home = formatTeamDisplay(homeEng, pick.team_home_ko);
+                                    const away = formatTeamDisplay(awayEng, pick.team_away_ko);
                                     return (
                                         <div key={i}
                                             onClick={() => { if (!isProOrAbove) router.push('/pricing'); }}
@@ -691,8 +696,8 @@ export default function BetsPage() {
                                         const parts = pred.match_id.split('_');
                                         const homeEng = pred.team_home || parts[0] || '';
                                         const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
-                                        const home = pred.team_home_ko ? `${pred.team_home_ko} (${homeEng})` : homeEng;
-                                        const away = pred.team_away_ko ? `${pred.team_away_ko} (${awayEng})` : awayEng;
+                                        const home = formatTeamDisplay(homeEng, pred.team_home_ko);
+                                        const away = formatTeamDisplay(awayEng, pred.team_away_ko);
                                         const matchKey = `ai-${idx}`;
                                         const isExpanded = expandedCard === matchKey;
                                         const oddsMatch = pred.oddsMatch;
@@ -962,10 +967,12 @@ export default function BetsPage() {
 
                                     {sportFilteredMatches.map((m, idx) => {
                                         const parts = m.match_name.split(' vs ');
-                                        const home = parts[0] || '';
-                                        const away = parts[1] || '';
+                                        const homeEng = m.team_home || parts[0] || '';
+                                        const awayEng = m.team_away || parts[1] || '';
                                         const matchId = `odds-${idx}`;
-                                        const aiPred = predictionMap.get(`${home}_${away}`) || predictionMap.get(m.match_name);
+                                        const aiPred = predictionMap.get(`${homeEng}_${awayEng}`) || predictionMap.get(m.match_name);
+                                        const home = formatTeamDisplay(homeEng, m.team_home_ko || aiPred?.team_home_ko);
+                                        const away = formatTeamDisplay(awayEng, m.team_away_ko || aiPred?.team_away_ko);
                                         const isLeagueAllowed = isProOrAbove || freeAllowedLeagues.has(m.league || '');
 
                                         if (!isLeagueAllowed && idx > 15) return null;

@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 # YouTube API 설정
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
-CREDENTIALS_FILE = 'credentials.json'
-TOKEN_FILE = 'youtube_token.pickle'
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CREDENTIALS_FILE = os.path.join(_BACKEND_DIR, 'credentials.json') if os.path.exists(os.path.join(_BACKEND_DIR, 'credentials.json')) else 'credentials.json'
+TOKEN_FILE = os.path.join(_BACKEND_DIR, 'youtube_token.pickle') if os.path.exists(os.path.join(_BACKEND_DIR, 'youtube_token.pickle')) else 'youtube_token.pickle'
 
 def get_youtube_service():
     """YouTube API 서비스 객체 생성 및 인증 관리"""

@@ -69,6 +69,14 @@ async def get_ai_predictions_internal(background_tasks: Optional[BackgroundTasks
             data = doc.to_dict()
             matches = data.get("matches", [])
             if len(matches) > 5:
+                for m in matches:
+                    if isinstance(m, dict):
+                        th = m.get("team_home") or ""
+                        ta = m.get("team_away") or ""
+                        if th:
+                            m["team_home_ko"] = pinnacle_service.team_mapper.get_korean_name(th) or m.get("team_home_ko") or th
+                        if ta:
+                            m["team_away_ko"] = pinnacle_service.team_mapper.get_korean_name(ta) or m.get("team_away_ko") or ta
                 _predictions_cache = matches
                 _last_prediction_time = data.get("updated_at", datetime.now(timezone.utc).isoformat())
                 
@@ -368,6 +376,22 @@ async def trigger_stats_collection():
     }
 
 
+def _enrich_standing_teams(teams: list) -> list:
+    enriched = []
+    for t in (teams or []):
+        row = dict(t.model_dump() if hasattr(t, "model_dump") else t)
+        t_name = row.get("team_name", "")
+        row["team_name_ko"] = pinnacle_service.team_mapper.get_korean_name(t_name) or row.get("team_name_ko") or t_name
+        if "won" not in row and "wins" in row:
+            row["won"] = row["wins"]
+        if "draw" not in row and "draws" in row:
+            row["draw"] = row["draws"]
+        if "lost" not in row and "losses" in row:
+            row["lost"] = row["losses"]
+        enriched.append(row)
+    return enriched
+
+
 @router.get("/standings/{sport}")
 async def get_standings(sport: str):
     """리그 순위 조회"""
@@ -377,18 +401,20 @@ async def get_standings(sport: str):
     if data:
         return {
             "sport": sport,
-            "standings": [t.model_dump() if hasattr(t, 'model_dump') else t for t in data],
+            "standings": _enrich_standing_teams(data),
         }
 
     # Try league_standings service cache
     cached = league_standings.get_cached()
     if sport in cached:
-        return {"sport": sport, "standings": cached[sport]}
+        return {"sport": sport, "standings": _enrich_standing_teams(cached[sport])}
 
     # Try ESPN fast service standings cache
     from app.services.espn_fast_service import espn_fast_service
-    if sport in espn_fast_service._standings_cache:
-        return {"sport": sport, "standings": espn_fast_service._standings_cache[sport]}
+    if not espn_fast_service.standings_by_league:
+        await espn_fast_service.fetch_all_standings()
+    if sport in espn_fast_service.standings_by_league:
+        return {"sport": sport, "standings": _enrich_standing_teams(espn_fast_service.standings_by_league[sport])}
 
     return {"sport": sport, "standings": [], "message": "데이터 수집 필요 (/api/ai/collect-stats)"}
 
@@ -401,21 +427,22 @@ async def get_all_standings():
 
     # AI predictor cache (API-Football 수집 데이터)
     for league_key, teams in ai_predictor._standings_cache.items():
-        all_standings[league_key] = [
-            t.model_dump() if hasattr(t, 'model_dump') else t for t in teams
-        ]
+        if teams:
+            all_standings[league_key] = _enrich_standing_teams(teams)
 
     # league_standings service cache (football-data.org) — 빠진 리그 보충
     cached = league_standings.get_cached()
     for league_key, teams in cached.items():
-        if league_key not in all_standings:
-            all_standings[league_key] = teams
+        if league_key not in all_standings and teams:
+            all_standings[league_key] = _enrich_standing_teams(teams)
 
     # ESPN fast service cache — 빠진 리그 보충
     from app.services.espn_fast_service import espn_fast_service
-    for league_key, teams in espn_fast_service._standings_cache.items():
+    if not espn_fast_service.standings_by_league:
+        await espn_fast_service.fetch_all_standings()
+    for league_key, teams in espn_fast_service.standings_by_league.items():
         if league_key not in all_standings and teams:
-            all_standings[league_key] = teams
+            all_standings[league_key] = _enrich_standing_teams(teams)
 
     return {
         "leagues": all_standings,

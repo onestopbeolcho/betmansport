@@ -2,14 +2,19 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
+import { formatTeamDisplay, mapTeamName } from '../../lib/teamNames';
 
 interface TeamStanding {
     team_name: string;
+    team_name_ko?: string;
     rank: number;
     played?: number;
     won?: number;
+    wins?: number;
     draw?: number;
+    draws?: number;
     lost?: number;
+    losses?: number;
     goals_for?: number;
     goals_against?: number;
     goal_diff?: number;
@@ -19,15 +24,22 @@ interface TeamStanding {
 
 const LEAGUE_INFO: Record<string, { name: string; nameKo: string; emoji: string; sport: string }> = {
     soccer_epl: { name: 'Premier League', nameKo: '프리미어리그', emoji: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', sport: 'football' },
-    soccer_spain_la_liga: { name: 'La Liga', nameKo: '라 리가', emoji: '🇪🇸', sport: 'football' },
+    soccer_spain_la_liga: { name: 'La Liga', nameKo: '라리가', emoji: '🇪🇸', sport: 'football' },
     soccer_germany_bundesliga: { name: 'Bundesliga', nameKo: '분데스리가', emoji: '🇩🇪', sport: 'football' },
     soccer_italy_serie_a: { name: 'Serie A', nameKo: '세리에 A', emoji: '🇮🇹', sport: 'football' },
     soccer_france_ligue_one: { name: 'Ligue 1', nameKo: '리그 1', emoji: '🇫🇷', sport: 'football' },
     soccer_uefa_champs_league: { name: 'Champions League', nameKo: '챔피언스리그', emoji: '🏆', sport: 'football' },
-    soccer_japan_jleague: { name: 'J-League', nameKo: 'J리그', emoji: '🇯🇵', sport: 'football' },
-    soccer_usa_mls: { name: 'MLS', nameKo: 'MLS', emoji: '🇺🇸', sport: 'football' },
+    soccer_uefa_europa_league: { name: 'Europa League', nameKo: '유로파리그', emoji: '🏆', sport: 'football' },
     soccer_netherlands_eredivisie: { name: 'Eredivisie', nameKo: '에레디비시', emoji: '🇳🇱', sport: 'football' },
-    soccer_portugal_liga: { name: 'Liga Portugal', nameKo: '리가 포르투갈', emoji: '🇵🇹', sport: 'football' },
+    soccer_portugal_liga: { name: 'Liga Portugal', nameKo: '포르투갈 리가', emoji: '🇵🇹', sport: 'football' },
+    soccer_brazil_serie_a: { name: 'Brasileirão Série A', nameKo: '브라질 세리에 A', emoji: '🇧🇷', sport: 'football' },
+    soccer_mexico_liga_mx: { name: 'Liga MX', nameKo: '멕시코 리가 MX', emoji: '🇲🇽', sport: 'football' },
+    soccer_usa_mls: { name: 'MLS', nameKo: '미국 MLS', emoji: '🇺🇸', sport: 'football' },
+    soccer_korea_kleague: { name: 'K League 1', nameKo: 'K리그1', emoji: '🇰🇷', sport: 'football' },
+    soccer_japan_jleague: { name: 'J1 League', nameKo: 'J1리그', emoji: '🇯🇵', sport: 'football' },
+    baseball_mlb: { name: 'MLB', nameKo: 'MLB (메이저리그)', emoji: '⚾', sport: 'baseball' },
+    basketball_nba: { name: 'NBA', nameKo: 'NBA (프로농구)', emoji: '🏀', sport: 'basketball' },
+    icehockey_nhl: { name: 'NHL', nameKo: 'NHL (아이스하키)', emoji: '🏒', sport: 'hockey' },
 };
 
 function FormBadges({ form }: { form: string }) {
@@ -93,9 +105,11 @@ export default function StandingsPage() {
     const currentStandings = useMemo(() => {
         const teams = allStandings[selectedLeague] || [];
         if (!searchQuery) return teams;
-        return teams.filter(t =>
-            t.team_name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const q = searchQuery.toLowerCase();
+        return teams.filter(t => {
+            const ko = mapTeamName(t.team_name, t.team_name_ko).toLowerCase();
+            return t.team_name.toLowerCase().includes(q) || ko.includes(q);
+        });
     }, [allStandings, selectedLeague, searchQuery]);
 
     const leagueInfo = LEAGUE_INFO[selectedLeague] || {
@@ -237,12 +251,12 @@ export default function StandingsPage() {
                                                     </span>
                                                 </td>
                                                 <td style={{ ...tdStyle, fontWeight: 600, color: '#fff' }}>
-                                                    {team.team_name}
+                                                    {isKo ? formatTeamDisplay(team.team_name, team.team_name_ko) : team.team_name}
                                                 </td>
                                                 <td style={tdCenter}>{team.played ?? '—'}</td>
-                                                <td style={{ ...tdCenter, color: '#22c55e' }}>{team.won ?? '—'}</td>
-                                                <td style={{ ...tdCenter, color: '#f59e0b' }}>{team.draw ?? '—'}</td>
-                                                <td style={{ ...tdCenter, color: '#ef4444' }}>{team.lost ?? '—'}</td>
+                                                <td style={{ ...tdCenter, color: '#22c55e' }}>{team.won ?? team.wins ?? '—'}</td>
+                                                <td style={{ ...tdCenter, color: '#f59e0b' }}>{team.draw ?? team.draws ?? '—'}</td>
+                                                <td style={{ ...tdCenter, color: '#ef4444' }}>{team.lost ?? team.losses ?? '—'}</td>
                                                 <td style={tdCenter}>{team.goals_for ?? '—'}</td>
                                                 <td style={tdCenter}>{team.goals_against ?? '—'}</td>
                                                 <td style={{

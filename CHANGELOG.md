@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.4 - Full Korean Team Name Localization (420+ Teams across 17 Leagues) & Broadcast Data Shorts v6.0 Pipeline
+- **100% Korean Team Name Localization (`team_mapper.py`, `teamNames.ts`, `odds.py`, `ai_predictions.py`)**:
+    - Added `TEAM_DISPLAY_EN_TO_KO` (420+ teams across all 17 leagues: EPL, Championship, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, Liga Portugal, UCL/UEL, Brasileirão, Liga MX, MLS, K League 1, J1 League, MLB, NBA, NHL) and `BETMAN_ABBR_TO_FULL_KO` to convert 4-char truncated Betman abbreviations (`도르트문` → `도르트문트`, `바르셀로` → `바르셀로나`, `레알마드` → `레알 마드리드`, `U베를린` → `우니온 베를린`, `페예노르` → `페예노르트`, `댈매브릭` → `댈러스 매버릭스`, etc.) into natural Korean team names.
+    - Added Unicode accent normalization (`_strip_accents`) for accented European & Latin American team names (`Atlético Madrid`, `Borussia Mönchengladbach`, `Alavés`, `São Paulo`, `Grêmio`, `Mazatlán FC`, `Atlético San Luis`) and eliminated cross-sport substring collisions (`FC Dallas` vs `Dallas Mavericks`, `Remo` vs `Cremonese`, `Los Angeles Kings` vs `LAFC`).
+    - Enriched `GET /api/bets`, `GET /api/ai/predictions`, `GET /api/ai/standings-all`, and `GET /api/ai/standings/{sport}` with `team_home_ko`, `team_away_ko`, and `team_name_ko`.
+    - Updated frontend `/analysis`, `/bets` (Top Picks, AI cards, and Odds Comparison table), `/[lang]/standings`, `/vip/portfolio`, and all 154 static SEO match pages with unified `formatTeamDisplay` (`한글명 (English)` without duplicate `Team (Team)` fallback).
+- **Broadcast Data Shorts v6.0 Pipeline & SNS Channel Updates (`video_generator_service.py`, `sns_content_service.py`, `Footer.tsx`)**:
+    - Upgraded `video_generator_service.py` to v6.0 Broadcast Data Graphics (4-scene 1080x1920 24fps layout: Hook & Today's Lineup → 1 Daily Free AI Pick Deep-Dive with 3-Pillar gauges → 2 Locked Pro Top Picks with Frosted Glass Lock UI → Conversion CTA) and rich YouTube description (`build_rich_youtube_description`) acting as a daily community briefing.
+    - Updated `Footer.tsx` with official Instagram (`@scorenix`), Threads (`@scorenix`), and YouTube (`@스코어닉스`) channel links.
+
 ## v0.7.3 - SEO Match Landing Pages (161 Matches) & Marketing Funnel Automation
 - **Fixed `/api/ai/match-list` & Static Match SEO Page Generator (`ai_predictions.py`, `generate-seo.mjs`)**:
     - Resolved `AttributeError: 'PinnacleOddsItem' object has no attribute 'home_win_prob'` in `GET /api/ai/match-list` by computing de-vigged probabilities (`home_prob`, `draw_prob`, `away_prob`) and including `match_time`, `home_ko`, `away_ko`, and `league`.

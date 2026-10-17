@@ -6,6 +6,7 @@ import DeadlineBanner from '../../components/DeadlineBanner';
 import PremiumGate from '../../components/PremiumGate';
 import { useAuth } from '../../context/AuthContext';
 import { i18n } from '../../lib/i18n-config';
+import { mapTeamName } from '../../lib/teamNames';
 
 interface Allocation {
     match_name: string;
@@ -121,8 +122,8 @@ export default function VipPortfolioPage() {
                                 odds = Number(((1.05 / trueProb)).toFixed(2));
                             }
 
-                            const homeName = p.team_home_ko || p.team_home;
-                            const awayName = p.team_away_ko || p.team_away;
+                            const homeName = mapTeamName(p.team_home, p.team_home_ko);
+                            const awayName = mapTeamName(p.team_away, p.team_away_ko);
                             return {
                                 match_name: `${homeName} vs ${awayName}`,
                                 selection: sel,
