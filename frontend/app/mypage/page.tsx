@@ -7,6 +7,7 @@ import DeadlineBanner from '../components/DeadlineBanner';
 import { useAuth } from '../context/AuthContext';
 import { useDictionarySafe } from '../context/DictionaryContext';
 import { i18n } from '../lib/i18n-config';
+import { mapTeamName } from '../lib/teamNames';
 
 interface SlipItem {
     id: string;
@@ -408,7 +409,7 @@ export default function MyPage() {
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <div className="text-[11px] font-medium text-white truncate max-w-[160px]">
-                                                    {pred.team_home_ko || pred.team_home} vs {pred.team_away_ko || pred.team_away}
+                                                    {mapTeamName(pred.team_home, pred.team_home_ko)} vs {mapTeamName(pred.team_away, pred.team_away_ko)}
                                                 </div>
                                                 {isProOrAbove ? (
                                                     <div className="text-[10px] px-2 py-0.5 rounded bg-[#8b5cf6]/10 text-[#8b5cf6] font-bold">
@@ -533,7 +534,13 @@ export default function MyPage() {
                                                             <span className="font-medium mr-1.5" style={{ color: 'var(--accent-primary)' }}>
                                                                 [{item.selection === 'Home' ? 'W' : item.selection === 'Away' ? 'L' : 'D'}]
                                                             </span>
-                                                            <span style={{ color: 'var(--text-secondary)' }}>{item.match_name}</span>
+                                                            <span style={{ color: 'var(--text-secondary)' }}>
+                                                                {item.team_home && item.team_away
+                                                                    ? `${mapTeamName(item.team_home)} vs ${mapTeamName(item.team_away)}`
+                                                                    : item.match_name.includes(' vs ')
+                                                                        ? item.match_name.split(' vs ').map(t => mapTeamName(t.trim())).join(' vs ')
+                                                                        : item.match_name}
+                                                            </span>
                                                         </div>
                                                         <span className="font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{item.odds.toFixed(2)}</span>
                                                     </div>

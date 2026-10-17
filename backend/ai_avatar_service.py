@@ -53,43 +53,57 @@ def is_did_available():
 def elevenlabs_tts(text: str, output_path: str, voice_id: str = None) -> bool:
     """
     ElevenLabs API로 자연스러운 음성 생성.
-    성공 시 True, 실패 시 False (폴백용).
+    유료 전용 라이브러리 보이스(402 에러) 설정 시 자동으로 기본 프리메이드 아나운서 보이스(pNInz6obpgDQGcFmaJgB)로 전환합니다.
     """
     if not ELEVENLABS_API_KEY:
+        try:
+            from app.models.config_db import load_config_to_env
+            load_config_to_env()
+        except Exception:
+            pass
+    api_key = os.getenv("ELEVENLABS_API_KEY", ELEVENLABS_API_KEY)
+    if not api_key:
         return False
 
-    vid = voice_id or ELEVENLABS_VOICE_ID
+    premade_default = "pNInz6obpgDQGcFmaJgB"  # Adam (Multilingual v2 아나운서 톤)
+    vid = voice_id or os.getenv("ELEVENLABS_VOICE_ID", ELEVENLABS_VOICE_ID) or premade_default
+    candidate_voices = [vid] if vid == premade_default else [vid, premade_default]
 
-    try:
-        url = f"{ELEVENLABS_BASE}/text-to-speech/{vid}?output_format=mp3_44100_128"
-        headers = {
-            "xi-api-key": ELEVENLABS_API_KEY,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "text": text,
-            "model_id": ELEVENLABS_MODEL,
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.75,
-                "style": 0.3,
-            },
-        }
+    headers = {
+        "xi-api-key": api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "text": text,
+        "model_id": ELEVENLABS_MODEL,
+        "voice_settings": {
+            "stability": 0.55,
+            "similarity_boost": 0.78,
+            "style": 0.35,
+            "speed": 1.12,
+        },
+    }
 
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
+    for current_vid in candidate_voices:
+        try:
+            url = f"{ELEVENLABS_BASE}/text-to-speech/{current_vid}?output_format=mp3_44100_128"
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
 
-        if resp.status_code == 200:
-            with open(output_path, "wb") as f:
-                f.write(resp.content)
-            print(f"    [OK] ElevenLabs TTS → {os.path.basename(output_path)}")
-            return True
-        else:
-            print(f"    [!] ElevenLabs error {resp.status_code}: {resp.text[:100]}")
+            if resp.status_code == 200:
+                with open(output_path, "wb") as f:
+                    f.write(resp.content)
+                print(f"    [OK] ElevenLabs TTS ({current_vid[:6]}) → {os.path.basename(output_path)}")
+                return True
+            elif resp.status_code == 402 and current_vid != premade_default:
+                print(f"    [~] ElevenLabs library voice restricted (402), switching to premade voice...")
+                continue
+            else:
+                print(f"    [!] ElevenLabs error {resp.status_code}: {resp.text[:100]}")
+                return False
+        except Exception as e:
+            print(f"    [!] ElevenLabs exception: {e}")
             return False
-
-    except Exception as e:
-        print(f"    [!] ElevenLabs exception: {e}")
-        return False
+    return False
 
 
 def list_elevenlabs_voices():

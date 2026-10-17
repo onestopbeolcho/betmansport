@@ -706,13 +706,18 @@ BLOGGER_SEO_PROMPT = """당신은 Scorenix의 수석 스포츠 퀀트 칼럼니�
    - 이 경기의 기초 전력과 팩터 데이터는 상세히 설명하되, **"오늘 가장 신뢰도가 높은 🔥 AI TOP PICK 3경기와 켈리 공식(Kelly Criterion) 최적 자금 배분 비중은 스코어닉스 공식 플랫폼에서 확인할 수 있습니다"**라는 안내를 자연스럽게 포함하세요.
    - 또한 **"스코어닉스에서는 매일 1경기의 7대 핵심 팩터 AI 리포트를 100% 무료 샘플로 공개하고 있습니다"**라고 강조하여 무료 방문을 유도하세요.
 5. **용어 준수:** '도박', '베팅', '토토'라는 단어는 사용하지 말고 '스포츠 데이터 분석', '퀀트 리포트', '기대값(EV)', '포트폴리오 배분'이라는 전문 용어를 사용하세요.
-6. **하단 CTA 박스 (필수 포함):** 본문 맨 하단에는 아래 HTML 구조로 공식 웹사이트(`/ko/analysis` 및 매치 상세 링크)로 연결되는 버튼을 넣으세요:
+6. **하단 CTA 박스 (필수 포함):** 본문 맨 하단에는 아래 HTML 구조로 공식 웹사이트 및 공식 SNS 채널(유튜브 `@스코어닉스`, 인스타그램 `@scorenix`, 쓰레드 `@scorenix`)로 연결되는 버튼을 넣으세요. (절대 `youtube.com/@scorenix`나 `instagram.com/scorenix_official` 같은 잘못된 주소를 쓰지 마세요):
      <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #0b1120, #1e293b); border: 1px solid #334155; border-radius: 16px; text-align: center; color: #f8fafc;">
        <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,0.2); color: #34d399; border-radius: 999px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">🎁 일일 1건 AI 심층 리포트 무료 공개 중</div>
        <h3 style="margin-top: 0; color: #ffffff; font-size: 20px;">🔥 오늘 밤 AI 신뢰도 80%+ 'TOP PICK 3경기'가 궁금하다면?</h3>
        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 22px;">8,960경기를 학습한 3-Pillar 하이브리드 퀀트 엔진의 실시간 승률 예측과 켈리 포트폴리오 최적 비중을 지금 바로 확인하세요.</p>
        <a href="https://scorenix.com/ko/analysis?utm_source=blogger&utm_medium=cta_analysis" style="display:inline-block; margin: 6px; padding: 14px 28px; background: linear-gradient(135deg, #00d4ff, #8b5cf6); color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">👉 오늘의 무료 AI 샘플 & TOP PICK 확인하기</a>
        <a href="https://scorenix.com/ko/vip/portfolio?utm_source=blogger&utm_medium=cta_portfolio" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">🏆 켈리 공식 자금 배분 계산기</a>
+       <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #334155;">
+         <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🎬 공식 유튜브 (@스코어닉스)</a>
+         <a href="https://www.instagram.com/scorenix/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix)</a>
+         <a href="https://www.threads.com/@scorenix" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix)</a>
+       </div>
      </div>
 """
 
@@ -737,6 +742,10 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
             if text.endswith("```"):
                 text = text[:-3]
             text = text.strip()
+            # Sanitize any legacy social links
+            text = text.replace("https://www.youtube.com/@scorenix", "https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4")
+            text = text.replace("https://www.instagram.com/scorenix_official/", "https://www.instagram.com/scorenix/")
+            text = text.replace("https://www.instagram.com/scorenix_official", "https://www.instagram.com/scorenix/")
             
             # Extract intuitive title (First h1)
             title = f"[Scorenix AI 분석] {match_data.get('team_home_ko', '')} vs {match_data.get('team_away_ko', '')} 해외배당 및 3-Pillar 승률 예측"
@@ -803,6 +812,11 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
       <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">스코어닉스 공식 플랫폼에서 실시간 배당 급변 알림과 AI 최종 추천 포지션을 확인하세요!</p>
       <a href="https://scorenix.com/ko/analysis?utm_source=blogger&utm_medium=cta_analysis" style="display:inline-block; margin: 6px; padding: 14px 28px; background: linear-gradient(135deg, #00d4ff, #8b5cf6); color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">👉 무료 AI 샘플 & TOP PICK 보러가기</a>
       <a href="{url}" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">📊 이 경기 전용 리포트 열기</a>
+      <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #334155;">
+        <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🎬 공식 유튜브 (@스코어닉스)</a>
+        <a href="https://www.instagram.com/scorenix/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix)</a>
+        <a href="https://www.threads.com/@scorenix" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix)</a>
+      </div>
     </div>
     """
     return {"title": title, "html": html}

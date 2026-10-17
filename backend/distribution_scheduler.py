@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.models.config_db import load_config_to_env
 from app.services.google_drive_service import google_drive_service
-from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches
+from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, build_youtube_metadata
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,40 +58,42 @@ def send_telegram_alert(message: str) -> bool:
         return False
 
 
-async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: list = None):
+async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = False, langs: list = None):
     """
-    하이브리드 비디오 제작 및 플랫폼별 배포 자동화 파이프라인 실행 (다국어 일괄 또는 개별 처리)
+    한국어 유료 전환 퍼널 집중 — Broadcast Shorts v6.0 제작 및 유튜브 자동 배포 파이프라인 (하루 1회 한국어 전용)
     """
-    logger.info(f"🚀 배포 파이프라인 트리거됨. 모드: {mode} (아바타 활성: {use_avatar}, 대상 언어: {langs})")
-    
+    # 한국 유저 유료 결제 집중을 위해 기본 언어를 한국어('ko') 단독으로 고정
+    langs = ["ko"]
+    logger.info(f"🚀 [Broadcast Shorts v6.0] 배포 파이프라인 트리거됨. 모드: {mode} (대상 언어: {langs})")
+
     # 0. 환경변수 최신화 (Firestore 로딩)
     load_config_to_env()
-    
+
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_output")
     os.makedirs(output_dir, exist_ok=True)
-    
-    if langs is None:
-        langs = ["ko", "en", "ja"]
-        
+
     results = {}
-    
+
     for lang in langs:
-        logger.info(f"🌐 [{lang.upper()}] 다국어 숏츠 빌드 및 배포 시작...")
+        logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v6.0 빌드 및 배포 시작...")
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(output_dir, f"scorenix_shorts_{mode}_{lang}_{ts}.mp4")
-        
-        # 1. 숏폼 비디오 생성 (Gemini 번역 및 성우 튜닝 탑재)
+
+        matches = fetch_top_matches(limit=5, lang="ko")
+        meta = build_youtube_metadata(matches)
+
+        # 1. 숏폼 비디오 생성 (Broadcast Data Card v6.0)
         try:
             loop = asyncio.get_running_loop()
             rendered_path = await loop.run_in_executor(
-                None, 
-                generate_video, 
-                "background.mp4", 
-                video_path, 
-                False,      # auto_upload는 본 스케줄러에서 따로 관리하므로 False
-                use_avatar, 
+                None,
+                generate_video,
+                "background.mp4",
+                video_path,
+                False,
+                use_avatar,
                 mode,
-                lang
+                "ko",
             )
         except Exception as render_err:
             logger.error(f"❌ [{lang.upper()}] 비디오 렌더링 중 오류 발생: {render_err}", exc_info=True)
@@ -103,72 +105,32 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: 
 
         logger.info(f"✅ [{lang.upper()}] 비디오 렌더링 완료: {rendered_path}")
 
-        # 2. 유튜브 숏츠 자동 업로드
+        # 2. 유튜브 숏츠 자동 업로드 (해결책 A: 설명란에 오늘의 무료 공개 1경기 리포트 전문 삽입)
         logger.info(f"📤 [{lang.upper()}] 유튜브 숏츠 자동 업로드 시도 중...")
         youtube_url = None
         try:
             from app.services.youtube_uploader import upload_to_youtube
-            now = datetime.now()
-            
-            # 제목 및 캡션 다국어 템플릿
-            title_templates = {
-                "ko": f"[AI 예측] {now.strftime('%m/%d')} 데이터가 말하는 오늘의 추천 경기 #shorts",
-                "en": f"[AI Predict] {now.strftime('%m/%d')} Today's Match Predictions by Data #shorts",
-                "ja": f"【AI勝敗予想】{now.strftime('%m/%d')} データが導く本日の本命カード #shorts"
-            }
-            title = title_templates.get(lang, title_templates["ko"])
-            
-            description_templates = {
-                "ko": (
-                    f"✦ {now.strftime('%Y년 %m월 %d일')} 기준 AI 데이터 분석\n\n"
-                    "7-Factor AI 알고리즘으로 분석한 기대값 최고 리포트입니다.\n"
-                    "※ 본 영상은 데이터 분석 결과이며 투자 권유가 아닙니다.\n\n"
-                    "👉 전체 분석 리포트 확인: https://scorenix.com\n\n"
-                    "#스포츠분석 #AI분석 #배당분석 #데이터분석 #shorts #스코어닉스"
-                ),
-                "en": (
-                    f"✦ AI Data Analysis as of {now.strftime('%b %d, %Y')}\n\n"
-                    "Expectation value report analyzed by 7-Factor AI algorithm.\n"
-                    "* This video is a data analysis result and is not an investment recommendation.\n\n"
-                    "👉 Check all analysis reports: https://scorenix.com\n\n"
-                    "#sportsanalytics #AIprediction #oddsanalysis #dataanalysis #shorts #scorenix"
-                ),
-                "ja": (
-                    f"✦ {now.strftime('%Y年%m月%d日')} 基準 AIデータ分析\n\n"
-                    "7-Factor AIアルゴリズムで分析した期待値最高カードのレポートです。\n"
-                    "※ 本動画はデータ分析結果であり、投資勧誘ではありません。\n\n"
-                    "👉 詳細分析レポート（無料）: https://scorenix.com/ja/bets\n\n"
-                    "#AI予想 #サッカー予想 #ブックメーカー #スポーツ分析 #shorts #スコアニック"
-                )
-            }
-            description = description_templates.get(lang, description_templates["ko"])
-            
-            tags_map = {
-                "ko": ["스포츠분석", "AI분석", "배당분석", "데이터분석", "shorts", "스코어닉스"],
-                "en": ["sportsanalytics", "AIprediction", "oddsanalysis", "dataanalysis", "shorts", "scorenix"],
-                "ja": ["AI予想", "サッカー予想", "ブックメーカー", "スポーツ分析", "海外サッカー", "shorts", "スコアニック"]
-            }
-            tags = tags_map.get(lang, tags_map["ko"])
-            
-            youtube_vid = upload_to_youtube(rendered_path, title, description, tags)
+            youtube_vid = upload_to_youtube(
+                rendered_path,
+                meta["title"],
+                meta["description"],
+                meta["tags"],
+            )
             if youtube_vid:
-                youtube_url = f"https://youtu.be/{youtube_vid}"
+                youtube_url = f"https://youtube.com/shorts/{youtube_vid}"
                 logger.info(f"✅ [{lang.upper()}] 유튜브 업로드 완료: {youtube_url}")
             else:
                 logger.warning(f"⚠️ [{lang.upper()}] 유튜브 업로드 결과 비디오 ID를 받지 못했습니다.")
         except Exception as yt_err:
             logger.error(f"❌ [{lang.upper()}] 유튜브 업로드 실패: {yt_err}")
 
-        # 3. 구글 드라이브 업로드 (사용자 요청으로 비활성화 - 유튜브 직접 다운로드 방식 사용)
-        logger.info(f"📂 [{lang.upper()}] 구글 드라이브 업로드 단계 생략")
-        drive_link = None
-
         results[lang] = {
             "youtube_url": youtube_url,
-            "drive_link": drive_link
+            "title": meta["title"],
+            "free_match": f"{meta['free_match']['home']} vs {meta['free_match']['away']} ({meta['free_match']['pick_label']})",
         }
 
-        # 5. 로컬 임시 파일 정리
+        # 3. 로컬 임시 파일 정리
         try:
             if os.path.exists(rendered_path):
                 os.remove(rendered_path)
@@ -176,31 +138,21 @@ async def run_distribution_pipeline(mode: str, use_avatar: bool = False, langs: 
         except OSError as clean_err:
             logger.warning(f"⚠️ [{lang.upper()}] 로컬 임시 비디오 정리 오류: {clean_err}")
 
-    # 4. 텔레그램 다국어 통합 알림 전송
-    logger.info("📲 통합 다국어 배포 알림 발송 중...")
+    # 4. 텔레그램 알림 전송
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-    
-    alert_msg = f"""<b>🎬 스코어닉스 글로벌 AI 숏폼 제작 완료 ({mode.upper()})</b>
-일시: {now_str}
-
-<b>🔗 다운로드 및 퍼블릭 링크</b>
-"""
-    for lang, res in results.items():
-        dl_link = res.get("drive_link") or "#"
-        yt_link = res.get("youtube_url") or "#"
-        alert_msg += f"""
-<b>[{lang.upper()} 버전]</b>
-📁 <a href="{dl_link}">구글 드라이브 비디오 다운로드</a>
-📺 <a href="{yt_link}">유튜브 숏츠 바로가기</a>
-"""
-
-    alert_msg += f"""
-<b>📲 SNS 복사용 기본 해시태그</b>
-#스코어닉스 #AI분석 #스포츠데이터 #릴스 #Reels #TikTok #shorts
-"""
+    ko_res = results.get("ko", {})
+    yt_link = ko_res.get("youtube_url") or "업로드 대기/실패"
+    alert_msg = (
+        f"<b>🎬 스코어닉스 Broadcast Shorts v6.0 자동 발행 완료</b>\n"
+        f"일시: {now_str}\n"
+        f"무료 공개 픽: <b>{ko_res.get('free_match', '-')}</b>\n"
+        f"📺 유튜브 쇼츠: <a href=\"{yt_link}\">{yt_link}</a>\n"
+        f"🌐 분석 페이지: https://scorenix.com/ko/analysis"
+    )
     send_telegram_alert(alert_msg)
-    
+
     return {"status": "success", "results": results}
+
 
 
 if __name__ == "__main__":

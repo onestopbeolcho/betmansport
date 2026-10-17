@@ -33,6 +33,7 @@ export default function Navbar() {
         { href: `/${currentLang}`, label: t.home || "홈", icon: "⚡", desc: t.homeDesc || "서비스 소개" },
         { href: `/${currentLang}/bets`, label: t.valueBet || "AI 우세팀 분석", icon: "📊", desc: t.valueBetDesc || "수학적/통계적으로 우세한 팀 선별" },
         { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 데이터 리포트", icon: "🧠", desc: t.aiPredictDesc || "예측을 뒷받침하는 세부 경기 데이터" },
+        { href: `/${currentLang}/standings`, label: "리그 순위", icon: "🏆", desc: "17개 글로벌 리그 실시간 순위표" },
         { href: `/${currentLang}/mypage`, label: t.portfolio || "나의 분석 노트", icon: "💼", desc: t.portfolioDesc || "관심 경기 배분 및 시뮬레이션" },
         { href: `/${currentLang}/vip`, label: "VIP 리포트", icon: "👑", desc: t.vipDesc || "전문가용 데이터 심층 분석" },
         { href: `/${currentLang}/manual`, label: t.guide || "이용안내", icon: "📖", desc: t.guideDesc || "데이터 툴 사용 방법" },

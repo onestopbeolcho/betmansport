@@ -54,13 +54,16 @@ export default function HeroSection() {
                         <a href={`/${currentLang}/bets`} data-tour="tour-cta-bets" className="btn-primary text-base px-8 py-3.5 animate-pulse-glow">
                             {t.ctaPrimary || 'Start AI Analysis →'}
                         </a>
+                        <a href={`/${currentLang}/analysis`} className="px-6 py-3.5 rounded-xl text-sm font-bold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all">
+                            🎁 오늘의 무료 AI 샘플 리포트 보기
+                        </a>
                     </div>
 
                     {/* Stats */}
                     <div className="mt-16 grid grid-cols-3 gap-4 max-w-lg mx-auto stagger-children" style={{ animationDelay: '320ms' }}>
                         {[
-                            { label: t.statMatches || '분석 경기', value: '94+', icon: '⚽' },
-                            { label: t.statLeagues || '지원 리그', value: '15+', icon: '🏆' },
+                            { label: t.statMatches || '분석 경기', value: '150+', icon: '⚽' },
+                            { label: t.statLeagues || '지원 리그', value: '17', icon: '🏆' },
                             { label: t.statUpdate || '업데이트', value: t.statUpdateValue || '실시간', icon: '⚡' },
                         ].map((stat, i) => (
                             <div key={i} className="gradient-border-card p-5 text-center">

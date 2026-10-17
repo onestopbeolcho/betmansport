@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useDictionarySafe } from "../context/DictionaryContext";
 import { motion } from "framer-motion";
+import { mapTeamName } from "../lib/teamNames";
 
 interface ComboMatch {
   match_id: string;
@@ -167,7 +168,7 @@ export default function VipComboPanel() {
                   <div key={mIdx} className="flex justify-between items-center bg-gray-900/50 p-3 rounded-lg border border-gray-800 hover:border-gray-600 transition-colors">
                     <div className="flex flex-col">
                       <span className="text-xs text-gray-500 mb-1">{match.league}</span>
-                      <span className="text-sm font-medium text-gray-100">{match.home} vs {match.away}</span>
+                      <span className="text-sm font-medium text-gray-100">{mapTeamName(match.home)} vs {mapTeamName(match.away)}</span>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-end">

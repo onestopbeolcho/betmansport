@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useDictionarySafe } from "../context/DictionaryContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { mapTeamName } from "../lib/teamNames";
 
 interface DroppingAlert {
   league: string;
@@ -24,8 +25,10 @@ export default function DroppingOddsRadar() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isVip = Boolean(user && (user.tier === "vip" || user.tier === "premium" || user.role === "admin"));
+
   useEffect(() => {
-    if (!user || user.tier !== "vip") {
+    if (!isVip) {
       setLoading(false);
       return;
     }
@@ -61,9 +64,9 @@ export default function DroppingOddsRadar() {
     if (token) {
       fetchDroppingOdds();
     }
-  }, [user, token]);
+  }, [user, token, isVip]);
 
-  if (!user || user.tier !== "vip") {
+  if (!isVip) {
     // Blank or minimal loading state for non-VIP if rendered outside blurred container
     return null;
   }
@@ -121,9 +124,9 @@ export default function DroppingOddsRadar() {
                       <span className="text-xs text-gray-400">{new Date(alert.start_time).toLocaleString()}</span>
                     </div>
                     <div className="text-white font-medium">
-                      <span className={alert.team_type === "home" ? "text-rose-400 font-bold" : ""}>{alert.home}</span>
+                      <span className={alert.team_type === "home" ? "text-rose-400 font-bold" : ""}>{mapTeamName(alert.home)}</span>
                       <span className="mx-2 text-gray-500">vs</span>
-                      <span className={alert.team_type === "away" ? "text-rose-400 font-bold" : ""}>{alert.away}</span>
+                      <span className={alert.team_type === "away" ? "text-rose-400 font-bold" : ""}>{mapTeamName(alert.away)}</span>
                     </div>
                   </div>
                   

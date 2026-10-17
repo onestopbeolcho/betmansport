@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useRouter } from 'next/navigation';
+import { mapTeamName } from '../lib/teamNames';
 
 export default function BetSlip() {
     const { cartItems, removeFromCart, clearCart, isOpen, toggleCart } = useCart();
@@ -103,7 +104,7 @@ export default function BetSlip() {
                                     <div className="text-xs text-[var(--accent-primary)] font-bold mb-1">
                                         {item.selection === 'Home' ? '홈 승' : item.selection === 'Away' ? '원정 승' : '무승부'}
                                     </div>
-                                    <div className="font-medium text-white/90 text-sm">{item.team_home} vs {item.team_away}</div>
+                                    <div className="font-medium text-white/90 text-sm">{mapTeamName(item.team_home)} vs {mapTeamName(item.team_away)}</div>
                                     <div className="flex justify-between items-center mt-2">
                                         <span className="text-xs text-[var(--text-muted)]">{item.time}</span>
                                         <span className="badge badge-value font-mono text-sm font-bold">{item.odds.toFixed(2)}</span>
