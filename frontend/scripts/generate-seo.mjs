@@ -79,6 +79,18 @@ function generateMatchPage(match) {
         },
         {
             '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Scorenix (스코어닉스)',
+            url: SITE_URL,
+            sameAs: [
+                'https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4',
+                'https://www.instagram.com/scorenix_official/',
+                'https://www.threads.com/@scorenix_official',
+                'https://official-scorenix.blogspot.com',
+            ],
+        },
+        {
+            '@context': 'https://schema.org',
             '@type': 'FAQPage',
             mainEntity: [
                 {
@@ -220,6 +232,12 @@ function generateMatchPage(match) {
     </div>
 
     <div class="seo-footer">
+      <div style="margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 12px; font-weight: 600;">
+        <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" target="_blank" rel="noopener" style="color: #f87171; text-decoration: none;">🎬 공식 유튜브 (@스코어닉스)</a>
+        <a href="https://www.instagram.com/scorenix_official/" target="_blank" rel="noopener" style="color: #f472b6; text-decoration: none;">📸 공식 인스타그램 (@scorenix_official)</a>
+        <a href="https://www.threads.com/@scorenix_official" target="_blank" rel="noopener" style="color: #cbd5e1; text-decoration: none;">🧵 공식 쓰레드 (@scorenix_official)</a>
+        <a href="https://official-scorenix.blogspot.com" target="_blank" rel="noopener" style="color: #fbbf24; text-decoration: none;">✍️ 공식 AI 분석 블로그</a>
+      </div>
       <p>Scorenix(스코어닉스)는 3-Pillar 하이브리드 퀀트 알고리즘(글로벌 배당 마진 제거 + 포아송/피타고라스 기대승률 + 7대 전술·폼 팩터)을 결합한 스포츠 데이터 분석 플랫폼입니다. ${match.home_ko} vs ${match.away_ko} 경기의 상세 분석, 승률 예측, 기대값(EV) 및 켈리 포트폴리오 정보를 확인하세요. 본 서비스의 모든 데이터는 통계 연구 목적이며, 최종 판단과 책임은 이용자 본인에게 있습니다.</p>
     </div>
   </div>
@@ -307,10 +325,10 @@ async function main() {
         console.warn(`⚠ match-list 호출 실패: ${e.message}`);
     }
 
-    if (matches.length === 0) {
+    if (matches.length < 50) {
         try {
             const predData = await fetchWithRetry(`${API_BASE}/api/ai/predictions`, 3, 4000);
-            if (predData && predData.predictions) {
+            if (predData && predData.predictions && predData.predictions.length > matches.length) {
                 const preds = predData.predictions;
                 matches = preds.map((p) => {
                     const rawTime = String(p.match_time || '');

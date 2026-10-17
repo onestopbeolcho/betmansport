@@ -363,8 +363,13 @@ SNS_MARKETING_PROMPT = """당신은 Scorenix의 최고 수석 SNS 마케팅 전�
 2. **[정확한 팀명 및 리그]**: `📍 [리그명] [홈팀] vs [원정팀]` 명시.
 3. **[명확한 예상 승리팀 & AI 수치]**: `🎯 AI 예상 승리: [예상 승리팀] (AI 신뢰도 [신뢰도]%)` 명시.
 4. **[AI 산출 근거 2~3가지]**: 주어지는 `factors_summary` 데이터 기반으로 `💡 AI 산출 근거:` 항목을 Bullet Point(•)로 2개 이상 명확히 요약 작성하세요! (허황된 소설 금지, 실제 데이터 기반).
-5. **[상세 링크]**: 본문 하단에 제공된 `url_path` 기반 링크 첨부:
-   👉 상세 분석 리포트: https://scorenix.com/ko/match/[제공된 url_path]?utm_source=sns&utm_medium=auto_post
+5. **[공식 채널 상호 링크 (필수 포함)]**: 본문 하단에 제공된 `url_path` 기반 링크 및 공식 채널들을 모두 첨부하세요:
+   🔗 공식 채널
+   🌐 AI분석: https://scorenix.com/ko/match/[제공된 url_path]?utm_source=sns&utm_medium=auto_post
+   🎬 유튜브: https://www.youtube.com/@스코어닉스
+   📸 인스타: https://www.instagram.com/scorenix_official/
+   🧵 쓰레드: https://www.threads.com/@scorenix_official
+   ✍️ 블로그: https://official-scorenix.blogspot.com
 
 출력 형식:
 각 경기별 게시물을 ---로 구분하여 작성하세요.
@@ -487,8 +492,12 @@ def _generate_sns_fallback(predictions: list) -> list:
             f"🎯 AI 예상 승리: {rec_ko} (AI 신뢰도 {conf:.0f}%)\n\n"
             f"💡 AI 핵심 산출 근거:\n"
             f"{factor_lines}\n"
-            f"👉 실시간 상세 분석 리포트: https://scorenix.com/ko/match/{date_param}/{slug}?utm_source=sns&utm_medium=auto_post\n"
-            f"(인스타는 프로필 링크 확인!)\n\n"
+            f"🔗 공식 채널\n"
+            f"🌐 AI분석: https://scorenix.com/ko/match/{date_param}/{slug}?utm_source=sns&utm_medium=auto_post\n"
+            f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
+            f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
+            f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
+            f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
             f"#Scorenix #AI예측 #스포츠분석 #{league.replace(' ', '')}"
         )
         results.append({
@@ -502,14 +511,18 @@ def _generate_sns_fallback(predictions: list) -> list:
 SNS_GENERIC_MARKETING_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 작성하세요.
 
 역할:
-- 오늘 당장 분석할 뚜렷한 경기가 없더라도, 사용자가 Scorenix(스코어닉스) 웹사이트를 방문하고 싶게 만드는 마케팅 게시물을 생성하세요.
+- 오늘 당장 분석할 뚜렷한 경기가 없더라도, 사용자가 Scorenix(스코어닉스) 웹사이트 및 공식 채널들을 방문하고 싶게 만드는 마케팅 게시물을 생성하세요.
 
 규칙:
 1. 반드시 SCORENIX.COM 도메인을 언급하고 클릭을 유도하세요.
-2. 280자 이내로 눈에 띄게 작성하세요.
-3. 본문 끝에는 홈페이지 링크를 첨부하세요:
-   👉 스코어닉스 바로가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic
-   (인스타는 프로필 링크 확인!)
+2. 본문은 240자 이내로 눈에 띄게 작성하세요.
+3. 본문 끝에는 반드시 공식 채널 상호 링크를 모두 첨부하세요:
+   🔗 공식 채널
+   🌐 AI분석: https://scorenix.com/ko/analysis
+   🎬 유튜브: https://www.youtube.com/@스코어닉스
+   📸 인스타: https://www.instagram.com/scorenix_official/
+   🧵 쓰레드: https://www.threads.com/@scorenix_official
+   ✍️ 블로그: https://official-scorenix.blogspot.com
 """
 
 async def generate_generic_promo() -> Optional[str]:
@@ -529,25 +542,32 @@ async def generate_generic_promo() -> Optional[str]:
             
     return (
         "🔥 스포츠 투자의 새로운 기준, Scorenix! 📈\n\n"
-        "감에 의존하는 투자는 그만. 🤖 배당률 분석과 7-Factor AI 알고리즘으로 매일 승리 예측과 가치 정보만 선별해 드립니다.\n\n"
-        "지금 바로 SCORENIX.COM 에서 놀라운 예측 결과를 확인하세요!\n\n"
-        "👉 실시간 분석 보러가기: https://scorenix.com?utm_source=sns&utm_medium=auto_post_generic\n"
-        "(인스타는 프로필 링크 확인!)\n\n"
-        f"#Scorenix #AI예측 #스포츠분석 #가치투자\n\n[Ref: {stamp}]"
+        "감에 의존하는 투자는 그만. 🤖 배당률 분석과 3-Pillar AI 알고리즘으로 매일 승리 예측과 가치 정보만 선별해 드립니다.\n\n"
+        "🔗 공식 채널\n"
+        "🌐 AI분석: https://scorenix.com/ko/analysis\n"
+        "🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
+        "📸 인스타: https://www.instagram.com/scorenix_official/\n"
+        "🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
+        "✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
+        f"#Scorenix #AI예측 #스포츠분석 #가치투자 [Ref: {stamp}]"
     )
 
 SNS_WINNING_PROOF_PROMPT = """당신은 Scorenix의 최고 수석 SNS 마케팅 전문 AI 분석관입니다. 한국어로 작성하세요.
 
 역할:
-- 최근 AI가 성공적으로 예측 적중(HIT)한 경기 데이터(경기 날짜, 리그, 팀명, 예상 승리팀, 최종 스코어, AI 산출 근거)를 유저들에게 공개하고, "지난 AI 예측 완벽 적중"을 증명하는 마케팅 게시물을 생성합니다.
+- 최근 AI가 성공적으로 예측 적중(HIT)한 경기 데이터를 유저들에게 공개하고, "지난 AI 예측 완벽 적중"을 증명하는 마케팅 게시물을 생성합니다.
 
 규칙 (필수 준수):
 1. **[경기 정보 & 날짜]**: `📅 경기 날짜: [날짜]` 및 `📍 [리그명] [홈팀] vs [원정팀]` 명시.
 2. **[예상 승리팀 & 최종 스코어]**: `🎯 AI 추천 픽: [예상 승리팀] (신뢰도 [신뢰도]%)` ➔ `⚽ 최종 스코어: [홈스코어] : [원정스코어] 완벽 적중! ✅` 명시.
-3. **[AI 적중 근거]**: `💡 AI 연산 분석 근거:` 요약 명시.
-4. **[검증 링크]**:
-   👉 AI 적중률 실시간 검증: https://scorenix.com?utm_source=sns&utm_medium=auto_post_winning
-   (인스타는 프로필 링크 확인!)
+3. **[AI 적중 근거]**: 2줄 이내로 핵심 요약.
+4. **[공식 채널 상호 링크 (필수 포함)]**:
+   🔗 공식 채널
+   🌐 AI분석: https://scorenix.com/ko/analysis
+   🎬 유튜브: https://www.youtube.com/@스코어닉스
+   📸 인스타: https://www.instagram.com/scorenix_official/
+   🧵 쓰레드: https://www.threads.com/@scorenix_official
+   ✍️ 블로그: https://official-scorenix.blogspot.com
 """
 
 SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다. 한국어로 트렌디하게 작성하세요.
@@ -559,12 +579,15 @@ SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다
 규칙 (매우 중요):
 1. **[🎁 오늘의 무료 AI 분석 샘플 1건 공개]**: 제공된 샘플 경기(또는 4번째 경기) 1건은 AI 추천 승리 팀과 승률(%)을 명확히 공개하세요.
 2. **[🔒 오늘의 AI TOP PICK 3경기 티저]**: 상위 3경기는 대진과 AI 신뢰도(%)만 공개하고 최종 추천 결과는 '[🔒 PRO 전용]'으로 표시해 클릭을 유도하세요.
-3. 280자 이내로 콤팩트하게 작성하세요.
-4. 이모지(🔥, 🎁, 🔒, 📊 등)를 적극 활용하세요.
-5. 해시태그 3-5개를 포함하세요 (#Scorenix #스포츠데이터 #AI승률분석 #해외배당 #프로토분석).
-6. 본문 끝에는 홈페이지 링크를 첨부하세요:
-   👉 무료 샘플 & AI TOP PICK 확인: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_top3
-   (인스타는 프로필 링크 확인!)
+3. 본문은 240자 이내로 콤팩트하게 작성하세요.
+4. 해시태그 3-4개를 포함하세요 (#Scorenix #스포츠데이터 #AI승률분석 #해외배당).
+5. 본문 끝에는 반드시 공식 채널 상호 링크를 첨부하세요:
+   🔗 공식 채널
+   🌐 AI분석: https://scorenix.com/ko/analysis
+   🎬 유튜브: https://www.youtube.com/@스코어닉스
+   📸 인스타: https://www.instagram.com/scorenix_official/
+   🧵 쓰레드: https://www.threads.com/@scorenix_official
+   ✍️ 블로그: https://official-scorenix.blogspot.com
 """
 
 async def generate_winning_proof_sns(hits: list) -> Optional[str]:
@@ -594,10 +617,13 @@ async def generate_winning_proof_sns(hits: list) -> Optional[str]:
     a_score = hit.get("away_score", 0)
     return (
         f"🎉 [AI 적중 인증] {home} vs {away} 데이터 예측 적중! ✅\n\n"
-        f"3-Pillar 퀀트 엔진이 지목한 포지션({rec})이 스코어 {h_score}:{a_score}로 정확히 적중했습니다! 🤖📈\n"
-        f"감에 의존하는 판단이 아닌, 피나클 디비깅(De-vig)과 포아송 기대득점 모델의 결과입니다.\n\n"
-        f"👉 오늘의 무료 샘플 1건 & 적중률 검증: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_winning\n"
-        f"(인스타는 프로필 링크 확인!)\n\n"
+        f"3-Pillar 퀀트 엔진이 지목한 포지션({rec})이 스코어 {h_score}:{a_score}로 정확히 적중했습니다! 🤖📈\n\n"
+        f"🔗 공식 채널\n"
+        f"🌐 AI분석: https://scorenix.com/ko/analysis\n"
+        f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
+        f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
+        f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
+        f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
         f"#Scorenix #적중인증 #스포츠데이터 #AI분석"
     )
 
@@ -628,9 +654,12 @@ async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]
     return (
         f"💡 [스포츠 퀀트 1분 지식] 🧠\n\n"
         f"{selected_topic}\n\n"
-        f"Scorenix에서는 매일 '무료 AI 분석 샘플 1건(7대 지표 전체 오픈)'을 누구나 체험할 수 있습니다!\n\n"
-        f"👉 무료 분석 리포트 보기: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_edu\n"
-        f"(인스타는 프로필 링크 확인!)\n\n"
+        f"🔗 공식 채널\n"
+        f"🌐 AI분석: https://scorenix.com/ko/analysis\n"
+        f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
+        f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
+        f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
+        f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
         f"#Scorenix #스포츠데이터 #퀀트분석 #배당분석"
     )
 
@@ -680,8 +709,12 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
         f"⚽ {s_home} vs {s_away} → AI 예측: [{s_rec_ko}] (신뢰도 {s_conf:.0f}%)\n\n"
         f"🚨 [오늘 밤 AI TOP PICK 3경기 포착]\n"
         f"{matches_text}\n"
-        f"7대 팩터 무료 리포트와 TOP PICK 3경기의 최종 승자는 스코어닉스에서 확인하세요!\n\n"
-        f"👉 지금 확인하기: https://scorenix.com/ko/analysis?utm_source=sns&utm_medium=auto_post_top3\n"
+        f"🔗 공식 채널\n"
+        f"🌐 AI분석: https://scorenix.com/ko/analysis\n"
+        f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
+        f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
+        f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
+        f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
         f"#Scorenix #스포츠분석 #AI예측 #해외배당"
     )
 
@@ -706,7 +739,7 @@ BLOGGER_SEO_PROMPT = """당신은 Scorenix의 수석 스포츠 퀀트 칼럼니�
    - 이 경기의 기초 전력과 팩터 데이터는 상세히 설명하되, **"오늘 가장 신뢰도가 높은 🔥 AI TOP PICK 3경기와 켈리 공식(Kelly Criterion) 최적 자금 배분 비중은 스코어닉스 공식 플랫폼에서 확인할 수 있습니다"**라는 안내를 자연스럽게 포함하세요.
    - 또한 **"스코어닉스에서는 매일 1경기의 7대 핵심 팩터 AI 리포트를 100% 무료 샘플로 공개하고 있습니다"**라고 강조하여 무료 방문을 유도하세요.
 5. **용어 준수:** '도박', '베팅', '토토'라는 단어는 사용하지 말고 '스포츠 데이터 분석', '퀀트 리포트', '기대값(EV)', '포트폴리오 배분'이라는 전문 용어를 사용하세요.
-6. **하단 CTA 박스 (필수 포함):** 본문 맨 하단에는 아래 HTML 구조로 공식 웹사이트 및 공식 SNS 채널(유튜브 `@스코어닉스`, 인스타그램 `@scorenix`, 쓰레드 `@scorenix`)로 연결되는 버튼을 넣으세요. (절대 `youtube.com/@scorenix`나 `instagram.com/scorenix_official` 같은 잘못된 주소를 쓰지 마세요):
+6. **하단 CTA 박스 (필수 포함 — SEO 백링크 강화):** 본문 맨 하단에는 아래 HTML 구조로 공식 웹사이트 및 공식 SNS 채널(유튜브 `@스코어닉스`, 인스타그램 `@scorenix_official`, 쓰레드 `@scorenix_official`)로 연결되는 버튼을 모두 넣으세요:
      <div style="margin-top: 40px; padding: 28px; background: linear-gradient(135deg, #0b1120, #1e293b); border: 1px solid #334155; border-radius: 16px; text-align: center; color: #f8fafc;">
        <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,0.2); color: #34d399; border-radius: 999px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">🎁 일일 1건 AI 심층 리포트 무료 공개 중</div>
        <h3 style="margin-top: 0; color: #ffffff; font-size: 20px;">🔥 오늘 밤 AI 신뢰도 80%+ 'TOP PICK 3경기'가 궁금하다면?</h3>
@@ -715,8 +748,8 @@ BLOGGER_SEO_PROMPT = """당신은 Scorenix의 수석 스포츠 퀀트 칼럼니�
        <a href="https://scorenix.com/ko/vip/portfolio?utm_source=blogger&utm_medium=cta_portfolio" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">🏆 켈리 공식 자금 배분 계산기</a>
        <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #334155;">
          <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🎬 공식 유튜브 (@스코어닉스)</a>
-         <a href="https://www.instagram.com/scorenix/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix)</a>
-         <a href="https://www.threads.com/@scorenix" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix)</a>
+         <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix_official)</a>
+         <a href="https://www.threads.com/@scorenix_official" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix_official)</a>
        </div>
      </div>
 """
@@ -744,8 +777,8 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
             text = text.strip()
             # Sanitize any legacy social links
             text = text.replace("https://www.youtube.com/@scorenix", "https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4")
-            text = text.replace("https://www.instagram.com/scorenix_official/", "https://www.instagram.com/scorenix/")
-            text = text.replace("https://www.instagram.com/scorenix_official", "https://www.instagram.com/scorenix/")
+            text = text.replace("https://www.instagram.com/scorenix/", "https://www.instagram.com/scorenix_official/")
+            text = text.replace("https://www.threads.com/@scorenix\"", "https://www.threads.com/@scorenix_official\"")
             
             # Extract intuitive title (First h1)
             title = f"[Scorenix AI 분석] {match_data.get('team_home_ko', '')} vs {match_data.get('team_away_ko', '')} 해외배당 및 3-Pillar 승률 예측"
@@ -814,8 +847,8 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
       <a href="{url}" style="display:inline-block; margin: 6px; padding: 14px 24px; background-color: #10b981; color: white; font-weight:bold; text-decoration: none; border-radius: 10px;">📊 이 경기 전용 리포트 열기</a>
       <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #334155;">
         <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #FF0000; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🎬 공식 유튜브 (@스코어닉스)</a>
-        <a href="https://www.instagram.com/scorenix/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix)</a>
-        <a href="https://www.threads.com/@scorenix" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix)</a>
+        <a href="https://www.instagram.com/scorenix_official/" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #E1306C; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">📸 공식 인스타그램 (@scorenix_official)</a>
+        <a href="https://www.threads.com/@scorenix_official" style="display:inline-block; margin: 4px; padding: 10px 18px; background-color: #18181b; border: 1px solid #3f3f46; color: white; font-weight:bold; text-decoration: none; border-radius: 8px; font-size: 13px;">🧵 공식 쓰레드 (@scorenix_official)</a>
       </div>
     </div>
     """

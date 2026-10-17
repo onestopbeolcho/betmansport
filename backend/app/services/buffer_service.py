@@ -146,16 +146,48 @@ class BufferService:
         return core
 
     def _compact_for_threads(self, text: str) -> str:
-        """Threads(스레드) 500자 제한에 맞춰 핵심 분석 + 링크 보존"""
+        """Threads(스레드) 500자 제한에 맞춰 핵심 분석 + 공식 사이트/유튜브/인스타그램/블로그 상호 링크 보존"""
+        cross_footer = (
+            "\n\n🔗 공식 채널"
+            "\n🌐 AI분석: https://scorenix.com/ko/analysis"
+            "\n🎬 유튜브: https://www.youtube.com/@스코어닉스"
+            "\n📸 인스타: https://www.instagram.com/scorenix_official/"
+            "\n✍️ 블로그: https://official-scorenix.blogspot.com"
+        )
+        max_body_len = 490 - len(cross_footer)
         clean = (text or "").strip()
         if not clean:
-            return "⚡ Scorenix AI 스포츠 승률 분석 리포트\n오늘의 1순위 무료 샘플 분석 확인하기 👇\nhttps://scorenix.com/ko/analysis"
-        if len(clean) <= 480:
-            if "scorenix.com" not in clean:
-                clean = clean[:430] + "\n👉 https://scorenix.com/ko/analysis"
+            return "⚡ Scorenix AI 3-Pillar 스포츠 승률 분석 리포트" + cross_footer
+
+        # 기존 본문에 중복된 링크 안내 문구 정리 후 핵심 본문만 추출
+        body_lines = []
+        for ln in clean.splitlines():
+            s = ln.strip()
+            if any(k in s for k in ["instagram.com/scorenix", "youtube.com/@", "threads.com/@", "official-scorenix.blogspot", "🔗 공식 채널", "인스타는 프로필 링크"]):
+                continue
+            if s.startswith("👉") and "scorenix.com" in s:
+                continue
+            body_lines.append(ln)
+        body = "\n".join(body_lines).strip()
+
+        if len(body) > max_body_len:
+            body = body[:max_body_len - 3].rsplit("\n", 1)[0].strip() + "..."
+        return body + cross_footer
+
+    def _format_for_instagram(self, text: str) -> str:
+        """Instagram 캡션용: 공식 사이트 + 유튜브 쇼츠 + 쓰레드 + 구글 블로그 상호 링크 블록 자동 포함"""
+        clean = (text or "").strip()
+        cross_block = (
+            "\n\n━━━━━━━━━━━━━━━━━━\n"
+            "🔗 [스코어닉스 공식 채널 네트워크]\n"
+            "🌐 AI 무료 샘플 & TOP PICK: https://scorenix.com/ko/analysis (프로필 링크 클릭!)\n"
+            "🎬 공식 유튜브 쇼츠: https://www.youtube.com/@스코어닉스\n"
+            "🧵 공식 쓰레드: https://www.threads.com/@scorenix_official\n"
+            "✍️ 공식 구글 블로그: https://official-scorenix.blogspot.com"
+        )
+        if "youtube.com/@스코어닉스" in clean and "threads.com/@scorenix_official" in clean:
             return clean
-        trimmed = clean[:430].rsplit("\n", 1)[0] + "...\n👉 https://scorenix.com/ko/analysis"
-        return trimmed
+        return clean + cross_block
 
     async def publish_post(
         self,
@@ -222,6 +254,8 @@ class BufferService:
                 channel_text = self._compact_for_twitter(text)
             elif service == "threads":
                 channel_text = self._compact_for_threads(text)
+            elif service == "instagram":
+                channel_text = self._format_for_instagram(text)
             else:
                 channel_text = text
 

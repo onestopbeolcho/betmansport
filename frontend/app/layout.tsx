@@ -139,6 +139,12 @@ export default function RootLayout({
                 name: "DesignBiz (Scorenix)",
                 url: SITE_URL,
                 email: "scorenix@gmail.com",
+                sameAs: [
+                  "https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4",
+                  "https://www.instagram.com/scorenix_official/",
+                  "https://www.threads.com/@scorenix_official",
+                  "https://official-scorenix.blogspot.com",
+                ],
               },
             }),
           }}

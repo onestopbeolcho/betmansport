@@ -109,7 +109,6 @@ function generatePostText(match, platform) {
     const url = `${SITE_URL}/ko/match/${match.date}/${match.slug}/`;
 
     if (platform === 'instagram') {
-        // Instagram: no clickable links in captions, focus on hashtags
         return `🤖 AI 경기분석 | ${match.date}
 
 ${emoji} ${match.home_ko} vs ${match.away_ko}
@@ -117,22 +116,29 @@ ${emoji} ${match.home_ko} vs ${match.away_ko}
 📊 AI 예측: ${favorite} 우세 ${bestProb}%
 💰 배당: 홈 ${match.home_odds} / 무 ${match.draw_odds} / 원정 ${match.away_odds}
 
-🔗 프로필 링크에서 자세한 분석 확인!
+🔗 [스코어닉스 공식 채널]
+🌐 AI 분석 본진: https://scorenix.com/ko/analysis (프로필 링크!)
+🎬 공식 유튜브: https://www.youtube.com/@스코어닉스
+🧵 공식 쓰레드: https://www.threads.com/@scorenix_official
+✍️ 공식 블로그: https://official-scorenix.blogspot.com
 
 #축구분석 #AI예측 #스포츠분석 #Scorenix #스코어닉스
 #${match.home_ko.replace(/\s/g, '')} #${match.away_ko.replace(/\s/g, '')}
 #${league.replace(/\s/g, '')} #해외축구 #배당분석`;
     }
 
-    // Facebook / default
+    // Threads / default
     return `🤖 AI 경기분석 | ${match.date}
 
-${emoji} ${match.home_ko} vs ${match.away_ko}
-🏟️ ${league}
+${emoji} ${match.home_ko} vs ${match.away_ko} (${league})
 📊 AI 예측: ${favorite} 우세 ${bestProb}%
 💰 배당: 홈 ${match.home_odds} / 무 ${match.draw_odds} / 원정 ${match.away_odds}
 
-🔗 자세한 분석 보기: ${url}
+🔗 공식 채널
+🌐 AI분석: ${url}
+🎬 유튜브: https://www.youtube.com/@스코어닉스
+📸 인스타: https://www.instagram.com/scorenix_official/
+✍️ 블로그: https://official-scorenix.blogspot.com
 
 #축구분석 #AI예측 #Scorenix`;
 }
