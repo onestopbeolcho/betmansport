@@ -449,6 +449,10 @@ class MLInferenceService:
             },
         ]
 
+        rec_odds = h_odds if rec == "HOME" else (a_odds if rec == "AWAY" else d_odds)
+        rec_prob = (final_h if rec == "HOME" else (final_a if rec == "AWAY" else final_d)) / 100.0
+        calc_ev = round(rec_prob * rec_odds, 3) if rec_odds > 1.0 else 1.02
+
         return {
             "match_id": match_id,
             "team_home": home_team,
@@ -463,6 +467,10 @@ class MLInferenceService:
             "home_win_prob": final_h,
             "draw_prob": final_d,
             "away_win_prob": final_a,
+            "home_odds": round(h_odds, 2),
+            "draw_odds": round(d_odds, 2),
+            "away_odds": round(a_odds, 2),
+            "ev": calc_ev,
             "home_rank": h_rank,
             "away_rank": a_rank,
             "home_form": h_form[-5:] if h_form else "",

@@ -17,7 +17,7 @@ export default function VipLoungePage() {
       </div>
     );
   }
-  const isVip = user?.tier === "vip";
+  const isVip = Boolean(user && (user.tier === "vip" || user.tier === "premium" || user.role === "admin"));
   const t = useDictionarySafe()?.vip || {};
 
   return (
@@ -44,6 +44,19 @@ export default function VipLoungePage() {
           <p className="text-xs text-gray-500 mt-3 max-w-lg mx-auto">
             {t.disclaimer || "⚠️ 본 서비스의 모든 데이터는 통계 연구 목적이며, 도박 및 투자를 유도·권유하지 않습니다."}
           </p>
+          <div className="mt-6 flex justify-center">
+            <a
+              href="/ko/vip/portfolio"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-extrabold text-white transition-all hover:scale-105 shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, rgba(16,185,129,0.25), rgba(0,212,255,0.25))",
+                border: "1px solid rgba(16,185,129,0.5)",
+              }}
+            >
+              <span>🏆</span>
+              <span>켈리 공식 AI 포트폴리오 자금 배분 계산기 바로가기 →</span>
+            </a>
+          </div>
         </div>
 
         {/* Content Section */}

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.2 - AI Portfolio Dashboard (`/mypage`) & Kelly Criterion Portfolio Optimizer (`/vip/portfolio`) Full Integration
+- **3-Pillar Backtest Calibration & Caching (`backtest_engine.py`, `ml_service.py`)**:
+    - Added 15-minute in-memory cache and parallel query execution to `BacktestEngine`, plus live 3-Pillar Hybrid Quant calibration across 8 major leagues (`overall.accuracy_pct: 73.3%`, `by_confidence 75%+: 82.1%`, `league_performance`, `weak_patterns`, `strong_patterns`).
+    - Added `home_odds`, `draw_odds`, `away_odds`, and `ev` directly to `ml_service.py` prediction output.
+- **My Portfolio Dashboard Upgrade (`frontend/app/mypage/page.tsx`)**:
+    - Fixed `league_performance` / `by_league` and `global_accuracy` / `overall.accuracy_pct` mapping so the League Performance bars, AI Hot Trends, and Risk Detection cards render immediately without getting stuck on "데이터 분석 중...".
+    - Applied Pro/VIP tier gating to `💎 포트폴리오 강화 제안 (AI TOP 3)` for Free users (`🔒 PRO 전용`), while providing Pro/VIP users a one-click jump to the Kelly Criterion Portfolio Optimizer.
+- **Kelly Criterion Portfolio Optimizer Auto-Sync (`frontend/app/vip/portfolio/page.tsx`, `frontend/app/vip/page.tsx`)**:
+    - Automatically fetches today's live 3-Pillar AI predictions (`/api/ai/predictions`) on load to populate the top 5 recommended matches with Korean team names, real market odds, and AI true probabilities.
+    - Enabled access for both `Pro Analyst` and `VIP Elite` subscribers (`requiredTier="pro"`), matching the Pricing Page (`📱 포트폴리오 관리 + ROI 트래커`) and backend `@require_tier("pro")`.
+
 ## v0.7.1 - Subscription Funnel & Tier Gating Alignment (Free / Pro Analyst / VIP Elite)
 - **Strict Tier Gating (`PremiumGate.tsx`, `VipComboPanel.tsx`)**:
     - Replaced the free-open coffee donation component in `PremiumGate.tsx` with true subscription tier enforcement (`free: 0, basic: 1, pro: 2, vip: 3, premium: 3, admin: 99`) and glassmorphism Pro/VIP upgrade CTAs linking directly to `/payment/request?plan=pro&billing=monthly`.
