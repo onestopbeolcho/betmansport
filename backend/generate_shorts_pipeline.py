@@ -1255,10 +1255,7 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
             bgm = audio_loop(bgm, duration=final.duration)
         else:
             bgm = bgm.subclip(0, final.duration)
-        try:
-            bgm = apply_audio_ducking(bgm, final.audio)
-        except Exception:
-            bgm = bgm.fx(volumex, 0.08)
+        bgm = bgm.fx(volumex, 0.08)
         final = final.set_audio(CompositeAudioClip([final.audio, bgm]))
 
     print("  [REC] Encoding Broadcast Shorts v6.0 video...")
@@ -1267,10 +1264,18 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
         fps=24,
         codec="libx264",
         audio_codec="aac",
-        bitrate="8000k",
-        threads=4,
+        bitrate="5000k",
+        threads=2,
         preset="ultrafast",
+        logger=None,
     )
+
+    try:
+        final.close()
+        for c in clips:
+            c.close()
+    except Exception:
+        pass
 
     for i in range(len(script_items)):
         p = os.path.join(os.path.dirname(__file__), f"_tmp_card_audio_{i}.mp3")
