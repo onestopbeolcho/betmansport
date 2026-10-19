@@ -33,6 +33,7 @@ export default function Footer({ lang }: { lang?: string }) {
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>{t.services || '핵심 서비스'}</h4>
                         <ul className="space-y-2 text-xs">
                             <li><a href={`/${currentLang}/analysis`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🤖 3-Pillar AI 매치 리포트</a></li>
+                            <li><a href="/ko/date/today" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>📅 일자별 전 경기 AI 분석 아카이브</a></li>
                             <li><a href={`/${currentLang}/bets`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.valueBet || '📊 실시간 배당 & 벨류 분석'}</a></li>
                             <li><a href={`/${currentLang}/vip/portfolio`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>🏆 켈리 공식 자금 배분 계산기</a></li>
                             <li><a href={`/${currentLang}/pricing`} className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>{t.plans || '💎 구독 플랜 안내'}</a></li>

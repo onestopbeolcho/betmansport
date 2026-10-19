@@ -60,31 +60,53 @@ app.add_middleware(
 )
 
 
-# ─── Rate Limiting 미들웨어 (60 req/min per IP) ───
+# ─── Rate Limiting 미들웨어 (검색엔진 봇 및 SEO/SSR 경로 무제한 허용) ───
 class RateLimitStore:
-    def __init__(self, max_requests: int = 60, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 300, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window = window_seconds
         self.requests: dict = defaultdict(list)
 
     def is_allowed(self, client_ip: str) -> bool:
         now = time.time()
-        # 오래된 요청 제거
         self.requests[client_ip] = [t for t in self.requests[client_ip] if now - t < self.window]
         if len(self.requests[client_ip]) >= self.max_requests:
             return False
         self.requests[client_ip].append(now)
         return True
 
-_rate_limiter = RateLimitStore(max_requests=60, window_seconds=60)
+_rate_limiter = RateLimitStore(max_requests=300, window_seconds=60)
+
+SEO_EXEMPT_PREFIXES = (
+    "/sitemap.xml",
+    "/robots.txt",
+    "/ko/date",
+    "/ko/match",
+    "/ko/seo-check",
+    "/api/seo",
+    "/api/odds",
+    "/api/ai/predictions",
+)
+
+BOT_KEYWORDS = ("googlebot", "yeti", "naver", "bingbot", "daum", "slurp", "duckduckbot", "baiduspider", "facebookexternalhit", "twitterbot")
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host if request.client else "unknown"
+    path = request.url.path or ""
+    ua = (request.headers.get("user-agent") or "").lower()
+    if path.startswith(SEO_EXEMPT_PREFIXES) or any(b in ua for b in BOT_KEYWORDS):
+        return await call_next(request)
+
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        client_ip = forwarded_for.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "unknown"
+
     if not _rate_limiter.is_allowed(client_ip):
         return JSONResponse(
             status_code=429,
-            content={"detail": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요. (60 req/min)"},
+            content={"detail": "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."},
         )
     response = await call_next(request)
     return response

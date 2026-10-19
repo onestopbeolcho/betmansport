@@ -147,14 +147,13 @@ async def dynamic_sitemap():
     today_str = datetime.now(KST).strftime("%Y-%m-%d")
 
     static_routes = [
-        ("/ko", "1.0", "daily"),
-        ("/ko/analysis", "0.95", "hourly"),
-        ("/ko/bets", "0.9", "hourly"),
-        ("/ko/market", "0.85", "hourly"),
-        ("/ko/pricing", "0.85", "weekly"),
-        ("/ko/guide", "0.8", "weekly"),
-        ("/ko/accuracy", "0.85", "daily"),
-        ("/ko/leaderboard", "0.75", "daily"),
+        ("/ko/", "1.0", "daily"),
+        ("/ko/analysis/", "0.95", "hourly"),
+        ("/ko/bets/", "0.9", "hourly"),
+        ("/ko/standings/", "0.85", "daily"),
+        ("/ko/pricing/", "0.85", "weekly"),
+        ("/ko/manual/", "0.8", "weekly"),
+        ("/ko/date/today", "0.95", "hourly"),
     ]
 
     urls_xml = []
@@ -213,7 +212,10 @@ async def dynamic_sitemap():
 @router.get("/ko/date/{date}/", response_class=HTMLResponse)
 async def ssr_date_hub_page(date: str):
     """[YYYY년 MM월 DD일] 날짜별 스포츠 경기 일정 및 AI 승률 예측 총정리 SSR HTML"""
-    clean_date = re.sub(r"[^0-9-]", "", date)[:10] or datetime.now(KST).strftime("%Y-%m-%d")
+    if date.strip("/").lower() == "today":
+        clean_date = datetime.now(KST).strftime("%Y-%m-%d")
+    else:
+        clean_date = re.sub(r"[^0-9-]", "", date)[:10] or datetime.now(KST).strftime("%Y-%m-%d")
     kr_date = _format_kr_date(clean_date)
 
     all_matches = await _load_enriched_matches()
@@ -470,6 +472,19 @@ async def ssr_match_detail_page(date: str, slug: str):
         ],
     }
 
+    json_ld_org = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Scorenix (스코어닉스)",
+        "url": "https://scorenix.com",
+        "sameAs": [
+            "https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4",
+            "https://www.instagram.com/scorenix_official/",
+            "https://www.threads.com/@scorenix_official",
+            "https://official-scorenix.blogspot.com",
+        ],
+    }
+
     draw_card_html = (
         f'<div class="prob-box"><div class="lbl">무승부 확률</div><div class="val" style="color:#cbd5e1;">{d_prob}%</div><div class="odd">배당 {do:.2f}</div></div>'
         if do > 1.0
@@ -483,7 +498,7 @@ async def ssr_match_detail_page(date: str, slug: str):
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(desc)}" />
-  <meta name="keywords" content="{html.escape(home_ko)}, {html.escape(away_ko)}, {html.escape(home_ko)} vs {html.escape(away_ko)}, {target['date']} 스포츠분석, {html.escape(league)} 승부예측, 프로토 AI 분석, Scorenix" />
+  <meta name="keywords" content="{html.escape(home_ko)}, {html.escape(away_ko)}, {html.escape(home_ko)} vs {html.escape(away_ko)}, {html.escape(home_ko)} {html.escape(away_ko)} 분석, {target['date']} 스포츠분석, {html.escape(league)} 승부예측, 프로토 AI 분석, 배트맨토토 배당 분석, Scorenix, 스코어닉스" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="{canonical}" />
   <meta property="og:title" content="{html.escape(title)}" />
@@ -493,6 +508,7 @@ async def ssr_match_detail_page(date: str, slug: str):
   <meta property="og:site_name" content="Scorenix AI 스포츠 데이터 분석" />
   <script type="application/ld+json">{json.dumps(json_ld_event, ensure_ascii=False)}</script>
   <script type="application/ld+json">{json.dumps(json_ld_faq, ensure_ascii=False)}</script>
+  <script type="application/ld+json">{json.dumps(json_ld_org, ensure_ascii=False)}</script>
   <style>
     body {{ margin:0; background:#080b12; color:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,'Pretendard','Malgun Gothic',sans-serif; line-height:1.65; }}
     .wrap {{ max-width:860px; margin:0 auto; padding:28px 16px 64px; }}
@@ -514,6 +530,8 @@ async def ssr_match_detail_page(date: str, slug: str):
     .rel-list {{ display:flex; flex-direction:column; gap:8px; margin-top:12px; }}
     .rel-item {{ display:flex; justify-content:space-between; align-items:center; background:#0f172a; border:1px solid rgba(255,255,255,0.07); padding:12px 16px; border-radius:12px; color:#e2e8f0; text-decoration:none; font-size:13px; }}
     .rel-item:hover {{ border-color:#06b6d4; }}
+    .ch-footer {{ margin-top:32px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08); text-align:center; font-size:12px; color:#94a3b8; }}
+    .ch-footer a {{ color:#38bdf8; text-decoration:none; margin:0 8px; font-weight:700; }}
   </style>
 </head>
 <body>
@@ -562,6 +580,17 @@ async def ssr_match_detail_page(date: str, slug: str):
         <a href="/ko/date/{target['date']}" style="color:#22d3ee;font-size:13px;font-weight:700;text-decoration:none;">{html.escape(kr_date)} 전체 경기 분석 목록 보기 →</a>
       </div>
     </section>
+
+    <footer class="ch-footer">
+      <div><strong>🔗 Scorenix 공식 채널 네트워크</strong></div>
+      <div style="margin-top:8px;">
+        <a href="https://scorenix.com/ko/analysis">🌐 공식 웹사이트</a> |
+        <a href="https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4" target="_blank" rel="noopener">🎬 유튜브 (@스코어닉스)</a> |
+        <a href="https://www.instagram.com/scorenix_official/" target="_blank" rel="noopener">📸 인스타그램 (@scorenix_official)</a> |
+        <a href="https://www.threads.com/@scorenix_official" target="_blank" rel="noopener">🧵 쓰레드 (@scorenix_official)</a> |
+        <a href="https://official-scorenix.blogspot.com" target="_blank" rel="noopener">✍️ 공식 구글 블로그</a>
+      </div>
+    </footer>
   </div>
 </body>
 </html>"""
