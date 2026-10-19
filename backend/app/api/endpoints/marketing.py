@@ -269,32 +269,58 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
             if not p.get("team_away_ko") or p.get("team_away_ko") == ta:
                 p["team_away_ko"] = mapper.get_korean_name(ta) or ta
 
+        # 오늘 이미 발행된 match_id 목록 조회 (중복 경기 발행 원천 차단)
+        published_today_ids = set()
+        today_prefix = now_kst.strftime("%Y-%m-%d")
+        for h_item in _publish_history:
+            if str(h_item.get("published_at", "")).startswith(today_prefix):
+                published_today_ids.add(h_item.get("match_id"))
+        try:
+            from app.db.firestore import get_firestore_db
+            from google.cloud import firestore as gc_firestore
+            db = get_firestore_db()
+            recent_docs = (
+                db.collection("sns_published")
+                .order_by("published_at", direction=gc_firestore.Query.DESCENDING)
+                .limit(15)
+                .stream()
+            )
+            for d in recent_docs:
+                d_dict = d.to_dict() or {}
+                if str(d_dict.get("published_at", "")).startswith(today_prefix):
+                    published_today_ids.add(d_dict.get("match_id"))
+        except Exception as e_dedup:
+            logger.warning(f"SNS dedup check skipped: {e_dedup}")
+
         # A. 지난 예측 결과 (적중 인증)
         if post_type in ["winning", "winning_proof"]:
             try:
-                hits = await get_recent_ai_predictions(limit=5, status="HIT")
-                if hits:
-                    text = await generate_winning_proof_sns(hits)
-                    best_hit = hits[0]
+                hits = await get_recent_ai_predictions(limit=10, status="HIT")
+                unposted_hits = [h for h in (hits or []) if f"hit_{h.get('match_id', '')}" not in published_today_ids]
+                if unposted_hits:
+                    text = await generate_winning_proof_sns(unposted_hits[:5])
+                    best_hit = unposted_hits[0]
                     if req.with_image:
                         from app.services.card_generator import generate_winning_card_and_upload
                         image_url = await generate_winning_card_and_upload(best_hit)
                     match_id = f"hit_{best_hit.get('match_id', '')}"
                     confidence = best_hit.get("confidence", 80)
                 else:
-                    logger.info("No HIT history found, falling back to match prediction...")
+                    logger.info("No unposted HIT history found, falling back to match prediction...")
                     post_type = "prediction"
             except Exception as e:
                 logger.error(f"Winning proof rotation error: {e}")
                 post_type = "prediction"
 
-        # B. 어디가 이길 것 같은지 (오늘/내일 승리 예상 픽)
+        # B. 어디가 이길 것 같은지 (오늘/내일 승리 예상 픽 — 당일 중복 경기 제외)
         if post_type in ["prediction", "top_picks", "preview"] or not text:
             post_type = "prediction"
             if pred_dicts:
                 import random
-                top_candidates = sorted(pred_dicts, key=lambda x: x.get("confidence", 0), reverse=True)[:10]
-                selected_pred = random.choice(top_candidates) if top_candidates else pred_dicts[0]
+                sorted_preds = sorted(pred_dicts, key=lambda x: x.get("confidence", 0), reverse=True)
+                unposted_preds = [p for p in sorted_preds if p.get("match_id") not in published_today_ids]
+                pool = unposted_preds[:10] if unposted_preds else sorted_preds[:10]
+                selected_pred = random.choice(pool) if pool else pred_dicts[0]
                 
                 posts = await generate_sns_content([selected_pred])
                 if posts:

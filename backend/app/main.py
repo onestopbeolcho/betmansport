@@ -512,16 +512,12 @@ async def startup_event():
         pinnacle_service.set_api_key(api_key)
     print(f"Backend Startup: Firestore mode | API-Football Key: {'YES' if pinnacle_service.api_key else 'NO'}")
 
-    # 백그라운드 스케줄러 시작
+    # 백그라운드 스케줄러 시작 (SNS/Blogger/Shorts 발행은 GCP Cloud Scheduler가 전담하므로 인메모리 중복 실행 제외)
     asyncio.create_task(_auto_collect_stats())         # 시작 시 1회 전체 수집
-    asyncio.create_task(_periodic_odds_refresh())       # 매 30분 배당 갱신
+    asyncio.create_task(_periodic_odds_refresh())       # 매 4시간 배당 갱신
     asyncio.create_task(_periodic_settlement())         # 매 30분 자동 정산
     asyncio.create_task(_periodic_stats_collection())   # 12시간마다 순위/부상/H2H (09:00, 21:00 KST)
-    asyncio.create_task(_periodic_nightly_retrain())    # 매일 03:00 KST ML 재학습
-    asyncio.create_task(_periodic_sns_publish())        # 매일 10:00, 16:00 KST SNS 자동 발행
-    asyncio.create_task(_periodic_blogger_publish())    # 매일 11:00 KST Blogger 자동 발행
-    asyncio.create_task(_periodic_wordpress_publish())  # 매일 11:30 KST WordPress 자동 발행
-    logger.info("🚀 All background schedulers started (including Blogger & WordPress auto-publish)")
+    logger.info("🚀 Core data background tasks started (Marketing/SNS/Blogger managed by Cloud Scheduler)")
 
 @app.get("/")
 def read_root():
