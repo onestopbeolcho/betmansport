@@ -66,9 +66,9 @@ export default function PremiumGate({
 
     // 3. 권한 미달 시 → 블러 프리뷰 + 구독 유도 오버레이
     const isVipGate = reqLevel >= 3;
-    const badgeLabel = isVipGate ? '👑 VIP ELITE 전용' : '🔒 PRO ANALYST 전용';
+    const badgeLabel = isVipGate ? '👑 PRO QUANT 멤버십 전용' : '☕ BASIC PASS 데이터 멤버십 전용';
     const planParam = isVipGate ? 'vip' : 'pro';
-    const priceLabel = isVipGate ? 'VIP Elite (105,000원/월)' : 'Pro Analyst (55,000원/월)';
+    const priceLabel = isVipGate ? 'Pro Quant (월 9,900원)' : 'Basic Pass (월 3,900원 · 커피 한 잔 값)';
 
     return (
         <div className="relative w-full overflow-hidden rounded-xl">
@@ -104,7 +104,7 @@ export default function PremiumGate({
                     {featureName} 잠금
                 </h4>
                 <p className="text-xs text-white/60 max-w-md mb-4 leading-relaxed">
-                    {tp.lockedDesc || '무료 체험 등급은 일일 1건의 AI 샘플 리포트만 열람 가능합니다. 3-Pillar 7-Factor 정밀 분석·신뢰도 게이지·AI TOP PICK을 무제한으로 확인하세요.'}
+                    {tp.lockedDesc || '무료 체험 등급은 일일 1건의 AI 샘플 리포트만 열람 가능합니다. 커피 한 잔 값(월 3,900원)으로 포아송 기대득점(xG)·신뢰도 게이지·기대값(+EV) 핵심 리포트를 무제한 확인하세요.'}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-2">
@@ -123,7 +123,7 @@ export default function PremiumGate({
                         href={`/${currentLang}/pricing`}
                         className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/70 hover:text-white border border-white/15 hover:bg-white/5 transition-all"
                     >
-                        요금제 혜택 비교
+                        멤버십 혜택 비교
                     </a>
                 </div>
             </div>

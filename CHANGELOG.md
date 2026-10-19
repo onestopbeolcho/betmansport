@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.7.5 - Micro-Subscription Funnel (₩3,900 Basic Pass / ₩9,900 Pro Quant), PG Compliance Defense & Broadcast Shorts v7.0 (5-Concept Rotation)
+- **Micro-Subscription Funnel (`payments.py`, `pricing/page.tsx`, `payment/request/page.tsx`, `PremiumGate.tsx`)**:
+    - Repositioned subscription tiers to maximize impulse conversion and retention ("subscription inertia"):
+        - **Free (`₩0/mo`)**: 1 daily free AI simulation sample report, 3-league real-time data comparison, historical backtest verification logs.
+        - **Basic Pass (`₩3,900/mo`, `$2.99/mo`, `plan_id="pro"`)**: "☕ 커피 한 잔 값" primary conversion tier — unlimited ML simulation probabilities across all 17 leagues, Top 3 +EV Value Anomaly Reports, Poisson xG & 7-Factor tactical breakdown.
+        - **Pro Quant (`₩9,900/mo`, `$6.99/mo`, `plan_id="vip"`)**: Full quant membership — all Basic Pass features + Kelly Criterion capital allocation simulator + multi-match probability combination simulator + real-time odds distortion alerts.
+- **PG Compliance & Post-Audit Defense (KG Inicis `MOI1846444` Protection)**:
+    - Defined business category and checkout `orderName` strictly as `"스코어닉스 데이터 분석 리포트 구독권 (Basic Pass)"` and `"스코어닉스 통합 퀀트 데이터 멤버십 (Pro Quant)"`.
+    - Scrubbed forbidden gambling terminology (`픽(Pick)`, `AI TOP PICK`, `무료픽`, `베팅 추천`, `Pinnacle vs Betman`) across `/analysis`, `/bets`, `/mypage`, `/pricing`, `/payment/request`, `seo_ssr.py`, `generate-seo.mjs`, `gemini_service.py`, and `generate_shorts_pipeline.py`, replacing with quantitative SaaS labels (`머신러닝 시뮬레이션 확률`, `+EV 핵심 밸류 리포트`, `포아송 기대득점(xG)`, `글로벌 표준 시장 확률 지수`).
+    - Added the Mandatory Legal Disclaimer to `/analysis`, `/bets`, `/pricing`, `/payment/request`, `Footer.tsx`, `seo_ssr.py`, and `generate-seo.mjs`.
+    - Added **1-click self-service recurring subscription cancellation** (`POST /api/payments/cancel`) in `/mypage` and Fair Trade compliant Korean prorated refund terms in `/refund`.
+- **Broadcast Shorts v7.0 — 5-Concept Rotating Engine (`generate_shorts_pipeline.py`, `distribution_scheduler.py`, `gemini_service.py`)**:
+    - Upgraded YouTube Shorts generator to rotate across 5 distinct broadcast concepts (`QUANT_RADAR`, `FACT_CHECK`, `VALUE_ALERT`, `MATCH_SPOTLIGHT`, `SPEED_BRIEFING`) with distinct color palettes, header badges, alternating TTS voices (`ko-KR-InJoonNeural` & `ko-KR-SunHiNeural`), opening hooks, and YouTube titles to prevent YouTube's repetitious content filter and viewer fatigue.
+    - Updated SNS (`Instagram`, `Threads`), Google Blogger, and YouTube Shorts descriptions/scripts to promote the `월 3,900원 커피 한 잔 값 데이터 멤버십`.
+
 ## v0.7.4 - Full Korean Team Name Localization (420+ Teams across 17 Leagues) & Broadcast Data Shorts v6.0 Pipeline
 - **100% Korean Team Name Localization (`team_mapper.py`, `teamNames.ts`, `odds.py`, `ai_predictions.py`)**:
     - Added `TEAM_DISPLAY_EN_TO_KO` (420+ teams across all 17 leagues: EPL, Championship, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, Liga Portugal, UCL/UEL, Brasileirão, Liga MX, MLS, K League 1, J1 League, MLB, NBA, NHL) and `BETMAN_ABBR_TO_FULL_KO` to convert 4-char truncated Betman abbreviations (`도르트문` → `도르트문트`, `바르셀로` → `바르셀로나`, `레알마드` → `레알 마드리드`, `U베를린` → `우니온 베를린`, `페예노르` → `페예노르트`, `댈매브릭` → `댈러스 매버릭스`, etc.) into natural Korean team names.

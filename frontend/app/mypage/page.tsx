@@ -413,11 +413,11 @@ export default function MyPage() {
                                                 </div>
                                                 {isProOrAbove ? (
                                                     <div className="text-[10px] px-2 py-0.5 rounded bg-[#8b5cf6]/10 text-[#8b5cf6] font-bold">
-                                                        {pred.recommendation === 'HOME' ? '홈승 추천' : pred.recommendation === 'AWAY' ? '원정승 추천' : '무승부 추천'}
+                                                        {pred.recommendation === 'HOME' ? '홈 우세 지표' : pred.recommendation === 'AWAY' ? '원정 우세 지표' : '무승부 지표'}
                                                     </div>
                                                 ) : (
                                                     <div className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-bold select-none">
-                                                        🔒 PRO 전용 픽
+                                                        🔒 유료 리포트 전용
                                                     </div>
                                                 )}
                                             </div>
@@ -449,7 +449,7 @@ export default function MyPage() {
                                             className="block w-full py-3 rounded-xl text-xs font-extrabold text-center text-white transition-all hover:scale-[1.02] shadow-lg"
                                             style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}
                                         >
-                                            💳 Pro 구독하고 AI TOP PICK & 포트폴리오 열기
+                                            ☕ 월 3,900원 Basic Pass 구독하고 전체 리포트 열기
                                         </a>
                                         <button 
                                             onClick={() => router.push(`/${currentLang}/analysis`)}
@@ -553,6 +553,50 @@ export default function MyPage() {
                         </div>
                     )}
                 </div>
+
+                {/* Self-Service Subscription Management (1-Click Cancel) */}
+                {user && (
+                    <div className="mt-6 rounded-2xl border border-[var(--border-default)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ background: 'var(--bg-surface)' }}>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-bold text-white">💳 데이터 멤버십 구독 관리</span>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 uppercase">
+                                    현재 등급: {user.tier === 'premium' || user.tier === 'vip' ? 'Pro Quant (월 9,900원)' : user.tier === 'pro' ? 'Basic Pass (월 3,900원)' : 'Free (무료 체험)'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-white/50">
+                                고객센터 문의 없이 언제든 1클릭으로 정기구독을 해지하거나 플랜을 변경할 수 있습니다. 해지 시에도 당월 만료일까지 데이터 리포트 열람 권한이 유지됩니다.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <a href={`/${currentLang}/pricing`} className="px-3.5 py-2 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all">
+                                플랜 변경
+                            </a>
+                            {isProOrAbove && (
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('정기구독을 해지하시겠습니까? 해지 후에도 현재 결제 주기의 만료일까지는 모든 리포트를 정상 열람하실 수 있습니다.')) return;
+                                        try {
+                                            const tk = localStorage.getItem('token');
+                                            const res = await fetch(`${API}/api/payments/cancel`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json', ...(tk ? { Authorization: `Bearer ${tk}` } : {}) },
+                                                body: JSON.stringify({ reason: '마이페이지 1클릭 셀프 해지' }),
+                                            });
+                                            const data = await res.json().catch(() => ({}));
+                                            alert(data.message || '구독 해지 예약이 완료되었습니다. 만료일까지 정상 이용 가능합니다.');
+                                        } catch {
+                                            alert('해지 처리 중 일시적 오류가 발생했습니다.');
+                                        }
+                                    }}
+                                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-300 bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 transition-all"
+                                >
+                                    구독 즉시 해지 (1클릭)
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Not logged in CTA */}
                 {!user && (

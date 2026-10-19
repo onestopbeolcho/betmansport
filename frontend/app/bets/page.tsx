@@ -519,30 +519,30 @@ export default function BetsPage() {
                                 <span className="text-2xl">🎁</span>
                                 <div>
                                     <div className="text-xs sm:text-sm font-black text-white">
-                                        무료 체험 모드: <span className="text-cyan-400">일일 AI 분석 리포트 1건 + 실시간 배당 비교 3개 리그</span> 제공 중
+                                        무료 체험 모드: <span className="text-cyan-400">일일 AI 통계 리포트 1건 + 실시간 데이터 비교 3개 리그</span> 제공 중
                                     </div>
                                     <div className="text-[11px] text-white/60 mt-0.5">
-                                        🔥 AI TOP PICK 3선 · 전 경기 신뢰도 게이지 & EV 분석 · 조합 시뮬레이터는 Pro Analyst 구독 시 무제한 해금됩니다.
+                                        ☕ 커피 한 잔 값(월 3,900원) Basic Pass 구독 시 오늘의 +EV 핵심 밸류 리포트 3선 · 포아송 기대득점(xG) · 전 리그 확률 지표가 무제한 해금됩니다.
                                     </div>
                                 </div>
                             </div>
                             <a href="/ko/payment/request?plan=pro&billing=monthly"
                                 className="shrink-0 px-4 py-2 rounded-xl text-xs font-black text-white transition hover:scale-105 shadow-md"
                                 style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                💳 Pro 구독하기 (55,000원/월) →
+                                ☕ Basic Pass 구독하기 (월 3,900원) →
                             </a>
                         </div>
                     )}
 
-                    {/* ━━━ TOP PICKS HERO (PRO EXCLUSIVE) ━━━ */}
+                    {/* ━━━ TOP VALUE REPORTS HERO (BASIC PASS EXCLUSIVE) ━━━ */}
                     {topPicks.length > 0 && (
                         <div className="mb-6">
                             <h2 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-3 flex items-center">
                                 <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
-                                🔥 {tb.topPick || '오늘의 AI 분석 하이라이트'}
+                                🔥 {tb.topPick || '오늘의 AI 핵심 밸류 리포트 (+EV 상위 3경기)'}
                                 {!isProOrAbove && (
                                     <span className="ml-2 text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                                        🔒 PRO 전용 잠금
+                                        🔒 월 3,900원 멤버십 전용
                                     </span>
                                 )}
                             </h2>
@@ -567,7 +567,7 @@ export default function BetsPage() {
                                             {i === 0 && (
                                                 <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
                                                     style={{ background: level.color, color: 'white' }}>
-                                                    #1 Focus
+                                                    #1 +EV
                                                 </div>
                                             )}
                                             <div className="p-4">
@@ -603,9 +603,9 @@ export default function BetsPage() {
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                                        <span className="text-xs font-bold text-red-400">🔒 AI TOP PICK 잠금</span>
+                                                        <span className="text-xs font-bold text-red-400">🔒 핵심 밸류 지표 잠금</span>
                                                         <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white">
-                                                            PRO 열람 →
+                                                            ☕ 월 3,900원 열람 →
                                                         </span>
                                                     </div>
                                                 )}
@@ -852,7 +852,7 @@ export default function BetsPage() {
                                                                 </>
                                                             ) : (
                                                                 <a href="/ko/pricing" className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition">
-                                                                    🔒 EV(기대값) & 추천픽 열람 (PRO)
+                                                                    🔒 기대값(+EV) & 우세 지표 열람 (월 3,900원)
                                                                 </a>
                                                             )}
                                                         </div>
@@ -901,10 +901,10 @@ export default function BetsPage() {
                                                                 </div>
                                                             )}
 
-                                                            {/* Match odds for betting */}
+                                                            {/* Match odds for simulation */}
                                                             {oddsMatch && (
                                                                 <div>
-                                                                    <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider mb-2">{tb.betSelection || '분석 선택'}</div>
+                                                                    <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider mb-2">{tb.betSelection || '시뮬레이션 선택'}</div>
                                                                     <div className="grid grid-cols-3 gap-2">
                                                                         {(['Home', 'Draw', 'Away'] as BetType[]).map(type => {
                                                                             const odds = type === 'Home' ? oddsMatch.home_odds : type === 'Draw' ? oddsMatch.draw_odds : oddsMatch.away_odds;
@@ -942,13 +942,13 @@ export default function BetsPage() {
                         </div>
                     )}
 
-                    {/* ━━━ ODDS COMPARISON VIEW (3 Leagues Free, Unlimited for Pro/VIP) ━━━ */}
+                    {/* ━━━ ODDS COMPARISON VIEW (3 Leagues Free, Unlimited for Basic Pass/Pro Quant) ━━━ */}
                     {viewMode === 'odds' && (
                         <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
                             {loading && matches.length === 0 ? (
                                 <div className="py-20 text-center text-white/40">
                                     <div className="animate-spin inline-block w-8 h-8 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-3" />
-                                    <p>{tb.oddsAnalyzing || '배당률 데이터 분석 중...'}</p>
+                                    <p>{tb.oddsAnalyzing || '데이터 지표 분석 중...'}</p>
                                 </div>
                             ) : matches.length === 0 ? (
                                 <div className="py-20 text-center text-white/30">{tb.noMatches || '분석 가능한 경기가 없습니다'}</div>
@@ -1030,7 +1030,7 @@ export default function BetsPage() {
                                                                 <div className="text-[9px] text-white/30">{aiPred.confidence.toFixed(0)}%</div>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-[10px] text-cyan-400 font-bold">🔒 PRO</span>
+                                                            <span className="text-[10px] text-cyan-400 font-bold">🔒 Basic</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1044,12 +1044,12 @@ export default function BetsPage() {
                                             style={{ background: 'linear-gradient(180deg, rgba(13,19,33,0.85), rgba(13,19,33,0.98))' }}>
                                             <div className="text-xs font-black text-cyan-400 mb-1">🔒 실시간 데이터 비교 (무료 3개 리그 제한)</div>
                                             <p className="text-xs text-white/60 mb-4">
-                                                전 세계 17개 리그({sportFilteredMatches.length}개 경기) 전체 배당 비교 및 AI 추천 매칭은 Pro Analyst 구독 시 무제한 열람 가능합니다.
+                                                전 세계 17개 리그({sportFilteredMatches.length}개 경기) 전체 확률 지수 비교 및 AI 시뮬레이션 매칭은 Basic Pass(월 3,900원) 구독 시 무제한 열람 가능합니다.
                                             </p>
                                             <a href="/ko/payment/request?plan=pro&billing=monthly"
                                                 className="inline-block px-6 py-2.5 rounded-xl text-xs font-black text-white transition hover:scale-105"
                                                 style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                                💳 Pro Analyst 시작하기 (55,000원/월)
+                                                ☕ Basic Pass 시작하기 (월 3,900원)
                                             </a>
                                         </div>
                                     )}
@@ -1058,12 +1058,13 @@ export default function BetsPage() {
                         </div>
                     )}
 
-                    <div className="mt-2 text-[10px] text-white/20 text-right px-2">
-                        {tb.disclaimer || '본 시뮬레이션은 과거 통계 데이터를 기반으로 한 연구 목적의 결과이며, 실제 경기 결과를 보장하지 않습니다. 도박 및 투자 목적의 활용을 금합니다.'}
+                    <div className="mt-4 p-3.5 rounded-xl text-[11px] text-white/40 leading-relaxed"
+                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+                        ⚖️ <strong>법적 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
                     </div>
                 </main>
 
-                {/* ━━━ COMBO ANALYSIS FLOATING PANEL (PRO EXCLUSIVE FOR 2+ FOLDS) ━━━ */}
+                {/* ━━━ COMBO ANALYSIS FLOATING PANEL ━━━ */}
                 {selectedBets.size > 0 && (
                     <div className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
                         style={{
@@ -1075,14 +1076,14 @@ export default function BetsPage() {
                         <div className="max-w-7xl mx-auto px-4 py-4">
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-white flex items-center">
-                                    🎯 {tb.comboBetting || '조합 시뮬레이터'}
+                                    🎯 다중 경기 확률 시뮬레이터
                                     <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
                                         style={{ background: 'rgba(0,212,255,0.12)', color: '#00d4ff' }}>
                                         {selectedBets.size} {tb.matches || '경기'}
                                     </span>
                                     {!isProOrAbove && (
                                         <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400">
-                                            🔒 PRO 전용
+                                            🔒 멤버십 전용
                                         </span>
                                     )}
                                 </h3>
@@ -1111,28 +1112,28 @@ export default function BetsPage() {
                             {isProOrAbove ? (
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <span className="text-xs text-white/40">{tb.totalOdds || '총 조합 배율'}</span>
+                                        <span className="text-xs text-white/40">{tb.totalOdds || '합산 지수 배율'}</span>
                                         <span className="text-lg font-black ml-2 font-mono gradient-text">{comboOdds.toFixed(2)}</span>
                                         <span className="text-xs text-white/30 ml-3">
-                                            {selectedBets.size}개 경기 조합
+                                            {selectedBets.size}개 경기 시뮬레이션
                                         </span>
                                     </div>
                                     <button onClick={handleSaveCombo}
                                         disabled={saving || selectedBets.size < 2}
                                         className={`text-sm px-6 py-2.5 rounded-xl font-bold transition-all ${saving ? 'opacity-50' : 'hover:scale-105'}`}
                                         style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>
-                                        {saving ? (tb.saving || '저장 중...') : `💾 ${tb.saveCombo || '조합 저장 →'}`}
+                                        {saving ? (tb.saving || '저장 중...') : `💾 시뮬레이션 기록 저장 →`}
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-white/10">
                                     <div className="text-xs text-white/60">
-                                        🔒 다폴더 조합 확률 시뮬레이션 및 포트폴리오 저장은 <strong className="text-cyan-400">Pro Analyst</strong> 전용 기능입니다.
+                                        🔒 다중 경기 확률 시뮬레이션 및 기록 저장은 <strong className="text-cyan-400">Basic Pass (월 3,900원)</strong> 이상 멤버십 전용 기능입니다.
                                     </div>
                                     <a href="/ko/payment/request?plan=pro&billing=monthly"
                                         className="text-xs px-5 py-2.5 rounded-xl font-black text-white transition-all hover:scale-105"
                                         style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                        💳 Pro 구독하고 조합 분석 잠금해제 →
+                                        ☕ 월 3,900원 구독하고 시뮬레이터 열기 →
                                     </a>
                                 </div>
                             )}

@@ -333,9 +333,10 @@ async def ssr_date_hub_page(date: str):
       {"".join(rows_html)}
     </div>
     <div class="hero-cta">
-      <h2 style="margin:0 0 6px;font-size:20px;color:#fff;">🔥 오늘 가장 적중 확률이 높은 AI TOP PICK 3경기는?</h2>
-      <p style="margin:0;color:#cbd5e1;font-size:14px;">Scorenix AI 분석실에서는 매일 #1순위 핵심 경기를 100% 무료 샘플로 즉시 공개합니다.</p>
-      <a href="/ko/analysis">⚡ 실시간 AI 분석실 바로가기 (무료 1경기 즉시 열람)</a>
+      <h2 style="margin:0 0 6px;font-size:20px;color:#fff;">🔥 오늘 기대값(+EV)과 신뢰도가 가장 높은 핵심 밸류 리포트 3경기는?</h2>
+      <p style="margin:0;color:#cbd5e1;font-size:14px;">Scorenix AI 데이터 센터에서는 매일 1경기 샘플 리포트를 100% 무료로 공개하며, 커피 한 잔 값(월 3,900원)으로 전 경기 시뮬레이션 지표를 무제한 열람하실 수 있습니다.</p>
+      <a href="/ko/analysis">⚡ 실시간 AI 통계 리포트 바로가기 (무료 1경기 즉시 열람)</a>
+      <p style="margin-top:14px;font-size:11px;color:#64748b;">⚖️ 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.</p>
     </div>
   </div>
 </body>
@@ -564,11 +565,11 @@ async def ssr_match_detail_page(date: str, slug: str):
 
       <div class="summary-box">
         <strong>🤖 Scorenix 3-Pillar AI 핵심 요약:</strong><br/>
-        {html.escape(kr_date)} 펼쳐지는 <strong>{html.escape(home_ko)} vs {html.escape(away_ko)}</strong> 경기는 글로벌 마켓 무마진(True Probability) 지표(55%), 리그 순위 및 공수 득실 마진 전력(30%), 최근 5경기 모멘텀(15%)을 종합할 때 <strong>{html.escape(target['fav_label'])}</strong> 구도로 분석되었습니다.
-        상세 켈리 기대값(+EV %)과 AI TOP PICK 추천 여부는 아래 실시간 분석실에서 즉시 확인하실 수 있습니다.
+        {html.escape(kr_date)} 펼쳐지는 <strong>{html.escape(home_ko)} vs {html.escape(away_ko)}</strong> 경기는 글로벌 마켓 무마진(True Probability) 지표(45%), 포아송 기대득점(xG) 시뮬레이션(30%), 최근 5경기 7-Factor 전력 모멘텀(25%)을 종합할 때 <strong>{html.escape(target['fav_label'])}</strong> 구도로 분석되었습니다.
+        상세 기대값(+EV %)과 AI 핵심 밸류 리포트 포함 여부는 아래 실시간 데이터 센터에서 커피 한 잔 값(월 3,900원) 멤버십 또는 일일 무료 샘플로 즉시 확인하실 수 있습니다.
       </div>
 
-      <a href="/ko/analysis" class="cta-btn">⚡ 실시간 AI 상세 리포트 &amp; 무료 1경기 샘플 즉시 열람하기 →</a>
+      <a href="/ko/analysis" class="cta-btn">⚡ 실시간 AI 통계 리포트 &amp; 무료 1경기 샘플 즉시 열람하기 →</a>
     </article>
 
     <section>
@@ -590,6 +591,7 @@ async def ssr_match_detail_page(date: str, slug: str):
         <a href="https://www.threads.com/@scorenix_official" target="_blank" rel="noopener">🧵 쓰레드 (@scorenix_official)</a> |
         <a href="https://official-scorenix.blogspot.com" target="_blank" rel="noopener">✍️ 공식 구글 블로그</a>
       </div>
+      <p style="margin-top:12px;font-size:11px;color:#64748b;">⚖️ 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.</p>
     </footer>
   </div>
 </body>

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.models.config_db import load_config_to_env
 from app.services.google_drive_service import google_drive_service
-from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, build_youtube_metadata
+from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, build_youtube_metadata, select_rotating_concept
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,13 +60,11 @@ def send_telegram_alert(message: str) -> bool:
 
 async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = False, langs: list = None):
     """
-    한국어 유료 전환 퍼널 집중 — Broadcast Shorts v6.0 제작 및 유튜브 자동 배포 파이프라인 (하루 1회 한국어 전용)
+    한국어 유료 전환 퍼널 집중 — Broadcast Shorts v7.0 (5종 컨셉 자동 로테이션) 제작 및 유튜브 자동 배포 파이프라인
     """
-    # 한국 유저 유료 결제 집중을 위해 기본 언어를 한국어('ko') 단독으로 고정
     langs = ["ko"]
-    logger.info(f"🚀 [Broadcast Shorts v6.0] 배포 파이프라인 트리거됨. 모드: {mode} (대상 언어: {langs})")
+    logger.info(f"🚀 [Broadcast Shorts v7.0] 배포 파이프라인 트리거됨. 모드: {mode} (대상 언어: {langs})")
 
-    # 0. 환경변수 최신화 (Firestore 로딩)
     load_config_to_env()
 
     output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_output")
@@ -75,14 +73,16 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
     results = {}
 
     for lang in langs:
-        logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v6.0 빌드 및 배포 시작...")
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        video_path = os.path.join(output_dir, f"scorenix_shorts_{mode}_{lang}_{ts}.mp4")
-
         matches = fetch_top_matches(limit=5, lang="ko")
-        meta = build_youtube_metadata(matches)
+        concept = select_rotating_concept(mode, matches)
+        concept_id = concept.get("id", "QUANT_RADAR")
+        meta = build_youtube_metadata(matches, concept=concept)
 
-        # 1. 숏폼 비디오 생성 (Broadcast Data Card v6.0)
+        logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v7.0 [{concept_id}] 빌드 및 배포 시작...")
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        video_path = os.path.join(output_dir, f"scorenix_shorts_{concept_id}_{lang}_{ts}.mp4")
+
+        # 1. 숏폼 비디오 생성 (Broadcast Data Card v7.0 — 5종 컨셉 로테이션)
         try:
             loop = asyncio.get_running_loop()
             rendered_path = await loop.run_in_executor(
@@ -94,6 +94,7 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
                 use_avatar,
                 mode,
                 "ko",
+                concept_id,
             )
         except Exception as render_err:
             logger.error(f"❌ [{lang.upper()}] 비디오 렌더링 중 오류 발생: {render_err}", exc_info=True)
@@ -105,7 +106,7 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
 
         logger.info(f"✅ [{lang.upper()}] 비디오 렌더링 완료: {rendered_path}")
 
-        # 2. 유튜브 숏츠 자동 업로드 (해결책 A: 설명란에 오늘의 무료 공개 1경기 리포트 전문 삽입)
+        # 2. 유튜브 숏츠 자동 업로드
         logger.info(f"📤 [{lang.upper()}] 유튜브 숏츠 자동 업로드 시도 중...")
         youtube_url = None
         try:
@@ -126,6 +127,8 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
 
         results[lang] = {
             "youtube_url": youtube_url,
+            "concept": concept_id,
+            "voice": concept.get("voice"),
             "title": meta["title"],
             "free_match": f"{meta['free_match']['home']} vs {meta['free_match']['away']} ({meta['free_match']['pick_label']})",
         }
@@ -143,9 +146,10 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
     ko_res = results.get("ko", {})
     yt_link = ko_res.get("youtube_url") or "업로드 대기/실패"
     alert_msg = (
-        f"<b>🎬 스코어닉스 Broadcast Shorts v6.0 자동 발행 완료</b>\n"
+        f"<b>🎬 스코어닉스 Broadcast Shorts v7.0 자동 발행 완료</b>\n"
         f"일시: {now_str}\n"
-        f"무료 공개 픽: <b>{ko_res.get('free_match', '-')}</b>\n"
+        f"컨셉 테마: <b>{ko_res.get('concept', 'QUANT_RADAR')} ({ko_res.get('voice', '-')})</b>\n"
+        f"무료 샘플: <b>{ko_res.get('free_match', '-')}</b>\n"
         f"📺 유튜브 쇼츠: <a href=\"{yt_link}\">{yt_link}</a>\n"
         f"🌐 분석 페이지: https://scorenix.com/ko/analysis"
     )

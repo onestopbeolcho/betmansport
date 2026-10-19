@@ -81,26 +81,28 @@ export default function Footer({ lang }: { lang?: string }) {
                         <p>{t.bizRep || '대표자'}: <span style={{ color: 'var(--text-secondary)' }}>노천택</span></p>
                         <p>{t.bizRegNo || '사업자등록번호'}: <span style={{ color: 'var(--text-secondary)' }}>534-40-01041</span></p>
                         <p>{t.bizEcommerceNo || '통신판매업 신고번호'}: <span style={{ color: 'var(--text-secondary)' }}>2024-전남나주-0053</span></p>
-                        <p>{t.bizCategory || '업태/종목'}: <span style={{ color: 'var(--text-secondary)' }}>{t.bizCategoryValue || '정보통신업 / 데이터베이스 및 온라인 정보 제공업'}</span></p>
+                        <p>{t.bizCategory || '업태/종목'}: <span style={{ color: 'var(--text-secondary)' }}>{t.bizCategoryValue || '정보통신업 / 스포츠 통계 데이터베이스 및 알고리즘 시뮬레이션 SaaS'}</span></p>
                         <p>{t.bizAddress || '주소'}: <span style={{ color: 'var(--text-secondary)' }}>{t.bizAddressValue || '전라남도 나주시 교육길 13 C동 4층 401호'}</span></p>
                         <p>{t.bizEmail || '이메일'}: <a href="mailto:scorenix@gmail.com" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>scorenix@gmail.com</a></p>
                         <p>{t.bizPhone || '담당자 연락처'}: <a href="tel:010-8725-4591" className="transition hover:text-[var(--accent-primary)]" style={{ color: 'var(--text-secondary)' }}>010-8725-4591</a></p>
                     </div>
                 </div>
 
+                {/* 필수 법적 면책 조항 */}
+                <div className="mb-5 p-3.5 rounded-xl text-[11px] leading-relaxed"
+                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
+                    ⚖️ <strong>면책 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
+                </div>
+
                 {/* Bottom Bar */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <span className="text-lg font-extrabold gradient-text">Scorenix</span>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>AI Sports Data Analytics</span>
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Digital Sports Data Intelligence & Analytics SaaS</span>
                     </div>
 
                     <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-                        © 2026 Scorenix. All rights reserved.
-                    </p>
-
-                    <p className="text-[10px] text-center max-w-md" style={{ color: 'var(--text-muted)' }}>
-                        {t.footerNotice || '본 서비스는 통계 분석 도구이며, 분석 결과에 대한 책임은 이용자에게 있습니다.'}
+                        © 2026 Scorenix (DesignBiz). All rights reserved.
                     </p>
                 </div>
             </div>

@@ -11,146 +11,101 @@ export default function RefundPage() {
             <Navbar />
 
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex-grow">
-                <h1 className="text-3xl font-extrabold mb-8" style={{ color: 'var(--text-primary)' }}>
-                    Refund Policy
+                <h1 className="text-3xl font-extrabold mb-3" style={{ color: 'var(--text-primary)' }}>
+                    환불 및 정기구독 해지 정책 (Refund & Cancellation Policy)
                 </h1>
+                <p className="text-xs mb-8" style={{ color: 'var(--text-muted)' }}>
+                    전자상거래 등에서의 소비자보호에 관한 법률 및 디지털 콘텐츠 이용자 보호 지침 준수
+                </p>
 
                 <div className="space-y-8 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
 
-                    {/* Overview */}
+                    {/* 제1조 */}
                     <section>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>제1조 (적용 범위 및 상품 정의)</h2>
                         <p>
-                            Scorenix (hereinafter &quot;Company&quot;) operates the following refund policy in accordance with the
-                            Act on Consumer Protection in Electronic Commerce.
+                            본 환불 및 해지 정책은 DesignBiz(이하 &quot;회사&quot;)가 운영하는 스포츠 통계 데이터베이스 및 알고리즘 시뮬레이션 SaaS 플랫폼 <strong>Scorenix(스코어닉스)</strong>의 유료 디지털 데이터 리포트 구독권(<strong>Basic Pass 월 3,900원</strong>, <strong>Pro Quant 월 9,900원</strong>)에 적용됩니다. 무료 체험 등급(Free)은 결제가 발생하지 않으므로 환불 대상에 해당하지 않습니다.
                         </p>
                     </section>
 
-                    {/* Article 1 */}
+                    {/* 제2조 */}
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Article 1 (Scope)</h2>
-                        <p>
-                            This refund policy applies to the paid subscription services (Pro Investor, VIP plans) provided by the Company.
-                            The free plan (Free) does not involve payment and is therefore not subject to refunds.
-                        </p>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>제2조 (원클릭 셀프 구독 해지 안내)</h2>
+                        <div className="p-4 rounded-xl mb-3" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                            <p className="font-bold mb-1" style={{ color: '#34d399' }}>⚡ 고객센터 문의 없는 24시간 원클릭 셀프 해지 지원</p>
+                            <p className="text-xs">
+                                모든 유료 구독 회원은 <strong>[마이페이지(My Page) → 구독 관리 → 구독 즉시 해지]</strong> 버튼을 통해 상담원 연결 없이 언제든 원클릭으로 다음 결제 주기의 자동 결제를 해지할 수 있습니다. 해지 신청 즉시 다음 달 결제가 중단되며, 이미 결제된 당월 잔여 이용 기간 만료일까지는 데이터 리포트 열람 권한이 정상 유지됩니다.
+                            </p>
+                        </div>
                     </section>
 
-                    {/* Article 2 */}
+                    {/* 제3조 */}
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Article 2 (Refund Terms)</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>제3조 (청약철회 및 일할 자동 차감 환불 기준)</h2>
 
-                        {/* 환불 테이블 */}
                         <div className="overflow-x-auto mb-4">
                             <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
                                 <thead>
                                     <tr style={{ background: 'var(--bg-elevated)' }}>
-                                        <th className="p-3 rounded-tl-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Category</th>
-                                        <th className="p-3 font-semibold" style={{ color: 'var(--text-primary)' }}>Refund Condition</th>
-                                        <th className="p-3 rounded-tr-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Refund Amount</th>
+                                        <th className="p-3 rounded-tl-lg font-semibold" style={{ color: 'var(--text-primary)' }}>구분</th>
+                                        <th className="p-3 font-semibold" style={{ color: 'var(--text-primary)' }}>디지털 리포트 열람 여부</th>
+                                        <th className="p-3 rounded-tr-lg font-semibold" style={{ color: 'var(--text-primary)' }}>환불 금액 산정 기준</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td className="p-3 font-bold" style={{ color: 'var(--accent-primary)' }}>Within 7 days</td>
-                                        <td className="p-3">Service not substantially used</td>
-                                        <td className="p-3 font-bold" style={{ color: '#34C759' }}>Full refund</td>
+                                        <td className="p-3 font-bold" style={{ color: 'var(--accent-primary)' }}>결제 후 7일 이내</td>
+                                        <td className="p-3">유료 전용 데이터 리포트 미열람 (미사용)</td>
+                                        <td className="p-3 font-bold" style={{ color: '#34C759' }}>100% 전액 환불</td>
                                     </tr>
                                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td className="p-3 font-bold" style={{ color: 'var(--accent-primary)' }}>Within 7 days</td>
-                                        <td className="p-3">Service has been used</td>
-                                        <td className="p-3">Prorated refund based on days used</td>
+                                        <td className="p-3 font-bold" style={{ color: 'var(--accent-primary)' }}>결제 후 7일 이내</td>
+                                        <td className="p-3">유료 전용 리포트 또는 시뮬레이터 열람 이력 존재</td>
+                                        <td className="p-3">사용 일수 일할 차감 후 잔액 환불</td>
                                     </tr>
                                     <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td className="p-3 font-bold" style={{ color: 'var(--text-muted)' }}>After 7 days</td>
-                                        <td className="p-3">Cancellation request</td>
-                                        <td className="p-3">Prorated refund based on remaining days</td>
+                                        <td className="p-3 font-bold" style={{ color: 'var(--text-muted)' }}>결제 후 7일 경과</td>
+                                        <td className="p-3">중도 해지 및 환불 요청 시</td>
+                                        <td className="p-3">잔여 일수 기준 일할 계산 환불 (위약금 10% 공제)</td>
                                     </tr>
                                     <tr>
-                                        <td className="p-3 font-bold" style={{ color: 'var(--text-muted)' }}>Auto-renewal</td>
-                                        <td className="p-3">Cancelled before renewal date</td>
-                                        <td className="p-3">Billing stops from next cycle</td>
+                                        <td className="p-3 font-bold" style={{ color: 'var(--text-muted)' }}>다음 주기 자동결제 해지</td>
+                                        <td className="p-3">만료일 이전 마이페이지 셀프 해지</td>
+                                        <td className="p-3">익월 과금 100% 차단 (잔여 기간 이용 보장)</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div className="p-4 rounded-xl" style={{ background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.2)' }}>
-                            <p className="font-semibold mb-1" style={{ color: 'var(--accent-primary)' }}>💡 Prorated Calculation Method</p>
-                            <p>Refund Amount = Payment Amount - (Payment Amount ÷ 30 days × Days Used)</p>
+                            <p className="font-semibold mb-1" style={{ color: 'var(--accent-primary)' }}>💡 일할 계산 자동 산식 (Prorated Auto-Calculation)</p>
+                            <p>환불 금액 = 결제 금액 - (결제 금액 ÷ 30일 × 이용 일수)</p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                                ※ 당일 경기의 유료 시뮬레이션 리포트를 이미 열람한 경우 해당 일자는 이용 일수(1일)로 산입됩니다.
+                            </p>
                         </div>
                     </section>
 
-                    {/* Article 3 */}
+                    {/* 제4조 */}
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Article 3 (Non-Refundable Cases)</h2>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>제4조 (면책 및 환불 제한 사유)</h2>
                         <ul className="list-disc list-inside space-y-2">
-                            <li>Service access was restricted due to user's own fault</li>
-                            <li>Payment was made with event/promotion discounts (separate refund policy applies)</li>
-                            <li>Simple change of mind after normal use of the service</li>
+                            <li>본 서비스는 통계적 시뮬레이션 지표를 제공하는 소프트웨어(SaaS)이며, 실제 스포츠 경기의 승패 결과는 환불 사유에 해당하지 않습니다.</li>
+                            <li>회원의 약관 위반(계정 공유, 크롤링 봇을 통한 데이터 무단 수집 등)으로 인해 이용이 제한된 경우 환불이 제한될 수 있습니다.</li>
                         </ul>
                     </section>
 
-                    {/* Article 4 */}
+                    {/* 제5조 */}
                     <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Article 4 (Refund Procedure)</h2>
-                        <div className="space-y-3">
-                            <div className="flex gap-3 items-start">
-                                <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'var(--accent-primary)' }}>1</div>
-                                <div>
-                                    <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Submit Request</p>
-                                    <p>Request a refund via email (support@smartproto.kr) or through My Page in the service.</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 items-start">
-                                <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'var(--accent-primary)' }}>2</div>
-                                <div>
-                                    <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Review</p>
-                                    <p>Refund eligibility will be communicated within 3 business days of receipt.</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 items-start">
-                                <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: 'var(--accent-primary)' }}>3</div>
-                                <div>
-                                    <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Processing</p>
-                                    <p>After approval, the refund will be processed to your payment method within 5-7 business days.</p>
-                                </div>
-                            </div>
-                        </div>
+                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>제5조 (환불 처리 절차 및 고객 지원)</h2>
+                        <p className="mb-2">
+                            구독 해지는 <Link href="/ko/mypage" className="underline font-bold" style={{ color: 'var(--accent-primary)' }}>마이페이지</Link>에서 즉시 처리 가능하며, 결제 취소 및 일할 환불 접수 시 KG이니시스(PortOne) 카드 취소 규정에 따라 영업일 기준 3~5일 이내에 원결제 수단으로 자동 환급됩니다.
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            결제/환불 전용 문의: <a href="mailto:scorenix@gmail.com" className="underline">scorenix@gmail.com</a> | 대표번호: 010-8725-4591
+                        </p>
                     </section>
 
-                    {/* Article 5 */}
-                    <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Article 5 (Service Pricing)</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-                                <p className="font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Pro Investor</p>
-                                <p className="text-2xl font-extrabold gradient-text">₩55,000<span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>/mo</span></p>
-                                <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Unlimited AI reports, real-time alerts, deep analysis</p>
-                            </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-                                <p className="font-bold mb-1" style={{ color: 'var(--text-primary)' }}>VIP</p>
-                                <p className="text-2xl font-extrabold" style={{ color: 'var(--accent-secondary)' }}>₩105,000<span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>/mo</span></p>
-                                <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>Exclusive channel, 1:1 premium reports, priority support</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Contact */}
-                    <section>
-                        <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Refund Inquiries</h2>
-                        <div className="p-4 rounded-xl" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}>
-                            <p>Email: <strong>support@smartproto.kr</strong></p>
-                            <p className="mt-1">Business hours: Mon-Fri 10:00 ~ 18:00 (excl. weekends/holidays)</p>
-                            <p className="mt-1">Refund processing: Within 3-7 business days from receipt</p>
-                        </div>
-                    </section>
-
-                    <section className="pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                        <div className="flex flex-wrap gap-4">
-                            <Link href="/terms" className="text-sm underline" style={{ color: 'var(--accent-primary)' }}>Terms of Service</Link>
-                            <Link href="/privacy" className="text-sm underline" style={{ color: 'var(--accent-primary)' }}>Privacy Policy</Link>
-                        </div>
-                        <p className="mt-3" style={{ color: 'var(--text-muted)' }}>Last updated: February 20, 2026</p>
-                    </section>
                 </div>
             </main>
         </div>

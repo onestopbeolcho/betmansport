@@ -199,11 +199,11 @@ def fetch_top_matches(limit=7, lang="ko"):
 
                 if hp >= ap:
                     pick_team = home
-                    pick_label = f"{home} 승"
+                    pick_label = f"{home} 우세"
                     win_prob = int(round(hp))
                 else:
                     pick_team = away
-                    pick_label = f"{away} 승"
+                    pick_label = f"{away} 우세"
                     win_prob = int(round(ap))
 
                 gap = round(abs(hp - ap), 1)
@@ -260,11 +260,11 @@ def fetch_top_matches(limit=7, lang="ko"):
                 hp, dp, ap = _calc_devig_probs(h_odds, d_odds, a_odds)
                 if hp >= ap:
                     pick_team = home
-                    pick_label = f"{home} 승"
+                    pick_label = f"{home} 우세"
                     win_prob = int(round(hp))
                 else:
                     pick_team = away
-                    pick_label = f"{away} 승"
+                    pick_label = f"{away} 우세"
                     win_prob = int(round(ap))
 
                 gap = round(abs(hp - ap), 1)
@@ -300,18 +300,18 @@ def fetch_top_matches(limit=7, lang="ko"):
 
 
 def _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap):
-    """실제 배당 및 3-Pillar 확률 격차 기반 한국어 해설 문장 생성"""
+    """실제 시장 지수 및 3-Pillar 확률 격차 기반 한국어 해설 문장 생성 (PG 규정 준수)"""
     fav = home if hp >= ap else away
     fav_odds = h_odds if hp >= ap else a_odds
     dog_odds = a_odds if hp >= ap else h_odds
     fav_prob = hp if hp >= ap else ap
 
     if gap >= 25:
-        return f"해외 기준 배당 {fav_odds} 대 {dog_odds}로, {fav}의 3-Pillar 승률이 {fav_prob}%에 달해 격차가 {gap}%포인트로 압도적입니다."
+        return f"글로벌 표준 지수 {fav_odds} 대 {dog_odds}로, {fav}의 3-Pillar 시뮬레이션 확률이 {fav_prob}%에 달해 격차가 {gap}%포인트로 압도적입니다."
     elif gap >= 12:
-        return f"글로벌 배당 흐름상 {fav} 배당이 {fav_odds}배로 안정권이며, AI 기대 승률도 {fav_prob}%로 우위가 뚜렷합니다."
+        return f"포아송 기대득점(xG)과 시장 지수 흐름상 {fav} 지수가 {fav_odds}로 안정권이며, AI 시뮬레이션 승률도 {fav_prob}%로 우위가 뚜렷합니다."
     else:
-        return f"양 팀 배당이 홈 {h_odds} 대 원정 {a_odds}로 팽팽하지만, 마진 제거 후 기대값에서 {fav} 쪽에 플러스 밸류가 포착됐습니다."
+        return f"양 팀 지수가 홈 {h_odds} 대 원정 {a_odds}로 팽팽하지만, 마진 제거 후 머신러닝 기대값(+EV)에서 {fav} 쪽에 플러스 밸류가 포착됐습니다."
 
 
 def _dynamic_fallback(limit=7, lang="ko"):
@@ -345,7 +345,7 @@ def _dynamic_fallback(limit=7, lang="ko"):
             "home": home,
             "away": away,
             "ai_pick": fav,
-            "pick_label": f"{fav} 승",
+            "pick_label": f"{fav} 우세",
             "win_prob": win_prob,
             "home_prob": hp,
             "draw_prob": dp,
@@ -365,6 +365,135 @@ def _dynamic_fallback(limit=7, lang="ko"):
 
 def _dummy():
     return _dynamic_fallback(7, "ko")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎬 v7.0 MULTI-CONCEPT ROTATING BROADCAST SHORTS ENGINE (5종 로테이션)
+# 매일/매시간 업로드되는 영상이 동일한 패턴으로 보이지 않도록
+# 5가지 방송 컨셉(색상 테마, 성우, 상단 배지, 오프닝 훅, 보드 타이틀)을 자동 순환합니다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+SHORTS_CONCEPTS = {
+    "QUANT_RADAR": {
+        "id": "QUANT_RADAR",
+        "badge": "QUANT AI",
+        "badge_rgb": (0, 180, 216),
+        "headline_suffix": "3-Pillar 퀀트 레이더",
+        "bg_canvas": (8, 12, 26, 255),
+        "board_bg": (13, 20, 38, 238),
+        "board_border": (0, 212, 255, 165),
+        "primary_rgb": (0, 212, 255),
+        "secondary_rgb": (16, 185, 129),
+        "lock_rgb": (245, 158, 11),
+        "voice": "ko-KR-InJoonNeural",
+        "rate": "+15%",
+        "pitch": "+0Hz",
+        "overview_tag": "3-PILLAR QUANT SIMULATION",
+        "overview_title": "오늘의 머신러닝 승률 시뮬레이션 3선",
+        "verdict_tag": "POISSON xG & DE-VIG VERDICT",
+        "verdict_subtitle": "일일 무료 공개 AI 시뮬레이션 우세 지표",
+    },
+    "FACT_CHECK": {
+        "id": "FACT_CHECK",
+        "badge": "FACT CHECK",
+        "badge_rgb": (225, 29, 72),
+        "headline_suffix": "빅매치 통계 팩트체크",
+        "bg_canvas": (20, 10, 18, 255),
+        "board_bg": (28, 14, 24, 238),
+        "board_border": (251, 191, 36, 175),
+        "primary_rgb": (251, 191, 36),
+        "secondary_rgb": (244, 63, 94),
+        "lock_rgb": (56, 189, 248),
+        "voice": "ko-KR-SunHiNeural",
+        "rate": "+14%",
+        "pitch": "+2Hz",
+        "overview_tag": "DATA FACT CHECK DESK",
+        "overview_title": "직관 vs 데이터! 오늘의 팩트체크 3경기",
+        "verdict_tag": "STATISTICAL FACT VERDICT",
+        "verdict_subtitle": "8,960경기 백테스트 기반 팩트체크 결과",
+    },
+    "VALUE_ALERT": {
+        "id": "VALUE_ALERT",
+        "badge": "+EV ALERT",
+        "badge_rgb": (147, 51, 234),
+        "headline_suffix": "+EV 기대값 왜곡 경보",
+        "bg_canvas": (15, 10, 28, 255),
+        "board_bg": (22, 15, 42, 238),
+        "board_border": (168, 85, 247, 175),
+        "primary_rgb": (192, 132, 252),
+        "secondary_rgb": (52, 211, 153),
+        "lock_rgb": (251, 191, 36),
+        "voice": "ko-KR-InJoonNeural",
+        "rate": "+16%",
+        "pitch": "+2Hz",
+        "overview_tag": "+EV ANOMALY RADAR",
+        "overview_title": "시장 확률 대비 +EV 기대값 포착 매치",
+        "verdict_tag": "+EV EXPECTED VALUE REPORT",
+        "verdict_subtitle": "시장 내재 확률 대비 시뮬레이션 우위 포착",
+    },
+    "MATCH_SPOTLIGHT": {
+        "id": "MATCH_SPOTLIGHT",
+        "badge": "BIG MATCH",
+        "badge_rgb": (16, 185, 129),
+        "headline_suffix": "빅리그 매치업 프리뷰",
+        "bg_canvas": (7, 20, 18, 255),
+        "board_bg": (11, 30, 27, 238),
+        "board_border": (52, 211, 153, 175),
+        "primary_rgb": (52, 211, 153),
+        "secondary_rgb": (56, 189, 248),
+        "lock_rgb": (245, 158, 11),
+        "voice": "ko-KR-SunHiNeural",
+        "rate": "+15%",
+        "pitch": "+0Hz",
+        "overview_tag": "PRIME MATCHUP SPOTLIGHT",
+        "overview_title": "오늘 밤 놓치면 안 될 빅리그 매치 3선",
+        "verdict_tag": "7-FACTOR TACTICAL VERDICT",
+        "verdict_subtitle": "포아송 기대득점(xG) & 7대 전술 팩터 결론",
+    },
+    "SPEED_BRIEFING": {
+        "id": "SPEED_BRIEFING",
+        "badge": "DAILY BRIEF",
+        "badge_rgb": (245, 158, 11),
+        "headline_suffix": "AI 스포츠 데이터 속보",
+        "bg_canvas": (12, 16, 30, 255),
+        "board_bg": (18, 24, 44, 238),
+        "board_border": (245, 158, 11, 175),
+        "primary_rgb": (251, 191, 36),
+        "secondary_rgb": (34, 211, 238),
+        "lock_rgb": (168, 85, 247),
+        "voice": "ko-KR-InJoonNeural",
+        "rate": "+15%",
+        "pitch": "-2Hz",
+        "overview_tag": "60-SECOND QUANT BRIEFING",
+        "overview_title": "바쁜 당신을 위한 핵심 3경기 데이터 요약",
+        "verdict_tag": "DAILY FREE SAMPLE REPORT",
+        "verdict_subtitle": "오늘의 무료 공개 AI 시뮬레이션 리포트",
+    },
+}
+
+
+def select_rotating_concept(mode: str = "marketing", matches: list = None) -> dict:
+    """
+    날짜 + 시간대 + 매치명 해시를 조합하여 매번 다른 방송 컨셉이 선택되도록 자동 로테이션합니다.
+    """
+    concept_keys = list(SHORTS_CONCEPTS.keys())
+    now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+
+    if mode == "educational":
+        return SHORTS_CONCEPTS["FACT_CHECK"]
+    elif mode == "winning":
+        return SHORTS_CONCEPTS["VALUE_ALERT"]
+    elif mode == "top_picks":
+        return SHORTS_CONCEPTS["SPEED_BRIEFING"]
+
+    match_salt = 0
+    if matches and len(matches) > 0:
+        m_str = f"{matches[0].get('home', '')}{matches[0].get('away', '')}"
+        match_salt = sum(ord(c) for c in m_str)
+
+    idx = (now_kst.day * 7 + now_kst.hour + match_salt) % len(concept_keys)
+    selected_key = concept_keys[idx]
+    return SHORTS_CONCEPTS[selected_key]
 
 
 # ─── Firestore 비디오 설정 로드 헬퍼 ────────────────────────
@@ -401,13 +530,14 @@ def load_video_settings():
     }
 
 
-def build_youtube_metadata(matches=None) -> dict:
+def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
     """
-    해결책 A: 유튜브 쇼츠 업로드 시 제목 + 설명란(Description) 최상단에
-    [오늘의 무료 공개 1경기 상세 리포트 전문 + AI TOP PICK 2·3순위 잠금 링크]를 자동 생성합니다.
+    컨셉별로 차별화된 유튜브 쇼츠 제목 + PG 규정 준수 설명란(월 3,900원 커피 한 잔 값 데이터 멤버십 퍼널) 생성
     """
     if not matches or len(matches) < 3:
         matches = fetch_top_matches(limit=5, lang="ko")
+    if not concept:
+        concept = select_rotating_concept("marketing", matches)
 
     free_m = matches[0]
     lock_m1 = matches[1] if len(matches) > 1 else matches[0]
@@ -416,44 +546,49 @@ def build_youtube_metadata(matches=None) -> dict:
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     date_md = now_kst.strftime("%m/%d")
     date_ko = now_kst.strftime("%m월 %d일")
-    date_iso = now_kst.strftime("%Y-%m-%d")
 
-    title = (
-        f"[{date_md} 스포츠분석] 🔓 {free_m['home']} vs {free_m['away']} AI 무료픽 공개 "
-        f"& 오늘의 TOP PICK 브리핑 #shorts"
-    )
+    cid = concept.get("id", "QUANT_RADAR")
+    title_templates = {
+        "QUANT_RADAR": f"[{date_md} AI 퀀트분석] 📊 {free_m['home']} vs {free_m['away']} 포아송 기대득점(xG) & 승률 시뮬레이션 #shorts",
+        "FACT_CHECK": f"[{date_md} 통계 팩트체크] ⚡ {free_m['home']} vs {free_m['away']} 이름값 vs AI 데이터 승률 비교 #shorts",
+        "VALUE_ALERT": f"[{date_md} +EV 밸류경보] 📈 {free_m['home']} vs {free_m['away']} 시장 확률 왜곡 포착 리포트 #shorts",
+        "MATCH_SPOTLIGHT": f"[{date_md} 빅매치 프리뷰] ⚽ {free_m['home']} vs {free_m['away']} 7-Factor 전력 시뮬레이션 #shorts",
+        "SPEED_BRIEFING": f"[{date_md} 1분 데이터브리핑] 🤖 {free_m['home']} vs {free_m['away']} 외 핵심 3경기 AI 승률 요약 #shorts",
+    }
+    title = title_templates.get(cid, title_templates["QUANT_RADAR"])
     if len(title) > 95:
-        title = f"[{date_md} AI 배당분석] {free_m['home']} vs {free_m['away']} 무료픽 & TOP PICK #shorts"
+        title = f"[{date_md} AI 데이터분석] {free_m['home']} vs {free_m['away']} 승률 시뮬레이션 리포트 #shorts"
 
     description = (
-        f"📊 [{date_ko} 스코어닉스 AI 3-Pillar 일일 무료 공개 리포트]\n"
-        f"👉 무료 상세 분석 & 🔒 TOP PICK 잠금 해제: https://scorenix.com/ko/analysis?utm_source=youtube_shorts&utm_medium=desc\n"
-        f"👉 실시간 배당 비교 & 조합 시뮬레이터: https://scorenix.com/ko/bets?utm_source=youtube_shorts&utm_medium=desc\n"
+        f"📊 [{date_ko} 스코어닉스 3-Pillar AI 스포츠 통계 시뮬레이션 리포트]\n"
+        f"☕ 커피 한 잔 값(월 3,900원 Basic Pass)으로 17개 리그 전 경기 +EV 밸류 리포트 무제한 열람!\n"
+        f"👉 일일 무료 샘플 & +EV 밸류 리포트 열람: https://scorenix.com/ko/analysis?utm_source=youtube_shorts&utm_medium=desc\n"
+        f"👉 월 3,900원 데이터 멤버십 안내: https://scorenix.com/ko/pricing?utm_source=youtube_shorts&utm_medium=desc\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🎁 [오늘의 1일 1경기 무료 공개 픽]\n"
+        f"🎁 [오늘의 1일 1경기 무료 공개 AI 시뮬레이션 샘플]\n"
         f"⚽ 매치업: {free_m['home']} vs {free_m['away']} ({free_m.get('league', '주요 리그')})\n"
-        f"📈 해외 기준 배당: 홈 {free_m['home_odds']} / 무 {free_m['draw_odds']} / 원정 {free_m['away_odds']}\n"
-        f"🤖 AI 3-Pillar 승률: 홈 {free_m['home_prob']}% | 무 {free_m['draw_prob']}% | 원정 {free_m['away_prob']}%\n"
-        f"🎯 AI 무료 추천 방향: [{free_m['pick_label']}] (신뢰도 {free_m['win_prob']}%)\n"
-        f"💡 핵심 근거: {free_m['reason']}\n\n"
+        f"📈 글로벌 표준 지수: 홈 {free_m['home_odds']} / 무 {free_m['draw_odds']} / 원정 {free_m['away_odds']}\n"
+        f"🤖 AI 3-Pillar 시뮬레이션 확률: 홈 {free_m['home_prob']}% | 무 {free_m['draw_prob']}% | 원정 {free_m['away_prob']}%\n"
+        f"📊 시뮬레이션 우세 지표: [{free_m['pick_label']}] (데이터 신뢰도 {free_m['win_prob']}%)\n"
+        f"💡 핵심 산출 근거: {free_m['reason']}\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔒 [오늘 밤 AI 신뢰도 상위 1% TOP PICK (PRO 전용)]\n"
-        f"1️⃣ [TOP PICK #1] {lock_m1['home']} vs {lock_m1['away']} (배당 {lock_m1['home_odds']} / {lock_m1['away_odds']})\n"
-        f"   └ 최종 추천 진영 & 켈리 최적 비중: 🔒 https://scorenix.com/ko/analysis 에서 확인\n"
-        f"2️⃣ [TOP PICK #2] {lock_m2['home']} vs {lock_m2['away']} (배당 {lock_m2['home_odds']} / {lock_m2['away_odds']})\n"
-        f"   └ 최종 추천 진영 & 켈리 최적 비중: 🔒 https://scorenix.com/ko/analysis 에서 확인\n\n"
+        f"🔒 [오늘 밤 +EV 핵심 밸류 리포트 상위 경기 (Basic Pass 월 3,900원)]\n"
+        f"1️⃣ [+EV 밸류 #1] {lock_m1['home']} vs {lock_m1['away']} (지수 {lock_m1['home_odds']} / {lock_m1['away_odds']})\n"
+        f"   └ 시뮬레이션 우세 지표 & 포아송 xG: 🔒 https://scorenix.com/ko/analysis 에서 확인\n"
+        f"2️⃣ [+EV 밸류 #2] {lock_m2['home']} vs {lock_m2['away']} (지수 {lock_m2['home_odds']} / {lock_m2['away_odds']})\n"
+        f"   └ 시뮬레이션 우세 지표 & 포아송 xG: 🔒 https://scorenix.com/ko/analysis 에서 확인\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🔗 [스코어닉스 공식 채널 네트워크]\n"
         f"🌐 공식 웹사이트: https://scorenix.com/ko/analysis\n"
         f"📸 공식 인스타그램: https://www.instagram.com/scorenix_official/\n"
         f"🧵 공식 쓰레드: https://www.threads.com/@scorenix_official\n"
         f"✍️ 공식 구글 블로그: https://official-scorenix.blogspot.com/\n\n"
-        f"※ 본 콘텐츠는 글로벌 배당 및 통계 데이터 기반 분석 리포트입니다.\n"
-        f"#스포츠분석 #프로토분석 #해외배당 #AI승부예측 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
+        f"⚖️ 본 콘텐츠는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다.\n"
+        f"#스포츠데이터 #축구통계 #포아송분포 #AI시뮬레이션 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
     )
 
     tags = [
-        "스포츠분석", "프로토분석", "배당분석", "AI승부예측", "해외축구분석",
+        "스포츠데이터", "축구통계분석", "AI시뮬레이션", "포아송기대득점", "해외축구분석",
         free_m["home"], free_m["away"], "스코어닉스", "shorts"
     ]
     return {
@@ -462,16 +597,20 @@ def build_youtube_metadata(matches=None) -> dict:
         "tags": tags,
         "free_match": free_m,
         "locked_matches": [lock_m1, lock_m2],
+        "concept": concept,
     }
 
 
-# ─── 대본 생성 (Broadcast Shorts v6.0 — 1경기 무료 공개 + 2경기 PRO 잠금 퍼널) ───
-def build_script(matches, mode="marketing"):
+# ─── 컨셉별 다변화 대본 생성 (Broadcast Shorts v7.0 — 5가지 오프닝/전개 패턴) ───
+def build_script(matches, mode="marketing", concept: dict = None):
     """
-    한국 유저 유료 결제 전환에 최적화된 4단계 브로드캐스트 쇼츠 대본을 생성합니다.
+    컨셉(QUANT_RADAR, FACT_CHECK, VALUE_ALERT, MATCH_SPOTLIGHT, SPEED_BRIEFING)별로
+    전혀 다른 오프닝 훅, 문장 구조, 자막 카드를 생성하여 유튜브 반복 콘텐츠 감지를 방지합니다.
     """
     if not matches or len(matches) < 3:
         matches = fetch_top_matches(limit=5, lang="ko")
+    if not concept:
+        concept = select_rotating_concept(mode, matches)
 
     free_m = matches[0]
     lock_m1 = matches[1] if len(matches) > 1 else matches[0]
@@ -483,46 +622,85 @@ def build_script(matches, mode="marketing"):
     h_free, a_free = free_m["home"], free_m["away"]
     h_lock1, a_lock1 = lock_m1["home"], lock_m1["away"]
     h_lock2, a_lock2 = lock_m2["home"], lock_m2["away"]
+    cid = concept.get("id", "QUANT_RADAR")
 
-    # Scene 1: 오프닝 훅 (~7초)
-    s1_tts = (
-        f"{today} 해외 배당판이 요동치고 있습니다! "
-        f"스코어닉스 AI의 오늘 무료 공개 한 경기와 프로 전용 탑 픽 두 경기를 브리핑합니다."
-    )
-    s1_cap = (
-        f"[ {today} AI 배당 브리핑 ]\n"
-        f"무료 공개 1경기 + PRO 탑픽 2경기"
-    )
+    # 컨셉별 Scene 1 (오프닝 훅) 차별화
+    if cid == "FACT_CHECK":
+        s1_tts = (
+            f"아직도 팀 이름값만 보고 결과를 예상하십니까? "
+            f"{today} 스코어닉스 팩트체크 데스크에서 데이터가 지목한 진짜 우세 경기를 공개합니다."
+        )
+        s1_cap = f"[ {today} 통계 팩트체크 ]\n이름값 착시 vs AI 시뮬레이션"
+    elif cid == "VALUE_ALERT":
+        s1_tts = (
+            f"긴급 데이터 브리핑입니다! {today} 글로벌 시장 내재 확률과 AI 시뮬레이션 사이에 "
+            f"뚜렷한 기대값 왜곡이 포착된 핵심 세 경기를 분석합니다."
+        )
+        s1_cap = f"[ {today} +EV 기대값 경보 ]\n시장 확률 왜곡 포착 3경기"
+    elif cid == "MATCH_SPOTLIGHT":
+        s1_tts = (
+            f"오늘 밤 빅리그 하이라이트 매치업! {h_free} 대 {a_free} 경기를 포함한 "
+            f"{today} 스코어닉스 세븐 팩터 전력 시뮬레이션을 시작합니다."
+        )
+        s1_cap = f"[ {today} 빅매치 프리뷰 ]\n{h_free} vs {a_free} 집중 분석"
+    elif cid == "SPEED_BRIEFING":
+        s1_tts = (
+            f"바쁜 분들을 위한 {today} 일분 스포츠 데이터 속보! "
+            f"오늘 무료 공개 샘플 한 경기와 플러스 기대값 상위 두 경기를 빠르게 요약합니다."
+        )
+        s1_cap = f"[ {today} 1분 데이터 브리핑 ]\n무료 샘플 1건 + 핵심 밸류 2건"
+    else:  # QUANT_RADAR
+        s1_tts = (
+            f"{today} 글로벌 스포츠 데이터 흐름이 급변하고 있습니다! "
+            f"스코어닉스 쓰리 필러 퀀트 엔진의 무료 샘플 리포트와 핵심 밸류 경기를 브리핑합니다."
+        )
+        s1_cap = f"[ {today} AI 퀀트 레이더 ]\n무료 샘플 1건 + 핵심 밸류 2건"
 
-    # Scene 2: 무료 공개 1경기 — 배당 & 3-Pillar 확률 분포 (~10초)
-    s2_tts = (
-        f"오늘 무료 공개 경기는 {h_free} 대 {a_free} 입니다. "
-        f"해외 배당 홈 {free_m['home_odds']}, 원정 {free_m['away_odds']}배로, "
-        f"AI 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트입니다."
-    )
-    s2_cap = (
-        f"[무료 공개] {h_free} vs {a_free}\n"
-        f"홈 승률 {free_m['home_prob']}% vs 원정 {free_m['away_prob']}%"
-    )
+    # 컨셉별 Scene 2 (기초 확률 분포) 차별화
+    if cid == "FACT_CHECK":
+        s2_tts = (
+            f"먼저 팩트체크 무료 공개 매치, {h_free} 대 {a_free} 입니다. "
+            f"글로벌 지수 마진을 제거한 순수 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트로 나타났습니다."
+        )
+    elif cid == "VALUE_ALERT":
+        s2_tts = (
+            f"첫 번째 분석 매치는 {h_free} 대 {a_free} 입니다. "
+            f"글로벌 표준 지수 홈 {free_m['home_odds']}, 원정 {free_m['away_odds']} 속에서 "
+            f"머신러닝 승률은 홈 {free_m['home_prob']}퍼센트 대 원정 {free_m['away_prob']}퍼센트입니다."
+        )
+    else:
+        s2_tts = (
+            f"오늘의 무료 공개 샘플은 {h_free} 대 {a_free} 경기입니다. "
+            f"포아송 기대득점과 시장 지수를 결합한 AI 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트입니다."
+        )
+    s2_cap = f"[무료 샘플] {h_free} vs {a_free}\n홈 승률 {free_m['home_prob']}% vs 원정 {free_m['away_prob']}%"
 
-    # Scene 3: 무료 공개 1경기 — AI 최종 추천 픽 & 근거 (~10초)
-    s3_tts = (
-        f"양 팀 승률 격차가 {free_m['odds_gap']}퍼센트 포인트로 뚜렷해, "
-        f"신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 포지션을 무료 추천합니다."
-    )
-    s3_cap = (
-        f"[AI 무료 추천] {free_m['pick_label']}\n"
-        f"데이터 신뢰도 {free_m['win_prob']}% 포착!"
-    )
+    # 컨셉별 Scene 3 (시뮬레이션 결론) 차별화
+    if cid == "FACT_CHECK":
+        s3_tts = (
+            f"양 팀의 세븐 팩터 확률 격차가 {free_m['odds_gap']}퍼센트 포인트까지 벌어지며, "
+            f"데이터 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 지표가 산출되었습니다."
+        )
+    elif cid == "VALUE_ALERT":
+        s3_tts = (
+            f"시장 확률 대비 플러스 기대값이 뚜렷하게 발생하여, "
+            f"신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 시뮬레이션 우세가 포착되었습니다."
+        )
+    else:
+        s3_tts = (
+            f"양 팀 승률 격차가 {free_m['odds_gap']}퍼센트 포인트로 명확해, "
+            f"머신러닝 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 지표를 무료 공개합니다."
+        )
+    s3_cap = f"[시뮬레이션 지표] {free_m['pick_label']}\n데이터 신뢰도 {free_m['win_prob']}% ({free_m['odds_gap']}%p 격차)"
 
-    # Scene 4: PRO 전용 잠금 2·3순위 매치 티저 & CTA (~11초)
+    # 컨셉별 Scene 4 (커피 한 잔 값 월 3,900원 Basic Pass CTA)
     s4_tts = (
-        f"그렇다면 오늘 AI 신뢰도 1위인 {h_lock1} 대 {a_lock1}, 그리고 {h_lock2} 대 {a_lock2}의 추천 픽은 어디일까요? "
-        f"지금 설명란 링크나 스코어닉스 닷컴에서 무료 리포트 전문과 프로 탑 픽을 확인하세요!"
+        f"오늘 기대값 1위인 {h_lock1} 대 {a_lock1}, 그리고 {h_lock2} 대 {a_lock2} 리포트는 어떨까요? "
+        f"커피 한 잔 값인 월 삼천구백 원 베이직 패스로 스코어닉스 닷컴에서 전 경기 리포트를 즉시 확인하세요!"
     )
     s4_cap = (
-        f"[PRO 전용] TOP PICK 2경기 잠금\n"
-        f"지금 scorenix.com 에서 즉시 확인"
+        f"☕ 커피 한 잔 값 [월 3,900원 Basic Pass]\n"
+        f"scorenix.com 에서 전 경기 리포트 열람"
     )
 
     return [
@@ -533,10 +711,7 @@ def build_script(matches, mode="marketing"):
     ]
 
 
-
-
-
-# ─── TTS (ElevenLabs 우선 → Edge TTS 폴백) ──────────────
+# ─── TTS (ElevenLabs 우선 → Edge TTS 컨셉별 성우 자동 전환) ──────────────
 try:
     from ai_avatar_service import (
         elevenlabs_tts, is_elevenlabs_available, is_did_available,
@@ -555,7 +730,7 @@ def apply_audio_ducking(bgm_clip, speech_clip, duck_vol=0.03, normal_vol=0.12, t
     미리 말소리 진폭(Envelope)을 추출한 뒤 BGM 음량을 동적으로 조절하는 프로페셔널 오디오 덕킹 필터
     """
     duration = speech_clip.duration
-    fps = 10  # 0.1초마다 샘플링
+    fps = 10
     n_samples = int(duration * fps)
     times = np.linspace(0, duration, n_samples)
     
@@ -590,71 +765,64 @@ def apply_audio_ducking(bgm_clip, speech_clip, duck_vol=0.03, normal_vol=0.12, t
     return bgm_clip.fl(lambda gf, t: gf(t) * get_vol(t))
 
 
-async def _tts_async(text, path, lang="ko"):
+async def _tts_async(text, path, lang="ko", concept: dict = None):
     import edge_tts
     cfg = load_video_settings()
     
-    # 언어별 최적의 성우 지정
-    voice_map = {
-        "ko": cfg.get("tts_voice_ko", "ko-KR-SunHiNeural"),
-        "en": cfg.get("tts_voice_en", "en-US-EmmaNeural"),
-        "ja": cfg.get("tts_voice_ja", "ja-JP-NanamiNeural")
-    }
-    voice = voice_map.get(lang, "ko-KR-SunHiNeural")
-    
-    # 속도를 언어별로 튜닝
-    rate_map = {
-        "ko": cfg.get("tts_speed_ko", "+15%"),
-        "en": cfg.get("tts_speed_en", "+12%"),
-        "ja": cfg.get("tts_speed_ja", "+10%")
-    }
-    rate = rate_map.get(lang, "+15%")
-    
-    # 피치 지정
-    pitch_map = {
-        "ko": cfg.get("tts_pitch_ko", "+5Hz"),
-        "en": cfg.get("tts_pitch_en", "+0Hz"),
-        "ja": cfg.get("tts_pitch_ja", "+0Hz")
-    }
-    pitch = pitch_map.get(lang, "+5Hz" if lang == "ko" else "+0Hz")
+    if lang == "ko" and concept:
+        voice = concept.get("voice", cfg.get("tts_voice_ko", "ko-KR-InJoonNeural"))
+        rate = concept.get("rate", cfg.get("tts_speed_ko", "+15%"))
+        pitch = concept.get("pitch", cfg.get("tts_pitch_ko", "+0Hz"))
+    else:
+        voice_map = {
+            "ko": cfg.get("tts_voice_ko", "ko-KR-InJoonNeural"),
+            "en": cfg.get("tts_voice_en", "en-US-EmmaNeural"),
+            "ja": cfg.get("tts_voice_ja", "ja-JP-NanamiNeural")
+        }
+        voice = voice_map.get(lang, "ko-KR-InJoonNeural")
+        rate_map = {
+            "ko": cfg.get("tts_speed_ko", "+15%"),
+            "en": cfg.get("tts_speed_en", "+12%"),
+            "ja": cfg.get("tts_speed_ja", "+10%")
+        }
+        rate = rate_map.get(lang, "+15%")
+        pitch_map = {
+            "ko": cfg.get("tts_pitch_ko", "+0Hz"),
+            "en": cfg.get("tts_pitch_en", "+0Hz"),
+            "ja": cfg.get("tts_pitch_ja", "+0Hz")
+        }
+        pitch = pitch_map.get(lang, "+0Hz")
     
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(path)
 
 
-def generate_tts(text, path, lang="ko"):
-    """ElevenLabs (최고 품질) → Edge TTS (무료 폴백) → gTTS (최종 폴백)"""
-    # 1차: ElevenLabs (API 키 있으면)
+def generate_tts(text, path, lang="ko", concept: dict = None):
+    """ElevenLabs (최고 품질) → Edge TTS (컨셉별 성우 로테이션) → gTTS (최종 폴백)"""
     if is_elevenlabs_available():
         if elevenlabs_tts(text, path):
             return
         print("    [>] ElevenLabs failed, trying Edge TTS...")
 
-    # 2차: Edge TTS
     try:
-        asyncio.run(_tts_async(text, path, lang))
+        asyncio.run(_tts_async(text, path, lang, concept=concept))
         return
     except Exception as e:
         print(f"    [!] Edge TTS failed ({e}), falling back to gTTS")
 
-    # 3차: gTTS
     from gtts import gTTS
     gTTS(text=text, lang=lang).save(path)
 
 
-
 # ─── 폰트 및 가상 캐릭터 헬퍼 ─────────────────────────────
 def get_font(size, bold=False):
-    # Try custom/system configurations or fallback paths
     font_names = []
-    
-    # Platform-specific standard font names/paths
-    if os.name == 'nt':  # Windows
+    if os.name == 'nt':
         if bold:
             font_names.extend(["malgunbd.ttf", "NanumGothicBold.ttf", "arialbd.ttf"])
         else:
             font_names.extend(["malgun.ttf", "NanumGothic.ttf", "arial.ttf"])
-    else:  # Linux (Cloud Run)
+    else:
         if bold:
             font_names.extend([
                 "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
@@ -670,14 +838,12 @@ def get_font(size, bold=False):
                 "DejaVuSans.ttf"
             ])
 
-    # Try loading each font
     for name in font_names:
         try:
             return ImageFont.truetype(name, size)
         except Exception:
             continue
 
-    # Final fallback
     try:
         return ImageFont.load_default()
     except Exception:
@@ -687,53 +853,38 @@ def get_font(size, bold=False):
 def make_circular_presenter_image():
     pres_path = os.path.join(os.path.dirname(__file__), "presenter.png")
     if not os.path.exists(pres_path):
-        # try fallback directory
         pres_path = os.path.join(os.path.dirname(__file__), "video", "presenter.png")
         if not os.path.exists(pres_path):
             return None
     try:
         img = Image.open(pres_path).convert("RGBA")
-        
-        # We want to crop it to a circle of size 400x400
         size = 400
         img = img.resize((size, size), Image.Resampling.LANCZOS)
-        
-        # Create mask
         mask = Image.new("L", (size, size), 0)
         draw_mask = ImageDraw.Draw(mask)
         draw_mask.ellipse((10, 10, size - 10, size - 10), fill=255)
-        
-        # Apply mask
         output = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         output.paste(img, (0, 0), mask=mask)
-        
-        # Draw a glowing neon cyan border
         draw_out = ImageDraw.Draw(output)
         draw_out.ellipse((6, 6, size - 6, size - 6), outline=(0, 255, 255, 220), width=6)
         draw_out.ellipse((10, 10, size - 10, size - 10), outline=(255, 255, 255, 100), width=2)
-        
         return np.array(output)
     except Exception as e:
         print(f"  [!] Failed to generate circular presenter: {e}")
         return None
 
 
-# ─── 자막 이미지 렌더링 ─────────────────────────────────
-def render_caption(text, scene="match", mode="marketing"):
-    """장면 유형별/테마별 디자인이 다른 자막 카드 생성 (자동 줄바꿈 + 폰트 자동 축소)"""
-    cfg = load_video_settings()
+# ─── 자막 이미지 렌더링 (컨셉별 네온 컬러 적용) ─────────────────────────
+def render_caption(text, scene="match", mode="marketing", concept: dict = None):
+    """장면 유형별/컨셉별 디자인이 다른 자막 카드 생성 (자동 줄바꿈 + 폰트 자동 축소)"""
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # 안전 영역: 화면 너비의 85%
     safe_w = int(WIDTH * 0.85)
-
-    # 장면별 기본 폰트 크기 (모바일 시인성 + 2줄 유지 최적화)
     base_size_intro = 56
     base_size_match = 52
     base_size = base_size_intro if scene == "intro" else base_size_match
 
-    # 자동 줄바꿈 + 폰트 크기 자동 축소 (2줄 초과 시 자동 축소)
     font = get_font(base_size, bold=True)
     wrapped = _wrap_text(draw, text, font, safe_w)
 
@@ -742,7 +893,6 @@ def render_caption(text, scene="match", mode="marketing"):
         font = get_font(base_size, bold=True)
         wrapped = _wrap_text(draw, text, font, safe_w)
 
-    # 각 줄 크기 계산
     spacing = 16
     line_data = []
     total_h = 0
@@ -756,11 +906,8 @@ def render_caption(text, scene="match", mode="marketing"):
         total_h += h + spacing
         line_data.append((line, w, h))
 
-    # UI 일관성을 위한 고정 너비(960px) 설정
     pad = 45
     box_w = 960
-
-    # 자막 위치를 화면 하단(Y=1600)으로 고정
     center_y = 1600
 
     box_h = total_h + pad * 2
@@ -769,64 +916,27 @@ def render_caption(text, scene="match", mode="marketing"):
     box_x2 = box_x1 + box_w
     box_y2 = box_y1 + box_h
 
-    # 장면별/테마별 컬러 스킴 (프리미엄 네온 테마)
-    if scene == "intro":
-        if mode == "winning":
-            box_color = (15, 25, 20, 230)  # 다크 그린
-            accent = (255, 215, 0, 255)     # 골드
-            border = (255, 215, 0, 180)
-        elif mode == "educational":
-            box_color = (25, 25, 30, 230)  # 다크 그레이
-            accent = (0, 255, 180, 255)     # 민트
-            border = (0, 255, 180, 180)
-        elif mode == "top_picks":
-            box_color = (30, 15, 30, 230)  # 다크 바이올렛
-            accent = (255, 100, 255, 255)   # 네온 핑크
-            border = (255, 100, 255, 180)
+    if concept:
+        pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
+        sr, sg, sb = concept.get("secondary_rgb", (16, 185, 129))
+        box_color = concept.get("board_bg", (15, 20, 35, 230))
+        if scene == "intro":
+            accent = (pr, pg, pb, 255)
+            border = (pr, pg, pb, 195)
+        elif scene == "cta":
+            accent = (251, 191, 36, 255)
+            border = (245, 158, 11, 200)
         else:
-            box_color = (10, 10, 30, 230)
-            accent = (255, 215, 0, 255)
-            border = (255, 215, 0, 180)
-    elif scene == "cta":
-        if mode == "winning":
-            box_color = (15, 25, 20, 230)
-            accent = (255, 215, 0, 255)
-            border = (255, 215, 0, 180)
-        elif mode == "educational":
-            box_color = (25, 25, 30, 230)
-            accent = (0, 255, 180, 255)
-            border = (0, 255, 180, 180)
-        elif mode == "top_picks":
-            box_color = (30, 15, 30, 230)
-            accent = (255, 100, 255, 255)
-            border = (255, 100, 255, 180)
-        else:
-            box_color = (30, 10, 15, 230)
-            accent = (255, 80, 80, 255)
-            border = (255, 80, 80, 180)
+            accent = (sr, sg, sb, 255)
+            border = (pr, pg, pb, 185)
     else:
-        if mode == "winning":
-            box_color = (15, 20, 15, 220)
-            accent = (100, 220, 160, 255)   # 라이트 에메랄드
-            border = (100, 220, 160, 180)
-        elif mode == "educational":
-            box_color = (20, 20, 25, 220)
-            accent = (0, 255, 180, 255)
-            border = (0, 255, 180, 180)
-        elif mode == "top_picks":
-            box_color = (25, 15, 25, 220)
-            accent = (255, 100, 255, 255)
-            border = (255, 100, 255, 180)
-        else:
-            box_color = (15, 20, 35, 220)
-            accent = (0, 255, 255, 255)
-            border = (0, 200, 255, 180)
+        box_color = (15, 20, 35, 225)
+        accent = (0, 255, 255, 255)
+        border = (0, 200, 255, 180)
 
-    # ── 프리미엄 Glassmorphism + Cyber-Glow 멀티레이어 렌더링 ──────────────
     try:
         from PIL import ImageFilter
 
-        # Layer 0: 외곽 확산 글로우 (Outer Diffuse Glow)
         glow_outer = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         gd = ImageDraw.Draw(glow_outer)
         gr, gg, gb, _ = border
@@ -839,7 +949,6 @@ def render_caption(text, scene="match", mode="marketing"):
         glow_outer = glow_outer.filter(ImageFilter.GaussianBlur(12))
         img = Image.alpha_composite(img, glow_outer)
 
-        # Layer 1: 딥 드롭 쉐도우 (Deep Drop Shadow)
         shadow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         shadow_draw = ImageDraw.Draw(shadow)
         shadow_draw.rounded_rectangle(
@@ -849,10 +958,8 @@ def render_caption(text, scene="match", mode="marketing"):
         shadow = shadow.filter(ImageFilter.GaussianBlur(18))
         img = Image.alpha_composite(img, shadow)
 
-        # Layer 2: 프리미엄 글래스 본체 (Frosted Glass)
         draw = ImageDraw.Draw(img)
         draw.rounded_rectangle([box_x1, box_y1, box_x2, box_y2], radius=25, fill=box_color)
-        # 상단 유리 반사 하이라이트
         highlight_img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         hl_draw = ImageDraw.Draw(highlight_img)
         hl_draw.rounded_rectangle(
@@ -862,7 +969,6 @@ def render_caption(text, scene="match", mode="marketing"):
         img = Image.alpha_composite(img, highlight_img)
         draw = ImageDraw.Draw(img)
 
-        # Layer 3: 멀티레이어 Cyber-Glow Border
         draw.rounded_rectangle(
             [box_x1 - 2, box_y1 - 2, box_x2 + 2, box_y2 + 2],
             radius=27, outline=(gr, gg, gb, 60), width=4
@@ -871,20 +977,10 @@ def render_caption(text, scene="match", mode="marketing"):
             [box_x1, box_y1, box_x2, box_y2],
             radius=25, outline=(gr, gg, gb, 210), width=2
         )
-        draw.rounded_rectangle(
-            [box_x1 + 3, box_y1 + 3, box_x2 - 3, box_y2 - 3],
-            radius=22, outline=(255, 255, 255, 45), width=1
-        )
-        draw.rounded_rectangle(
-            [box_x1 + 5, box_y1 + 5, box_x2 - 5, box_y2 - 5],
-            radius=20, outline=(gr, gg, gb, 25), width=1
-        )
-
     except AttributeError:
         draw = ImageDraw.Draw(img)
         draw.rectangle([box_x1, box_y1, box_x2, box_y2], fill=box_color)
 
-    # 텍스트 렌더링 (그림자 추가)
     cur_y = box_y1 + pad
     for line, w, h in line_data:
         if not line:
@@ -892,7 +988,7 @@ def render_caption(text, scene="match", mode="marketing"):
             continue
         x = (WIDTH - w) // 2
 
-        highlight_keys = ["승률", "승리", "유리", "TOP", "확인", "배당", "격차", "%", "vs", "DATA", "LIVE", "ODDS", "AI", "HOME", ">>", "리포트", "적중", "성공", "기대값", "Expected", "공개", "꿀팁", "1가지를"]
+        highlight_keys = ["승률", "우세", "3,900원", "커피", "밸류", "신뢰도", "격차", "%", "vs", "AI", "리포트", "팩트체크", "+EV", "샘플", "Basic"]
         color = accent if any(k in line for k in highlight_keys) else (255, 255, 255, 255)
 
         draw.text((x + 3, cur_y + 3), line, font=font, fill=(0, 0, 0, 220))
@@ -953,35 +1049,48 @@ def render_radial_vignette(width=1080, height=1920, strength=0.75):
     return Image.fromarray(vig_arr, "RGBA")
 
 
-def render_headline():
+def render_headline(concept: dict = None):
+    if not concept:
+        concept = SHORTS_CONCEPTS["QUANT_RADAR"]
+
     img = Image.new("RGBA", (WIDTH, 165), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    font_badge = get_font(26, bold=True)
-    font_title = get_font(38, bold=True)
+    font_badge = get_font(25, bold=True)
+    font_title = get_font(36, bold=True)
 
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     today = now_kst.strftime("%m월 %d일")
 
+    pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
+    br, bg, bb = concept.get("badge_rgb", (220, 38, 38))
+    badge_txt = concept.get("badge", "QUANT AI")
+    suffix_txt = concept.get("headline_suffix", "3-Pillar 퀀트 리포트")
+
     draw.rounded_rectangle(
         [40, 15, WIDTH - 40, 145],
         radius=24,
-        fill=(11, 17, 34, 240),
-        outline=(0, 212, 255, 190),
+        fill=concept.get("board_bg", (11, 17, 34, 240)),
+        outline=(pr, pg, pb, 200),
         width=3,
     )
-    draw.rounded_rectangle([70, 42, 255, 118], radius=14, fill=(220, 38, 38, 240))
-    draw.text((92, 62), "LIVE AI", font=font_badge, fill=(255, 255, 255, 255))
+    draw.rounded_rectangle([68, 42, 285, 118], radius=14, fill=(br, bg, bb, 245))
+    tb = draw.textbbox((0, 0), badge_txt, font=font_badge)
+    bw = tb[2] - tb[0]
+    draw.text((68 + (217 - bw) // 2, 62), badge_txt, font=font_badge, fill=(255, 255, 255, 255))
 
-    text = f"{today} 스코어닉스 배당 리포트"
-    draw.text((285, 55), text, font=font_title, fill=(240, 248, 255, 255))
+    text = f"{today} {suffix_txt}"
+    draw.text((310, 56), text, font=font_title, fill=(245, 250, 255, 255))
     return np.array(img)
 
 
-def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
+def render_broadcast_board(board_type: str, matches: list, concept: dict = None) -> np.ndarray:
     """
     9:16 스포츠 방송국 스타일 메인 데이터 그래픽 보드 렌더링 (Y: 195 ~ 1360 영역)
-    board_type: 'overview' | 'free_odds' | 'free_verdict' | 'locked_cta'
+    컨셉별 테마 컬러, 보드 타이틀, 배지 텍스트가 동적으로 변화합니다.
     """
+    if not concept:
+        concept = SHORTS_CONCEPTS["QUANT_RADAR"]
+
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
@@ -992,19 +1101,23 @@ def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
     lock_m1 = matches[1] if len(matches) > 1 else matches[0]
     lock_m2 = matches[2] if len(matches) > 2 else matches[0]
 
-    f_tag = get_font(28, bold=True)
-    f_sub = get_font(32, bold=False)
-    f_sub_b = get_font(34, bold=True)
-    f_team = get_font(46, bold=True)
-    f_big = get_font(56, bold=True)
-    f_huge = get_font(64, bold=True)
+    f_tag = get_font(27, bold=True)
+    f_sub = get_font(31, bold=False)
+    f_sub_b = get_font(33, bold=True)
+    f_team = get_font(44, bold=True)
+    f_big = get_font(54, bold=True)
+    f_huge = get_font(60, bold=True)
+
+    pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
+    sr, sg, sb = concept.get("secondary_rgb", (16, 185, 129))
+    lr, lg, lb = concept.get("lock_rgb", (245, 158, 11))
 
     bx1, by1, bx2, by2 = 45, 195, WIDTH - 45, 1355
     draw.rounded_rectangle(
         [bx1, by1, bx2, by2],
         radius=32,
-        fill=(13, 20, 38, 238),
-        outline=(56, 189, 248, 150),
+        fill=concept.get("board_bg", (13, 20, 38, 238)),
+        outline=concept.get("board_border", (56, 189, 248, 150)),
         width=3,
     )
 
@@ -1016,18 +1129,18 @@ def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
     def _draw_pill(x, y, txt, r, g, b, text_rgb=None):
         tb = draw.textbbox((0, 0), txt, font=f_tag)
         pw = (tb[2] - tb[0]) + 52
-        draw.rounded_rectangle([x, y, x + pw, y + 58], radius=14, fill=(r, g, b, 48), outline=(r, g, b, 210), width=2)
+        draw.rounded_rectangle([x, y, x + pw, y + 58], radius=14, fill=(r, g, b, 48), outline=(r, g, b, 215), width=2)
         t_col = text_rgb if text_rgb else (r, g, b, 255)
         draw.text((x + 26, y + 14), txt, font=f_tag, fill=t_col)
 
     if board_type == "overview":
-        _draw_pill(85, 230, "TODAY'S AI QUANT LINEUP", 16, 185, 129, (52, 211, 153, 255))
-        _center_text(310, "오늘의 해외배당 핵심 분석 3경기", f_team, (255, 255, 255, 255))
+        _draw_pill(85, 230, concept.get("overview_tag", "TODAY'S AI QUANT LINEUP"), sr, sg, sb, (255, 255, 255, 255))
+        _center_text(310, concept.get("overview_title", "오늘의 3-Pillar 시뮬레이션 3경기"), f_team, (255, 255, 255, 255))
 
         cards = [
-            ("무료 공개 매치 (100% OPEN)", free_m, (16, 185, 129), f"해외배당  승 {free_m['home_odds']}  |  무 {free_m['draw_odds']}  |  패 {free_m['away_odds']}"),
-            ("PRO AI TOP PICK #1 (잠금)", lock_m1, (245, 158, 11), f"해외배당  {lock_m1['home_odds']} vs {lock_m1['away_odds']}   |   추천 진영 PRO 전용"),
-            ("PRO AI TOP PICK #2 (잠금)", lock_m2, (168, 85, 247), f"해외배당  {lock_m2['home_odds']} vs {lock_m2['away_odds']}   |   추천 진영 PRO 전용"),
+            ("일일 무료 샘플 (100% OPEN)", free_m, (sr, sg, sb), f"글로벌 지수  홈 {free_m['home_odds']}  |  무 {free_m['draw_odds']}  |  원정 {free_m['away_odds']}"),
+            ("+EV 핵심 밸류 #1 (Basic Pass)", lock_m1, (pr, pg, pb), f"글로벌 지수  {lock_m1['home_odds']} vs {lock_m1['away_odds']}   |   월 3,900원 열람"),
+            ("+EV 핵심 밸류 #2 (Basic Pass)", lock_m2, (lr, lg, lb), f"글로벌 지수  {lock_m2['home_odds']} vs {lock_m2['away_odds']}   |   월 3,900원 열람"),
         ]
         cy = 400
         for badge_txt, m, col, bottom_txt in cards:
@@ -1035,55 +1148,55 @@ def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
             draw.rounded_rectangle(
                 [85, cy, WIDTH - 85, cy + 280],
                 radius=24,
-                fill=(20, 30, 55, 245),
+                fill=(18, 26, 48, 245),
                 outline=(r, g, b, 220),
                 width=3,
             )
-            _draw_pill(115, cy + 20, badge_txt, r, g, b)
+            _draw_pill(115, cy + 20, badge_txt, r, g, b, (255, 255, 255, 255))
 
             match_title = f"{m['home']}  vs  {m['away']}"
             _center_text(cy + 105, match_title, f_team, (255, 255, 255, 255))
-            _center_text(cy + 195, bottom_txt, f_sub_b, (200, 230, 255, 255))
+            _center_text(cy + 195, bottom_txt, f_sub_b, (210, 235, 255, 255))
             cy += 305
 
     elif board_type == "free_odds":
-        _draw_pill(85, 230, f"오늘의 무료 공개 매치  |  {free_m['league']}", 16, 185, 129, (52, 211, 153, 255))
+        _draw_pill(85, 230, f"일일 무료 시뮬레이션 샘플  |  {free_m['league']}", sr, sg, sb, (255, 255, 255, 255))
 
-        draw.rounded_rectangle([85, 315, WIDTH - 85, 535], radius=24, fill=(22, 34, 62, 250), outline=(0, 212, 255, 180), width=2)
+        draw.rounded_rectangle([85, 315, WIDTH - 85, 535], radius=24, fill=(20, 30, 56, 250), outline=(pr, pg, pb, 190), width=2)
         _center_text(345, free_m["home"], f_big, (255, 255, 255, 255))
-        _center_text(412, "VS", f_sub_b, (0, 212, 255, 255))
+        _center_text(412, "VS", f_sub_b, (pr, pg, pb, 255))
         _center_text(455, free_m["away"], f_big, (255, 255, 255, 255))
 
-        draw.text((95, 565), "글로벌 기준 배당 (Pinnacle True Odds)", font=f_sub_b, fill=(148, 163, 184, 255))
+        draw.text((95, 565), "글로벌 표준 시장 확률 지수 (De-vig Index)", font=f_sub_b, fill=(165, 180, 200, 255))
         cols = [
-            ("홈 승", f"{free_m['home_odds']}", (56, 189, 248)),
-            ("무승부", f"{free_m['draw_odds']}", (148, 163, 184)),
-            ("원정 승", f"{free_m['away_odds']}", (52, 211, 153)),
+            ("홈 우세 지수", f"{free_m['home_odds']}", (pr, pg, pb)),
+            ("무승부 지수", f"{free_m['draw_odds']}", (148, 163, 184)),
+            ("원정 우세 지수", f"{free_m['away_odds']}", (sr, sg, sb)),
         ]
         col_w = 280
         start_x = 90
         for idx, (lbl, val, c_rgb) in enumerate(cols):
             cx1 = start_x + idx * (col_w + 30)
             cx2 = cx1 + col_w
-            draw.rounded_rectangle([cx1, 615, cx2, 795], radius=20, fill=(18, 28, 50, 245), outline=(*c_rgb, 180), width=2)
+            draw.rounded_rectangle([cx1, 615, cx2, 795], radius=20, fill=(16, 24, 44, 245), outline=(*c_rgb, 185), width=2)
             b1 = draw.textbbox((0, 0), lbl, font=f_sub)
-            draw.text((cx1 + (col_w - (b1[2] - b1[0])) // 2, 635), lbl, font=f_sub, fill=(203, 213, 225, 255))
+            draw.text((cx1 + (col_w - (b1[2] - b1[0])) // 2, 635), lbl, font=f_sub, fill=(215, 225, 235, 255))
             b2 = draw.textbbox((0, 0), val, font=f_big)
             draw.text((cx1 + (col_w - (b2[2] - b2[0])) // 2, 695), val, font=f_big, fill=(*c_rgb, 255))
 
-        draw.text((95, 830), "AI 3-Pillar 마진 제거 승률 분포", font=f_sub_b, fill=(148, 163, 184, 255))
+        draw.text((95, 830), "3-Pillar 머신러닝 승률 시뮬레이션 분포", font=f_sub_b, fill=(165, 180, 200, 255))
         bars = [
-            (f"홈 ({free_m['home'][:7]})", free_m["home_prob"], (0, 212, 255)),
-            ("무승부", free_m["draw_prob"], (148, 163, 184)),
-            (f"원정 ({free_m['away'][:7]})", free_m["away_prob"], (16, 185, 129)),
+            (f"홈 ({free_m['home'][:7]})", free_m["home_prob"], (pr, pg, pb)),
+            ("무승부 확률", free_m["draw_prob"], (148, 163, 184)),
+            (f"원정 ({free_m['away'][:7]})", free_m["away_prob"], (sr, sg, sb)),
         ]
         by = 895
         bar_max_w = 880
         for b_lbl, pct, b_col in bars:
             draw.text((95, by), b_lbl, font=f_sub_b, fill=(241, 245, 249, 255))
             pct_txt = f"{pct}%"
-            pb = draw.textbbox((0, 0), pct_txt, font=f_sub_b)
-            draw.text((WIDTH - 95 - (pb[2] - pb[0]), by), pct_txt, font=f_sub_b, fill=(*b_col, 255))
+            pb_box = draw.textbbox((0, 0), pct_txt, font=f_sub_b)
+            draw.text((WIDTH - 95 - (pb_box[2] - pb_box[0]), by), pct_txt, font=f_sub_b, fill=(*b_col, 255))
 
             draw.rounded_rectangle([95, by + 48, 95 + bar_max_w, by + 92], radius=16, fill=(30, 41, 59, 255))
             fill_w = max(36, int(bar_max_w * (float(pct) / 100.0)))
@@ -1091,22 +1204,22 @@ def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
             by += 135
 
     elif board_type == "free_verdict":
-        _draw_pill(85, 230, "SCORENIX AI FINAL VERDICT", 0, 212, 255, (56, 189, 248, 255))
+        _draw_pill(85, 230, concept.get("verdict_tag", "SCORENIX QUANT SIMULATION"), pr, pg, pb, (255, 255, 255, 255))
         _center_text(325, f"{free_m['home']}  vs  {free_m['away']}", f_team, (255, 255, 255, 255))
 
         draw.rounded_rectangle(
             [85, 415, WIDTH - 85, 755],
             radius=28,
-            fill=(12, 38, 46, 250),
-            outline=(16, 185, 129, 245),
+            fill=(14, 34, 46, 250),
+            outline=(sr, sg, sb, 245),
             width=4,
         )
-        _center_text(445, "오늘의 1일 1경기 무료 공개 추천 픽", f_sub_b, (167, 243, 208, 255))
-        _center_text(520, f"[ {free_m['pick_label']} ]", f_huge, (52, 211, 153, 255))
-        _center_text(635, f"AI 데이터 신뢰도 {free_m['win_prob']}%   |   승률 격차 +{free_m['odds_gap']}%p", f_sub_b, (255, 255, 255, 255))
+        _center_text(445, concept.get("verdict_subtitle", "일일 무료 공개 AI 시뮬레이션 지표"), f_sub_b, (200, 250, 225, 255))
+        _center_text(520, f"[ {free_m['pick_label']} ]", f_huge, (sr, sg, sb, 255))
+        _center_text(635, f"머신러닝 신뢰도 {free_m['win_prob']}%   |   확률 우위 +{free_m['odds_gap']}%p", f_sub_b, (255, 255, 255, 255))
 
-        draw.rounded_rectangle([85, 795, WIDTH - 85, 1305], radius=24, fill=(20, 30, 55, 245), outline=(100, 116, 139, 140), width=2)
-        draw.text((120, 830), "3-Pillar 핵심 분석 리포트 요약", font=f_sub_b, fill=(56, 189, 248, 255))
+        draw.rounded_rectangle([85, 795, WIDTH - 85, 1305], radius=24, fill=(18, 28, 52, 245), outline=(pr, pg, pb, 150), width=2)
+        draw.text((120, 830), "3-Pillar 퀀트 데이터 분석 요약", font=f_sub_b, fill=(pr, pg, pb, 255))
 
         wrapped_reason = _wrap_text(draw, free_m["reason"], f_sub, WIDTH - 250)
         ry = 905
@@ -1114,52 +1227,50 @@ def render_broadcast_board(board_type: str, matches: list) -> np.ndarray:
             draw.text((120, ry), line, font=f_sub, fill=(241, 245, 249, 255))
             ry += 54
 
-        draw.rounded_rectangle([120, 1155, WIDTH - 120, 1265], radius=16, fill=(15, 23, 42, 255), outline=(56, 189, 248, 150), width=2)
-        _center_text(1190, "영상 설명란에 무료 1경기 상세 리포트 전문 수록!", f_sub_b, (56, 189, 248, 255))
+        draw.rounded_rectangle([120, 1155, WIDTH - 120, 1265], radius=16, fill=(12, 20, 38, 255), outline=(sr, sg, sb, 170), width=2)
+        _center_text(1190, "설명란에 무료 1경기 상세 리포트 & 월 3,900원 안내 수록!", f_sub_b, (sr, sg, sb, 255))
 
     else:
-        _draw_pill(85, 230, "SCORENIX PRO  |  AI TOP PICK LOCK", 245, 158, 11, (251, 191, 36, 255))
+        _draw_pill(85, 230, "BASIC PASS (월 3,900원)  |  +EV VALUE REPORT", lr, lg, lb, (255, 255, 255, 255))
 
-        _center_text(318, "오늘 밤 AI 신뢰도 1·2위 히든 매치", f_team, (255, 255, 255, 255))
+        _center_text(318, "오늘 밤 기대값(+EV) 1·2위 핵심 밸류 매치", f_team, (255, 255, 255, 255))
 
         locked_list = [
-            ("AI TOP PICK #1 (신뢰도 1위)", lock_m1),
-            ("AI TOP PICK #2 (밸류 1위)", lock_m2),
+            ("+EV 핵심 밸류 리포트 #1 (기대값 1위)", lock_m1),
+            ("+EV 핵심 밸류 리포트 #2 (신뢰도 상위)", lock_m2),
         ]
         ly = 405
         for lbl, lm in locked_list:
             draw.rounded_rectangle(
                 [85, ly, WIDTH - 85, ly + 290],
                 radius=24,
-                fill=(24, 28, 48, 248),
-                outline=(245, 158, 11, 210),
+                fill=(22, 26, 46, 248),
+                outline=(lr, lg, lb, 215),
                 width=3,
             )
-            draw.text((120, ly + 25), lbl, font=f_tag, fill=(251, 191, 36, 255))
+            draw.text((120, ly + 25), lbl, font=f_tag, fill=(lr, lg, lb, 255))
             _center_text(ly + 82, f"{lm['home']}  vs  {lm['away']}", f_team, (255, 255, 255, 255))
 
-            # 잠금 바
             draw.rounded_rectangle(
                 [120, ly + 170, WIDTH - 120, ly + 260],
                 radius=16,
-                fill=(45, 20, 35, 245),
-                outline=(244, 63, 94, 220),
+                fill=(16, 38, 36, 245),
+                outline=(sr, sg, sb, 220),
                 width=2,
             )
-            _center_text(ly + 198, "[PRO 전용] AI 최종 추천 픽 & 켈리 비중 잠금", f_sub_b, (253, 164, 175, 255))
+            _center_text(ly + 198, "☕ 커피 한 잔 값 (월 3,900원)으로 전체 리포트 열람", f_sub_b, (167, 243, 208, 255))
             ly += 320
 
-        # 하단 사이트 유도 배너
         draw.rounded_rectangle(
             [85, 1060, WIDTH - 85, 1310],
             radius=24,
-            fill=(12, 42, 62, 250),
-            outline=(0, 212, 255, 240),
+            fill=(12, 38, 58, 250),
+            outline=(pr, pg, pb, 240),
             width=3,
         )
-        _center_text(1095, "설명란 링크 또는 검색창에 [ 스코어닉스 ]", f_sub_b, (255, 255, 255, 255))
-        _center_text(1165, "scorenix.com", f_huge, (0, 212, 255, 255))
-        _center_text(1245, "무료 1경기 리포트 & PRO TOP PICK 즉시 열람", f_sub, (167, 243, 208, 255))
+        _center_text(1092, "설명란 링크 또는 검색창에 [ 스코어닉스 ]", f_sub_b, (255, 255, 255, 255))
+        _center_text(1158, "scorenix.com", f_huge, (pr, pg, pb, 255))
+        _center_text(1242, "일일 무료 샘플 1건 & 월 3,900원 전 경기 무제한 열람", f_sub, (251, 191, 36, 255))
 
     return np.array(img)
 
@@ -1203,16 +1314,17 @@ def get_bgm():
     return bgm_path
 
 
-def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko"):
+def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko", concept_id=None):
     """
-    실시간 데이터 기반 Broadcast Data Shorts v6.0 비디오 렌더러 (한국어 유료 전환 퍼널 전용)
-    PIL 사전 알파 합성(Pre-compositing)을 통해 프레임당 RGBA 블렌딩 병목을 제거하고 초고속 인코딩을 수행합니다.
+    실시간 데이터 기반 Broadcast Data Shorts v7.0 비디오 렌더러 (5대 컨셉 로테이션 + 월 3,900원 Basic Pass 퍼널)
     """
-    print(f"\n[>>] Broadcast Data Video Renderer v6.0 starting (mode={mode}, lang={lang})...")
     matches = fetch_top_matches(limit=5, lang="ko")
-    script_items = build_script(matches, mode=mode)
+    concept = SHORTS_CONCEPTS.get(concept_id) if concept_id in SHORTS_CONCEPTS else select_rotating_concept(mode, matches)
+    print(f"\n[>>] Broadcast Data Video Renderer v7.0 starting (mode={mode}, concept={concept['id']}, voice={concept['voice']})...")
 
-    headline_arr = render_headline()
+    script_items = build_script(matches, mode=mode, concept=concept)
+
+    headline_arr = render_headline(concept=concept)
     headline_pil = Image.fromarray(headline_arr, "RGBA")
     vignette_pil = render_radial_vignette()
 
@@ -1221,20 +1333,19 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
         board_type = item.get("board_type", "overview")
         print(f"  [{i+1}/{len(script_items)}] Scene '{item.get('scene', 'match')}' ({board_type}): {item['tts'][:38]}...")
         audio_path = os.path.join(os.path.dirname(__file__), f"_tmp_card_audio_{i}.mp3")
-        generate_tts(item["tts"], audio_path, lang="ko")
+        generate_tts(item["tts"], audio_path, lang="ko", concept=concept)
         audio = AudioFileClip(audio_path)
         dur = audio.duration
 
-        # 씬별 5개 레이어를 PIL에서 단 1회 사전 합성 → MoviePy 인코딩 속도 100배 향상!
-        canvas = Image.new("RGBA", (WIDTH, HEIGHT), (8, 12, 24, 255))
+        canvas = Image.new("RGBA", (WIDTH, HEIGHT), concept.get("bg_canvas", (8, 12, 24, 255)))
         canvas = Image.alpha_composite(canvas, vignette_pil)
         canvas.paste(headline_pil, ((WIDTH - headline_pil.width) // 2, 20), headline_pil)
 
-        board_arr = render_broadcast_board(board_type, matches)
+        board_arr = render_broadcast_board(board_type, matches, concept=concept)
         board_pil = Image.fromarray(board_arr, "RGBA")
         canvas = Image.alpha_composite(canvas, board_pil)
 
-        caption_arr = render_caption(item["caption"], scene=item.get("scene", "match"), mode=mode)
+        caption_arr = render_caption(item["caption"], scene=item.get("scene", "match"), mode=mode, concept=concept)
         caption_pil = Image.fromarray(caption_arr, "RGBA")
         canvas = Image.alpha_composite(canvas, caption_pil)
 
@@ -1258,7 +1369,7 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
         bgm = bgm.fx(volumex, 0.08)
         final = final.set_audio(CompositeAudioClip([final.audio, bgm]))
 
-    print("  [REC] Encoding Broadcast Shorts v6.0 video...")
+    print(f"  [REC] Encoding Broadcast Shorts v7.0 [{concept['id']}] video...")
     final.write_videofile(
         output_path,
         fps=24,
@@ -1285,27 +1396,25 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
             except OSError:
                 pass
 
-    print(f"  [OK] Broadcast Shorts v6.0 Done! → {output_path}")
+    print(f"  [OK] Broadcast Shorts v7.0 ({concept['id']}) Done! → {output_path}")
 
     if auto_upload:
-        _upload(output_path, matches=matches)
+        _upload(output_path, matches=matches, concept=concept)
 
     return output_path
 
 
 # ─── 메인 영상 생성 ─────────────────────────────────────
-def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko"):
+def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko", concept_id=None):
     """
-    스코어닉스 Shorts 영상 생성 (v6.0 — 9:16 Broadcast Data Card Engine)
-    기존의 불안정하고 자막 없던 브라우저 스크린샷 캡처 방식을 제거하고,
-    1080x1920 고해상도 방송국 데이터 보드 + 한국어 아나운서 나레이션 + 하단 네온 자막으로 즉시 렌더링합니다.
+    스코어닉스 Shorts 영상 생성 (v7.0 — 5-Concept Rotating Broadcast Data Engine)
     """
     print("=" * 60)
-    print(" [>>] Scorenix Video Pipeline v6.0 (Korean Broadcast Funnel)")
+    print(" [>>] Scorenix Video Pipeline v7.0 (5-Concept Rotating Broadcast Engine)")
     if is_elevenlabs_available():
         print(" [MIC] TTS: ElevenLabs (premium)")
     else:
-        print(" [MIC] TTS: Edge TTS (ko-KR-InJoonNeural)")
+        print(" [MIC] TTS: Edge TTS (Rotating InJoonNeural / SunHiNeural)")
     print("=" * 60)
     return generate_video_card_fallback(
         bg_video_path,
@@ -1314,6 +1423,7 @@ def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=Fal
         use_avatar=use_avatar,
         mode=mode,
         lang="ko",
+        concept_id=concept_id,
     )
 
 
@@ -1325,10 +1435,10 @@ def _get_desktop():
     return onedrive if os.path.isdir(onedrive) else regular
 
 
-def _upload(video_path, matches=None):
+def _upload(video_path, matches=None, concept=None):
     try:
         from app.services.youtube_uploader import upload_to_youtube
-        meta = build_youtube_metadata(matches)
+        meta = build_youtube_metadata(matches, concept=concept)
         vid = upload_to_youtube(video_path, meta["title"], meta["description"], meta["tags"])
         if vid:
             print(f"  [OK] YouTube upload success! https://youtu.be/{vid}")

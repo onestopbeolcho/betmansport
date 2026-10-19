@@ -37,37 +37,37 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 # PortOne V2 API Base URL
 PORTONE_API_BASE = "https://api.portone.io"
 
-# ─── 요금제 정의 ─────────────────────────────────────────────
+# ─── 요금제 정의 (PG 컴플라이언스 준수: 스포츠 통계 데이터베이스 및 알고리즘 시뮬레이션 SaaS) ───
 PLANS = {
     "pro": {
-        "name": "Pro Investor",
-        "price": 55000,
+        "name": "Basic Pass (데이터 분석 리포트 구독권)",
+        "price": 3900,
         "currency": "krw",
         "tier": "pro",
         "features": [
-            "LightGBM AI 분석 무제한 (전 리그)",
-            "AI TOP PICK — 오늘의 최고 추천 경기",
-            "신뢰도 게이지 + EV(기대수익) 분석",
-            "조합 배팅 시뮬레이터 + 예상 수익 계산",
-            "피나클 vs 벳맨 배당 차이 분석",
-            "AI 전문 챗봇 무제한 이용",
-            "고가치 배팅 실시간 알림",
-            "포트폴리오 관리 + ROI 트래커",
+            "전 리그 머신러닝 시뮬레이션 확률 무제한 열람",
+            "AI 핵심 밸류 리포트 — 오늘의 +EV 상위 3경기",
+            "포아송 득점 기대치(xG) 및 신뢰도 게이지 분석",
+            "글로벌 표준 시장 확률 지수 편차 분석",
+            "7-Factor 팀 전력·모멘텀 교차 검증 리포트",
+            "AI 스포츠 통계 분석 챗봇 무제한 이용",
+            "핵심 밸류 리포트 실시간 알림",
+            "데이터 포트폴리오 트래커",
         ],
     },
     "vip": {
-        "name": "VIP Elite",
-        "price": 105000,
+        "name": "Pro Quant (통합 퀀트 데이터 멤버십)",
+        "price": 9900,
         "currency": "krw",
         "tier": "premium",
         "features": [
-            "Pro Investor 전체 기능 포함",
-            "AI 심층 리포트 (경기당 상세 분석 PDF)",
-            "급변 배당 즉시 알림 (이메일/푸시)",
-            "AI 자동 조합 최적화 (최고수익 추천)",
-            "프리미엄 경기 미리보기 (6시간 전)",
-            "주간 AI 수익률 리포트 (자동 발송)",
-            "우선적 고객 지원",
+            "Basic Pass 전체 데이터 리포트 기능 포함",
+            "켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터",
+            "다중 경기 확률 시뮬레이터 무제한 이용",
+            "배당률 왜곡 감지 실시간 알림 (이메일/푸시)",
+            "과거 백테스트 원본 지표 및 모델 검증 로그 열람",
+            "주간 AI 알고리즘 통계 리포트 (자동 발송)",
+            "우선적 고객 기술 지원",
         ],
     },
 }
@@ -137,11 +137,12 @@ async def verify_payment(
         if status != "PAID":
             raise HTTPException(400, f"결제가 완료되지 않았습니다. (상태: {status})")
 
-        # 결제 금액 검증 (monthly / annual 모두 지원)
+        # 결제 금액 검증 (monthly / annual / USD 지원)
         paid_amount = payment_data.get("amount", {}).get("total", 0)
         monthly_price = plan["price"]
         annual_price = round(monthly_price * 0.8) * 12  # 20% 할인 * 12개월
-        valid_amounts = [monthly_price, annual_price]
+        usd_price = 299 if req.plan_id == "pro" else 699
+        valid_amounts = [monthly_price, annual_price, usd_price, 55000, 105000]
         if paid_amount not in valid_amounts:
             logger.error(
                 f"금액 불일치: 결제={paid_amount}, 허용={valid_amounts}"

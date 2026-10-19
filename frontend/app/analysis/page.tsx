@@ -492,16 +492,16 @@ export default function AnalysisPage() {
                         </div>
                     )}
 
-                    {/* ━━━ TOP PICKS (PRO EXCLUSIVE) ━━━ */}
+                    {/* ━━━ TOP VALUE REPORTS (BASIC PASS EXCLUSIVE) ━━━ */}
                     {topPicks.length > 0 && (
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-sm font-bold text-white/80 uppercase tracking-wider flex items-center">
                                     <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
-                                    🔥 오늘의 AI TOP PICK
+                                    🔥 오늘의 AI 핵심 밸류 리포트 (+EV 상위 3경기)
                                     {!isProOrAbove && (
                                         <span className="ml-2 text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                                            🔒 PRO 전용 잠금
+                                            🔒 월 3,900원 멤버십 전용
                                         </span>
                                     )}
                                 </h2>
@@ -526,19 +526,19 @@ export default function AnalysisPage() {
                                             {i === 0 && (
                                                 <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
                                                     style={{ background: level.color, color: 'white' }}>
-                                                    #1 PICK
+                                                    #1 +EV
                                                 </div>
                                             )}
                                             {i === 1 && (
                                                 <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
                                                     style={{ background: `${level.color}88`, color: 'white' }}>
-                                                    #2 PICK
+                                                    #2 +EV
                                                 </div>
                                             )}
                                             {i === 2 && (
                                                 <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
                                                     style={{ background: `${level.color}66`, color: 'white' }}>
-                                                    #3 PICK
+                                                    #3 +EV
                                                 </div>
                                             )}
                                             <div className="p-4">
@@ -576,10 +576,10 @@ export default function AnalysisPage() {
                                                 ) : (
                                                     <div className="flex items-center justify-between pt-2 border-t border-white/5">
                                                         <span className="text-xs font-bold text-red-400 flex items-center gap-1">
-                                                            🔒 추천 픽 & 신뢰도 잠금
+                                                            🔒 시뮬레이션 우세 지표 잠금
                                                         </span>
                                                         <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white">
-                                                            PRO 열람 →
+                                                            ☕ 월 3,900원 열람 →
                                                         </span>
                                                     </div>
                                                 )}
@@ -787,7 +787,7 @@ export default function AnalysisPage() {
                                                         </span>
                                                     ) : (
                                                         <a href="/ko/pricing" className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition">
-                                                            🔒 승무패 추천 픽 열람 (PRO)
+                                                            🔒 시뮬레이션 우세 지표 열람 (월 3,900원)
                                                         </a>
                                                     )}
                                                 </div>
@@ -888,16 +888,10 @@ export default function AnalysisPage() {
                         </div>
                     </div>
 
-                    {/* Data source info */}
-                    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-white/20 px-2">
-                        <div className="flex items-center space-x-2">
-                            <span>📚 8,960+ 경기 학습 완료</span>
-                            <span className="w-1 h-1 rounded-full bg-white/20" />
-                            <span>매일 03:00 재학습</span>
-                            <span className="w-1 h-1 rounded-full bg-white/20" />
-                            <span>데이터: {dataSources.join(' · ') || '로딩 중...'}</span>
-                        </div>
-                        <div>AI 예측은 과거 데이터에 기반하며, 예측 결과를 보장하지 않습니다</div>
+                    {/* Mandatory Legal Disclaimer */}
+                    <div className="mt-6 p-4 rounded-xl text-[11px] text-white/40 leading-relaxed"
+                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
+                        ⚖️ <strong>법적 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
                     </div>
                 </div>
             </main>

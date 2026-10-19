@@ -222,13 +222,13 @@ function generateMatchPage(match) {
     </section>
 
     <div class="paywall-box">
-      <div class="sample-pill">🎁 매일 1경기 7대 팩터 AI 리포트 100% 무료 공개 중</div>
-      <h2 style="color:#ffffff; margin-bottom:10px;">🔒 ${match.home_ko} vs ${match.away_ko} 7대 핵심 지표 & 오늘의 AI TOP PICK 3경기</h2>
+      <div class="sample-pill">🎁 매일 1경기 7대 팩터 AI 통계 리포트 100% 무료 공개 중</div>
+      <h2 style="color:#ffffff; margin-bottom:10px;">🔒 ${match.home_ko} vs ${match.away_ko} 7대 핵심 지표 & 오늘의 +EV 핵심 밸류 리포트 3경기</h2>
       <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:18px;">
-        포아송 기대득점(xG) · 최근 5경기 공수 흐름 · 배당 변동(스마트머니) · 켈리 공식 최적 자금 배분 비중을 지금 바로 확인하세요.
+        포아송 기대득점(xG) · 최근 5경기 공수 흐름 · 글로벌 시장 확률 편차 · 켈리 공식 최적 비중 시뮬레이션을 커피 한 잔 값(월 3,900원)으로 무제한 확인하세요.
       </p>
-      <a class="btn-primary" href="/ko/analysis">🤖 오늘의 무료 AI 샘플 & TOP PICK 열기 →</a>
-      <a class="btn-secondary" href="/ko/bets">📊 실시간 배당 비교 & 조합 시뮬레이터</a>
+      <a class="btn-primary" href="/ko/analysis">🤖 오늘의 무료 AI 샘플 & 핵심 밸류 리포트 열기 →</a>
+      <a class="btn-secondary" href="/ko/pricing">☕ 월 3,900원 데이터 멤버십 안내</a>
     </div>
 
     <div class="seo-footer">
@@ -238,7 +238,7 @@ function generateMatchPage(match) {
         <a href="https://www.threads.com/@scorenix_official" target="_blank" rel="noopener" style="color: #cbd5e1; text-decoration: none;">🧵 공식 쓰레드 (@scorenix_official)</a>
         <a href="https://official-scorenix.blogspot.com" target="_blank" rel="noopener" style="color: #fbbf24; text-decoration: none;">✍️ 공식 AI 분석 블로그</a>
       </div>
-      <p>Scorenix(스코어닉스)는 3-Pillar 하이브리드 퀀트 알고리즘(글로벌 배당 마진 제거 + 포아송/피타고라스 기대승률 + 7대 전술·폼 팩터)을 결합한 스포츠 데이터 분석 플랫폼입니다. ${match.home_ko} vs ${match.away_ko} 경기의 상세 분석, 승률 예측, 기대값(EV) 및 켈리 포트폴리오 정보를 확인하세요. 본 서비스의 모든 데이터는 통계 연구 목적이며, 최종 판단과 책임은 이용자 본인에게 있습니다.</p>
+      <p>⚖️ 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.</p>
     </div>
   </div>
 </body>
