@@ -69,14 +69,6 @@ async def trigger_daily_blogger_post():
                 t_away = match.get("team_away") or "away"
                 match_id = f"{t_home}_{t_away}"
 
-            # Firestore-based duplicate check to ensure 0 duplicates
-            pub_doc_id = f"{today_str}_{match_id}"
-            pub_doc_ref = db.collection("blogger_published").document(pub_doc_id)
-            if pub_doc_ref.get().exists:
-                logger.info(f"Match {match_id} already published today on Blogger. Skipping to prevent duplicate.")
-                skipped_count += 1
-                continue
-
             match_time = match.get("match_time") or today_str
             if "T" in match_time:
                 date_param = match_time.split("T")[0]
@@ -84,6 +76,15 @@ async def trigger_daily_blogger_post():
                 date_param = match_time.split(" ")[0]
             else:
                 date_param = match_time
+
+            # Firestore-based duplicate check by match date AND run date to ensure 0 duplicates across days
+            pub_doc_id = f"{date_param}_{match_id}"
+            legacy_doc_id = f"{today_str}_{match_id}"
+            pub_doc_ref = db.collection("blogger_published").document(pub_doc_id)
+            if pub_doc_ref.get().exists or db.collection("blogger_published").document(legacy_doc_id).get().exists:
+                logger.info(f"Match {match_id} ({date_param}) already published on Blogger. Skipping to prevent duplicate.")
+                skipped_count += 1
+                continue
 
             import re
             def to_en_slug(name: str) -> str:
@@ -129,6 +130,7 @@ async def trigger_daily_blogger_post():
                 logger.info(f"Successfully posted to blogger. URL: {published_url}")
                 pub_doc_ref.set({
                     "match_id": match_id,
+                    "match_date": date_param,
                     "published_at": firestore.SERVER_TIMESTAMP,
                     "url": published_url,
                     "title": seo_title

@@ -269,11 +269,10 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
             if not p.get("team_away_ko") or p.get("team_away_ko") == ta:
                 p["team_away_ko"] = mapper.get_korean_name(ta) or ta
 
-        # 오늘 이미 발행된 match_id 목록 조회 (중복 경기 발행 원천 차단)
+        # 최근 발행된 match_id 목록 조회 (당일 및 전일 중복 경기 발행 원천 차단)
         published_today_ids = set()
-        today_prefix = now_kst.strftime("%Y-%m-%d")
-        for h_item in _publish_history:
-            if str(h_item.get("published_at", "")).startswith(today_prefix):
+        for h_item in _publish_history[-30:]:
+            if h_item.get("match_id"):
                 published_today_ids.add(h_item.get("match_id"))
         try:
             from app.db.firestore import get_firestore_db
@@ -282,12 +281,12 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
             recent_docs = (
                 db.collection("sns_published")
                 .order_by("published_at", direction=gc_firestore.Query.DESCENDING)
-                .limit(15)
+                .limit(30)
                 .stream()
             )
             for d in recent_docs:
                 d_dict = d.to_dict() or {}
-                if str(d_dict.get("published_at", "")).startswith(today_prefix):
+                if d_dict.get("match_id"):
                     published_today_ids.add(d_dict.get("match_id"))
         except Exception as e_dedup:
             logger.warning(f"SNS dedup check skipped: {e_dedup}")
