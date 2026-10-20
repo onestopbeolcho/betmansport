@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+import Navbar from '../../components/Navbar';
+import DeadlineBanner from '../../components/DeadlineBanner';
 import { formatTeamDisplay, mapTeamName } from '../../lib/teamNames';
+import { i18n } from '../../lib/i18n-config';
 
 interface TeamStanding {
     team_name: string;
@@ -46,7 +49,7 @@ function FormBadges({ form }: { form: string }) {
     if (!form) return <span style={{ color: '#666' }}>—</span>;
     const recent = form.slice(-5);
     return (
-        <div style={{ display: 'flex', gap: '2px' }}>
+        <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
             {recent.split('').map((ch, i) => {
                 const color = ch === 'W' ? '#22c55e' : ch === 'D' ? '#f59e0b' : '#ef4444';
                 const bg = ch === 'W' ? 'rgba(34,197,94,0.15)' : ch === 'D' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)';
@@ -69,7 +72,10 @@ function FormBadges({ form }: { form: string }) {
 
 export default function StandingsPage() {
     const params = useParams();
-    const lang = (params?.lang as string) || 'ko';
+    const pathname = usePathname() || '';
+    const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
+    const detectedLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
+    const lang = (params?.lang as string) || detectedLang || 'ko';
     const isKo = lang === 'ko';
 
     const [allStandings, setAllStandings] = useState<Record<string, TeamStanding[]>>({});
@@ -98,6 +104,7 @@ export default function StandingsPage() {
             }
         }
         fetchStandings();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiUrl]);
 
     const leagueKeys = Object.keys(allStandings);
@@ -117,20 +124,29 @@ export default function StandingsPage() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0a0a14', color: '#e0e0e0', padding: '24px 16px' }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)', color: '#e0e0e0' }}>
+            <DeadlineBanner />
+            <Navbar />
+
+            <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div style={{ marginBottom: '32px' }}>
-                    <h1 style={{
-                        fontSize: '28px', fontWeight: 800, margin: 0,
-                        background: 'linear-gradient(135deg, #818cf8, #a78bfa)',
-                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                    }}>
-                        🏆 {isKo ? '리그 순위표' : 'League Standings'}
-                    </h1>
-                    <p style={{ color: '#888', marginTop: '8px', fontSize: '14px' }}>
-                        {isKo ? '주요 축구 리그 실시간 순위 · AI 분석 데이터 기반' : 'Live standings across major football leagues · AI data-driven'}
-                    </p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-2.5">
+                            <span>🏆</span>
+                            <span className="gradient-text">{isKo ? '17개 글로벌 리그 실시간 순위표' : 'Global League Standings'}</span>
+                        </h1>
+                        <p className="text-xs sm:text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                            {isKo ? '3-Pillar 하이브리드 퀀트 엔진에 실시간 반영되는 17개 리그 공식 순위 및 최근 5경기 흐름 데이터' : 'Live standings & form data across 17 leagues powering the 3-Pillar AI Quant Engine'}
+                        </p>
+                    </div>
+                    <a
+                        href={`/${lang}/analysis`}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition hover:scale-105 self-start sm:self-auto"
+                        style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}
+                    >
+                        🧠 {isKo ? '오늘의 AI 매치 리포트 보러가기 →' : 'View AI Match Reports →'}
+                    </a>
                 </div>
 
                 {/* League Tabs */}
@@ -284,18 +300,18 @@ export default function StandingsPage() {
                             display: 'flex', gap: '24px', marginTop: '16px', padding: '12px 16px',
                             background: 'rgba(255,255,255,0.02)', borderRadius: '8px', fontSize: '12px', color: '#888',
                         }}>
-                            <span><span style={{ color: '#22c55e' }}>●</span> {isKo ? 'UCL / 승격' : 'UCL / Promotion'}</span>
-                            <span><span style={{ color: '#ef4444' }}>●</span> {isKo ? '강등' : 'Relegation'}</span>
+                            <span><span style={{ color: '#22c55e' }}>●</span> {isKo ? '상위 시드 / 챔피언스리그 진출권' : 'Top Seed / UCL'}</span>
+                            <span><span style={{ color: '#ef4444' }}>●</span> {isKo ? '하위권 / 강등권' : 'Relegation Zone'}</span>
                             <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                {isKo ? '폼:' : 'Form:'}
-                                <span style={{ color: '#22c55e', fontWeight: 700 }}>W</span>
-                                <span style={{ color: '#f59e0b', fontWeight: 700 }}>D</span>
-                                <span style={{ color: '#ef4444', fontWeight: 700 }}>L</span>
+                                {isKo ? '최근 5경기 폼:' : 'Recent Form:'}
+                                <span style={{ color: '#22c55e', fontWeight: 700 }}>W(승)</span>
+                                <span style={{ color: '#f59e0b', fontWeight: 700 }}>D(무)</span>
+                                <span style={{ color: '#ef4444', fontWeight: 700 }}>L(패)</span>
                             </span>
                         </div>
                     </>
                 )}
-            </div>
+            </main>
         </div>
     );
 }
