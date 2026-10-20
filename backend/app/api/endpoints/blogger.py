@@ -54,9 +54,11 @@ async def trigger_daily_blogger_post():
         valid.sort(key=lambda x: float(x.get("confidence", 0) or 0), reverse=True)
 
         from firebase_admin import firestore
+        import asyncio
+        import re
         published_count = 0
         skipped_count = 0
-        max_per_run = 8
+        max_per_run = 2  # 하루 2건 고신뢰 경기 집중 발행 (Blogger 스팸 한도 및 Gemini 429 방지)
         urls = []
 
         # Loop through top matches of today to post each one individually
@@ -77,16 +79,17 @@ async def trigger_daily_blogger_post():
             else:
                 date_param = match_time
 
-            # Firestore-based duplicate check by match date AND run date to ensure 0 duplicates across days
-            pub_doc_id = f"{date_param}_{match_id}"
-            legacy_doc_id = f"{today_str}_{match_id}"
+            # Firestore-based duplicate check by match date AND run date (sanitize '/' to prevent invalid path error)
+            safe_date = re.sub(r'[^a-zA-Z0-9_-]', '-', str(date_param))
+            safe_match_id = re.sub(r'[/\\]', '_', str(match_id))
+            pub_doc_id = f"{safe_date}_{safe_match_id}"
+            legacy_doc_id = f"{today_str}_{safe_match_id}"
             pub_doc_ref = db.collection("blogger_published").document(pub_doc_id)
             if pub_doc_ref.get().exists or db.collection("blogger_published").document(legacy_doc_id).get().exists:
                 logger.info(f"Match {match_id} ({date_param}) already published on Blogger. Skipping to prevent duplicate.")
                 skipped_count += 1
                 continue
 
-            import re
             def to_en_slug(name: str) -> str:
                 if not name:
                     return "team"
@@ -99,9 +102,11 @@ async def trigger_daily_blogger_post():
             t_home_ko = match.get("team_home_ko") or t_home_en
             t_away_ko = match.get("team_away_ko") or t_away_en
             slug = f"{to_en_slug(t_home_en)}-vs-{to_en_slug(t_away_en)}"
-            url_path = f"{date_param}/{slug}"
+            url_path = f"{safe_date}/{slug}"
 
-            # Generate SEO HTML via Gemini
+            # Generate SEO HTML via Gemini (with brief pause to avoid 429)
+            if published_count > 0:
+                await asyncio.sleep(2.5)
             logger.info(f"Generating Blogger content for match: {slug}")
             content_res = await generate_blogger_content(match, url_path)
             if not content_res:

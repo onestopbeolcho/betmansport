@@ -239,8 +239,13 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
         post_type = req.post_type
         if not post_type:
-            if hour % 2 == 0:
+            # 09:30 KST (hour=9) -> 오늘의 핵심 매치 AI 퀀트 리포트 ("prediction")
+            # 13:30 KST (hour=13) -> 무료 샘플 1건 + TOP 3 +EV 밸류 리포트 브리핑 ("top_picks")
+            # 17:30 KST (hour=17) -> 백테스트 적중 검증 리포트 (없으면 다른 경기 "prediction")
+            if 7 <= hour <= 11:
                 post_type = "prediction"
+            elif 12 <= hour <= 15:
+                post_type = "top_picks"
             else:
                 post_type = "winning"
 
@@ -311,8 +316,24 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                 logger.error(f"Winning proof rotation error: {e}")
                 post_type = "prediction"
 
-        # B. 어디가 이길 것 같은지 (오늘/내일 승리 예상 픽 — 당일 중복 경기 제외)
-        if post_type in ["prediction", "top_picks", "preview"] or not text:
+        # B. 무료 AI 샘플 1건 공개 + 오늘의 +EV 상위 3경기 티저 브리핑
+        if post_type == "top_picks" and pred_dicts and not text:
+            try:
+                sorted_preds = sorted(pred_dicts, key=lambda x: x.get("confidence", 0), reverse=True)
+                unposted_preds = [p for p in sorted_preds if p.get("match_id") not in published_today_ids]
+                pool = unposted_preds if len(unposted_preds) >= 4 else sorted_preds
+                text = await generate_top_picks_sns(pool)
+                sample_pred = pool[3] if len(pool) > 3 else pool[0]
+                match_id = sample_pred.get("match_id", "top_picks")
+                confidence = sample_pred.get("confidence", 75)
+                if req.with_image:
+                    from app.services.card_generator import generate_card_and_upload
+                    image_url = await generate_card_and_upload(sample_pred)
+            except Exception as e:
+                logger.error(f"Top picks rotation error: {e}")
+
+        # C. 단일 경기 정밀 AI 3-Pillar 리포트 (당일 중복 경기 제외)
+        if post_type in ["prediction", "preview"] or not text:
             post_type = "prediction"
             if pred_dicts:
                 import random
@@ -320,13 +341,13 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                 unposted_preds = [p for p in sorted_preds if p.get("match_id") not in published_today_ids]
                 pool = unposted_preds[:10] if unposted_preds else sorted_preds[:10]
                 selected_pred = random.choice(pool) if pool else pred_dicts[0]
-                
+
                 posts = await generate_sns_content([selected_pred])
                 if posts:
                     text = posts[0]["text"]
                     match_id = posts[0]["match_id"]
                     confidence = posts[0]["confidence"]
-                    
+
                     if req.with_image:
                         from app.services.card_generator import generate_card_and_upload
                         image_url = await generate_card_and_upload(selected_pred)

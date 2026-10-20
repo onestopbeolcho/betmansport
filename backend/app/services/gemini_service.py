@@ -661,11 +661,11 @@ SNS_TOP_PICKS_PROMPT = """당신은 Scorenix의 SNS 마케팅 전문 AI입니다
 - 가장 기대값(+EV)이 높은 '📊 오늘의 AI 핵심 밸류 리포트 상위 3경기'는 대진(팀명)과 신뢰도만 공개한 뒤 상세 리포트는 스코어닉스 본진(월 3,900원 커피 한 잔 값 멤버십)에서 확인하도록 유도합니다.
 
 규칙 (매우 중요):
+0. **[인사말·서론 절대 금지]**: "안녕하세요", "수석 분석관입니다" 같은 서론을 절대 쓰지 마세요! 첫 줄부터 즉시 `🎁 [오늘의 무료 AI 시뮬레이션 샘플 공개]`로 시작하세요.
 1. **[금칙어 절대 금지]**: '픽(Pick)', 'TOP PICK', '베팅', '토토' 단어를 절대 쓰지 마세요. 대신 '+EV 핵심 밸류 리포트', '시뮬레이션 우세 지표'라고 표기하세요.
 2. **[🎁 오늘의 무료 AI 시뮬레이션 샘플 1건 공개]**: 제공된 샘플 경기 1건은 AI 시뮬레이션 우세 팀과 확률(%)을 명확히 공개하세요.
 3. **[🔒 오늘의 +EV 핵심 밸류 리포트 3경기 티저]**: 상위 3경기는 대진과 AI 신뢰도(%)만 공개하고 최종 방향은 '[🔒 Basic Pass 전용 (월 3,900원)]'으로 표시해 클릭을 유도하세요.
-4. 본문은 260자 이내로 콤팩트하게 작성하세요.
-5. 본문 끝에는 반드시 공식 채널 상호 링크를 첨부하세요:
+4. 본문 끝에는 반드시 공식 채널 상호 링크를 첨부하세요:
    🔗 공식 채널
    🌐 AI리포트: https://scorenix.com/ko/analysis
    🎬 유튜브: https://www.youtube.com/@스코어닉스
@@ -678,28 +678,14 @@ async def generate_winning_proof_sns(hits: list) -> Optional[str]:
     """최근 시뮬레이션 검증 일치(HIT) 경기 데이터를 바탕으로 검증 브리핑 SNS 생성"""
     if not hits:
         return None
-        
-    if _init_gemini() and _client is not None:
-        try:
-            import json
-            prompt = SNS_WINNING_PROOF_PROMPT + "\n\n최근 시뮬레이션 검증 일치 경기 데이터:\n" + json.dumps(hits, ensure_ascii=False, indent=2)
-            prompt += "\n\n위 데이터를 바탕으로 신뢰성 높은 백테스트 검증 게시글을 작성하세요."
-            response = _client.generate_content(prompt)
-            text = response.text.strip()
-            if text:
-                logger.info(f"✅ Winning proof SNS content generated ({len(text)} chars)")
-                return text
-        except Exception as e:
-            logger.error(f"Winning proof SNS generation error: {e}")
-            
-    # Fallback if Gemini fails
+
     hit = hits[0]
-    home = hit.get("team_home", "홈팀")
-    away = hit.get("team_away", "원정팀")
+    home = hit.get("team_home_ko") or hit.get("team_home", "홈팀")
+    away = hit.get("team_away_ko") or hit.get("team_away", "원정팀")
     rec = hit.get("recommendation", "HOME")
     h_score = hit.get("home_score", 0)
     a_score = hit.get("away_score", 0)
-    return (
+    fallback_text = (
         f"✅ [AI 백테스트 검증 완료] {home} vs {away} 시뮬레이션 결과 일치!\n\n"
         f"3-Pillar 퀀트 엔진이 산출한 우세 지표({rec})가 최종 스코어 {h_score}:{a_score}로 정확히 검증되었습니다! 🤖📈\n"
         f"☕ 커피 한 잔 값(월 3,900원)으로 매일 전 경기 +EV 데이터 리포트를 확인하세요.\n\n"
@@ -712,6 +698,23 @@ async def generate_winning_proof_sns(hits: list) -> Optional[str]:
         f"#Scorenix #백테스트검증 #스포츠데이터 #AI시뮬레이션"
     )
 
+    if _init_gemini() and _client is not None:
+        try:
+            import json
+            prompt = SNS_WINNING_PROOF_PROMPT + "\n\n최근 시뮬레이션 검증 일치 경기 데이터:\n" + json.dumps(hits[:3], ensure_ascii=False, indent=2)
+            prompt += "\n\n위 데이터를 바탕으로 인사말/서론 없이 즉시 신뢰성 높은 백테스트 검증 게시글을 작성하세요."
+            response = _client.generate_content(prompt)
+            text = (response.text or "").strip()
+            lines = [ln for ln in text.splitlines() if not any(bad in ln for bad in ["수석 SNS", "분석관입니다", "게시글을 작성"])]
+            cleaned = "\n".join(lines).strip()
+            if len(cleaned) >= 140:
+                logger.info(f"✅ Winning proof SNS content generated ({len(cleaned)} chars)")
+                return cleaned
+        except Exception as e:
+            logger.error(f"Winning proof SNS generation error: {e}")
+
+    return fallback_text
+
 async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]:
     """스포츠 데이터 퀀트 분석 교육용 콘텐츠 생성"""
     topics = [
@@ -722,19 +725,19 @@ async def generate_educational_sns(topic: Optional[str] = None) -> Optional[str]
     ]
     import random
     selected_topic = topic or random.choice(topics)
-    
+
     if _init_gemini() and _client is not None:
         try:
             prompt = SNS_EDUCATIONAL_PROMPT + f"\n\n선택된 교육 주제:\n{selected_topic}"
-            prompt += "\n\n위 주제를 바탕으로 초보자도 이해하기 쉬운 1줄 지식을 포함한 트렌디한 데이터 브리핑 글을 작성하세요."
+            prompt += "\n\n위 주제를 바탕으로 인사말/서론 없이 초보자도 이해하기 쉬운 트렌디한 데이터 브리핑 글을 작성하세요."
             response = _client.generate_content(prompt)
-            text = response.text.strip()
-            if text:
+            text = (response.text or "").strip()
+            if len(text) >= 120:
                 logger.info(f"✅ Educational SNS content generated ({len(text)} chars)")
                 return text
         except Exception as e:
             logger.error(f"Educational SNS generation error: {e}")
-            
+
     # Fallback
     return (
         f"💡 [스포츠 퀀트 1분 인사이트] 🧠\n\n"
@@ -753,29 +756,11 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
     """오늘 밤의 무료 샘플 1건 오픈 + 상위 3경기 +EV 밸류 리포트 티저 생성"""
     if not predictions:
         return None
-        
+
     sorted_preds = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)
     top_3 = sorted_preds[:3]
     free_sample = sorted_preds[3] if len(sorted_preds) > 3 else sorted_preds[0]
-    
-    if _init_gemini() and _client is not None:
-        try:
-            import json
-            payload = {
-                "free_sample_match": free_sample,
-                "locked_top_3_matches": top_3,
-            }
-            prompt = SNS_TOP_PICKS_PROMPT + "\n\n오늘의 경기 데이터:\n" + json.dumps(payload, ensure_ascii=False, indent=2)
-            prompt += "\n\n위 데이터를 바탕으로 무료 샘플 1건은 시뮬레이션 지표를 공개하고, 상위 3경기는 호기심을 유발하는 게시글을 작성하세요."
-            response = _client.generate_content(prompt)
-            text = response.text.strip()
-            if text:
-                logger.info(f"✅ Top value reports SNS content generated ({len(text)} chars)")
-                return text
-        except Exception as e:
-            logger.error(f"Top value reports SNS generation error: {e}")
-            
-    # Fallback
+
     s_home = free_sample.get("team_home_ko") or free_sample.get("team_home", "홈")
     s_away = free_sample.get("team_away_ko") or free_sample.get("team_away", "원정")
     s_rec = free_sample.get("recommendation", "HOME")
@@ -789,8 +774,8 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
         conf = p.get("confidence", 0)
         league = p.get("league", "")
         matches_text += f"📊 #{i+1} +EV. [{league}] {home} vs {away} (신뢰도 {conf:.0f}% · 🔒Basic Pass)\n"
-        
-    return (
+
+    fallback_text = (
         f"🎁 [오늘의 무료 AI 시뮬레이션 샘플 공개]\n"
         f"⚽ {s_home} vs {s_away} → 시뮬레이션 지표: [{s_rec_ko}] (신뢰도 {s_conf:.0f}%)\n\n"
         f"📈 [오늘 밤 AI 핵심 밸류 리포트 (+EV 상위 3경기)]\n"
@@ -802,8 +787,43 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
         f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
         f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
         f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
-        f"#Scorenix #스포츠데이터 #AI시뮬레이션 #기대값분석"
+        f"#Scorenix #스코어닉스 #스포츠데이터 #AI시뮬레이션 #기대값분석"
     )
+
+    if _init_gemini() and _client is not None:
+        try:
+            import json
+            payload = {
+                "free_sample_match": {
+                    "league": free_sample.get("league", ""),
+                    "home": s_home,
+                    "away": s_away,
+                    "favored": s_rec_ko,
+                    "confidence": s_conf,
+                },
+                "locked_top_3_matches": [
+                    {
+                        "league": p.get("league", ""),
+                        "home": p.get("team_home_ko") or p.get("team_home", ""),
+                        "away": p.get("team_away_ko") or p.get("team_away", ""),
+                        "confidence": p.get("confidence", 0),
+                    }
+                    for p in top_3
+                ],
+            }
+            prompt = SNS_TOP_PICKS_PROMPT + "\n\n오늘의 경기 데이터:\n" + json.dumps(payload, ensure_ascii=False, indent=2)
+            prompt += "\n\n위 데이터를 바탕으로 서론 없이 즉시 무료 샘플 1건은 시뮬레이션 지표를 공개하고, 상위 3경기는 호기심을 유발하는 게시글을 작성하세요."
+            response = _client.generate_content(prompt)
+            text = (response.text or "").strip()
+            lines = [ln for ln in text.splitlines() if not any(bad in ln for bad in ["수석 SNS", "마케팅 전문", "분석관입니다", "게시글을 작성"])]
+            cleaned = "\n".join(lines).strip()
+            if len(cleaned) >= 160 and s_home.split()[0] in cleaned:
+                logger.info(f"✅ Top value reports SNS content generated ({len(cleaned)} chars)")
+                return cleaned
+        except Exception as e:
+            logger.error(f"Top value reports SNS generation error: {e}")
+
+    return fallback_text
 
 # ═══════════════════════════════════════════════════
 # Phase 6: Blogger / WordPress SEO 콘텐츠 자동 생성 (PG 규정 준수)
