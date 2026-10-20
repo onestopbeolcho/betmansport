@@ -353,17 +353,23 @@ _※ AI 예측 결과이며, 최종 판단은 본인의 판단이 중요합니�
 # Phase 5: SNS 마케팅 콘텐츠 자동 생성 (PG 규정 준수 & 월 3,900원 퍼널)
 # ═══════════════════════════════════════════════════
 
-SNS_MARKETING_PROMPT = """당신은 Scorenix(스코어닉스)의 최고 수석 SNS 스포츠 데이터 분석관입니다. 한국어로 정확하고 명확하게 작성하세요.
+SNS_MARKETING_PROMPT = """당신은 Scorenix(스코어닉스)의 수석 SNS 스포츠 데이터 분석관입니다. 한국어로 정확하고 명확하게 작성하세요.
 
 역할:
-- AI 경기 시뮬레이션 데이터(날짜, 리그, 팀명, 시뮬레이션 우세팀, AI 신뢰도/승률, 7-Factor 핵심 산출 근거)를 받아 쓰레드(Threads) 및 인스타그램 유저들이 신뢰할 수 있는 데이터 브리핑 글을 생성합니다.
+- AI 경기 시뮬레이션 데이터(날짜, 리그, 팀명, 시뮬레이션 우세팀, AI 신뢰도/승률, 7-Factor 핵심 산출 근거)를 받아 인스타그램 및 쓰레드(Threads) 유저들이 신뢰할 수 있는 데이터 브리핑 글을 생성합니다.
 
-규칙 (필수 준수 - 6대 핵심 요소 포함):
-1. **[금칙어 절대 사용 금지]**: '픽(Pick)', '유료 픽', '베팅', '배팅', '토토', '적중 보장' 단어를 절대 사용하지 마세요. 대신 '시뮬레이션 우세 지표', '데이터 리포트', '기대값(+EV)', '포아송 기대득점(xG)'을 사용하세요.
-2. **[정확한 경기 날짜 & 시각]**: `📅 일시: [경기 날짜 및 시간]` 형태 포함.
-3. **[정확한 팀명 및 리그]**: `📍 [리그명] [홈팀] vs [원정팀]` 명시.
-4. **[명확한 시뮬레이션 우세 지표 & 수치]**: `📊 AI 시뮬레이션 우세: [우세팀] (머신러닝 신뢰도 [신뢰도]%)` 명시.
-5. **[AI 산출 근거 2~3가지]**: 주어지는 `factors_summary` 데이터 기반으로 `💡 3-Pillar 퀀트 산출 근거:` 항목을 Bullet Point(•)로 2개 이상 명확히 요약 작성하세요.
+⚠️ 절대 규칙 (위반 시 게시물 폐기):
+0. **[인사말·서론 절대 금지]**: "안녕하세요", "Scorenix의 수석 분석관입니다", "다음은 게시물입니다" 같은 인사말이나 서론을 절대 쓰지 마세요! 첫 줄부터 즉시 경기 제목(`📊 [리그명] ...`)으로 시작하세요.
+1. **[구분자 엄수]**: 본문 내부에 `---`나 `===` 같은 가로줄 기호를 절대 쓰지 마세요. 여러 경기를 구분할 때만 경기 사이에 정확히 `===POST_SPLIT===` 한 줄만 넣으세요.
+2. **[금칙어 절대 사용 금지]**: '픽(Pick)', 'TOP PICK', '유료 픽', '베팅', '배팅', '토토', '적중 보장' 단어를 절대 사용하지 마세요. 대신 '시뮬레이션 우세 지표', '데이터 리포트', '기대값(+EV)', '포아송 기대득점(xG)'을 사용하세요.
+3. **[정확한 경기 날짜 & 대진]**:
+   📊 [[리그명]] AI 퀀트 시뮬레이션 리포트
+   📅 일시: [경기 날짜]
+   ⚽ 매치: [홈팀] vs [원정팀]
+4. **[명확한 시뮬레이션 우세 지표 & 확률 분포]**:
+   📈 AI 시뮬레이션 우세: [우세팀] (머신러닝 신뢰도 [신뢰도]%)
+   • 확률 분포: 홈 [home_prob]% | 무 [draw_prob]% | 원정 [away_prob]%
+5. **[AI 산출 근거 3가지]**: 주어지는 `factors_summary` 데이터를 바탕으로 `💡 3-Pillar 퀀트 산출 근거:` 항목을 Bullet Point(•)로 3줄 명확히 작성하세요.
 6. **[월 3,900원 멤버십 안내 & 공식 채널 상호 링크 (필수 포함)]**:
    ☕ 전 경기 +EV 밸류 리포트 무제한 열람: 월 3,900원 (커피 한 잔 값)
    🔗 공식 채널
@@ -372,10 +378,23 @@ SNS_MARKETING_PROMPT = """당신은 Scorenix(스코어닉스)의 최고 수석 S
    📸 인스타: https://www.instagram.com/scorenix_official/
    🧵 쓰레드: https://www.threads.com/@scorenix_official
    ✍️ 블로그: https://official-scorenix.blogspot.com
-
-출력 형식:
-각 경기별 게시물을 ---로 구분하여 작성하세요.
 """
+
+
+def _is_valid_sns_post(post_text: str, home_team: str, away_team: str) -> bool:
+    """생성된 SNS 본문이 서론 조각이 아니라 실제 경기 이름과 핵심 지표를 포함하는지 검증"""
+    if not post_text or len(post_text.strip()) < 160:
+        return False
+    # 서론/인사말 조각 필터링
+    first_line = post_text.strip().splitlines()[0]
+    if any(bad in first_line for bad in ["수석 SNS", "마케팅 전문", "분석관입니다", "생성합니다", "작성해 드립니다"]):
+        return False
+    # 팀명(한글 또는 영문 앞부분) 포함 여부 확인
+    h_token = (home_team or "").split()[0]
+    a_token = (away_team or "").split()[0]
+    if h_token and a_token and (h_token not in post_text and a_token not in post_text):
+        return False
+    return True
 
 
 async def generate_sns_content(predictions: list) -> list:
@@ -389,6 +408,7 @@ async def generate_sns_content(predictions: list) -> list:
     # 고신뢰 순 정렬 → Top 5
     sorted_preds = sorted(predictions, key=lambda x: x.get("confidence", 0), reverse=True)
     top_picks = sorted_preds[:5]
+    fallback_posts = _generate_sns_fallback(top_picks)
 
     if _init_gemini() and _client is not None:
         try:
@@ -396,7 +416,7 @@ async def generate_sns_content(predictions: list) -> list:
             match_summaries = []
             for p in top_picks:
                 match_id = p.get("match_id", "")
-                
+
                 from app.api.endpoints.ai_predictions import get_slug
                 slug = get_slug(p)
                 match_time_raw = p.get("match_time") or ""
@@ -407,9 +427,25 @@ async def generate_sns_content(predictions: list) -> list:
                     date_param = match_time_raw.split(" ")[0]
                 else:
                     date_param = match_time_raw
-                
+
                 rec = p.get("recommendation", "HOME")
-                rec_ko = p.get("team_home_ko", p.get("team_home", "홈팀")) if rec == "HOME" else (p.get("team_away_ko", p.get("team_away", "원정팀")) if rec == "AWAY" else "무승부")
+                rec_ko = (
+                    f"{p.get('team_home_ko', p.get('team_home', '홈팀'))} 우세"
+                    if rec == "HOME"
+                    else (
+                        f"{p.get('team_away_ko', p.get('team_away', '원정팀'))} 우세"
+                        if rec == "AWAY"
+                        else "무승부 경향"
+                    )
+                )
+
+                factor_items = []
+                for f in p.get("factors", [])[:4]:
+                    fname = f.get("name", "")
+                    fscore = f.get("score", 50)
+                    fdetail = f.get("detail", "")
+                    if fname:
+                        factor_items.append(f"{fname} ({fscore:.0f}점): {fdetail}")
 
                 match_summaries.append({
                     "match_id": match_id,
@@ -423,37 +459,60 @@ async def generate_sns_content(predictions: list) -> list:
                     "home_prob": p.get("home_win_prob", 0),
                     "draw_prob": p.get("draw_prob", 0),
                     "away_prob": p.get("away_win_prob", 0),
-                    "factors_summary": [f.get("name", "") for f in p.get("factors", [])[:3]],
+                    "factors_summary": factor_items,
                 })
 
-            prompt = SNS_MARKETING_PROMPT + "\n\n오늘의 AI 시뮬레이션 경기 데이터:\n" + json.dumps(match_summaries, ensure_ascii=False, indent=2)
-            prompt += "\n\n위 데이터를 바탕으로 각 경기별 SNS 게시물을 작성하세요."
+            prompt = (
+                SNS_MARKETING_PROMPT
+                + "\n\n오늘의 AI 시뮬레이션 경기 데이터:\n"
+                + json.dumps(match_summaries, ensure_ascii=False, indent=2)
+                + "\n\n위 데이터를 바탕으로 서론 없이 즉시 각 경기별 SNS 게시물을 작성하세요. 경기 사이 구분자는 ===POST_SPLIT=== 만 사용하세요."
+            )
 
             response = _client.generate_content(prompt)
-            text = response.text.strip()
+            text = (response.text or "").strip()
 
             if text:
-                posts = [p.strip() for p in text.split("---") if p.strip()]
+                raw_chunks = (
+                    [c.strip() for c in text.split("===POST_SPLIT===") if c.strip()]
+                    if "===POST_SPLIT===" in text
+                    else [text.strip()] if len(top_picks) == 1 else [c.strip() for c in text.split("---") if c.strip()]
+                )
+
                 results = []
-                for i, post_text in enumerate(posts):
-                    if i < len(top_picks):
+                for i, target_p in enumerate(top_picks):
+                    home_ko = target_p.get("team_home_ko", target_p.get("team_home", ""))
+                    away_ko = target_p.get("team_away_ko", target_p.get("team_away", ""))
+                    candidate = raw_chunks[i] if i < len(raw_chunks) else ""
+
+                    # 만약 서론 줄이 앞에 붙어 있다면 첫 줄이📊/📈/🔥/📍/📅로 시작하는 지점부터 자름
+                    lines = [ln for ln in candidate.splitlines() if not any(
+                        bad in ln for bad in ["수석 SNS", "마케팅 전문", "분석관입니다", "게시물을 작성", "데이터 브리핑입니다"]
+                    )]
+                    cleaned_candidate = "\n".join(lines).strip()
+
+                    if _is_valid_sns_post(cleaned_candidate, home_ko, away_ko):
                         results.append({
-                            "match_id": top_picks[i].get("match_id", ""),
-                            "text": post_text,
-                            "confidence": top_picks[i].get("confidence", 0),
-                            "league": top_picks[i].get("league", ""),
+                            "match_id": target_p.get("match_id", ""),
+                            "text": cleaned_candidate,
+                            "confidence": target_p.get("confidence", 0),
+                            "league": target_p.get("league", ""),
                         })
-                logger.info(f"✅ SNS content generated: {len(results)} posts")
+                    else:
+                        logger.warning(f"⚠️ Gemini SNS post for {home_ko} vs {away_ko} failed quality check; using structured fallback.")
+                        results.append(fallback_posts[i])
+
+                logger.info(f"✅ SNS content generated & validated: {len(results)} posts")
                 return results
 
         except Exception as e:
             logger.error(f"SNS content generation error: {e}")
 
-    return _generate_sns_fallback(top_picks)
+    return fallback_posts
 
 
 def _generate_sns_fallback(predictions: list) -> list:
-    """Gemini 없을 때 템플릿 기반 SNS 콘텐츠"""
+    """Gemini 없을 때 또는 응답 검증 실패 시 고품질 템플릿 기반 SNS 콘텐츠"""
     results = []
     for p in predictions:
         home = p.get("team_home_ko", p.get("team_home", "홈"))
@@ -463,6 +522,9 @@ def _generate_sns_fallback(predictions: list) -> list:
         match_id = p.get("match_id", "")
         rec = p.get("recommendation", "HOME")
         rec_ko = f"{home} 우세" if rec == "HOME" else (f"{away} 우세" if rec == "AWAY" else "무승부 경향")
+        h_prob = p.get("home_win_prob", 0)
+        d_prob = p.get("draw_prob", 0)
+        a_prob = p.get("away_win_prob", 0)
 
         from app.api.endpoints.ai_predictions import get_slug
         slug = get_slug(p)
@@ -478,30 +540,39 @@ def _generate_sns_fallback(predictions: list) -> list:
         factors = p.get("factors", [])
         factor_lines = ""
         if factors:
-            for f in factors[:2]:
+            for f in factors[:3]:
                 fname = f.get("name", "")
-                if fname:
-                    factor_lines += f"• {fname}\n"
+                fscore = f.get("score", 50)
+                fdetail = f.get("detail", "")
+                if fname and fdetail:
+                    factor_lines += f"• {fname} ({fscore:.0f}점): {fdetail}\n"
+                elif fname:
+                    factor_lines += f"• {fname} ({fscore:.0f}점)\n"
         if not factor_lines:
             factor_lines = "• 7-Factor 머신러닝 시뮬레이션 +EV 기대값 포착\n• 글로벌 표준 시장 확률 대비 배당률 왜곡 검증 완료\n"
 
-        fire = "📈🔥" if conf >= 70 else "📊" if conf >= 55 else "⚡"
+        prob_line = (
+            f"• 시뮬레이션 확률 분포: 홈 {h_prob:.1f}% | 무 {d_prob:.1f}% | 원정 {a_prob:.1f}%"
+            if d_prob and d_prob > 0
+            else f"• 시뮬레이션 확률 분포: 홈 {h_prob:.1f}% | 원정 {a_prob:.1f}%"
+        )
 
         text = (
-            f"{fire} [{league}] AI 퀀트 데이터 분석 리포트\n"
+            f"📊 [{league}] AI 3-Pillar 퀀트 데이터 분석 리포트\n"
             f"📅 일시: {date_param}\n"
-            f"📍 매치: {home} vs {away}\n\n"
-            f"📊 AI 시뮬레이션 우세: {rec_ko} (신뢰도 {conf:.0f}%)\n\n"
-            f"💡 3-Pillar 퀀트 산출 근거:\n"
+            f"⚽ 매치: {home} vs {away}\n\n"
+            f"📈 AI 시뮬레이션 우세 지표: {rec_ko} (머신러닝 신뢰도 {conf:.0f}%)\n"
+            f"{prob_line}\n\n"
+            f"💡 3-Pillar 퀀트 핵심 산출 근거:\n"
             f"{factor_lines}\n"
-            f"☕ 전 경기 +EV 리포트 무제한 열람: 월 3,900원 (커피 한 잔 값)\n"
+            f"☕ 전 경기 +EV 밸류 리포트 무제한 열람: 월 3,900원 (커피 한 잔 값)\n"
             f"🔗 공식 채널\n"
             f"🌐 AI리포트: https://scorenix.com/ko/match/{date_param}/{slug}?utm_source=sns&utm_medium=auto_post\n"
             f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
             f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
             f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
             f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
-            f"#Scorenix #스포츠데이터 #AI시뮬레이션 #{league.replace(' ', '')}"
+            f"#Scorenix #스코어닉스 #스포츠데이터 #AI시뮬레이션 #포아송분포 #{league.split('(')[0].replace(' ', '')}"
         )
         results.append({
             "match_id": match_id,

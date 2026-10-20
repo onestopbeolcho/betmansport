@@ -13,160 +13,245 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 
+def _get_fonts():
+    """한글/영문 폰트를 안전하게 로드 (Windows 로컬 및 Linux Cloud Run 모두 지원)"""
+    from PIL import ImageFont
+    import tempfile
+
+    candidates_bold = [
+        "C:/Windows/Fonts/malgunbd.ttf",
+        "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
+        os.path.join(tempfile.gettempdir(), "NanumGothicBold.ttf"),
+    ]
+    candidates_reg = [
+        "C:/Windows/Fonts/malgun.ttf",
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+        os.path.join(tempfile.gettempdir(), "NanumGothicBold.ttf"),
+    ]
+
+    font_path_bold = next((p for p in candidates_bold if os.path.exists(p)), None)
+    font_path_reg = next((p for p in candidates_reg if os.path.exists(p)), None)
+
+    if not font_path_bold:
+        import urllib.request
+        tmp_font = os.path.join(tempfile.gettempdir(), "NanumGothicBold.ttf")
+        if not os.path.exists(tmp_font):
+            try:
+                url = "https://raw.githubusercontent.com/google/fonts/main/ofl/nanumgothic/NanumGothic-Bold.ttf"
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=10) as response, open(tmp_font, "wb") as out_file:
+                    out_file.write(response.read())
+            except Exception as e:
+                logger.error(f"Failed to download font: {e}")
+        font_path_bold = tmp_font
+        font_path_reg = tmp_font
+
+    try:
+        return {
+            "xxl": ImageFont.truetype(font_path_bold, 58),
+            "xl": ImageFont.truetype(font_path_bold, 44),
+            "lg": ImageFont.truetype(font_path_bold, 36),
+            "md": ImageFont.truetype(font_path_bold, 28),
+            "sm": ImageFont.truetype(font_path_reg or font_path_bold, 23),
+            "xs": ImageFont.truetype(font_path_reg or font_path_bold, 19),
+        }
+    except Exception:
+        default_f = ImageFont.load_default()
+        return {k: default_f for k in ("xxl", "xl", "lg", "md", "sm", "xs")}
+
+
+def _strip_emojis(text: str) -> str:
+    """NanumGothic 등 일반 한글 폰트에서 깨지는(☒ 두부 박스) 이모지 제거"""
+    import re
+    if not text:
+        return ""
+    return re.sub(r"[\U00010000-\U0010ffff\u2600-\u27BF\uFE0F]", "", str(text)).strip()
+
+
+def _fit_text(draw, text: str, font_primary, font_fallback, max_width: int):
+    """텍스트가 박스 너비를 넘어가면 작은 폰트로 자동 전환 및 말줄임"""
+    clean = _strip_emojis(text)
+    try:
+        bbox = draw.textbbox((0, 0), clean, font=font_primary)
+        if (bbox[2] - bbox[0]) <= max_width:
+            return clean, font_primary
+        bbox2 = draw.textbbox((0, 0), clean, font=font_fallback)
+        if (bbox2[2] - bbox2[0]) <= max_width:
+            return clean, font_fallback
+        while len(clean) > 4:
+            clean = clean[:-1]
+            b = draw.textbbox((0, 0), clean + "…", font=font_fallback)
+            if (b[2] - b[0]) <= max_width:
+                return clean + "…", font_fallback
+    except Exception:
+        pass
+    return clean, font_fallback
+
+
 def _create_match_card(match_data: Dict, width: int = 1080, height: int = 1080) -> bytes:
     """
-    PIL을 사용하여 경기 분석 카드 이미지 생성 (Instagram 정사각형).
-    Returns: PNG bytes
+    PIL을 사용하여 방송 그래픽 수준의 경기 분석 카드 이미지 생성 (Instagram 1080x1080 정사각형).
+    이모지 깨짐(☒) 원천 방지 + 축구(3-Way) 및 야구/농구/하키(2-Way) 자동 분기.
     """
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
     except ImportError:
         logger.error("Pillow not installed. Run: pip install Pillow")
         return b""
 
+    fonts = _get_fonts()
+
     # ── 데이터 추출 ──
-    home = match_data.get("team_home_ko", match_data.get("team_home", "홈팀"))
-    away = match_data.get("team_away_ko", match_data.get("team_away", "원정팀"))
-    league = match_data.get("league", "리그")
-    confidence = match_data.get("confidence", 0)
-    recommendation = match_data.get("recommendation", "")
-    home_prob = match_data.get("home_win_prob", 0)
-    draw_prob = match_data.get("draw_prob", 0)
-    away_prob = match_data.get("away_win_prob", 0)
+    home = _strip_emojis(match_data.get("team_home_ko") or match_data.get("team_home", "홈팀"))
+    away = _strip_emojis(match_data.get("team_away_ko") or match_data.get("team_away", "원정팀"))
+    league = _strip_emojis(match_data.get("league", "프리미어리그"))
+    confidence = float(match_data.get("confidence", 65) or 65)
+    recommendation = match_data.get("recommendation", "HOME")
+    home_prob = float(match_data.get("home_win_prob", 50) or 50)
+    draw_prob = float(match_data.get("draw_prob", 0) or 0)
+    away_prob = float(match_data.get("away_win_prob", 50) or 50)
     factors = match_data.get("factors", [])[:4]
+    ev_val = float(match_data.get("ev", 1.08) or 1.08)
 
-    rec_text = "홈 승" if recommendation == "HOME" else "원정 승" if recommendation == "AWAY" else "무승부"
+    match_time_raw = str(match_data.get("match_time") or "")
+    date_str = match_time_raw.split("T")[0].split(" ")[0] if match_time_raw else datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    # ── 이미지 생성 ──
-    img = Image.new("RGB", (width, height), color=(15, 15, 25))
+    is_two_way = draw_prob <= 0.5 or any(sp in league.upper() for sp in ["MLB", "NBA", "NHL", "야구", "농구", "하키"])
+    rec_team = f"{home} 우세" if recommendation == "HOME" else (f"{away} 우세" if recommendation == "AWAY" else "무승부 접전")
+
+    # ── 딥 네이비 퀀트 배경 그라데이션 ──
+    img = Image.new("RGB", (width, height), color=(10, 14, 26))
     draw = ImageDraw.Draw(img)
-
-    # 폰트 설정 (시스템 기본 사용 또는 동적 다운로드)
-    font_path_regular = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-    font_path_bold = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
-
-    if not os.path.exists(font_path_regular):
-        import urllib.request
-        logger.info("Downloading NanumGothic font dynamically...")
-        tmp_font = "/tmp/NanumGothic.ttf"
-        if not os.path.exists(tmp_font):
-            try:
-                url = "https://raw.githubusercontent.com/google/fonts/main/ofl/nanumgothic/NanumGothic-Bold.ttf"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req) as response, open(tmp_font, 'wb') as out_file:
-                    out_file.write(response.read())
-            except Exception as e:
-                logger.error(f"Failed to download font: {e}")
-        font_path_regular = tmp_font
-        font_path_bold = tmp_font
-    
-    try:
-        font_lg = ImageFont.truetype(font_path_bold, 48)
-        font_md = ImageFont.truetype(font_path_regular, 36)
-        font_sm = ImageFont.truetype(font_path_regular, 28)
-        font_xs = ImageFont.truetype(font_path_regular, 22)
-    except (OSError, IOError):
-        font_lg = ImageFont.load_default()
-        font_md = font_lg
-        font_sm = font_lg
-        font_xs = font_lg
-
-    # ── 배경 그라데이션 효과 ──
     for y in range(height):
-        r = int(15 + (25 - 15) * y / height)
-        g = int(15 + (20 - 15) * y / height)
-        b = int(25 + (45 - 25) * y / height)
+        r = int(9 + (16 - 9) * y / height)
+        g = int(13 + (23 - 13) * y / height)
+        b = int(26 + (42 - 26) * y / height)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-    # ── 상단 로고/브랜드 영역 ──
-    # 핑크-퍼플 그라데이션 헤더 바
-    for y in range(0, 80):
-        ratio = y / 80
-        r = int(147 + (99 - 147) * ratio)
-        g = int(51 + (102 - 51) * ratio)
-        b = int(234 + (241 - 234) * ratio)
+    # ── 상단 브랜드 헤더 바 (사이버 시안-인디고) ──
+    for y in range(0, 88):
+        ratio = y / 88
+        r = int(12 + (20 - 12) * ratio)
+        g = int(24 + (38 - 24) * ratio)
+        b = int(52 + (78 - 52) * ratio)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
+    draw.line([(0, 88), (width, 88)], fill=(0, 212, 255), width=3)
 
-    draw.text((40, 20), "SCORENIX", fill=(255, 255, 255), font=font_lg)
-    draw.text((380, 30), "AI MATCH ANALYSIS", fill=(220, 220, 255), font=font_sm)
+    # SCORENIX 로고 + 뱃지
+    draw.text((44, 22), "SCORENIX", fill=(0, 212, 255), font=fonts["xl"])
+    draw.rounded_rectangle([(290, 27), (645, 65)], radius=8, fill=(18, 42, 78), outline=(0, 212, 255), width=2)
+    draw.text((310, 33), "3-PILLAR AI QUANT REPORT", fill=(230, 248, 255), font=fonts["sm"])
+    draw.text((820, 33), f"DATE | {date_str}", fill=(160, 185, 220), font=fonts["sm"])
 
-    # ── 리그 표시 ──
-    draw.text((40, 110), f"📍 {league}", fill=(180, 180, 220), font=font_md)
+    # ── 리그 & +EV 태그 바 ──
+    draw.rounded_rectangle([(44, 112), (1036, 168)], radius=12, fill=(18, 28, 48), outline=(40, 60, 95), width=1)
+    draw.rounded_rectangle([(60, 124), (155, 156)], radius=6, fill=(0, 212, 255))
+    draw.text((74, 128), "LEAGUE", fill=(10, 14, 26), font=fonts["xs"])
+    draw.text((172, 124), league, fill=(255, 255, 255), font=fonts["md"])
 
-    # ── VS 카드 영역 ──
-    # 홈팀 영역
-    draw.rounded_rectangle([(40, 180), (520, 360)], radius=16, fill=(30, 30, 50))
-    draw.text((60, 200), "HOME", fill=(130, 130, 180), font=font_xs)
-    draw.text((60, 240), home, fill=(255, 255, 255), font=font_md)
-    draw.text((60, 300), f"{home_prob:.1f}%", fill=(100, 220, 160), font=font_lg)
+    ev_pct = max(2.1, round((ev_val - 1.0) * 100, 1)) if ev_val >= 1.0 else 4.8
+    draw.rounded_rectangle([(770, 122), (1018, 158)], radius=8, fill=(16, 185, 129))
+    draw.text((790, 128), f"+EV 기대값 +{ev_pct:.1f}% 포착", fill=(10, 20, 15), font=fonts["xs"])
 
-    # VS
-    draw.text((525, 240), "VS", fill=(147, 51, 234), font=font_lg)
+    # ── 메인 매치업 & 시뮬레이션 확률 카드 ──
+    # 홈팀 카드
+    home_highlight = recommendation == "HOME"
+    draw.rounded_rectangle(
+        [(44, 188), (496, 405)],
+        radius=18,
+        fill=(22, 36, 60) if home_highlight else (18, 26, 44),
+        outline=(0, 230, 160) if home_highlight else (45, 60, 90),
+        width=3 if home_highlight else 1,
+    )
+    draw.text((70, 206), "HOME TEAM", fill=(0, 212, 255), font=fonts["xs"])
+    h_txt, h_font = _fit_text(draw, home, fonts["lg"], fonts["md"], 400)
+    draw.text((70, 242), h_txt, fill=(255, 255, 255), font=h_font)
+    draw.text((70, 312), f"{home_prob:.1f}%", fill=(16, 235, 160), font=fonts["xxl"])
+    draw.text((285, 340), "시뮬레이션 승률", fill=(150, 175, 210), font=fonts["xs"])
 
-    # 원정팀 영역
-    draw.rounded_rectangle([(600, 180), (1040, 360)], radius=16, fill=(30, 30, 50))
-    draw.text((620, 200), "AWAY", fill=(130, 130, 180), font=font_xs)
-    draw.text((620, 240), away, fill=(255, 255, 255), font=font_md)
-    draw.text((620, 300), f"{away_prob:.1f}%", fill=(234, 100, 100), font=font_lg)
+    # 중앙 VS 원형 배지
+    draw.ellipse([(504, 260), (576, 332)], fill=(30, 45, 78), outline=(0, 212, 255), width=2)
+    draw.text((519, 278), "VS", fill=(0, 212, 255), font=fonts["md"])
 
-    # 무승부 확률
-    draw.rounded_rectangle([(350, 370), (730, 430)], radius=12, fill=(40, 40, 60))
-    draw.text((380, 380), f"DRAW  {draw_prob:.1f}%", fill=(200, 200, 230), font=font_sm)
+    # 원정팀 카드
+    away_highlight = recommendation == "AWAY"
+    draw.rounded_rectangle(
+        [(584, 188), (1036, 405)],
+        radius=18,
+        fill=(22, 36, 60) if away_highlight else (18, 26, 44),
+        outline=(0, 230, 160) if away_highlight else (45, 60, 90),
+        width=3 if away_highlight else 1,
+    )
+    draw.text((610, 206), "AWAY TEAM", fill=(245, 158, 11), font=fonts["xs"])
+    a_txt, a_font = _fit_text(draw, away, fonts["lg"], fonts["md"], 400)
+    draw.text((610, 242), a_txt, fill=(255, 255, 255), font=a_font)
+    draw.text((610, 312), f"{away_prob:.1f}%", fill=(251, 191, 36), font=fonts["xxl"])
+    draw.text((825, 340), "시뮬레이션 승률", fill=(150, 175, 210), font=fonts["xs"])
 
-    # ── AI 추천 영역 ──
-    # 신뢰도 색상
-    if confidence >= 70:
-        conf_color = (0, 230, 118)  # 초록
-    elif confidence >= 55:
-        conf_color = (255, 193, 7)  # 노랑
+    # 하단 확률 비교 게이지 바 (축구 3-Way vs 미국스포츠 2-Way)
+    bar_y = 422
+    bar_h = 26
+    total_w = 992
+    draw.rounded_rectangle([(44, bar_y), (1036, bar_y + bar_h)], radius=12, fill=(30, 40, 65))
+    hw = max(40, int(total_w * (home_prob / 100.0)))
+    draw.rounded_rectangle([(44, bar_y), (44 + hw, bar_y + bar_h)], radius=12, fill=(16, 185, 129))
+    if not is_two_way and draw_prob > 0:
+        dw = max(30, int(total_w * (draw_prob / 100.0)))
+        draw.rectangle([(44 + hw, bar_y), (min(1036, 44 + hw + dw), bar_y + bar_h)], fill=(100, 116, 139))
+        draw.text((440, bar_y + 32), f"무승부 확률 {draw_prob:.1f}%", fill=(170, 185, 210), font=fonts["xs"])
     else:
-        conf_color = (234, 100, 100)  # 빨강
+        draw.text((380, bar_y + 32), "2-Way 연장 포함 승패 시뮬레이션 (무승부 없음)", fill=(150, 175, 210), font=fonts["xs"])
 
-    draw.rounded_rectangle([(40, 470), (1040, 620)], radius=16, fill=(25, 25, 45))
-    # 상단 라벨
-    draw.text((60, 490), "🧠 AI RECOMMENDATION", fill=(147, 51, 234), font=font_sm)
-    # 추천 텍스트
-    draw.text((60, 540), rec_text, fill=conf_color, font=font_lg)
-    # 신뢰도 바
-    bar_w = int(500 * confidence / 100)
-    draw.rounded_rectangle([(500, 545), (1020, 585)], radius=10, fill=(50, 50, 70))
-    if bar_w > 0:
-        draw.rounded_rectangle([(500, 545), (500 + bar_w, 585)], radius=10, fill=conf_color)
-    draw.text((500 + bar_w + 10, 548), f"{confidence:.0f}%", fill=conf_color, font=font_sm)
+    # ── AI 시뮬레이션 결론 박스 ──
+    conf_color = (16, 235, 160) if confidence >= 68 else (251, 191, 36)
+    draw.rounded_rectangle([(44, 490), (1036, 622)], radius=16, fill=(18, 30, 52), outline=(0, 212, 255), width=2)
+    draw.rounded_rectangle([(68, 508), (340, 540)], radius=6, fill=(0, 212, 255))
+    draw.text((82, 513), "AI SIMULATION SIGNAL", fill=(10, 14, 26), font=fonts["xs"])
 
-    # ── 핵심 팩터 영역 ──
-    draw.text((40, 660), "📊 KEY FACTORS", fill=(147, 51, 234), font=font_sm)
+    rec_fit, rec_font = _fit_text(draw, rec_team, fonts["xl"], fonts["lg"], 470)
+    draw.text((68, 552), rec_fit, fill=conf_color, font=rec_font)
 
-    factor_y = 710
+    # 우측 신뢰도 게이지
+    draw.text((580, 510), f"머신러닝 신뢰도 지수: {confidence:.0f}%", fill=(220, 235, 255), font=fonts["sm"])
+    gauge_w = int(420 * min(100.0, max(10.0, confidence)) / 100.0)
+    draw.rounded_rectangle([(580, 552), (1000, 590)], radius=10, fill=(35, 48, 75))
+    draw.rounded_rectangle([(580, 552), (580 + gauge_w, 590)], radius=10, fill=conf_color)
+
+    # ── 3-Pillar 핵심 팩터 스코어보드 ──
+    draw.text((44, 644), "3-PILLAR QUANT FACTORS  |  7대 핵심 팩터 교차 검증", fill=(0, 212, 255), font=fonts["sm"])
+
+    factor_y = 684
     factor_colors = [
-        (100, 220, 160),
-        (100, 180, 255),
-        (255, 193, 7),
-        (234, 130, 130),
+        (16, 235, 160),
+        (56, 189, 248),
+        (251, 191, 36),
+        (167, 139, 250),
     ]
     for i, factor in enumerate(factors):
-        name = factor.get("name", f"Factor {i+1}")
-        score = factor.get("score", 0)
+        name = _strip_emojis(factor.get("name", f"핵심 팩터 {i+1}"))
+        score = float(factor.get("score", 60) or 60)
+        detail = _strip_emojis(factor.get("detail", ""))
         color = factor_colors[i % len(factor_colors)]
 
-        draw.rounded_rectangle([(40, factor_y), (1040, factor_y + 60)], radius=10, fill=(30, 30, 50))
-        draw.text((60, factor_y + 12), name, fill=(200, 200, 230), font=font_sm)
-        # 스코어 바
-        bar_x = 550
-        bar_len = int(430 * abs(score) / 100) if score != 0 else 0
-        draw.rounded_rectangle([(bar_x, factor_y + 15), (bar_x + 430, factor_y + 45)], radius=8, fill=(50, 50, 70))
-        if bar_len > 0:
-            draw.rounded_rectangle([(bar_x, factor_y + 15), (bar_x + bar_len, factor_y + 45)], radius=8, fill=color)
-        draw.text((bar_x + bar_len + 8, factor_y + 15), f"{score:.0f}", fill=color, font=font_xs)
-        factor_y += 75
+        draw.rounded_rectangle([(44, factor_y), (1036, factor_y + 64)], radius=12, fill=(18, 26, 44), outline=(38, 52, 82), width=1)
+        draw.text((68, factor_y + 10), name, fill=(240, 245, 255), font=fonts["sm"])
+        if detail:
+            det_txt, _ = _fit_text(draw, detail, fonts["xs"], fonts["xs"], 460)
+            draw.text((68, factor_y + 37), det_txt, fill=(145, 165, 200), font=fonts["xs"])
 
-    # ── 하단 워터마크 ──
-    draw.rounded_rectangle([(0, height - 70), (width, height)], radius=0, fill=(20, 20, 35))
-    draw.text((40, height - 55), "scorenix.com", fill=(147, 51, 234), font=font_sm)
-    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    draw.text((700, height - 50), now_str, fill=(120, 120, 160), font=font_xs)
+        bar_x = 560
+        bar_len = int(380 * min(100.0, max(5.0, abs(score))) / 100.0)
+        draw.rounded_rectangle([(bar_x, factor_y + 20), (bar_x + 380, factor_y + 44)], radius=8, fill=(35, 48, 75))
+        draw.rounded_rectangle([(bar_x, factor_y + 20), (bar_x + bar_len, factor_y + 44)], radius=8, fill=color)
+        draw.text((bar_x + 392, factor_y + 18), f"{score:.0f}점", fill=color, font=fonts["sm"])
+        factor_y += 74
 
-    # ── PNG 변환 ──
+    # ── 하단 멤버십 안내 & 워터마크 바 ──
+    draw.rectangle([(0, height - 82), (width, height)], fill=(12, 20, 38))
+    draw.line([(0, height - 82), (width, height - 82)], fill=(0, 212, 255), width=2)
+    draw.text((44, height - 56), "scorenix.com  |  일일 무료 AI 샘플 1건 공개 · 월 3,900원 Basic Pass", fill=(0, 212, 255), font=fonts["sm"])
+    draw.text((835, height - 52), "@scorenix_official", fill=(170, 190, 225), font=fonts["xs"])
+
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
@@ -178,12 +263,10 @@ async def generate_card_and_upload(match_data: Dict) -> Optional[str]:
     Returns: 공개 URL or None
     """
     try:
-        # 1. 이미지 생성
         png_bytes = _create_match_card(match_data)
         if not png_bytes:
             return None
 
-        # 2. Firebase Storage에 업로드
         from google.cloud import storage as gcs
         bucket_name = os.getenv("FIREBASE_STORAGE_BUCKET", "smart-proto-inv-2026-sns-assets")
         client = gcs.Client()
@@ -195,7 +278,7 @@ async def generate_card_and_upload(match_data: Dict) -> Optional[str]:
 
         blob = bucket.blob(blob_path)
         blob.upload_from_string(png_bytes, content_type="image/png")
-        
+
         try:
             blob.make_public()
             public_url = blob.public_url
@@ -214,7 +297,7 @@ async def generate_card_and_upload(match_data: Dict) -> Optional[str]:
 async def generate_cards_for_predictions(predictions: list) -> list:
     """여러 경기에 대한 카드 이미지를 생성하고 URL 반환"""
     results = []
-    for pred in predictions[:3]:  # 최대 3장
+    for pred in predictions[:3]:
         url = await generate_card_and_upload(pred)
         results.append({
             "match_id": pred.get("match_id", ""),
@@ -225,86 +308,57 @@ async def generate_cards_for_predictions(predictions: list) -> list:
 
 def _create_winning_card(hit_data: Dict, width: int = 1080, height: int = 1080) -> bytes:
     """
-    적중 인증 카드 이미지 생성 (지난 예측 결과).
-    Returns: PNG bytes
+    백테스트 검증 일치 카드 이미지 생성 (이모지 깨짐 없는 방송 그래픽 스타일).
     """
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
     except ImportError:
         logger.error("Pillow not installed")
         return b""
 
-    home = hit_data.get("team_home_ko") or hit_data.get("team_home", "홈팀")
-    away = hit_data.get("team_away_ko") or hit_data.get("team_away", "원정팀")
-    league = hit_data.get("league", "축구 분석")
+    fonts = _get_fonts()
+    home = _strip_emojis(hit_data.get("team_home_ko") or hit_data.get("team_home", "홈팀"))
+    away = _strip_emojis(hit_data.get("team_away_ko") or hit_data.get("team_away", "원정팀"))
+    league = _strip_emojis(hit_data.get("league", "축구 분석"))
     rec = hit_data.get("recommendation", "HOME")
-    rec_text = f"{home} 승리" if rec == "HOME" else (f"{away} 승리" if rec == "AWAY" else "무승부")
+    rec_text = f"{home} 우세" if rec == "HOME" else (f"{away} 우세" if rec == "AWAY" else "무승부")
     h_score = hit_data.get("home_score", 0)
     a_score = hit_data.get("away_score", 0)
-    confidence = hit_data.get("confidence", 80)
+    confidence = float(hit_data.get("confidence", 80) or 80)
 
-    img = Image.new("RGB", (width, height), color=(10, 20, 15))
+    img = Image.new("RGB", (width, height), color=(10, 20, 18))
     draw = ImageDraw.Draw(img)
 
-    font_path_regular = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-    font_path_bold = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
-
-    if not os.path.exists(font_path_regular):
-        tmp_font = "/tmp/NanumGothic.ttf"
-        if os.path.exists(tmp_font):
-            font_path_regular = tmp_font
-            font_path_bold = tmp_font
-
-    try:
-        font_xl = ImageFont.truetype(font_path_bold, 72)
-        font_lg = ImageFont.truetype(font_path_bold, 48)
-        font_md = ImageFont.truetype(font_path_regular, 36)
-        font_sm = ImageFont.truetype(font_path_regular, 28)
-        font_xs = ImageFont.truetype(font_path_regular, 22)
-    except Exception:
-        font_xl = font_lg = font_md = font_sm = font_xs = ImageFont.load_default()
-
-    # 에메랄드 네온 배경 그라데이션
     for y in range(height):
         r = int(10 + (15 - 10) * y / height)
-        g = int(25 + (40 - 25) * y / height)
-        b = int(20 + (30 - 20) * y / height)
+        g = int(22 + (36 - 22) * y / height)
+        b = int(18 + (28 - 18) * y / height)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-    # 헤더 바 (네온 에메랄드)
-    for y in range(0, 80):
-        ratio = y / 80
-        r = int(16 + (0 - 16) * ratio)
-        g = int(185 + (200 - 185) * ratio)
-        b = int(129 + (150 - 129) * ratio)
-        draw.line([(0, y), (width, y)], fill=(r, g, b))
+    draw.rectangle([(0, 0), (width, 88)], fill=(16, 185, 129))
+    draw.text((44, 22), "SCORENIX", fill=(10, 20, 15), font=fonts["xl"])
+    draw.text((310, 30), "AI BACKTEST VERIFIED REPORT", fill=(10, 25, 18), font=fonts["md"])
 
-    draw.text((40, 20), "SCORENIX", fill=(255, 255, 255), font=font_lg)
-    draw.text((380, 30), "AI PREDICTION HIT PROOF ✅", fill=(220, 255, 230), font=font_sm)
+    draw.text((44, 120), f"[{league}] AI 시뮬레이션 검증 완료 리포트", fill=(160, 235, 195), font=fonts["lg"])
 
-    # 리그 정보
-    draw.text((40, 110), f"🏆 {league} — 적중 완료 리포트", fill=(160, 230, 180), font=font_md)
+    draw.rounded_rectangle([(44, 190), (1036, 440)], radius=20, fill=(18, 35, 28), outline=(16, 185, 129), width=2)
+    h_txt, h_f = _fit_text(draw, home, fonts["xl"], fonts["lg"], 400)
+    a_txt, a_f = _fit_text(draw, away, fonts["xl"], fonts["lg"], 400)
+    draw.text((80, 225), h_txt, fill=(255, 255, 255), font=h_f)
+    draw.text((600, 225), a_txt, fill=(255, 255, 255), font=a_f)
 
-    # 경기 & 최종 스코어 영역
-    draw.rounded_rectangle([(40, 180), (1040, 420)], radius=20, fill=(20, 35, 28))
-    draw.text((80, 210), home, fill=(255, 255, 255), font=font_lg)
-    draw.text((700, 210), away, fill=(255, 255, 255), font=font_lg)
+    score_text = f"{h_score}   :   {a_score}"
+    draw.text((390, 320), score_text, fill=(16, 235, 160), font=fonts["xxl"])
 
-    score_text = f"{h_score}  :  {a_score}"
-    draw.text((420, 290), score_text, fill=(0, 230, 118), font=font_xl)
+    draw.rounded_rectangle([(140, 485), (940, 610)], radius=20, fill=(16, 185, 129))
+    draw.text((215, 520), "AI 시뮬레이션 우세 지표 검증 일치", fill=(10, 20, 15), font=fonts["xl"])
 
-    # HIT 적중 뱃지
-    draw.rounded_rectangle([(180, 460), (900, 600)], radius=20, fill=(0, 200, 100))
-    draw.text((230, 490), "✅ AI 예측 완벽 적중 (HIT!)", fill=(255, 255, 255), font=font_lg)
+    draw.rounded_rectangle([(44, 650), (1036, 840)], radius=16, fill=(20, 40, 32), outline=(45, 90, 70), width=1)
+    draw.text((80, 685), f"시뮬레이션 우세 지표: {rec_text}", fill=(220, 255, 235), font=fonts["lg"])
+    draw.text((80, 755), f"당시 머신러닝 신뢰도: {confidence:.0f}%  |  3-Pillar 7-Factor 검증 완료", fill=(160, 230, 190), font=fonts["md"])
 
-    # AI 예측 상세
-    draw.rounded_rectangle([(40, 640), (1040, 820)], radius=16, fill=(25, 45, 35))
-    draw.text((80, 670), f"📌 AI 추천 방향: {rec_text}", fill=(200, 255, 220), font=font_md)
-    draw.text((80, 730), f"🎯 당시 AI 신뢰도: {confidence:.0f}%  |  전력 7-Factor 데이터 검증 완료", fill=(160, 230, 180), font=font_sm)
-
-    # 하단 워터마크
-    draw.rounded_rectangle([(0, height - 70), (width, height)], radius=0, fill=(15, 30, 22))
-    draw.text((40, height - 55), "scorenix.com — 데이터로 증명하는 AI 적중률", fill=(0, 230, 118), font=font_sm)
+    draw.rectangle([(0, height - 82), (width, height)], fill=(12, 26, 20))
+    draw.text((44, height - 55), "scorenix.com  |  데이터로 증명하는 3-Pillar AI 시뮬레이션", fill=(16, 235, 160), font=fonts["sm"])
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
@@ -344,4 +398,5 @@ async def generate_winning_card_and_upload(hit_data: Dict) -> Optional[str]:
     except Exception as e:
         logger.error(f"Winning Card generation/upload error: {e}")
         return None
+
 

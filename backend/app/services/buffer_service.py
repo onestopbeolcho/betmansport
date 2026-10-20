@@ -180,7 +180,8 @@ class BufferService:
         cross_block = (
             "\n\n━━━━━━━━━━━━━━━━━━\n"
             "🔗 [스코어닉스 공식 채널 네트워크]\n"
-            "🌐 AI 무료 샘플 & TOP PICK: https://scorenix.com/ko/analysis (프로필 링크 클릭!)\n"
+            "🌐 일일 무료 AI 샘플 & +EV 밸류 리포트: https://scorenix.com/ko/analysis (프로필 링크 클릭!)\n"
+            "☕ Basic Pass (월 3,900원 커피 한 잔 값): https://scorenix.com/ko/pricing\n"
             "🎬 공식 유튜브 쇼츠: https://www.youtube.com/@스코어닉스\n"
             "🧵 공식 쓰레드: https://www.threads.com/@scorenix_official\n"
             "✍️ 공식 구글 블로그: https://official-scorenix.blogspot.com"
