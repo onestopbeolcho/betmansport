@@ -62,11 +62,12 @@ export default function VipComboPage() {
         setError('');
         try {
             const API = process.env.NEXT_PUBLIC_API_URL || '';
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
             const res = await fetch(`${API}/api/vip/combo/auto-optimize`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
                 },
                 body: JSON.stringify({
                     budget,
@@ -76,7 +77,7 @@ export default function VipComboPage() {
             });
             const data = await res.json();
             if (res.status === 403) {
-                setError('VIP membership required.');
+                setError('유료 데이터 멤버십(Basic Pass 이상) 구독이 필요합니다.');
                 return;
             }
             setResult(data);
@@ -84,40 +85,49 @@ export default function VipComboPage() {
                 setError(data.message || data.error);
             }
         } catch (e) {
-            setError('Failed to connect to server.');
+            setError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        if (user) {
+            handleAutoOptimize();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
+
     return (
         <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-            <Navbar />
             <DeadlineBanner />
+            <Navbar />
 
             <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                    <a href={`/${currentLang}/vip`} className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                        ← VIP
-                    </a>
-                    <h1 className="text-xl font-black text-white">🎯 AI Combo Analysis</h1>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold"
-                        style={{ background: 'rgba(0,212,255,0.15)', color: 'var(--accent-primary)' }}>
-                        VIP
-                    </span>
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <a href={`/${currentLang}/vip`} className="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition" style={{ color: 'var(--text-secondary)' }}>
+                            ← PRO QUANT 라운지
+                        </a>
+                        <h1 className="text-xl font-black text-white">🎯 AI 다폴더 시너지 · 비과세 분산 시뮬레이터</h1>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold"
+                            style={{ background: 'rgba(0,212,255,0.15)', color: 'var(--accent-primary)' }}>
+                            PRO / QUANT
+                        </span>
+                    </div>
                 </div>
 
-                <PremiumGate featureName="AI Combo Analysis" requiredTier="vip">
+                <PremiumGate featureName="AI 다폴더 시너지 & 비과세 분산 시뮬레이터" requiredTier="pro">
                     {/* Settings Card */}
                     <div className="glass-card p-5 rounded-2xl space-y-4"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
-                        <h2 className="text-sm font-bold text-white">⚙️ Analysis Settings</h2>
+                        <h2 className="text-sm font-bold text-white">⚙️ 시뮬레이션 조건 설정</h2>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
-                                <label className="text-[10px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                                    Budget (KRW)
+                                <label className="text-[11px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                                    시뮬레이션 예산 (원)
                                 </label>
                                 <input
                                     type="number"
@@ -134,38 +144,38 @@ export default function VipComboPage() {
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                                    Max Combo Matches
+                                <label className="text-[11px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                                    최대 조합 경기 수
                                 </label>
                                 <select
                                     value={maxCombo}
                                     onChange={(e) => setMaxCombo(Number(e.target.value))}
                                     className="w-full px-3 py-2 rounded-lg text-sm font-bold text-white"
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
+                                        background: '#111827',
                                         border: '1px solid var(--border-subtle)',
                                     }}
                                 >
                                     {[2, 3, 4, 5, 6, 7, 8].map((n) => (
-                                        <option key={n} value={n}>{n} matches</option>
+                                        <option key={n} value={n}>최대 {n}경기 조합</option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
-                                    Min Value Gap (%)
+                                <label className="text-[11px] font-bold mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                                    최소 기대값 편차 (+EV Gap %)
                                 </label>
                                 <select
                                     value={minGap}
                                     onChange={(e) => setMinGap(Number(e.target.value))}
                                     className="w-full px-3 py-2 rounded-lg text-sm font-bold text-white"
                                     style={{
-                                        background: 'rgba(255,255,255,0.05)',
+                                        background: '#111827',
                                         border: '1px solid var(--border-subtle)',
                                     }}
                                 >
-                                    {[3, 5, 8, 10, 15, 20].map((n) => (
-                                        <option key={n} value={n}>{n}%</option>
+                                    {[1, 2, 3, 5, 8, 10, 15].map((n) => (
+                                        <option key={n} value={n}>{n}% 이상</option>
                                     ))}
                                 </select>
                             </div>
@@ -182,7 +192,7 @@ export default function VipComboPage() {
                                 color: 'white',
                             }}
                         >
-                            {loading ? '⏳ Analyzing...' : '🎯 Run Auto Optimization'}
+                            {loading ? '⏳ AI 시너지 및 비과세 분할 계산 중...' : '🎯 AI 다폴더 시너지 최적화 실행'}
                         </button>
                     </div>
 

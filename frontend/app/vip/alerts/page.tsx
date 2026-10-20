@@ -47,17 +47,21 @@ export default function VipAlertsPage() {
     };
 
     useEffect(() => {
-        if (token) {
-            loadData();
-        }
+        loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const loadData = async () => {
         setLoading(true);
         try {
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+            const reqHeaders = {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            };
             const [rulesRes, presetsRes] = await Promise.all([
-                fetch(`${API}/api/vip/alerts/rules`, { headers }),
-                fetch(`${API}/api/vip/alerts/presets`, { headers }),
+                fetch(`${API}/api/vip/alerts/rules`, { headers: reqHeaders }),
+                fetch(`${API}/api/vip/alerts/presets`, { headers: reqHeaders }),
             ]);
             const rulesData = await rulesRes.json();
             const presetsData = await presetsRes.json();
@@ -73,9 +77,13 @@ export default function VipAlertsPage() {
     const addPreset = async (preset: Preset) => {
         setSaving(true);
         try {
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
             const res = await fetch(`${API}/api/vip/alerts/rules`, {
                 method: 'POST',
-                headers,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
                 body: JSON.stringify({
                     rules: [{
                         rule_type: preset.rule_type,
@@ -94,9 +102,13 @@ export default function VipAlertsPage() {
 
     const toggleRule = async (ruleId: string, enabled: boolean) => {
         try {
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
             await fetch(`${API}/api/vip/alerts/rules/${ruleId}`, {
                 method: 'PATCH',
-                headers,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
                 body: JSON.stringify({ enabled }),
             });
             setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, enabled } : r));
@@ -105,42 +117,46 @@ export default function VipAlertsPage() {
 
     const deleteRule = async (ruleId: string) => {
         try {
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
             await fetch(`${API}/api/vip/alerts/rules/${ruleId}`, {
                 method: 'DELETE',
-                headers,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
             });
             setRules((prev) => prev.filter((r) => r.id !== ruleId));
         } catch { /* */ }
     };
 
     const OPERATOR_LABELS: Record<string, string> = {
-        '>': 'above', '<': 'below', '>=': 'at least', '<=': 'at most', '==': 'equals', contains: 'contains',
+        '>': '초과', '<': '미만', '>=': '이상', '<=': '이하', '==': '일치', contains: '포함',
     };
 
     return (
         <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-            <Navbar />
             <DeadlineBanner />
+            <Navbar />
 
             <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
                 {/* Header */}
                 <div className="flex items-center gap-3">
-                    <a href={`/${currentLang}/vip`} className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                        ← VIP
+                    <a href={`/${currentLang}/vip`} className="text-xs px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition" style={{ color: 'var(--text-secondary)' }}>
+                        ← PRO QUANT 라운지
                     </a>
-                    <h1 className="text-xl font-black text-white">⚙️ Custom Alerts</h1>
+                    <h1 className="text-xl font-black text-white">🔔 배당 왜곡 · +EV 커스텀 알림 규칙 관리</h1>
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold"
                         style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--accent-secondary)' }}>
-                        VIP
+                        PRO / QUANT
                     </span>
                 </div>
 
-                <PremiumGate featureName="Custom Alerts" requiredTier="vip">
+                <PremiumGate featureName="배당 왜곡 및 +EV 커스텀 알림 규칙 관리" requiredTier="pro">
                     {/* Active Rules */}
                     <div className="glass-card p-5 rounded-2xl space-y-4"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
                         <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-bold text-white">📋 My Alert Rules</h2>
+                            <h2 className="text-sm font-bold text-white">📋 내 활성 알림 규칙</h2>
                             <span className="text-[10px] px-2 py-0.5 rounded-full"
                                 style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)' }}>
                                 {rules.length}/10
@@ -149,14 +165,14 @@ export default function VipAlertsPage() {
 
                         {loading ? (
                             <div className="text-center py-6 text-sm" style={{ color: 'var(--text-muted)' }}>
-                                Loading...
+                                알림 규칙 불러오는 중...
                             </div>
                         ) : rules.length === 0 ? (
                             <div className="text-center py-6">
                                 <div className="text-2xl mb-2">🔔</div>
                                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                                    No alert rules set yet.
-                                    <br />Add one quickly from the presets below!
+                                    아직 등록된 커스텀 알림 규칙이 없습니다.
+                                    <br />아래 원클릭 프리셋에서 원하는 배당 왜곡/+EV 조건을 추가해보세요!
                                 </p>
                             </div>
                         ) : (

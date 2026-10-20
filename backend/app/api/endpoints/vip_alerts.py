@@ -102,13 +102,13 @@ PRESET_TEMPLATES = [
 # ─── Endpoints ───
 
 @router.get("/presets")
-async def get_presets(user_id: str = Depends(require_tier("vip"))):
+async def get_presets(user_id: str = Depends(require_tier("pro"))):
     """프리셋 알림 조건 목록"""
     return {"presets": PRESET_TEMPLATES}
 
 
 @router.get("/rules")
-async def get_rules(user_id: str = Depends(require_tier("vip"))):
+async def get_rules(user_id: str = Depends(require_tier("pro"))):
     """내 커스텀 알림 규칙 조회"""
     try:
         from app.db.firestore import get_firestore_db
@@ -132,7 +132,7 @@ async def get_rules(user_id: str = Depends(require_tier("vip"))):
 @router.post("/rules")
 async def create_rules(
     req: CreateRulesRequest,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """커스텀 알림 규칙 생성 (최대 10개)"""
     try:
@@ -171,7 +171,7 @@ async def create_rules(
 async def update_rule(
     rule_id: str,
     req: UpdateRuleRequest,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """규칙 수정 (on/off 토글, 값 변경)"""
     try:
@@ -207,7 +207,7 @@ async def update_rule(
 @router.delete("/rules/{rule_id}")
 async def delete_rule(
     rule_id: str,
-    user_id: str = Depends(require_tier("vip")),
+    user_id: str = Depends(require_tier("pro")),
 ):
     """규칙 삭제"""
     try:

@@ -9,14 +9,17 @@ from app.core.deps import require_current_user
 from app.models.user_db import get_user_by_id
 from datetime import datetime
 
-TIER_ORDER = {"free": 0, "basic": 1, "pro": 2, "vip": 3, "premium": 3}
+TIER_ORDER = {"free": 0, "basic": 1, "pro": 2, "vip": 3, "premium": 3, "admin": 99}
 
 
 async def _get_user_tier(user_id: str) -> str:
-    """유저의 현재 Tier 확인 (구독 만료도 체크)"""
+    """유저의 현재 Tier 확인 (구독 만료 및 관리자 권한 체크)"""
     user = await get_user_by_id(user_id)
     if not user:
         return "free"
+
+    if user.get("role") == "admin" or user.get("tier") == "admin":
+        return "admin"
 
     tier = user.get("tier", "free")
     expires_at = user.get("subscription_expires_at")
@@ -26,7 +29,6 @@ async def _get_user_tier(user_id: str) -> str:
         try:
             exp_dt = datetime.fromisoformat(expires_at)
             if datetime.utcnow() > exp_dt:
-                # 구독 만료 → 자동 다운그레이드
                 from app.models.user_db import update_user
                 await update_user(user_id, {
                     "tier": "free",
