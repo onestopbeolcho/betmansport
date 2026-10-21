@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import ProAnalysisPanel from '../../components/ProAnalysisPanel';
 import { useDictionarySafe } from '../../context/DictionaryContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface AIPrediction {
     match_id: string;
@@ -43,6 +44,10 @@ export default function PredictionPage() {
     const router = useRouter();
     const match_id = params?.match_id as string;
     const dict = useDictionarySafe();
+    const { user } = useAuth();
+    const isProOrAbove = Boolean(
+        user && (['pro', 'vip', 'premium', 'admin'].includes((user.tier || '').toLowerCase()) || user.role === 'admin')
+    );
     const tm = (dict as any)?.market || {} as Record<string, string>;
     const tc = (dict as any)?.common || {} as Record<string, string>;
 
@@ -156,33 +161,40 @@ export default function PredictionPage() {
 
                 {/* ── Highlight AI Prediction Result ── */}
                 <div className="mb-8">
-                    <h3 className="text-lg font-bold mb-4 text-white/80">AI 승부 예측 결과</h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-white/80">AI 승부 예측 결과</h3>
+                        {!isProOrAbove && (
+                            <a href="/ko/pricing" className="text-xs font-black px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                                🔒 Basic Pass 구독 시 해금 (월 3,900원)
+                            </a>
+                        )}
+                    </div>
                     <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
                         <div className="p-4 sm:p-6 rounded-2xl border transition-all" style={{
-                            background: prediction.recommendation === 'HOME' ? 'rgba(0,212,255,0.1)' : 'var(--bg-card)',
-                            borderColor: prediction.recommendation === 'HOME' ? 'rgba(0,212,255,0.4)' : 'var(--border-subtle)',
+                            background: isProOrAbove && prediction.recommendation === 'HOME' ? 'rgba(0,212,255,0.1)' : 'var(--bg-card)',
+                            borderColor: isProOrAbove && prediction.recommendation === 'HOME' ? 'rgba(0,212,255,0.4)' : 'var(--border-subtle)',
                         }}>
                             <div className="text-sm text-white/50 mb-1">{teamHome} (Home)</div>
-                            <div className="text-3xl font-black" style={{ color: prediction.recommendation === 'HOME' ? '#00d4ff' : 'var(--text-primary)' }}>
-                                {prediction.home_win_prob}%
+                            <div className="text-3xl font-black" style={{ color: isProOrAbove && prediction.recommendation === 'HOME' ? '#00d4ff' : 'var(--text-primary)' }}>
+                                {isProOrAbove ? `${prediction.home_win_prob}%` : '🔒 ??%'}
                             </div>
                         </div>
                         <div className="p-4 sm:p-6 rounded-2xl border transition-all" style={{
-                            background: prediction.recommendation === 'DRAW' ? 'rgba(255,255,255,0.1)' : 'var(--bg-card)',
-                            borderColor: prediction.recommendation === 'DRAW' ? 'rgba(255,255,255,0.4)' : 'var(--border-subtle)',
+                            background: isProOrAbove && prediction.recommendation === 'DRAW' ? 'rgba(255,255,255,0.1)' : 'var(--bg-card)',
+                            borderColor: isProOrAbove && prediction.recommendation === 'DRAW' ? 'rgba(255,255,255,0.4)' : 'var(--border-subtle)',
                         }}>
                             <div className="text-sm text-white/50 mb-1">무승부 (Draw)</div>
                             <div className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>
-                                {prediction.draw_prob}%
+                                {isProOrAbove ? `${prediction.draw_prob}%` : '🔒 ??%'}
                             </div>
                         </div>
                         <div className="p-4 sm:p-6 rounded-2xl border transition-all" style={{
-                            background: prediction.recommendation === 'AWAY' ? 'rgba(139,92,246,0.1)' : 'var(--bg-card)',
-                            borderColor: prediction.recommendation === 'AWAY' ? 'rgba(139,92,246,0.4)' : 'var(--border-subtle)',
+                            background: isProOrAbove && prediction.recommendation === 'AWAY' ? 'rgba(139,92,246,0.1)' : 'var(--bg-card)',
+                            borderColor: isProOrAbove && prediction.recommendation === 'AWAY' ? 'rgba(139,92,246,0.4)' : 'var(--border-subtle)',
                         }}>
                             <div className="text-sm text-white/50 mb-1">{teamAway} (Away)</div>
-                            <div className="text-3xl font-black" style={{ color: prediction.recommendation === 'AWAY' ? '#8b5cf6' : 'var(--text-primary)' }}>
-                                {prediction.away_win_prob}%
+                            <div className="text-3xl font-black" style={{ color: isProOrAbove && prediction.recommendation === 'AWAY' ? '#8b5cf6' : 'var(--text-primary)' }}>
+                                {isProOrAbove ? `${prediction.away_win_prob}%` : '🔒 ??%'}
                             </div>
                         </div>
                     </div>
@@ -206,7 +218,7 @@ export default function PredictionPage() {
                          homeTeam={teamHome}
                          awayTeam={teamAway}
                          injuries={matchDetail?.injuries || { home: [], away: [] }}
-                         userTier="pro"
+                         userTier={isProOrAbove ? 'pro' : 'free'}
                      />
                 </div>
 

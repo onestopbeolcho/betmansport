@@ -171,7 +171,7 @@ export default async function MatchDetailPage({ params }: MatchPageProps) {
                                 home: detail?.injuries?.home || [],
                                 away: detail?.injuries?.away || []
                             }}
-                            userTier="vip"
+                            userTier="free"
                         />
                         
                         {/* Go to Market Button */}

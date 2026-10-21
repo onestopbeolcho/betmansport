@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import OddsHistoryChart from './OddsHistoryChart';
+import { useAuth } from '../context/AuthContext';
 
 interface Factor {
     name: string;
@@ -96,7 +97,11 @@ const getFormBadge = (char: string) => {
 };
 
 export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam, awayTeam, historyData, userTier = 'free' }: Props) {
-    const isPro = userTier === 'pro' || userTier === 'vip';
+    const { user } = useAuth();
+    const effectiveTier = user
+        ? (user.role === 'admin' ? 'vip' : (user.tier || 'free').toLowerCase())
+        : (userTier === 'pro' || userTier === 'vip' ? 'free' : userTier);
+    const isPro = ['pro', 'vip', 'premium', 'admin'].includes(effectiveTier);
 
     return (
         <div className="space-y-4 mt-4">
@@ -109,33 +114,54 @@ export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam,
                     <span className="text-xs font-bold flex items-center gap-1.5" style={{ color: 'var(--accent-primary)' }}>
                         🧠 AI 종합 분석 리포트
                     </span>
-                    <span className="text-[10px] px-2.5 py-1 rounded-full font-bold" style={{
-                        background: pred.confidence >= 65 ? 'rgba(255,107,53,0.15)' : pred.confidence >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)',
-                        color: pred.confidence >= 65 ? '#ff6b35' : pred.confidence >= 50 ? '#fbbf24' : 'var(--text-muted)',
-                    }}>
-                        {pred.confidence >= 65 ? '🔥 Strong' : pred.confidence >= 50 ? '⭐ Good' : '➖ Normal'} {pred.confidence.toFixed(0)}%
-                    </span>
+                    {isPro ? (
+                        <span className="text-[10px] px-2.5 py-1 rounded-full font-bold" style={{
+                            background: pred.confidence >= 65 ? 'rgba(255,107,53,0.15)' : pred.confidence >= 50 ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.05)',
+                            color: pred.confidence >= 65 ? '#ff6b35' : pred.confidence >= 50 ? '#fbbf24' : 'var(--text-muted)',
+                        }}>
+                            {pred.confidence >= 65 ? '🔥 Strong' : pred.confidence >= 50 ? '⭐ Good' : '➖ Normal'} {pred.confidence.toFixed(0)}%
+                        </span>
+                    ) : (
+                        <a href="/ko/pricing" className="text-[10px] px-2.5 py-1 rounded-full font-bold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                            🔒 Basic Pass 전용 (월 3,900원)
+                        </a>
+                    )}
                 </div>
 
                 {/* Win Probability Bar */}
-                <div className="mb-1">
-                    <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>
-                        <span>{homeTeam} {pred.home_win_prob.toFixed(0)}%</span>
-                        <span>무승부 {pred.draw_prob.toFixed(0)}%</span>
-                        <span>{awayTeam} {pred.away_win_prob.toFixed(0)}%</span>
+                {isPro ? (
+                    <div className="mb-1">
+                        <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>
+                            <span>{homeTeam} {pred.home_win_prob.toFixed(0)}%</span>
+                            <span>무승부 {pred.draw_prob.toFixed(0)}%</span>
+                            <span>{awayTeam} {pred.away_win_prob.toFixed(0)}%</span>
+                        </div>
+                        <div className="flex h-3.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+                            <div style={{ width: `${pred.home_win_prob}%`, background: 'linear-gradient(90deg, #00d4ff, #22d3ee)' }}
+                                className="transition-all duration-1000 rounded-l-full" />
+                            <div style={{ width: `${pred.draw_prob}%`, background: 'rgba(255,255,255,0.1)' }}
+                                className="transition-all duration-1000" />
+                            <div style={{ width: `${pred.away_win_prob}%`, background: 'linear-gradient(90deg, #a78bfa, #8b5cf6)' }}
+                                className="transition-all duration-1000 rounded-r-full" />
+                        </div>
                     </div>
-                    <div className="flex h-3.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-                        <div style={{ width: `${pred.home_win_prob}%`, background: 'linear-gradient(90deg, #00d4ff, #22d3ee)' }}
-                            className="transition-all duration-1000 rounded-l-full" />
-                        <div style={{ width: `${pred.draw_prob}%`, background: 'rgba(255,255,255,0.1)' }}
-                            className="transition-all duration-1000" />
-                        <div style={{ width: `${pred.away_win_prob}%`, background: 'linear-gradient(90deg, #a78bfa, #8b5cf6)' }}
-                            className="transition-all duration-1000 rounded-r-full" />
+                ) : (
+                    <div className="mb-1 relative">
+                        <div className="flex justify-between text-[10px] mb-1 text-white/40">
+                            <span>{homeTeam} 🔒 ??%</span>
+                            <span>무승부 🔒 ??%</span>
+                            <span>{awayTeam} 🔒 ??%</span>
+                        </div>
+                        <div className="flex h-3.5 rounded-full overflow-hidden opacity-40" style={{ background: 'var(--bg-primary)', filter: 'blur(4px)' }}>
+                            <div style={{ width: '34%', background: 'linear-gradient(90deg, #00d4ff, #22d3ee)' }} className="rounded-l-full" />
+                            <div style={{ width: '33%', background: 'rgba(255,255,255,0.1)' }} />
+                            <div style={{ width: '33%', background: 'linear-gradient(90deg, #a78bfa, #8b5cf6)' }} className="rounded-r-full" />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* API-Football External Prediction */}
-                {pred.api_prediction_pct && (
+                {isPro && pred.api_prediction_pct && (
                     <div className="mt-3 p-2.5 rounded-lg" style={{ background: 'rgba(53,199,89,0.05)', border: '1px solid rgba(53,199,89,0.15)' }}>
                         <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold" style={{ color: '#35c759' }}>⚽ API-Football 예측</span>
@@ -162,7 +188,7 @@ export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam,
                     {!isPro && (
                         <span className="text-[9px] px-2 py-0.5 rounded-full font-bold"
                             style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }}>
-                            🔒 Pro
+                            🔒 Basic Pass (월 3,900원)
                         </span>
                     )}
                 </div>
@@ -171,14 +197,38 @@ export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam,
                     {pred.factors.map((f, i) => {
                         const icon = FACTOR_ICONS[f.name] || '📌';
                         const color = getFactorColor(f.score);
-                        const isLocked = !isPro && i >= 2; // Free: 상위 2개만 공개
+                        const isLocked = !isPro && i >= 1; // Free: 상위 1개만 맛보기 공개, 나머지 완전 마스킹
+
+                        if (isLocked) {
+                            return (
+                                <div key={i} className="rounded-lg p-2.5 relative transition-all select-none" style={{
+                                    background: 'rgba(255,255,255,0.015)',
+                                    border: '1px solid var(--border-subtle)',
+                                }}>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm">{icon}</span>
+                                            <span className="text-[11px] font-bold text-white/60">{f.name}</span>
+                                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-white/30">
+                                                가중치 {(f.weight * 100).toFixed(0)}%
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-black text-cyan-400">🔒 ??점</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 opacity-30" style={{ filter: 'blur(4px)' }}>
+                                        <div className="flex-1 h-2 rounded-full overflow-hidden bg-white/5">
+                                            <div className="h-full rounded-full w-1/2 bg-cyan-500/40" />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] mt-1.5 text-white/30">🔒 Basic Pass 구독 시 퀀트 팩터 수치 및 상세 분석 근거가 공개됩니다.</p>
+                                </div>
+                            );
+                        }
 
                         return (
                             <div key={i} className="rounded-lg p-2.5 relative transition-all" style={{
-                                background: isLocked ? 'rgba(255,255,255,0.02)' : color.bg,
-                                border: `1px solid ${isLocked ? 'var(--border-subtle)' : color.bar}20`,
-                                filter: isLocked ? 'blur(3px)' : 'none',
-                                pointerEvents: isLocked ? 'none' : 'auto',
+                                background: color.bg,
+                                border: `1px solid ${color.bar}20`,
                             }}>
                                 <div className="flex items-center justify-between mb-1.5">
                                     <div className="flex items-center gap-1.5">
@@ -264,15 +314,13 @@ export default function ProAnalysisPanel({ prediction: pred, injuries, homeTeam,
                         );
                     })}
 
-                    {!isPro && pred.factors.length > 2 && (
+                    {!isPro && pred.factors.length > 1 && (
                         <div className="text-center py-3">
-                            <a href="/pricing" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all hover:scale-105"
+                            <a href="/ko/pricing" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black transition-all hover:scale-105 text-white shadow-lg"
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(139,92,246,0.15))',
-                                    color: 'var(--accent-primary)',
-                                    border: '1px solid rgba(0,212,255,0.3)',
+                                    background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)',
                                 }}>
-                                🔓 Pro에서 전체 7-Factor AI 분석 보기
+                                ☕ Basic Pass (월 3,900원) 구독하고 7-Factor 전체 열람하기 →
                             </a>
                         </div>
                     )}
