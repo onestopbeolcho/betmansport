@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.8.1 - Betman Official Multi-Game Schedule Integration (`승무패`, `승5패`, `스페셜N 더블`, `매치`, `프로토 승부식`) & PG Compliance Separation
+- **Betman Official Multi-Game Discovery & Schedule Engine (`proto_round_service.py`, `proto.py`)**:
+    - Integrated live Betman multi-game catalog discovery (`GET /api/proto/games`, `GET /api/proto/game/{gm_id}/{gm_ts}`) supporting all active official Betman games:
+        - `G011`: 축구토토 승무패 (e.g. `축구토토 승무패 65회차` — 14 matches + live Betman user vote rate comparison)
+        - `G027`: 농구토토 승5패 (e.g. `농구토토 승5패 31회차` — 14 matches with `홈승(6점+)` / `5(5점차 이내 접전)` / `원정승(6점+)` AI probabilities + live vote rates)
+        - `G055` / `G056`: 농구토토 스페셜N 더블 / 트리플 (e.g. `농구토토 스페셜N 더블 98회차`, `99회차` — NBA 6-bracket score range probabilities `79점 이하` ~ `120점 이상`)
+        - `G025` / `G005`: 농구토토 스페셜 더블 / 트리플 (e.g. `농구토토 스페셜 더블 32회차` — KBL 6-bracket score range probabilities `59점 이하` ~ `100점 이상`)
+        - `G015`: 농구토토 매치 (e.g. `농구토토 매치 104회차`, `105회차` — Half-time & Final score bracket simulation)
+        - `G101`: 프로토 승부식 (e.g. `프로토 승부식 129회차`, `128회차`)
+- **Direct Match-Level `[📊 AI 리포트 보기]` Modal & Game Switcher (`ProtoRoundDashboard.tsx`, `StorePrintReportView.tsx`)**:
+    - Added the interactive Betman Official Game Selector Bar on `/ko` and `/store/print-report/[round_id]`.
+    - Connected every match row in every Betman game directly to a 3-Pillar 7-Factor **`[📊 AI 리포트 보기]`** modal tailored to that game's rules (`승무패`, `승5패`, `스페셜N 6구간 득점대`, `매치 전반·최종 득점대`).
+- **PG Compliance Separation (`Navbar.tsx`, `ProtoRoundDashboard.tsx`, `archive/history/page.tsx`)**:
+    - Removed "조합 적중 영수증", "폴더 조합", "배당률/환급률", and "조합 계산기" from the web platform UI and navigation to ensure 100% PG audit compliance, while preserving `/api/proto/marketing-receipt-json` and `generate_shorts_pipeline.py` exclusively for external SNS/YouTube Shorts marketing.
+
 ## v0.8.0 - Betman Proto Precision AI Report, B2B Retail Store A4 Print Solution & Hit Receipt Archive
 - **Task 1 — Gemini Zero-Shot Entity Resolution & Betman Proto Round Engine (`proto_round_service.py`, `proto.py`, `crawler_betman.py`, `betman_db.py`)**:
     - Restored `BetmanCrawler` (`inqCacheBuyAbleGameInfoList.do`, `gameInfoInq.do`) and `betman_db.py` (`betman_rounds` Firestore persistence).

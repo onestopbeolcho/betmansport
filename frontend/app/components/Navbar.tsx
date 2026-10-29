@@ -16,7 +16,6 @@ export default function Navbar() {
     const profileRef = useRef<HTMLDivElement>(null);
     const langRef = useRef<HTMLDivElement>(null);
 
-    // Detect current locale from pathname (check longer codes first: zh-CN before zh)
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
@@ -30,16 +29,14 @@ export default function Navbar() {
     const t = dict?.nav || {};
 
     const navLinks = [
-        { href: `/${currentLang}`, label: "🎯 이번 회차 프로토 공략", icon: "⚡", desc: "현재 발매 중인 프로토 승부식 AI 종합 리포트" },
-        { href: `/${currentLang}/store/print-report/current`, label: "🖨️ 판매점 A4 인쇄(B2B)", icon: "🏪", desc: "복권방·토토 판매점 전용 A4 원클릭 출력 뷰" },
-        { href: `/${currentLang}/archive/history`, label: "🧾 적중 영수증 아카이브", icon: "✅", desc: "최근 5회차 주력 조합 실제 스코어 적중 영수증" },
-        { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 상세 리포트", icon: "🧠", desc: "7-Factor 정밀 경기 데이터 및 커뮤니티" },
-        { href: `/${currentLang}/pricing`, label: "💳 1,500원 회차권 / 점주구독", icon: "💎", desc: "회차당 1,500원 열람권 및 B2B 판매점 구독" },
+        { href: `/${currentLang}`, label: "🎯 베트맨 전 게임 AI 리포트", icon: "⚡", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 공식 경기별 AI 리포트" },
+        { href: `/${currentLang}/store/print-report/current`, label: "🖨️ 판매점 A4 리포트 출력(B2B)", icon: "🏪", desc: "오프라인 매장 전용 A4 원클릭 AI 분석 리포트 출력" },
+        { href: `/${currentLang}/analysis`, label: t.aiPredict || "7-Factor 심층 데이터", icon: "🧠", desc: "7-Factor 정밀 경기 데이터 및 커뮤니티" },
         { href: `/${currentLang}/standings`, label: "리그 순위", icon: "🏆", desc: "주요 리그 실시간 순위표" },
+        { href: `/${currentLang}/pricing`, label: "💳 리포트 열람권 / 멤버십", icon: "💎", desc: "회차당 1,500원 AI 리포트 열람권 및 B2B 매장 구독" },
     ];
 
     const switchLocale = (newLang: string) => {
-        // Replace current locale in path (use regex for exact match)
         const escapedLang = currentLang.replace('-', '\\-');
         const regex = new RegExp(`^/${escapedLang}(?=/|$)`);
         const newPath = pathname.replace(regex, `/${newLang}`);
@@ -105,7 +102,6 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                    {/* 🌐 Language Selector — 임시 비활성화 (PG 승인 후 복구) */}
                     <div className="relative hidden" ref={langRef}>
                         <button
                             onClick={() => setLangOpen(!langOpen)}
@@ -142,7 +138,6 @@ export default function Navbar() {
                         )}
                     </div>
 
-                    {/* 🔔 Notification Bell (logged-in users only) */}
                     {!loading && user && <NotificationBell />}
 
                     {!loading && (
@@ -227,28 +222,6 @@ export default function Navbar() {
                                 </div>
                             </a>
                         ))}
-
-                        {/* Mobile Language Switcher — 임시 비활성화 (PG 승인 후 복구) */}
-                        <div className="pt-2 border-t border-[var(--border-subtle)] hidden">
-                            <div className="grid grid-cols-3 gap-1.5 px-4 py-2">
-                                {i18n.locales.map((code) => {
-                                    const lang = languageNames[code];
-                                    return (
-                                        <button
-                                            key={code}
-                                            onClick={() => { switchLocale(code); setMobileOpen(false); }}
-                                            className={`flex items-center justify-center gap-1 py-2 rounded-lg text-[11px] font-bold transition-all ${currentLang === code
-                                                ? 'bg-[rgba(0,212,255,0.1)] text-[var(--accent-primary)] border border-[rgba(0,212,255,0.2)]'
-                                                : 'text-[var(--text-secondary)] bg-white/5 border border-transparent'
-                                                }`}
-                                        >
-                                            <span>{lang?.flag}</span>
-                                            <span>{lang?.nativeName}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
 
                         <div className="pt-3 mt-2 border-t border-[var(--border-subtle)]">
                             {user ? (

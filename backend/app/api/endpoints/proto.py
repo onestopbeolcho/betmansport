@@ -1,5 +1,5 @@
 """
-ScoreNix Proto API Endpoints (베트맨 프로토 승부식 AI 리포트 & B2B 판매점 A4 출력 & 적중 영수증 아카이브)
+ScoreNix Betman Multi-Game & Proto AI Report API Endpoints
 """
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from app.services.proto_round_service import (
     build_proto_round_report,
+    get_betman_games_catalog,
     get_proto_archive_history,
     match_betman_entities_with_gemini,
 )
@@ -35,23 +36,34 @@ class EntityMatchRequest(BaseModel):
     canonical_fixtures: List[CanonicalFixturePayload]
 
 
+@router.get("/games")
+async def get_betman_games_list():
+    """베트맨 공식 사이트에서 현재 운영 중인 전체 게임(승무패, 승5패, 스페셜N 더블/트리플, 매치, 프로토 승부식 등) 목록 조회."""
+    return await get_betman_games_catalog()
+
+
+@router.get("/game/{gm_id}/{gm_ts}")
+async def get_betman_game_report(gm_id: str, gm_ts: str):
+    """특정 베트맨 게임(예: G011/260065 축구토토 승무패 65회차, G055/260098 스페셜N 더블 98회차)의 경기 목록 및 AI 리포트 조회."""
+    return await build_proto_round_report(round_id=f"{gm_id}_{gm_ts}")
+
+
 @router.get("/current-round")
 async def get_current_proto_round(round_id: Optional[str] = Query(default=None)):
-    """현재 발매 중인 베트맨 프로토 승부식 회차 전체 AI 공략 리포트 조회 (B2C 웹 & B2B A4 출력 공용)."""
+    """현재 선택된 베트맨 게임/회차의 전체 AI 분석 리포트 조회."""
     return await build_proto_round_report(round_id=round_id)
 
 
 @router.get("/round/{round_id}")
 async def get_proto_round_by_id(round_id: str):
-    """특정 회차(round_id)의 프로토 승부식 AI 공략 리포트 조회 (/store/print-report/[round_id] 연동)."""
+    """특정 회차/게임키(예: G011_260065, G027_260031, G055_260098, 260129)의 AI 리포트 조회."""
     return await build_proto_round_report(round_id=round_id)
 
 
 @router.post("/match-entities")
 async def resolve_betman_entities(req: EntityMatchRequest):
     """
-    [Task 1] Gemini 1.5/2.5 Flash 기반 베트맨 단축 한글팀명 <-> 글로벌 Canonical Fixture 매칭 API.
-    단일 betman_item 또는 복수 betman_items 입력을 모두 지원하며 100% Structured JSON으로 반환합니다.
+    [Task 1] Gemini 2.5 Flash 기반 베트맨 단축 한글팀명 <-> 글로벌 Canonical Fixture 매칭 API.
     """
     items_to_match: List[Dict[str, Any]] = []
     if req.betman_item:
@@ -70,7 +82,7 @@ async def resolve_betman_entities(req: EntityMatchRequest):
 @router.get("/archive")
 async def get_proto_archive():
     """
-    [Task 4] 마감된 최근 5회차 주력 조합 적중률 배너 및 실시간 적중 영수증 아카이브 조회 (/archive/history).
+    외부 마케팅 및 백테스트 검증 통계 요약 조회.
     """
     return await get_proto_archive_history()
 
@@ -78,7 +90,7 @@ async def get_proto_archive():
 @router.get("/marketing-receipt-json")
 async def get_marketing_receipt_json():
     """
-    [Task 4 - Marketing] 일일 적중 영수증 쇼츠 렌더링용 요약 JSON 생성.
+    [SNS / YouTube Shorts 마케팅 전용] 일일 적중 영수증 쇼츠 렌더링용 요약 JSON 생성.
     """
     archive = await get_proto_archive_history()
     current = await build_proto_round_report()

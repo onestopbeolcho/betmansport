@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { fetchProtoRoundWithFallback } from "../lib/protoFallback";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://scorenix-backend-n5dv44kdaa-du.a.run.app";
+import {
+    fetchProtoRoundWithFallback,
+    DEFAULT_BETMAN_CATALOG,
+    BetmanGameCatalogItem,
+} from "../lib/protoFallback";
 
 interface ProtoMatch {
     game_no: number;
@@ -27,6 +29,25 @@ interface ProtoMatch {
     ai_home_prob: number;
     ai_draw_prob: number;
     ai_away_prob: number;
+    vote_total?: number;
+    vote_home_pct?: number;
+    vote_mid_pct?: number;
+    vote_away_pct?: number;
+    w5l_analysis?: {
+        win_prob: number;
+        close5_prob: number;
+        lose_prob: number;
+        primary_label: string;
+        multi_recommend: string;
+    } | null;
+    special_brackets?: {
+        expected_home_pts: number;
+        expected_away_pts: number;
+        home_top1_bracket: string;
+        home_top1_prob: number;
+        away_top1_bracket: string;
+        away_top1_prob: number;
+    } | null;
     ai_pick_code: string;
     ai_pick_label: string;
     ai_pick_full_label: string;
@@ -44,13 +65,22 @@ interface ProtoMatch {
 }
 
 interface ProtoReportData {
+    game_key?: string;
+    gm_id?: string;
+    gm_ts?: string;
+    game_name?: string;
+    game_category?: string;
+    game_type?: string;
+    rule_summary?: string;
     round_id: string;
     display_round_no: string;
     round_title: string;
     published_at: string;
     published_date: string;
+    sale_end_display?: string;
     total_matches: number;
     killer_picks_count: number;
+    available_games?: BetmanGameCatalogItem[];
     recent_5_rounds_banner: {
         headline: string;
         combo_accuracy_pct: number;
@@ -89,17 +119,18 @@ interface ProtoReportData {
 export default function StorePrintReportView({ initialRoundId }: { initialRoundId?: string }) {
     const pathname = usePathname();
     const [report, setReport] = useState<ProtoReportData | null>(null);
+    const [selectedGameKey, setSelectedGameKey] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [storeName, setStoreName] = useState("공식 스포츠토토 판매점 VIP 고객용");
-    const [storeNotice, setStoreNotice] = useState("발매 마감 10분 전까지 마킹을 완료해 주세요. 스마트폰으로 우측 QR코드를 스캔하면 실시간 배당 변동과 전 경기 AI 예측을 확인할 수 있습니다.");
-    const [includePage2, setIncludePage2] = useState(false);
+    const [storeNotice, setStoreNotice] = useState("발매 마감 10분 전까지 마킹을 완료해 주세요. 스마트폰으로 우측 QR코드를 스캔하면 전 경기 AI 상세 전력 리포트를 확인할 수 있습니다.");
+    const [includePage2, setIncludePage2] = useState(true);
     const [trialModalOpen, setTrialModalOpen] = useState(false);
     const [trialPhone, setTrialPhone] = useState("");
     const [trialStore, setTrialStore] = useState("");
     const [trialSubmitted, setTrialSubmitted] = useState(false);
 
-    // URL에서 round_id 추출
     const resolvedRoundId = React.useMemo(() => {
+        if (selectedGameKey) return selectedGameKey;
         if (initialRoundId && initialRoundId !== "current" && initialRoundId !== "latest") {
             return initialRoundId;
         }
@@ -108,8 +139,8 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
         if (idx >= 0 && parts[idx + 1] && parts[idx + 1] !== "current" && parts[idx + 1] !== "latest") {
             return parts[idx + 1];
         }
-        return undefined;
-    }, [initialRoundId, pathname]);
+        return "G011_260065";
+    }, [initialRoundId, pathname, selectedGameKey]);
 
     useEffect(() => {
         try {
@@ -159,6 +190,10 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
         }
     };
 
+    const catalogList = report?.available_games && report.available_games.length > 0
+        ? report.available_games
+        : DEFAULT_BETMAN_CATALOG;
+
     const qrTargetUrl = `https://scorenix.com/ko?utm_source=b2b_qr&round=${report?.round_id || "current"}`;
     const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(qrTargetUrl)}`;
 
@@ -166,8 +201,8 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
         return (
             <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
                 <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-lg font-bold">프로토 승부식 AI 종합 공략 리포트(A4 인쇄 뷰) 생성 중...</p>
-                <p className="text-xs text-slate-400 mt-1">베트맨 발매 회차 데이터 및 Gemini 엔터티 매칭 동기화 중</p>
+                <p className="text-lg font-bold">베트맨 게임별 AI 종합 리포트(A4 인쇄 뷰) 생성 중...</p>
+                <p className="text-xs text-slate-400 mt-1">승무패 · 승5패 · 스페셜N · 매치 · 프로토 승부식 데이터 동기화</p>
             </div>
         );
     }
@@ -188,7 +223,6 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-900 print:bg-white print:min-h-0">
-            {/* 🖨️ A4 인쇄 전용 CSS 규칙 (@media print 완벽 고정) */}
             <style jsx global>{`
                 @media print {
                     @page {
@@ -229,11 +263,11 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                             href="/ko"
                             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition"
                         >
-                            ← 메인 대시보드
+                            ← 베트맨 전체 게임 대시보드
                         </Link>
                         <div>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                🏪 B2B 판매점 전용 솔루션
+                                🏪 B2B 판매점 전용 A4 출력 솔루션
                             </span>
                             <h1 className="text-sm sm:text-base font-extrabold text-white mt-0.5">
                                 {report.round_title} A4 원클릭 출력 뷰
@@ -242,6 +276,19 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
+                        {/* 출력할 베트맨 게임 즉시 전환 셀렉터 */}
+                        <select
+                            value={report.game_key || resolvedRoundId}
+                            onChange={(e) => setSelectedGameKey(e.target.value)}
+                            className="px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/50 text-xs font-extrabold text-cyan-300 focus:outline-none"
+                        >
+                            {catalogList.map((g) => (
+                                <option key={g.game_key} value={g.game_key} className="bg-slate-900 text-white">
+                                    {g.icon} {g.full_title} ({g.match_count}경기)
+                                </option>
+                            ))}
+                        </select>
+
                         <label className="flex items-center gap-1.5 text-xs bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg cursor-pointer">
                             <input
                                 type="checkbox"
@@ -249,7 +296,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                 onChange={(e) => setIncludePage2(e.target.checked)}
                                 className="rounded accent-cyan-400"
                             />
-                            <span className="font-semibold text-slate-200">2페이지(전체 경기번호 일람표) 포함</span>
+                            <span className="font-semibold text-slate-200">2페이지(전체 경기 일람표) 포함</span>
                         </label>
 
                         <button
@@ -293,7 +340,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
             </div>
 
             {/* ═══════════════════════════════════════════════════════════════
-                📄 A4 SHEET 1: 핵심 주력 조합(Section A) + 배당가치 Top 5(Section B) + 함정주의보(Section C) + QR 푸터
+                📄 A4 SHEET 1: 핵심 우위 매치(Section A) + 데이터 우위 Top 5(Section B) + 이변 주의보(Section C) + QR 푸터
             ═══════════════════════════════════════════════════════════════ */}
             <div className="py-6 px-2 sm:px-6 print:p-0">
                 <div className="a4-sheet max-w-[210mm] mx-auto bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-300 p-5 sm:p-6 print:rounded-none print:p-0">
@@ -302,17 +349,17 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-black tracking-wider uppercase rounded">
-                                    SCORENIX AI PROTO REPORT
+                                    SCORENIX OFFICIAL GAME AI REPORT
                                 </span>
                                 <span className="text-xs font-bold text-blue-700">
-                                    🔥 {report.recent_5_rounds_banner.headline}
+                                    🤖 {report.recent_5_rounds_banner.headline}
                                 </span>
                             </div>
                             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950 mt-1">
-                                {report.round_title} AI 종합 공략 리포트
+                                {report.round_title} AI 종합 전력 분석 리포트
                             </h1>
                             <p className="text-[11px] text-slate-600 font-medium mt-0.5">
-                                발행일시: {report.published_date} ({report.published_at}) &nbsp;|&nbsp; 분석 대상: 프로토 승부식 {report.total_matches}경기 (베트맨 공식 경기번호 기준)
+                                발행일시: {report.published_date} ({report.published_at}) &nbsp;|&nbsp; 대상 경기: {report.total_matches}경기 ({report.rule_summary || "베트맨 공식 대상 경기 기준"})
                             </p>
                         </div>
 
@@ -324,20 +371,19 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </div>
                     </header>
 
-                    {/* 2. Section A: 주력 추천 조합 (환급률 극대화 2폴더 / 중배당 3폴더) */}
+                    {/* 2. Section A: AI 핵심 우위 매치 요약 */}
                     <section className="mb-3.5">
                         <div className="flex items-center justify-between mb-1.5">
                             <h2 className="text-sm font-black text-slate-950 flex items-center gap-1.5">
                                 <span className="w-5 h-5 rounded bg-blue-700 text-white inline-flex items-center justify-center text-xs font-black">A</span>
-                                <span>주력 추천 조합 (환급률 극대화 2폴더 &amp; 중배당 3폴더)</span>
+                                <span>AI 최우선 핵심 우위 경기 패키지 (신뢰도 1순위 매치업)</span>
                             </h2>
                             <span className="text-[11px] font-bold text-blue-800">
-                                ※ 가장 안정적인 주력 2폴더(70% 비중) + 중배당 3폴더(30% 비중) 분할 공략 권장
+                                ※ 3-Pillar 머신러닝 및 기대득점(xG/xPts) 상위 우위 경기
                             </span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2.5">
-                            {/* 주력 2폴더 카드 */}
                             <div className="border-2 border-blue-700 rounded-lg p-2.5 bg-blue-50/40">
                                 <div className="flex items-center justify-between border-b border-blue-200 pb-1.5 mb-2">
                                     <div>
@@ -347,8 +393,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                         <h3 className="text-xs font-black text-slate-900 mt-0.5">{combo2.title}</h3>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm font-black text-blue-800">합산 {combo2.total_odds}배</div>
-                                        <div className="text-[10px] font-bold text-slate-600">적중확률 {combo2.hit_probability_pct}%</div>
+                                        <div className="text-xs font-black text-blue-800">기대적중 {combo2.hit_probability_pct}%</div>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -363,7 +408,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className="font-black text-blue-700">[{p.ai_pick_code}] {p.ai_pick_odds}배</span>
+                                                <span className="font-black text-blue-700">[{p.ai_pick_label}]</span>
                                                 <span className="text-[10px] font-bold text-slate-500">({p.ai_pick_prob}%)</span>
                                             </div>
                                         </div>
@@ -371,7 +416,6 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                 </div>
                             </div>
 
-                            {/* 중배당 3폴더 카드 */}
                             <div className="border-2 border-slate-800 rounded-lg p-2.5 bg-slate-50">
                                 <div className="flex items-center justify-between border-b border-slate-300 pb-1.5 mb-2">
                                     <div>
@@ -381,8 +425,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                         <h3 className="text-xs font-black text-slate-900 mt-0.5">{combo3.title}</h3>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm font-black text-emerald-700">합산 {combo3.total_odds}배</div>
-                                        <div className="text-[10px] font-bold text-slate-600">적중확률 {combo3.hit_probability_pct}%</div>
+                                        <div className="text-xs font-black text-emerald-700">기대적중 {combo3.hit_probability_pct}%</div>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
@@ -397,7 +440,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <span className="font-black text-emerald-700">[{p.ai_pick_code}] {p.ai_pick_odds}배</span>
+                                                <span className="font-black text-emerald-700">[{p.ai_pick_label}]</span>
                                                 <span className="text-[10px] text-slate-500">({p.ai_pick_prob}%)</span>
                                             </div>
                                         </div>
@@ -407,15 +450,15 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </div>
                     </section>
 
-                    {/* 3. Section B: 배당 가치 Top 5 (AI 예측 확률 대비 베트맨 배당이 후하게 책정된 가치 경기) */}
+                    {/* 3. Section B: 데이터 우위 Top 5 */}
                     <section className="mb-3.5">
                         <div className="flex items-center justify-between mb-1">
                             <h2 className="text-sm font-black text-slate-950 flex items-center gap-1.5">
                                 <span className="w-5 h-5 rounded bg-emerald-700 text-white inline-flex items-center justify-center text-xs font-black">B</span>
-                                <span>배당 가치 Top 5 (AI 예측 승률 대비 베트맨 배당이 후하게 책정된 꿀배당 경기)</span>
+                                <span>AI 전력 지수 우위 Top {report.section_b_value_top5.length} (7-Factor 핵심 추천 경기)</span>
                             </h2>
                             <span className="text-[10px] font-bold text-emerald-800">
-                                글로벌 기준 배당 대비 국내 환급 효율 상위 5선
+                                베트맨 공식 표기 및 정식 구단명 병기
                             </span>
                         </div>
 
@@ -423,12 +466,11 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                             <thead>
                                 <tr className="bg-slate-900 text-white">
                                     <th className="border border-slate-600 py-1 px-1.5 text-center w-14">경기번호</th>
-                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-20">마감시간</th>
-                                    <th className="border border-slate-600 py-1 px-2 text-left">프로토 표기 (정식 팀명)</th>
-                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-28">베트맨 배당(승/무/패)</th>
-                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-24">AI 추천 픽</th>
-                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-16">AI 승률</th>
-                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-16">배당효율</th>
+                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-24">일시</th>
+                                    <th className="border border-slate-600 py-1 px-2 text-left">베트맨 표기 (정식 구단명)</th>
+                                    <th className="border border-slate-600 py-1 px-1.5 text-center">AI 예측 확률 / 구간</th>
+                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-28">AI 분석 결론</th>
+                                    <th className="border border-slate-600 py-1 px-1.5 text-center w-16">신뢰도</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -444,17 +486,18 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                             <span className="font-black text-slate-950">{m.betman_home} vs {m.betman_away}</span>
                                             <span className="text-[10px] text-slate-500 ml-1.5">({m.home_ko} vs {m.away_ko})</span>
                                         </td>
-                                        <td className="border border-slate-300 py-1 px-1.5 text-center font-mono text-slate-700">
-                                            {m.betman_home_odds.toFixed(2)} / {m.betman_draw_odds ? m.betman_draw_odds.toFixed(2) : "-"} / {m.betman_away_odds.toFixed(2)}
+                                        <td className="border border-slate-300 py-1 px-1.5 text-center text-slate-700 font-semibold">
+                                            {m.special_brackets
+                                                ? `홈 ${m.special_brackets.expected_home_pts}점 / 원정 ${m.special_brackets.expected_away_pts}점`
+                                                : m.w5l_analysis
+                                                ? `승 ${m.w5l_analysis.win_prob}% / 5(${m.w5l_analysis.close5_prob}%) / 패 ${m.w5l_analysis.lose_prob}%`
+                                                : `홈 ${m.ai_home_prob}% / 무 ${m.ai_draw_prob}% / 원정 ${m.ai_away_prob}%`}
                                         </td>
                                         <td className="border border-slate-300 py-1 px-1.5 text-center font-black text-emerald-800 bg-emerald-100/60">
-                                            [{m.ai_pick_code}] {m.ai_pick_odds}배
-                                        </td>
-                                        <td className="border border-slate-300 py-1 px-1.5 text-center font-black text-slate-900">
-                                            {m.ai_pick_prob}%
+                                            {m.ai_pick_label}
                                         </td>
                                         <td className="border border-slate-300 py-1 px-1.5 text-center font-black text-blue-700">
-                                            {m.payout_efficiency}%
+                                            {m.ai_confidence}%
                                         </td>
                                     </tr>
                                 ))}
@@ -462,15 +505,15 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </table>
                     </section>
 
-                    {/* 4. Section C: 함정 경기 주의보 (대중 쏠림 대비 무승부/역배 위험도가 높은 저배당 경기) */}
+                    {/* 4. Section C: 이변 및 혼전 주의 경보 */}
                     <section className="mb-3.5">
                         <div className="flex items-center justify-between mb-1">
                             <h2 className="text-sm font-black text-slate-950 flex items-center gap-1.5">
                                 <span className="w-5 h-5 rounded bg-rose-600 text-white inline-flex items-center justify-center text-xs font-black">C</span>
-                                <span>함정 경기 주의보 (무승부·역배 위험도가 높은 고위험 저배당 경기 — 주력 폴더 제외 권장)</span>
+                                <span>이변·박빙 주의 경보 (대중 쏠림 대비 무승부·접전 위험이 높은 경기)</span>
                             </h2>
                             <span className="text-[10px] font-bold text-rose-700">
-                                ⚠️ 정배당 착시 주의
+                                ⚠️ 복수 마킹 또는 주의 권장
                             </span>
                         </div>
 
@@ -487,63 +530,64 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                             </span>
                                         </div>
                                         <span className="text-[11px] font-black text-rose-700">
-                                            이변·무승부 위험 {t.upset_or_draw_prob}%
+                                            접전·이변 확률 {t.upset_or_draw_prob}%
                                         </span>
                                     </div>
                                     <p className="text-[10px] text-slate-700 mt-1 leading-snug">
-                                        • 정배당 {Math.min(t.betman_home_odds, t.betman_away_odds).toFixed(2)}배 경기이나, {t.trap_reason}
+                                        • {t.trap_reason}
                                     </p>
                                 </div>
                             ))}
                         </div>
                     </section>
 
-                    {/* 5. 이번 회차 핵심 경기 요약표 (상위 10경기) */}
+                    {/* 5. 이번 회차 대상 경기 요약표 (최대 14경기 A4 1페이지에 완전 수록!) */}
                     <section className="mb-3">
                         <div className="flex items-center justify-between mb-1">
                             <h2 className="text-xs font-black text-slate-900">
-                                📊 이번 회차 주요 대상 경기 AI 승·무·패 확률 및 주력 분류 요약 (경기번호순)
+                                📊 [{report.round_title}] 공식 대상 경기 AI 분석 요약표 (경기번호순)
                             </h2>
                             <span className="text-[10px] text-slate-500">
-                                ★표시: AI 확신도 85% 이상 핵심 주력 픽
+                                ★표시: AI 확신도 85% 이상 핵심 우위 경기
                             </span>
                         </div>
-                        <table className="w-full border-collapse border border-slate-300 text-[10.5px]">
+                        <table className="w-full border-collapse border border-slate-300 text-[10px]">
                             <thead>
                                 <tr className="bg-slate-100 text-slate-800">
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">번호</th>
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">리그</th>
-                                    <th className="border border-slate-300 py-0.5 px-1.5 text-left">매치업 (단축명)</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">베트맨 승/무/패</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 예측 승/무/패 확률</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 방향</th>
+                                    <th className="border border-slate-300 py-0.5 px-1.5 text-left">베트맨 매치업 (정식 구단명)</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 예측 확률 / 예상 구간</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 1순위 결론</th>
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">등급</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {report.matches.slice(0, 10).map((m) => (
+                                {report.matches.slice(0, 14).map((m) => (
                                     <tr key={m.game_no} className={m.is_killer_pick ? "bg-amber-50/70 font-semibold" : ""}>
                                         <td className="border border-slate-300 py-0.5 px-1 text-center font-black">{m.game_no_label}</td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center text-slate-600">{m.league.slice(0, 8)}</td>
+                                        <td className="border border-slate-300 py-0.5 px-1 text-center text-slate-600">{m.league.slice(0, 9)}</td>
                                         <td className="border border-slate-300 py-0.5 px-1.5 font-bold text-slate-900">
-                                            {m.betman_home} vs {m.betman_away}
-                                        </td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center font-mono">
-                                            {m.betman_home_odds.toFixed(2)} / {m.betman_draw_odds ? m.betman_draw_odds.toFixed(2) : "-"} / {m.betman_away_odds.toFixed(2)}
+                                            {m.betman_home} vs {m.betman_away}{" "}
+                                            <span className="text-[9px] text-slate-500 font-normal">({m.home_ko} vs {m.away_ko})</span>
                                         </td>
                                         <td className="border border-slate-300 py-0.5 px-1 text-center">
-                                            홈 {m.ai_home_prob}% · 무 {m.ai_draw_prob}% · 원정 {m.ai_away_prob}%
+                                            {m.special_brackets
+                                                ? `홈 ${m.special_brackets.home_top1_bracket} / 원정 ${m.special_brackets.away_top1_bracket}`
+                                                : m.w5l_analysis
+                                                ? `승 ${m.w5l_analysis.win_prob}% · 5(${m.w5l_analysis.close5_prob}%) · 패 ${m.w5l_analysis.lose_prob}%`
+                                                : `홈 ${m.ai_home_prob}% · 무 ${m.ai_draw_prob}% · 원정 ${m.ai_away_prob}%`}
                                         </td>
                                         <td className="border border-slate-300 py-0.5 px-1 text-center font-black text-blue-800">
-                                            [{m.ai_pick_code}] {m.ai_pick_odds}배
+                                            {m.ai_pick_label}
                                         </td>
                                         <td className="border border-slate-300 py-0.5 px-1 text-center">
                                             {m.is_killer_pick ? (
-                                                <span className="text-[10px] font-black text-amber-800 bg-amber-200 px-1 rounded">★주력 {m.ai_confidence}%</span>
+                                                <span className="text-[9.5px] font-black text-amber-800 bg-amber-200 px-1 rounded">★핵심 {m.ai_confidence}%</span>
                                             ) : m.is_trap_candidate ? (
-                                                <span className="text-[10px] font-bold text-rose-700">⚠️함정주의</span>
+                                                <span className="text-[9.5px] font-bold text-rose-700">⚠️이변주의</span>
                                             ) : (
-                                                <span className="text-[10px] text-slate-500">일반분석</span>
+                                                <span className="text-[9.5px] text-slate-500">일반분석</span>
                                             )}
                                         </td>
                                     </tr>
@@ -552,17 +596,17 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </table>
                     </section>
 
-                    {/* 6. 푸터: 매장 전용 안내문구 + 스코어닉스 실시간 배당 분석 연결 QR 코드 */}
+                    {/* 6. 푸터: 매장 전용 안내문구 + 스코어닉스 연결 QR 코드 */}
                     <footer className="border-t-2 border-slate-900 pt-2.5 mt-2 flex items-center justify-between gap-4 bg-slate-50 rounded-lg p-2.5">
                         <div className="space-y-1">
                             <div className="text-xs font-black text-slate-950">
-                                📌 [{storeName}] 방문 고객 전용 AI 분석 안내
+                                📌 [{storeName}] 방문 고객 전용 AI 스포츠 데이터 리포트 안내
                             </div>
                             <p className="text-[10.5px] text-slate-700 leading-snug">
                                 {storeNotice}
                             </p>
                             <p className="text-[9.5px] text-slate-500">
-                                ⚖️ 본 리포트는 스코어닉스(scorenix.com) 3-Pillar 머신러닝 모델의 통계적 참고자료이며, 최종 투표 선택과 결과에 대한 책임은 구매자 본인에게 있습니다.
+                                ⚖️ 본 리포트는 스코어닉스(scorenix.com) 3-Pillar 머신러닝 모델의 통계적 스포츠 데이터 참고자료입니다.
                             </p>
                         </div>
 
@@ -570,7 +614,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                             <div className="text-right">
                                 <div className="text-[10px] font-black text-blue-700 uppercase">스마트폰 카메라 스캔</div>
                                 <div className="text-xs font-black text-slate-950 leading-tight mt-0.5">
-                                    실시간 배당 변동 &amp;<br />전 경기 AI 픽 확인
+                                    전 게임 AI 리포트 &amp;<br />실시간 데이터 확인
                                 </div>
                                 <div className="text-[9.5px] font-bold text-slate-500 mt-1">scorenix.com</div>
                             </div>
@@ -587,17 +631,17 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                 </div>
 
                 {/* ═══════════════════════════════════════════════════════════════
-                    📄 A4 SHEET 2 (선택): 이번 회차 전체 대상 경기 상세 일람표
+                    📄 A4 SHEET 2 (선택): 전체 대상 경기 상세 일람표
                 ═══════════════════════════════════════════════════════════════ */}
-                {includePage2 && (
+                {includePage2 && report.matches.length > 14 && (
                     <div className="a4-sheet max-w-[210mm] mx-auto bg-white text-slate-900 rounded-xl shadow-2xl border border-slate-300 p-5 sm:p-6 mt-6 print:mt-0 print:rounded-none print:p-0">
                         <header className="border-b-2 border-slate-900 pb-2 mb-3 flex items-center justify-between">
                             <div>
                                 <h2 className="text-lg font-black text-slate-950">
-                                    {report.round_title} 전체 대상 경기 AI 승·무·패 확률 일람표 (2/2면)
+                                    {report.round_title} 전체 대상 경기 AI 전력 분석 일람표 (2/2면)
                                 </h2>
                                 <p className="text-[11px] text-slate-600">
-                                    베트맨 경기번호순 전체 매치업 · AI 확신도 및 배당 효율 비교표
+                                    베트맨 경기번호순 전체 매치업 · AI 신뢰도 및 예측 확률 비교표
                                 </p>
                             </div>
                             <span className="text-xs font-black text-slate-800">{storeName}</span>
@@ -607,13 +651,12 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                             <thead>
                                 <tr className="bg-slate-900 text-white">
                                     <th className="border border-slate-600 py-1 px-1 text-center">경기번호</th>
-                                    <th className="border border-slate-600 py-1 px-1 text-center">마감일시</th>
+                                    <th className="border border-slate-600 py-1 px-1 text-center">일시</th>
                                     <th className="border border-slate-600 py-1 px-1 text-center">리그</th>
-                                    <th className="border border-slate-600 py-1 px-2 text-left">프로토 단축명 (정식 팀명)</th>
-                                    <th className="border border-slate-600 py-1 px-1 text-center">베트맨 배당</th>
+                                    <th className="border border-slate-600 py-1 px-2 text-left">베트맨 단축명 (정식 구단명)</th>
                                     <th className="border border-slate-600 py-1 px-1 text-center">AI 승/무/패 확률</th>
-                                    <th className="border border-slate-600 py-1 px-1 text-center">AI 추천</th>
-                                    <th className="border border-slate-600 py-1 px-1 text-center">확신도</th>
+                                    <th className="border border-slate-600 py-1 px-1 text-center">AI 분석 결론</th>
+                                    <th className="border border-slate-600 py-1 px-1 text-center">신뢰도</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -626,14 +669,11 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                             <span className="font-bold text-slate-900">{m.betman_home} vs {m.betman_away}</span>
                                             <span className="text-[9.5px] text-slate-500 ml-1">({m.home_ko} vs {m.away_ko})</span>
                                         </td>
-                                        <td className="border border-slate-300 py-1 px-1 text-center font-mono">
-                                            {m.betman_home_odds.toFixed(2)} / {m.betman_draw_odds ? m.betman_draw_odds.toFixed(2) : "-"} / {m.betman_away_odds.toFixed(2)}
-                                        </td>
                                         <td className="border border-slate-300 py-1 px-1 text-center">
                                             {m.ai_home_prob}% / {m.ai_draw_prob}% / {m.ai_away_prob}%
                                         </td>
                                         <td className="border border-slate-300 py-1 px-1 text-center font-black text-blue-800">
-                                            [{m.ai_pick_code}] {m.ai_pick_odds}배
+                                            {m.ai_pick_label}
                                         </td>
                                         <td className="border border-slate-300 py-1 px-1 text-center font-bold">
                                             {m.is_killer_pick ? `★${m.ai_confidence}%` : `${m.ai_confidence}%`}
@@ -658,7 +698,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </div>
                         <h3 className="text-lg font-black">점주 전용 A4 데일리 리포트 2주 무료 체험 &amp; 월 구독</h3>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                            매 회차 발매 직후 A4 1장으로 인쇄해 매장 벽면·테이블에 비치하세요! 손님들의 마킹 속도와 매장 재방문율이 폭발적으로 상승합니다.
+                            승무패·승5패·스페셜N·프로토 승부식 매 회차 발매 직후 A4 1장으로 인쇄해 매장 벽면·테이블에 비치하세요!
                         </p>
 
                         <div className="my-4 p-3.5 rounded-xl bg-slate-800/90 border border-slate-700 space-y-1.5 text-xs">
