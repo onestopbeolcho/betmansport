@@ -199,19 +199,19 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
-                <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-lg font-bold">베트맨 게임별 AI 종합 리포트(A4 인쇄 뷰) 생성 중...</p>
-                <p className="text-xs text-slate-400 mt-1">승무패 · 승5패 · 스페셜N · 매치 · 프로토 승부식 데이터 동기화</p>
+            <div className="min-h-screen bg-[#f4f6f9] text-slate-800 flex flex-col items-center justify-center p-6">
+                <div className="w-12 h-12 border-4 border-[#0046b8] border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-lg font-extrabold text-slate-900">베트맨 게임별 AI 종합 리포트(A4 인쇄 뷰) 생성 중...</p>
+                <p className="text-xs text-slate-500 mt-1">승무패 · 승5패 · 스페셜N · 매치 · 프로토 승부식 데이터 동기화</p>
             </div>
         );
     }
 
     if (!report) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
-                <p className="text-lg font-bold text-rose-400">리포트 데이터를 불러오지 못했습니다.</p>
-                <Link href="/ko" className="mt-4 px-4 py-2 rounded-lg bg-cyan-500 text-slate-950 font-bold text-sm">
+            <div className="min-h-screen bg-[#f4f6f9] text-slate-800 flex flex-col items-center justify-center p-6">
+                <p className="text-lg font-bold text-rose-600">리포트 데이터를 불러오지 못했습니다.</p>
+                <Link href="/ko" className="mt-4 px-4 py-2 rounded-lg bg-[#0046b8] text-white font-bold text-sm">
                     메인 화면으로 이동
                 </Link>
             </div>
@@ -222,7 +222,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
     const combo3 = report.section_a_combos.value_3folder;
 
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-900 print:bg-white print:min-h-0">
+        <div className="min-h-screen bg-[#e2e8f0] text-slate-900 print:bg-white print:min-h-0">
             <style jsx global>{`
                 @media print {
                     @page {
@@ -256,20 +256,20 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
             `}</style>
 
             {/* ─── 상단 점주 전용 컨트롤 바 (인쇄 시 자동 숨김) ─── */}
-            <div className="no-print bg-slate-950 border-b border-slate-800 text-white sticky top-0 z-50 shadow-2xl">
+            <div className="no-print bg-white border-b-2 border-[#0046b8] text-slate-900 sticky top-0 z-50 shadow-md">
                 <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                         <Link
                             href="/ko"
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition"
+                            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-bold text-slate-700 transition"
                         >
                             ← 베트맨 전체 게임 대시보드
                         </Link>
                         <div>
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-blue-50 text-[#0046b8] border border-blue-200">
                                 🏪 B2B 판매점 전용 A4 출력 솔루션
                             </span>
-                            <h1 className="text-sm sm:text-base font-extrabold text-white mt-0.5">
+                            <h1 className="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">
                                 {report.round_title} A4 원클릭 출력 뷰
                             </h1>
                         </div>
@@ -280,35 +280,35 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         <select
                             value={report.game_key || resolvedRoundId}
                             onChange={(e) => setSelectedGameKey(e.target.value)}
-                            className="px-3 py-1.5 rounded-lg bg-slate-900 border border-cyan-500/50 text-xs font-extrabold text-cyan-300 focus:outline-none"
+                            className="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-300 text-xs font-extrabold text-[#0046b8] focus:outline-none"
                         >
                             {catalogList.map((g) => (
-                                <option key={g.game_key} value={g.game_key} className="bg-slate-900 text-white">
+                                <option key={g.game_key} value={g.game_key} className="bg-white text-slate-900">
                                     {g.icon} {g.full_title} ({g.match_count}경기)
                                 </option>
                             ))}
                         </select>
 
-                        <label className="flex items-center gap-1.5 text-xs bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg cursor-pointer">
+                        <label className="flex items-center gap-1.5 text-xs bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-lg cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={includePage2}
                                 onChange={(e) => setIncludePage2(e.target.checked)}
-                                className="rounded accent-cyan-400"
+                                className="rounded accent-[#0046b8]"
                             />
-                            <span className="font-semibold text-slate-200">2페이지(전체 경기 일람표) 포함</span>
+                            <span className="font-bold text-slate-700">2페이지(전체 경기 일람표) 포함</span>
                         </label>
 
                         <button
                             onClick={() => setTrialModalOpen(true)}
-                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg"
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm"
                         >
                             🎁 점주 2주 무료체험 / 월 39,000원 구독
                         </button>
 
                         <button
                             onClick={() => window.print()}
-                            className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/25 flex items-center gap-2 transition cursor-pointer"
+                            className="px-5 py-2 rounded-lg bg-[#0046b8] hover:bg-[#003996] text-white font-black text-sm shadow-sm flex items-center gap-2 transition cursor-pointer"
                         >
                             <span>🖨️ A4 원클릭 인쇄 / PDF 저장</span>
                         </button>
@@ -317,23 +317,23 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
 
                 {/* 매장 상호명 & 공지문 커스터마이징 바 */}
                 <div className="max-w-5xl mx-auto px-4 pb-3 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5">
-                        <span className="text-slate-400 font-bold whitespace-nowrap">매장 상호명:</span>
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5">
+                        <span className="text-slate-600 font-bold whitespace-nowrap">매장 상호명:</span>
                         <input
                             type="text"
                             value={storeName}
                             onChange={(e) => handleStoreNameChange(e.target.value)}
                             placeholder="예: 행운복권방 (출력물 우측 상단에 인쇄됩니다)"
-                            className="bg-transparent text-white font-bold w-full focus:outline-none"
+                            className="bg-transparent text-slate-900 font-bold w-full focus:outline-none"
                         />
                     </div>
-                    <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5">
-                        <span className="text-slate-400 font-bold whitespace-nowrap">하단 매장 안내문:</span>
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5">
+                        <span className="text-slate-600 font-bold whitespace-nowrap">하단 매장 안내문:</span>
                         <input
                             type="text"
                             value={storeNotice}
                             onChange={(e) => handleStoreNoticeChange(e.target.value)}
-                            className="bg-transparent text-slate-200 w-full focus:outline-none"
+                            className="bg-transparent text-slate-800 w-full focus:outline-none"
                         />
                     </div>
                 </div>

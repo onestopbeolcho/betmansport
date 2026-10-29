@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.8.2 - Clean White & Royal Blue Institutional Portal Design (Betman Official Portal Style)
+- **Global Theme & Typography Overhaul (`globals.css`, `Navbar.tsx`, `Footer.tsx`, `app/[lang]/page.tsx`)**:
+    - Replaced dark cyberpunk/neon theme (`#06060a`) with a high-trust **Clean White & Royal Blue Institutional Portal theme** (`--bg-primary: #f4f6f9`, `--bg-surface: #ffffff`, `--accent-primary: #0046b8`, `--text-primary: #0f172a`).
+    - Redesigned `Navbar.tsx` with a Betman-style Royal Blue top utility bar (`bg-[#003996]`) and crisp white header (`SCORENIX 스포츠데이터연구소`).
+    - Redesigned `Footer.tsx` in clean white institutional style with clear business registration and legal compliance notice.
+- **Betman Portal Schedule Table & AI Report Modal (`ProtoRoundDashboard.tsx`, `StorePrintReportView.tsx`)**:
+    - Redesigned the Betman Official Game Selector Hub (`border-t-4 border-t-[#0046b8]`), summary cards, and full round schedule table with crisp white cards, bordered table grids (`border-slate-300`), alternating light row backgrounds (`bg-white` / `bg-slate-50/60`), and Royal Blue `[📊 AI 리포트 보기]` buttons.
+    - Redesigned the 3-Pillar 7-Factor AI Report Modal into a clean white institutional report sheet.
+
 ## v0.8.1 - Betman Official Multi-Game Schedule Integration (`승무패`, `승5패`, `스페셜N 더블`, `매치`, `프로토 승부식`) & PG Compliance Separation
 - **Betman Official Multi-Game Discovery & Schedule Engine (`proto_round_service.py`, `proto.py`)**:
     - Integrated live Betman multi-game catalog discovery (`GET /api/proto/games`, `GET /api/proto/game/{gm_id}/{gm_ts}`) supporting all active official Betman games:
