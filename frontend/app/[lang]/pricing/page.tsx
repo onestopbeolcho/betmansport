@@ -6,66 +6,64 @@ import DeadlineBanner from '../../components/DeadlineBanner';
 import { useAuth } from '../../context/AuthContext';
 import { i18n } from '../../lib/i18n-config';
 
-/* ── 요금제 데이터 (PG 컴플라이언스 준수 · 초저가 구독 관성 모델) ── */
+/* ── 요금제 데이터 (베트맨 프로토 정밀 AI 리포트 마이크로 결제 & B2B 판매점 출력 솔루션) ── */
 const PLANS = {
-    free: {
-        name: 'Free',
-        badge: '무료 체험',
-        badgeBg: 'rgba(255,255,255,0.08)',
-        badgeColor: 'var(--text-muted)',
-        price: '0원',
-        period: '/월',
-        tagline: '기초 통계 데이터 체험',
-        description: '회원가입 즉시 매일 1경기의 AI 시뮬레이션 샘플 리포트와 기본 상대 전적·확률 분포를 무료로 열람할 수 있습니다.',
+    round_pass: {
+        name: '이번 회차 열람권',
+        badge: '⚡ 단건 간편결제 · 부담 제로',
+        badgeBg: 'linear-gradient(135deg, #f59e0b, #eab308)',
+        badgeColor: '#0f172a',
+        price: '1,500원',
+        period: '/회차',
+        tagline: '현재 발매 중인 프로토 회차 즉시 해금',
+        description: '일반 경기 승패 확률은 100% 무료! AI 확신도 85% 이상 핵심 주력 픽과 2·3폴더 조합 계산기만 회차당 1,500원에 가볍게 열람하세요.',
         features: [
-            { icon: '📊', text: '실시간 글로벌 데이터 비교 (3개 리그)', highlight: false },
-            { icon: '🤖', text: 'AI 통계 시뮬레이션 리포트 일일 1건', highlight: false },
-            { icon: '📈', text: '과거 모델 백테스트 적중률 검증 로그', highlight: false },
-            { icon: '💬', text: 'AI 통계 챗봇 일일 5회', highlight: false },
+            { icon: '💎', text: '이번 회차 AI 확신도 85%+ 핵심 주력 픽 전체 오픈', highlight: true },
+            { icon: '🎯', text: '환급률 극대화 주력 2폴더 & 중배당 3폴더 조합 공개', highlight: true },
+            { icon: '🧮', text: '프로토 조합 계산기 및 예상 환급금 시뮬레이터 활성화', highlight: true },
+            { icon: '💰', text: '베트맨 공시 배당 대비 +EV 배당 가치 Top 5 제공', highlight: false },
+            { icon: '⚠️', text: '대중 쏠림 저배당 함정 경기 주의보 포함', highlight: false },
         ],
-        limitations: ['핵심 밸류 리포트(+EV) 잠금', '포아송 기대득점(xG) 상세 잠금', '신뢰도 게이지 제한'],
-        accent: 'var(--text-muted)',
+        limitations: ['이번 발매 회차에 한해 적용 (자동 정기결제 없음)'],
+        accent: '#fbbf24',
     },
     pro: {
-        name: 'Basic Pass',
-        badge: '☕ 커피 한 잔 값 · 인기',
+        name: '개인 월 무제한 패스',
+        badge: '🔥 개인 회원 최다 선택',
         badgeBg: 'linear-gradient(135deg, #00d4ff, #8b5cf6)',
         badgeColor: '#fff',
-        price: '3,900원',
+        price: '9,900원',
         period: '/월',
-        tagline: '데이터 분석 리포트 구독권',
-        description: '아메리카노 한 잔 값으로 17개 글로벌 정규 리그 전 경기의 머신러닝 시뮬레이션 확률과 +EV 밸류 리포트를 무제한 열람하세요.',
+        tagline: '한 달 내내 모든 프로토 회차 무제한 공략',
+        description: '주 3회(월·수·금) 발행되는 프로토 승부식 전 회차(월 12~14회차)의 핵심 주력 픽과 조합 계산기, 켈리 비중 계산기를 무제한으로 이용합니다.',
         features: [
-            { icon: '🧠', text: '전 리그 머신러닝 시뮬레이션 확률 무제한 열람', highlight: true },
-            { icon: '🎯', text: 'AI 핵심 밸류 리포트 — 오늘의 +EV 상위 3경기', highlight: true },
-            { icon: '⚽', text: '포아송 득점 기대치(xG) 및 7-Factor 전력 지표', highlight: true },
-            { icon: '📊', text: '신뢰도 게이지 + 글로벌 시장 확률 지수 편차 분석', highlight: true },
-            { icon: '💬', text: 'AI 스포츠 통계 챗봇 무제한 이용', highlight: false },
-            { icon: '🔔', text: '핵심 밸류 리포트 실시간 알림', highlight: false },
+            { icon: '🔓', text: '한 달간 발행되는 모든 프로토 승부식 회차 무제한 열람', highlight: true },
+            { icon: '💎', text: 'AI 확신도 85%+ 핵심 주력 픽 & 조합 계산기 무제한', highlight: true },
+            { icon: '🏆', text: '켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터 포함', highlight: true },
+            { icon: '📊', text: '배당 가치 Top 5 & 함정 경기 주의보 실시간 업데이트', highlight: true },
+            { icon: '💬', text: 'AI 스포츠 통계 챗봇 및 적중 영수증 아카이브 무제한', highlight: false },
         ],
         limitations: [],
         accent: 'var(--accent-primary)',
     },
-    vip: {
-        name: 'Pro Quant',
-        badge: '👑 QUANT FULL',
-        badgeBg: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+    store_b2b: {
+        name: 'B2B 판매점 A4 출력 구독',
+        badge: '🏪 복권방·토토 판매점 점주 전용',
+        badgeBg: 'linear-gradient(135deg, #10b981, #059669)',
         badgeColor: '#fff',
-        price: '9,900원',
+        price: '39,000원',
         period: '/월',
-        tagline: '통합 퀀트 데이터 멤버십',
-        description: 'Basic Pass의 모든 통계 리포트에 더해 켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터와 다중 경기 확률 계산기가 모두 열립니다.',
+        tagline: '정가 49,000원 → 초기 가맹점 런칭 특가',
+        description: '매 회차 발매 직후 A4 1장으로 원클릭 인쇄하여 매장 벽면·테이블에 비치하세요! 방문 손님의 체류시간과 마킹 회전율이 즉시 상승합니다.',
         features: [
-            { icon: '✦', text: 'Basic Pass 전체 데이터 리포트 포함', highlight: false },
-            { icon: '🏆', text: '켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터', highlight: true },
-            { icon: '🔮', text: '다중 경기 확률 조합 시뮬레이터 무제한', highlight: true },
-            { icon: '⚡', text: '배당률 왜곡 감지 실시간 알림 (이메일/푸시)', highlight: true },
-            { icon: '📊', text: '과거 백테스트 원본 지표 및 모델 검증 로그 전체', highlight: true },
-            { icon: '📈', text: '주간 AI 알고리즘 통계 리포트 (자동 발송)', highlight: false },
-            { icon: '🛡️', text: '우선적 고객 기술 지원', highlight: false },
+            { icon: '🖨️', text: '점주 전용 [A4 원클릭 인쇄 / PDF 리포트 뷰] 무제한 출력', highlight: true },
+            { icon: '🏷️', text: '우리 매장 상호명 커스텀 헤더 & 공지문 인쇄 지원', highlight: true },
+            { icon: '📱', text: '출력물 하단 스마트폰 실시간 배당 확인 QR코드 자동 생성', highlight: true },
+            { icon: '📋', text: '주력 2·3폴더 / 배당가치 Top 5 / 함정주의보 한 장 요약', highlight: true },
+            { icon: '🎁', text: '신규 가맹 판매점 2주 무료 체험 즉시 제공', highlight: false },
         ],
         limitations: [],
-        accent: 'var(--accent-secondary)',
+        accent: '#34d399',
     },
 };
 
@@ -133,9 +131,10 @@ export default function PricingPage() {
                 {/* ── Plan Cards ───────────────────── */}
                 <div className="grid gap-8 lg:grid-cols-3 lg:gap-x-6 mb-16">
                     {Object.entries(PLANS).map(([id, plan]) => {
+                        const isRoundPass = id === 'round_pass';
                         const isPro = id === 'pro';
-                        const isVip = id === 'vip';
-                        const monthlyPrice = id === 'pro' ? 3900 : id === 'vip' ? 9900 : 0;
+                        const isStoreB2B = id === 'store_b2b';
+                        const monthlyPrice = id === 'pro' ? 9900 : id === 'store_b2b' ? 39000 : 0;
                         const displayPrice = billing === 'annual' && monthlyPrice > 0
                             ? Math.round(monthlyPrice * 0.8).toLocaleString() + '원'
                             : plan.price;
@@ -143,8 +142,8 @@ export default function PricingPage() {
                         return (
                             <div key={id} className="glass-card relative p-8 flex flex-col"
                                 style={{
-                                    border: isPro ? '2px solid var(--accent-primary)' : isVip ? '2px solid var(--accent-secondary)' : undefined,
-                                    boxShadow: isPro ? '0 0 40px rgba(0,212,255,0.15)' : isVip ? '0 0 40px rgba(139,92,246,0.12)' : undefined,
+                                    border: isPro ? '2px solid var(--accent-primary)' : isStoreB2B ? '2px solid #10b981' : '1px solid rgba(251,191,36,0.35)',
+                                    boxShadow: isPro ? '0 0 40px rgba(0,212,255,0.15)' : isStoreB2B ? '0 0 40px rgba(16,185,129,0.14)' : undefined,
                                     transform: isPro ? 'scale(1.03)' : undefined,
                                 }}>
 
@@ -176,15 +175,19 @@ export default function PricingPage() {
                                         <p className="text-xs mt-1 text-center" style={{ color: '#ef4444' }}>
                                             연 {(Math.round(monthlyPrice * 0.8) * 12).toLocaleString()}원 (월 {Math.round(monthlyPrice * 0.8).toLocaleString()}원)
                                         </p>
-                                    ) : monthlyPrice === 3900 ? (
-                                        <p className="text-xs mt-1 text-center font-semibold" style={{ color: '#34d399' }}>
-                                            하루 130원 · 언제든 1클릭 해지 가능
-                                        </p>
-                                    ) : monthlyPrice === 9900 ? (
+                                    ) : isRoundPass ? (
                                         <p className="text-xs mt-1 text-center font-semibold" style={{ color: '#fbbf24' }}>
-                                            만원 이하로 누리는 풀 퀀트 시뮬레이터
+                                            정기결제 부담 없는 1회차 단건 열람권
                                         </p>
-                                    ) : null}
+                                    ) : isPro ? (
+                                        <p className="text-xs mt-1 text-center font-semibold" style={{ color: '#34d399' }}>
+                                            회차당 약 750원꼴 · 언제든 1클릭 해지 가능
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs mt-1 text-center font-semibold" style={{ color: '#34d399' }}>
+                                            점주 2주 무료 체험 제공 · 정가 49,000원 → 39,000원
+                                        </p>
+                                    )}
 
                                     {/* Description */}
                                     <p className="mt-5 text-sm leading-relaxed text-left" style={{ color: 'var(--text-muted)' }}>
@@ -202,16 +205,12 @@ export default function PricingPage() {
                                         ))}
                                     </ul>
 
-                                    {/* Limitations (Free only) */}
                                     {plan.limitations && plan.limitations.length > 0 && (
                                         <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                                            <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>
-                                                무료 체험 제한 항목:
-                                            </p>
                                             <ul className="space-y-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
                                                 {plan.limitations.map((l, i) => (
                                                     <li key={i} className="flex items-center gap-2">
-                                                        <span style={{ color: '#ef4444' }}>✕</span>{l}
+                                                        <span style={{ color: '#fbbf24' }}>•</span>{l}
                                                     </li>
                                                 ))}
                                             </ul>
@@ -220,29 +219,29 @@ export default function PricingPage() {
                                 </div>
 
                                 {/* CTA Button */}
-                                {id === 'free' ? (
-                                    user ? (
-                                        <span className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl"
-                                            style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}>
-                                            ✓ 현재 이용 가능
-                                        </span>
-                                    ) : (
-                                        <a href={`/${currentLang}/register`} className="mt-8 block w-full py-3 text-sm font-semibold text-center rounded-xl transition-all hover:opacity-80"
-                                            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
-                                            무료로 시작하기
-                                        </a>
-                                    )
+                                {isRoundPass ? (
+                                    <a href={`/${currentLang}/payment/request?plan=round_pass&billing=once`}
+                                        className="mt-8 block w-full py-3.5 text-sm font-black text-center rounded-xl transition-all hover:opacity-90"
+                                        style={{ background: 'linear-gradient(135deg, #f59e0b, #eab308)', color: '#0f172a' }}>
+                                        ⚡ 1,500원으로 이번 회차 즉시 열기
+                                    </a>
                                 ) : isPro ? (
                                     <a href={`/${currentLang}/payment/request?plan=pro&billing=${billing}`}
                                         className="btn-primary mt-8 block w-full py-3.5 text-sm font-bold text-center">
-                                        ☕ 월 3,900원 데이터 리포트 구독하기
+                                        💎 월 9,900원 전 회차 무제한 시작
                                     </a>
                                 ) : (
-                                    <a href={`/${currentLang}/payment/request?plan=vip&billing=${billing}`}
-                                        className="mt-8 block w-full py-3.5 text-sm font-bold text-center rounded-xl transition-all hover:opacity-80"
-                                        style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--accent-secondary)', border: '1px solid rgba(139,92,246,0.3)' }}>
-                                        👑 월 9,900원 Pro Quant 시작하기
-                                    </a>
+                                    <div className="mt-8 space-y-2">
+                                        <a href={`/${currentLang}/payment/request?plan=store_b2b&billing=${billing}`}
+                                            className="block w-full py-3.5 text-sm font-black text-center rounded-xl transition-all hover:opacity-90"
+                                            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
+                                            🏪 월 39,000원 판매점 B2B 구독하기
+                                        </a>
+                                        <a href={`/${currentLang}/store/print-report/current`}
+                                            className="block w-full py-2 text-xs font-bold text-center rounded-xl border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10">
+                                            🖨️ A4 출력 샘플 보기 &amp; 2주 무료체험 신청 →
+                                        </a>
+                                    </div>
                                 )}
                             </div>
                         );

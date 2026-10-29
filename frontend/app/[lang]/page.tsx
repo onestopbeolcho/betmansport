@@ -3,7 +3,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import DeadlineBanner from '../components/DeadlineBanner';
-import HeroSection from '../components/HeroSection';
+import ProtoRoundDashboard from '../components/ProtoRoundDashboard';
 import Leaderboard from '../components/Leaderboard';
 
 export default function Home() {
@@ -13,7 +13,7 @@ export default function Home() {
             <Navbar />
 
             <main className="flex-grow w-full relative z-10">
-                <HeroSection />
+                <ProtoRoundDashboard />
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
                     <Leaderboard />
                 </section>

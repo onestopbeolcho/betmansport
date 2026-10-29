@@ -37,22 +37,33 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 # PortOne V2 API Base URL
 PORTONE_API_BASE = "https://api.portone.io"
 
-# ─── 요금제 정의 (PG 컴플라이언스 준수: 스포츠 통계 데이터베이스 및 알고리즘 시뮬레이션 SaaS) ───
+# ─── 요금제 정의 (PG 컴플라이언스 준수: 프로토 승부식 AI 데이터 리포트 및 B2B 판매점 출력 솔루션) ───
 PLANS = {
-    "pro": {
-        "name": "Basic Pass (데이터 분석 리포트 구독권)",
-        "price": 3900,
+    "round_pass": {
+        "name": "프로토 승부식 이번 회차 AI 주력 리포트 열람권",
+        "price": 1500,
         "currency": "krw",
         "tier": "pro",
+        "duration_days": 5,
         "features": [
-            "전 리그 머신러닝 시뮬레이션 확률 무제한 열람",
-            "AI 핵심 밸류 리포트 — 오늘의 +EV 상위 3경기",
-            "포아송 득점 기대치(xG) 및 신뢰도 게이지 분석",
-            "글로벌 표준 시장 확률 지수 편차 분석",
+            "이번 회차 AI 확신도 85% 이상 핵심 주력 리포트 즉시 해금",
+            "환급률 극대화 주력 2폴더 / 중배당 3폴더 조합 계산기 오픈",
+            "베트맨 공시 배당 대비 +EV 배당 가치 Top 5 전체 열람",
+            "대중 쏠림 저배당 함정 경기 주의보 리포트 제공",
+        ],
+    },
+    "pro": {
+        "name": "ScoreNix 개인 월 무제한 패스 (전 회차 AI 리포트 구독권)",
+        "price": 9900,
+        "currency": "krw",
+        "tier": "pro",
+        "duration_days": 30,
+        "features": [
+            "한 달간 발행되는 모든 프로토 승부식 회차 무제한 열람",
+            "AI 확신도 85%+ 핵심 주력 픽 & 2·3폴더 조합 계산기 무제한",
+            "배당 가치 Top 5 & 함정 경기 주의보 실시간 업데이트",
             "7-Factor 팀 전력·모멘텀 교차 검증 리포트",
             "AI 스포츠 통계 분석 챗봇 무제한 이용",
-            "핵심 밸류 리포트 실시간 알림",
-            "데이터 포트폴리오 트래커",
         ],
     },
     "vip": {
@@ -60,14 +71,27 @@ PLANS = {
         "price": 9900,
         "currency": "krw",
         "tier": "premium",
+        "duration_days": 30,
         "features": [
-            "Basic Pass 전체 데이터 리포트 기능 포함",
+            "전 회차 프로토 승부식 AI 핵심 주력 리포트 무제한 포함",
             "켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터",
             "다중 경기 확률 시뮬레이터 무제한 이용",
             "배당률 왜곡 감지 실시간 알림 (이메일/푸시)",
-            "과거 백테스트 원본 지표 및 모델 검증 로그 열람",
-            "주간 AI 알고리즘 통계 리포트 (자동 발송)",
-            "우선적 고객 기술 지원",
+            "과거 백테스트 원본 지표 및 적중 영수증 아카이브 열람",
+        ],
+    },
+    "store_b2b": {
+        "name": "토토 판매점·복권방 전용 B2B A4 데일리 출력 솔루션 (월 구독)",
+        "price": 39000,
+        "currency": "krw",
+        "tier": "vip",
+        "duration_days": 30,
+        "features": [
+            "매 회차 복권방·판매점 비치용 [A4 원클릭 인쇄/PDF 리포트] 무제한 출력",
+            "우리 매장 상호명 커스텀 인쇄 헤더 및 하단 전용 QR코드 자동 삽입",
+            "Section A 주력 2·3폴더 조합 / Section B 배당가치 Top 5 / Section C 함정주의보 수록",
+            "매장 방문 고객 체류시간 및 마킹 회전율 극대화 B2B 전용 라이선스",
+            "점주 전용 CS 기술 지원 및 발매 직후 알림 서비스",
         ],
     },
 }
@@ -137,12 +161,12 @@ async def verify_payment(
         if status != "PAID":
             raise HTTPException(400, f"결제가 완료되지 않았습니다. (상태: {status})")
 
-        # 결제 금액 검증 (monthly / annual / USD 지원)
+        # 결제 금액 검증 (1,500원 회차권 / 3,900원 / 9,900원 / 39,000원~49,000원 판매점 B2B 지원)
         paid_amount = payment_data.get("amount", {}).get("total", 0)
         monthly_price = plan["price"]
         annual_price = round(monthly_price * 0.8) * 12  # 20% 할인 * 12개월
-        usd_price = 299 if req.plan_id == "pro" else 699
-        valid_amounts = [monthly_price, annual_price, usd_price, 55000, 105000]
+        usd_price = 150 if req.plan_id == "round_pass" else (699 if req.plan_id in ("pro", "vip") else 2900)
+        valid_amounts = [monthly_price, annual_price, usd_price, 1500, 3900, 9900, 39000, 49000, 55000, 105000]
         if paid_amount not in valid_amounts:
             logger.error(
                 f"금액 불일치: 결제={paid_amount}, 허용={valid_amounts}"
@@ -151,7 +175,8 @@ async def verify_payment(
         is_annual = (paid_amount == annual_price)
 
         # 유저 tier 업그레이드
-        sub_days = 365 if is_annual else 30
+        default_days = plan.get("duration_days", 30)
+        sub_days = 365 if is_annual else default_days
         expires_at = (datetime.utcnow() + timedelta(days=sub_days)).isoformat()
         await update_user(user_id, {
             "tier": plan["tier"],

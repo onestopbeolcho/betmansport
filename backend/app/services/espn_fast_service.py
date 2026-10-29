@@ -532,5 +532,140 @@ class EspnFastService:
 
         return items
 
+    async def fetch_completed_matches(self, days_back: int = 2) -> List[Dict[str, Any]]:
+        """
+        최근 N일 내에 종료된(STATUS_FINAL / completed=True) 전 종목/리그 경기의
+        실제 최종 스코어(home_score, away_score) 및 사전 마감 배당/전적을 병렬 수집.
+        """
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            now_utc = await self._get_server_utc_now(client)
+            date_strs = [
+                (now_utc - datetime.timedelta(days=d)).strftime("%Y%m%d")
+                for d in range(days_back + 1)
+            ]
+
+            tasks = []
+            for lg in ESPN_LEAGUES:
+                for d_str in date_strs:
+                    tasks.append(self._fetch_completed_league_date(client, lg, d_str))
+
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        seen_ids = set()
+        completed_list: List[Dict[str, Any]] = []
+        for res in batch_results:
+            if isinstance(res, list):
+                for item in res:
+                    key = f"{item['sport']}_{item['home_team']}_{item['away_team']}_{item['match_time'][:10]}"
+                    if key not in seen_ids:
+                        seen_ids.add(key)
+                        completed_list.append(item)
+
+        completed_list.sort(key=lambda x: x.get("match_time", ""), reverse=True)
+        logger.info(f"✅ [ESPN Result Collector] Collected {len(completed_list)} completed matches with final scores!")
+        return completed_list
+
+    async def _fetch_completed_league_date(
+        self,
+        client: httpx.AsyncClient,
+        lg: Dict[str, Any],
+        date_str: str,
+    ) -> List[Dict[str, Any]]:
+        url = f"{self.BASE_SITE_URL}/{lg['espn_path']}/scoreboard"
+        try:
+            resp = await client.get(url, params={"dates": date_str})
+            if resp.status_code != 200:
+                return []
+            data = resp.json()
+        except Exception:
+            return []
+
+        items: List[Dict[str, Any]] = []
+        is_soccer = (lg["sport"].lower() == "soccer")
+
+        for ev in data.get("events", []):
+            status_type = ev.get("status", {}).get("type", {})
+            state = status_type.get("state", "pre")
+            if state != "post" and not status_type.get("completed", False):
+                continue
+
+            comps = ev.get("competitions", [])
+            if not comps:
+                continue
+            comp = comps[0]
+            competitors = comp.get("competitors", [])
+            if len(competitors) < 2:
+                continue
+
+            home_comp = next((c for c in competitors if c.get("homeAway") == "home"), competitors[0])
+            away_comp = next((c for c in competitors if c.get("homeAway") == "away"), competitors[1])
+
+            home_team = home_comp.get("team", {}).get("displayName") or home_comp.get("team", {}).get("name") or ""
+            away_team = away_comp.get("team", {}).get("displayName") or away_comp.get("team", {}).get("name") or ""
+            if not home_team or not away_team:
+                continue
+
+            try:
+                home_score = int(float(home_comp.get("score", 0) or 0))
+                away_score = int(float(away_comp.get("score", 0) or 0))
+            except Exception:
+                continue
+
+            home_form = home_comp.get("form", "") or ""
+            away_form = away_comp.get("form", "") or ""
+            home_records = home_comp.get("records", [])
+            away_records = away_comp.get("records", [])
+            h_rec_str = next((r.get("summary", "") for r in home_records if r.get("type") in ("total", "overall")), "")
+            if not h_rec_str and home_records:
+                h_rec_str = home_records[0].get("summary", "")
+            a_rec_str = next((r.get("summary", "") for r in away_records if r.get("type") in ("total", "overall")), "")
+            if not a_rec_str and away_records:
+                a_rec_str = away_records[0].get("summary", "")
+
+            h_w, h_d, h_l = parse_record_summary(h_rec_str, is_soccer=is_soccer)
+            a_w, a_d, a_l = parse_record_summary(a_rec_str, is_soccer=is_soccer)
+
+            home_odds, draw_odds, away_odds = self._synthesize_fair_odds(
+                sport=lg["sport"],
+                home_name=home_team,
+                away_name=away_team,
+                home_wins=h_w,
+                home_draws=h_d,
+                home_losses=h_l,
+                away_wins=a_w,
+                away_draws=a_d,
+                away_losses=a_l,
+                home_form=home_form,
+                away_form=away_form,
+                home_adv=lg.get("home_adv", 1.06),
+            )
+
+            if home_score > away_score:
+                actual_winner = "HOME"
+            elif away_score > home_score:
+                actual_winner = "AWAY"
+            else:
+                actual_winner = "DRAW"
+
+            items.append({
+                "match_id": f"{home_team}_{away_team}",
+                "home_team": home_team,
+                "away_team": away_team,
+                "home_score": home_score,
+                "away_score": away_score,
+                "actual_winner": actual_winner,
+                "home_odds": home_odds,
+                "draw_odds": draw_odds,
+                "away_odds": away_odds,
+                "match_time": ev.get("date", ""),
+                "league": lg["title"],
+                "league_key": lg["key"],
+                "sport": lg["sport"],
+                "home_form": home_form,
+                "away_form": away_form,
+            })
+
+        return items
+
 
 espn_fast_service = EspnFastService()

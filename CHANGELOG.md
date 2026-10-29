@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.8.0 - Betman Proto Precision AI Report, B2B Retail Store A4 Print Solution & Hit Receipt Archive
+- **Task 1 — Gemini Zero-Shot Entity Resolution & Betman Proto Round Engine (`proto_round_service.py`, `proto.py`, `crawler_betman.py`, `betman_db.py`)**:
+    - Restored `BetmanCrawler` (`inqCacheBuyAbleGameInfoList.do`, `gameInfoInq.do`) and `betman_db.py` (`betman_rounds` Firestore persistence).
+    - Built `match_betman_entities_with_gemini` (`POST /api/proto/match-entities`) using Gemini 2.5 Flash Structured JSON output + hybrid `TeamMapper` verification (`FULL_KO_TO_BETMAN_ABBR` / `BETMAN_ABBR_TO_FULL_KO`) to resolve abbreviated Korean Betman team names (`맨체스C`, `울버햄프`, `파리생제` 등) to canonical fixtures with 100% completion.
+    - Built `build_proto_round_report` (`GET /api/proto/current-round`, `GET /api/proto/round/{round_id}`) generating Section A (2-folder high-confidence & 3-folder mid-odds value combinations), Section B (Top 5 Betman Value Bets), and Section C (Low-Odds Public Trap Game Warnings).
+- **Task 2 — B2B Retail Store 1-Click A4 Print Report View (`StorePrintReportView.tsx`, `/store/print-report/[round_id]`)**:
+    - Implemented `/store/print-report/[round_id]` and `/ko/store/print-report/[round_id]` with strict `@media print` (`@page { size: A4 portrait; margin: 6mm 7mm; }`) styling for zero-clipping single-sheet (or 2-page full-table) A4 printing.
+    - Added customizable store name header, custom footer notice, 2-week free store trial modal, monthly B2B subscription (`₩39,000/mo`), and automatic QR code linking offline store customers to `scorenix.com`.
+- **Task 3 — Single-Entry B2C Proto Round Dashboard & ₩1,500 Micro-Payment (`ProtoRoundDashboard.tsx`, `payments.py`, `pricing/page.tsx`, `payment/request/page.tsx`)**:
+    - Streamlined the main entry page (`/ko`) into the active Proto Match (`프로토 승부식`) round dashboard.
+    - Implemented Freemium gating: all general matches show win/draw/loss probabilities for free, while `AI 확신도 85%+ 핵심 주력 픽` and the `프로토 조합 계산기` are gated behind the **`이번 회차 열람권 (1,500원)`** micro-payment (`plan=round_pass`) or **`개인 월 무제한 패스 (9,900원/월)`** (`plan=pro`).
+- **Task 4 — Automated Hit Receipt Marketing Archive (`/archive/history`, `GET /api/proto/archive`, `GET /api/proto/marketing-receipt-json`)**:
+    - Automated post-match grading of recent 5 Proto rounds against ESPN completed match scores, displaying the live `"🔥 최근 5회차 주력 조합 적중률 80.0%"` banner on the main header and full round-by-round hit receipts on `/archive/history`.
+
 ## v0.7.5 - Micro-Subscription Funnel (₩3,900 Basic Pass / ₩9,900 Pro Quant), PG Compliance Defense & Broadcast Shorts v7.0 (5-Concept Rotation)
 - **Micro-Subscription Funnel (`payments.py`, `pricing/page.tsx`, `payment/request/page.tsx`, `PremiumGate.tsx`)**:
     - Repositioned subscription tiers to maximize impulse conversion and retention ("subscription inertia"):

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.models.config_db import load_config_to_env
 from app.services.google_drive_service import google_drive_service
-from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, build_youtube_metadata, select_rotating_concept
+from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, fetch_graded_results_for_shorts, build_youtube_metadata, select_rotating_concept
 
 logging.basicConfig(
     level=logging.INFO,
@@ -73,7 +73,7 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
     results = {}
 
     for lang in langs:
-        matches = fetch_top_matches(limit=5, lang="ko")
+        matches = fetch_graded_results_for_shorts(limit=5) if mode == "result_review" else fetch_top_matches(limit=5, lang="ko")
         concept = select_rotating_concept(mode, matches)
         concept_id = concept.get("id", "QUANT_RADAR")
         meta = build_youtube_metadata(matches, concept=concept)

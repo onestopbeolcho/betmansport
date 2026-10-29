@@ -11,15 +11,26 @@ import * as PortOne from '@portone/browser-sdk/v2';
 
 const PLANS: Record<string, Record<string, { name: string; orderLabel: string; price: number; features: string[] }>> = {
     ko: {
-        pro: {
-            name: "Basic Pass (데이터 분석 리포트 구독권)",
-            orderLabel: "스코어닉스 데이터 분석 리포트 구독권 (Basic Pass)",
-            price: 3900,
+        round_pass: {
+            name: "이번 회차 주력 픽 열람권 (단건 결제)",
+            orderLabel: "스코어닉스 프로토 회차별 데이터 리포트 열람권",
+            price: 1500,
             features: [
-                "전 리그 머신러닝 시뮬레이션 확률 무제한 열람",
-                "AI 핵심 밸류 리포트 (+EV 상위 3경기) 잠금 해제",
-                "포아송 득점 기대치(xG) 및 7-Factor 전력 지표",
-                "글로벌 표준 시장 확률 지수 편차 분석",
+                "현재 발매 회차 AI 확신도 85%+ 핵심 주력 픽 전체 잠금 해제",
+                "환급률 극대화 주력 2폴더 & 중배당 3폴더 추천 조합 열람",
+                "프로토 조합 계산기 및 예상 환급금 시뮬레이터 즉시 활성화",
+                "베트맨 공시 배당 대비 +EV 배당 가치 Top 5 제공",
+            ],
+        },
+        pro: {
+            name: "개인 월 무제한 패스 (전 회차 AI 리포트 구독권)",
+            orderLabel: "스코어닉스 데이터 분석 리포트 월 구독권 (Pro Pass)",
+            price: 9900,
+            features: [
+                "한 달간 발행되는 모든 프로토 승부식 회차 무제한 열람",
+                "AI 확신도 85%+ 핵심 주력 픽 & 2·3폴더 조합 계산기 무제한",
+                "배당 가치 Top 5 & 함정 경기 주의보 실시간 업데이트",
+                "7-Factor 팀 전력·모멘텀 교차 검증 리포트",
             ],
         },
         vip: {
@@ -27,21 +38,42 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
             orderLabel: "스코어닉스 통합 퀀트 데이터 멤버십 (Pro Quant)",
             price: 9900,
             features: [
-                "Basic Pass 전체 데이터 리포트 기능 포함",
+                "전 회차 프로토 승부식 AI 핵심 주력 리포트 무제한 포함",
                 "켈리 공식(Kelly Criterion) 비중 배분 시뮬레이터",
                 "다중 경기 확률 조합 시뮬레이터 무제한",
                 "배당률 왜곡 감지 실시간 알림 & 백테스트 원본 지표",
             ],
         },
+        store_b2b: {
+            name: "토토 판매점·복권방 전용 B2B A4 데일리 출력 솔루션",
+            orderLabel: "스코어닉스 B2B 판매점 A4 리포트 솔루션 (월 구독)",
+            price: 39000,
+            features: [
+                "매 회차 복권방·판매점 비치용 [A4 원클릭 인쇄/PDF 리포트] 무제한 출력",
+                "매장 상호명 커스텀 헤더 및 하단 전용 QR코드 자동 삽입",
+                "Section A 주력 2·3폴더 조합 / Section B 배당가치 Top 5 / Section C 함정주의보 수록",
+                "점주 전용 CS 기술 지원 및 발매 직후 알림 서비스",
+            ],
+        },
     },
     en: {
-        pro: {
-            name: "Basic Pass (Data Analytics Report Membership)",
-            orderLabel: "Scorenix Digital Data Report Membership (Basic Pass)",
-            price: 299,
+        round_pass: {
+            name: "Single Round AI Report Pass",
+            orderLabel: "Scorenix Single Round Data Report Pass",
+            price: 150,
             features: [
-                "Unlimited ML simulation probability reports (17 leagues)",
-                "Top 3 +EV Value Anomaly Reports unlocked",
+                "Unlock all 85%+ confidence AI Killer Picks for this round",
+                "2-Folder & 3-Folder optimal combination calculator",
+                "Top 5 +EV Value Bet matches unlocked",
+            ],
+        },
+        pro: {
+            name: "Monthly Unlimited Pass (All Rounds)",
+            orderLabel: "Scorenix Digital Data Report Membership (Monthly)",
+            price: 699,
+            features: [
+                "Unlimited access to all Proto rounds for 30 days",
+                "Top 5 +EV Value Anomaly Reports unlocked",
                 "Poisson xG & 7-Factor tactical index breakdown",
                 "Global market implied probability gap analysis",
             ],
@@ -55,6 +87,15 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
                 "Kelly Criterion capital allocation simulator",
                 "Multi-match probability combination simulator",
                 "Real-time odds distortion alerts & raw backtest logs",
+            ],
+        },
+        store_b2b: {
+            name: "B2B Retail Store A4 Print Solution (Monthly)",
+            orderLabel: "Scorenix B2B Store A4 Print Report Subscription",
+            price: 2900,
+            features: [
+                "Unlimited A4 1-Click Print/PDF Reports for retail stores",
+                "Custom store name header & QR code footer",
             ],
         },
     },

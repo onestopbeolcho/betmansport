@@ -30,13 +30,12 @@ export default function Navbar() {
     const t = dict?.nav || {};
 
     const navLinks = [
-        { href: `/${currentLang}`, label: t.home || "홈", icon: "⚡", desc: t.homeDesc || "서비스 소개" },
-        { href: `/${currentLang}/bets`, label: t.valueBet || "AI 우세팀 분석", icon: "📊", desc: t.valueBetDesc || "수학적/통계적으로 우세한 팀 선별" },
-        { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 데이터 리포트", icon: "🧠", desc: t.aiPredictDesc || "예측을 뒷받침하는 세부 경기 데이터" },
-        { href: `/${currentLang}/standings`, label: "리그 순위", icon: "🏆", desc: "17개 글로벌 리그 실시간 순위표" },
-        { href: `/${currentLang}/mypage`, label: t.portfolio || "나의 분석 노트", icon: "💼", desc: t.portfolioDesc || "관심 경기 배분 및 시뮬레이션" },
-        { href: `/${currentLang}/vip`, label: "VIP 리포트", icon: "👑", desc: t.vipDesc || "전문가용 데이터 심층 분석" },
-        { href: `/${currentLang}/manual`, label: t.guide || "이용안내", icon: "📖", desc: t.guideDesc || "데이터 툴 사용 방법" },
+        { href: `/${currentLang}`, label: "🎯 이번 회차 프로토 공략", icon: "⚡", desc: "현재 발매 중인 프로토 승부식 AI 종합 리포트" },
+        { href: `/${currentLang}/store/print-report/current`, label: "🖨️ 판매점 A4 인쇄(B2B)", icon: "🏪", desc: "복권방·토토 판매점 전용 A4 원클릭 출력 뷰" },
+        { href: `/${currentLang}/archive/history`, label: "🧾 적중 영수증 아카이브", icon: "✅", desc: "최근 5회차 주력 조합 실제 스코어 적중 영수증" },
+        { href: `/${currentLang}/analysis`, label: t.aiPredict || "매치 상세 리포트", icon: "🧠", desc: "7-Factor 정밀 경기 데이터 및 커뮤니티" },
+        { href: `/${currentLang}/pricing`, label: "💳 1,500원 회차권 / 점주구독", icon: "💎", desc: "회차당 1,500원 열람권 및 B2B 판매점 구독" },
+        { href: `/${currentLang}/standings`, label: "리그 순위", icon: "🏆", desc: "주요 리그 실시간 순위표" },
     ];
 
     const switchLocale = (newLang: string) => {
