@@ -1631,10 +1631,115 @@ export default function ProtoRoundDashboard() {
                 </div>
             )}
 
-            {/* 하단 법적 고지문 */}
-            <div className="rounded-xl bg-white border border-slate-200 p-4 text-[11px] text-slate-500 leading-relaxed">
-                <strong className="text-slate-700">[스포츠 데이터 분석 리포트 이용 안내]</strong> 스코어닉스(Scorenix)는 통계 알고리즘과 머신러닝(LightGBM·포아송 분포)을 활용하여 국내외 스포츠 경기의 전력 지수 및 기대 확률을 분석·제공하는 스포츠 데이터 분석 정보 서비스입니다. 당사는 어떠한 경우에도 사행성 행위나 금전적 베팅을 중개·권유하지 않으며, 모든 분석 리포트는 스포츠 데이터 연구 및 경기 관전 참고용으로만 제공됩니다.
-            </div>
+            {/* ═══════════════════════════════════════════════════════════════════════════
+                🏛️ 건전 스포츠·레저문화 캠페인 및 공식 유관기관 바로가기 배너 (공신력 강화 백링크)
+               ═══════════════════════════════════════════════════════════════════════════ */}
+            <section className="rounded-xl bg-white border border-slate-300 p-5 shadow-xs space-y-3.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded bg-[#003996] text-white text-xs font-extrabold">
+                            🏛️ 공식 유관기관 &amp; 건전이용 안내
+                        </span>
+                        <h3 className="text-sm sm:text-base font-black text-slate-900">
+                            건전 스포츠·레저문화 정착 캠페인 및 공식 기관 바로가기
+                        </h3>
+                    </div>
+                    <span className="text-xs text-slate-500 font-medium">
+                        클릭 시 각 공식 기관 홈페이지로 이동합니다
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <a
+                        href="https://www.betman.co.kr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-[#0046b8] p-3.5 flex items-center justify-between transition"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[#0046b8] text-white flex items-center justify-center font-black text-xs shrink-0">
+                                betman
+                            </div>
+                            <div>
+                                <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                    베트맨 공식 홈페이지 ↗
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                    공식 발매일정 · 투표권 안내 (betman.co.kr)
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a
+                        href="https://www.kspo.or.kr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-[#0046b8] p-3.5 flex items-center justify-between transition"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center font-black text-xs shrink-0">
+                                KSPO
+                            </div>
+                            <div>
+                                <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                    국민체육진흥공단 ↗
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                    체육진흥투표권 공익기금 안내 (kspo.or.kr)
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a
+                        href="https://www.dhlottery.co.kr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-[#0046b8] p-3.5 flex items-center justify-between transition"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-black text-xs shrink-0">
+                                복권위
+                            </div>
+                            <div>
+                                <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                    기획재정부 복권위원회 ↗
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                    동행복권 · 건전 복권문화 캠페인
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a
+                        href="https://www.kcgp.or.kr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-[#0046b8] p-3.5 flex items-center justify-between transition"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-black text-xs shrink-0">
+                                1336
+                            </div>
+                            <div>
+                                <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                    한국도박문제예방치유원 ↗
+                                </div>
+                                <div className="text-[11px] text-slate-500 mt-0.5">
+                                    과몰입 예방 및 건전이용 상담 (1336)
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                {/* 하단 법적 고지문 */}
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-[11px] text-slate-500 leading-relaxed">
+                    <strong className="text-slate-700">[스포츠 데이터 분석 리포트 이용 안내]</strong> 스코어닉스(Scorenix)는 불법 사설 스포츠도박을 근절하고 국민체육진흥공단(베트맨) 및 복권위원회의 건전 레저문화 정착 캠페인을 지지하는 독립 스포츠 통계 데이터 연구소입니다. 당사는 어떠한 경우에도 투표권 구매 대행이나 사행성 행위를 중개·권유하지 않으며, 모든 분석 리포트는 스포츠 데이터 연구 및 건전한 경기 관전 참고용으로만 제공됩니다.
+                </div>
+            </section>
         </div>
     );
 }

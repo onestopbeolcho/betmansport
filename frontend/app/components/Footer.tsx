@@ -20,6 +20,122 @@ export default function Footer({ lang }: { lang?: string }) {
 
     return (
         <footer className="w-full mt-auto bg-white border-t border-slate-200 text-slate-600">
+            {/* 상단 건전 레저문화 캠페인 & 공식 유관기관 백링크 배너 바 */}
+            <div className="bg-slate-50 border-b border-slate-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded bg-[#003996] text-white text-[10px] font-extrabold">
+                                건전 스포츠·레저문화 캠페인
+                            </span>
+                            <span className="text-xs font-extrabold text-slate-800">
+                                대한민국 공식 체육진흥·복권 유관기관 바로가기
+                            </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500">
+                            ※ 불법 사설 스포츠도박 근절 및 건전한 스포츠 관전 문화 정착을 함께합니다.
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                        <a
+                            href="https://www.betman.co.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0046b8] hover:shadow-xs transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-[#0046b8] text-white flex items-center justify-center text-xs font-black shrink-0">
+                                    BM
+                                </span>
+                                <div>
+                                    <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                        베트맨 (Betman) ↗
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">체육진흥투표권 공식 발매사이트</div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a
+                            href="https://www.kspo.or.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0046b8] hover:shadow-xs transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-slate-800 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                    KSPO
+                                </span>
+                                <div>
+                                    <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                        국민체육진흥공단 ↗
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">국민체육진흥기금 공익사업 안내</div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a
+                            href="https://www.dhlottery.co.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0046b8] hover:shadow-xs transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xs font-black shrink-0">
+                                    복권
+                                </span>
+                                <div>
+                                    <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                        기획재정부 복권위원회 ↗
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">동행복권 · 건전 복권문화 안내</div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a
+                            href="https://www.kcgp.or.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0046b8] hover:shadow-xs transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-amber-600 text-white flex items-center justify-center text-[11px] font-black shrink-0">
+                                    1336
+                                </span>
+                                <div>
+                                    <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                        한국도박문제예방치유원 ↗
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">건전이용 상담센터 (국번없이 1336)</div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a
+                            href="https://www.ngcc.go.kr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0046b8] hover:shadow-xs transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-8 h-8 rounded-lg bg-rose-700 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                                    신고
+                                </span>
+                                <div>
+                                    <div className="text-xs font-black text-slate-900 group-hover:text-[#0046b8]">
+                                        사행산업통합감독위원회 ↗
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">불법사설 신고센터 (1899-1119)</div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
                 {/* Links Grid */}
