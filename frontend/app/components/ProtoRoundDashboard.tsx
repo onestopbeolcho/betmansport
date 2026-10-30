@@ -165,7 +165,7 @@ interface ProtoReportData {
     matches: ProtoMatch[];
 }
 
-type BudgetPlanId = "PLAN_8K" | "PLAN_16K" | "PLAN_32K" | "PLAN_48K";
+type SimulationModelId = "MODEL_CONSERVATIVE" | "MODEL_STANDARD" | "MODEL_EXTENDED" | "MODEL_DEFENSIVE";
 
 interface MatchMarkingStrategy {
     match: ProtoMatch;
@@ -186,7 +186,7 @@ export default function ProtoRoundDashboard() {
     const [gameCatFilter, setGameCatFilter] = useState<string>("ALL");
     const [loading, setLoading] = useState(true);
     const [switchingGame, setSwitchingGame] = useState(false);
-    const [budgetPlan, setBudgetPlan] = useState<BudgetPlanId>("PLAN_16K");
+    const [simModel, setSimModel] = useState<SimulationModelId>("MODEL_STANDARD");
     const [filterTab, setFilterTab] = useState<"ALL" | "KILLER" | "VALUE" | "TRAP">("ALL");
     const [searchQuery, setSearchQuery] = useState("");
     const [unlockedDemo, setUnlockedDemo] = useState(false);
@@ -246,21 +246,23 @@ export default function ProtoRoundDashboard() {
     const isW5LGame = currentGameType === "BASKETBALL_W5L";
     const isSpecialGame = currentGameType.includes("SPECIAL") || currentGameType === "BASKETBALL_MATCH";
 
-    // ─── 14경기 패키지 게임(축구 승무패 / 농구 승5패) 전용 통합 마킹 설계 엔진 ───
+    // ─── 14경기 패키지 게임(축구 승무패 / 농구 승5패) 전용 통합 밸런스 시뮬레이션 엔진 ───
     const pool14Strategies: MatchMarkingStrategy[] = useMemo(() => {
         if (!data?.matches || !is14PoolGame) return [];
         const midCode: "무" | "5" = isW5LGame ? "5" : "무";
 
-        // 예산 플랜별 복수마킹 개수 설정
-        // PLAN_8K: 2복식 3경기 (8,000원)
-        // PLAN_16K: 2복식 4경기 (16,000원)
-        // PLAN_32K: 2복식 5경기 (32,000원)
-        // PLAN_48K: 2복식 4경기 + 3복식(지우개) 1경기 (48,000원)
+        // 시뮬레이션 모델별 경합 검토(복수 지표) 개수 설정
         const dualCountTarget =
-            budgetPlan === "PLAN_8K" ? 3 : budgetPlan === "PLAN_16K" ? 4 : budgetPlan === "PLAN_32K" ? 5 : 4;
-        const tripleCountTarget = budgetPlan === "PLAN_48K" ? 1 : 0;
+            simModel === "MODEL_CONSERVATIVE"
+                ? 3
+                : simModel === "MODEL_STANDARD"
+                ? 4
+                : simModel === "MODEL_EXTENDED"
+                ? 5
+                : 4;
+        const tripleCountTarget = simModel === "MODEL_DEFENSIVE" ? 1 : 0;
 
-        // 각 경기의 1순위, 2순위, 3순위 마킹 후보와 '단통 안정도 점수' 계산
+        // 각 경기의 1순위, 2순위, 3순위 후보와 '단독 우위 안정도 점수' 계산
         const evaluated = data.matches.map((m) => {
             const pHome = isW5LGame && m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
             const pMid = isW5LGame && m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
@@ -282,9 +284,9 @@ export default function ProtoRoundDashboard() {
             const voteAway = m.vote_away_pct || 0;
             const maxVote = Math.max(voteHome, voteAway);
             const correspAi = voteHome >= voteAway ? pHome : pAway;
-            const voteOverheat = maxVote - correspAi; // 양수면 대중 과열
+            const voteOverheat = maxVote - correspAi; // 양수면 대중 선호 과열
 
-            // 단통 안정도: 1순위 확률이 높고, 2순위와 격차가 크며, 함정 후보가 아닐수록 높음
+            // 단독 우위 안정도: 1순위 확률이 높고, 2순위와 격차가 크며, 주의 후보가 아닐수록 높음
             const gap12 = primary.prob - secondary.prob;
             const bankerScore = primary.prob * 1.2 + gap12 - (m.is_trap_candidate ? 18 : 0) - Math.max(0, voteOverheat * 0.4);
 
@@ -299,7 +301,7 @@ export default function ProtoRoundDashboard() {
             };
         });
 
-        // bankerScore가 가장 낮은 순(가장 혼전이거나 함정 위험이 큰 순)으로 정렬하여 복수마킹 배정
+        // bankerScore가 가장 낮은 순(가장 혼전이거나 이변 위험이 큰 순)으로 정렬하여 경합 검토 배정
         const sortedByRisk = [...evaluated].sort((a, b) => a.bankerScore - b.bankerScore);
         const tripleSet = new Set<number>();
         const dualSet = new Set<number>();
@@ -319,33 +321,33 @@ export default function ProtoRoundDashboard() {
             const isDual = dualSet.has(m.game_no);
 
             let role: "BANKER" | "DUAL" | "TRIPLE_TRAP" = "BANKER";
-            let roleBadge = "📌 단통(축) 고정";
+            let roleBadge = "📌 단독 우위 (1순위)";
             let activeMarks: ("승" | "무" | "5" | "패")[] = [primary.code];
             let strategyReason = "";
 
             if (isTriple) {
                 role = "TRIPLE_TRAP";
-                roleBadge = "💣 3마킹(지우개) 승부처";
+                roleBadge = "⚠️ 혼전 경보 (3방향 검토)";
                 activeMarks = ["승", midCode, "패"];
-                strategyReason = `대중 투표 쏠림 대비 AI 역배·${midCode} 위험도가 가장 높은 최대 함정 경기입니다. 3마킹(지우개)으로 이변을 완벽 방어합니다.`;
+                strategyReason = `대중 선호도 대비 AI 이변·${midCode} 지수가 가장 높은 최대 혼전 경기입니다. 3방향 전수 검토로 변수에 대비합니다.`;
             } else if (isDual) {
                 role = "DUAL";
-                roleBadge = "🛡️ 투마킹(복식) 보험";
+                roleBadge = "🛡️ 경합 주의 (1·2순위 병행)";
                 activeMarks = [primary.code, secondary.code];
-                strategyReason = `1순위 [${primary.code}](${primary.prob}%)와 2순위 [${secondary.code}](${secondary.prob}%) 격차가 좁아 [${primary.code}+${secondary.code}] 복수 마킹이 필수인 구간입니다.`;
+                strategyReason = `1순위 [${primary.code}](${primary.prob}%)와 2순위 [${secondary.code}](${secondary.prob}%) 격차가 좁아 [${primary.code}+${secondary.code}] 병행 검토가 필요한 구간입니다.`;
             } else {
                 role = "BANKER";
-                roleBadge = "📌 단통(축) 고정";
+                roleBadge = "📌 단독 우위 (1순위)";
                 activeMarks = [primary.code];
-                strategyReason = `AI 1순위 [${primary.code}](${primary.prob}%) 우위가 뚜렷하여 마킹 수를 아끼는 단통(축) 고정 경기입니다.`;
+                strategyReason = `AI 1순위 [${primary.code}](${primary.prob}%) 우위가 뚜렷하여 단독 우위(안정권)로 분류된 경기입니다.`;
             }
 
             const voteGapComment =
                 voteOverheat >= 10
-                    ? `⚠️ 대중 투표 과열 (+${voteOverheat.toFixed(0)}%p 쏠림)`
+                    ? `⚠️ 대중 선호 과열 (+${voteOverheat.toFixed(0)}%p 괴리)`
                     : voteOverheat <= -10
-                    ? `💡 대중 저평가 꿀구간 (AI 우위 +${Math.abs(voteOverheat).toFixed(0)}%p)`
-                    : `투표율·AI 확률 일치 안정권`;
+                    ? `💡 데이터 저평가 구간 (AI 우위 +${Math.abs(voteOverheat).toFixed(0)}%p)`
+                    : `선호도·AI 확률 일치 안정권`;
 
             return {
                 match: m,
@@ -359,18 +361,16 @@ export default function ProtoRoundDashboard() {
                 strategyReason,
             };
         });
-    }, [data, is14PoolGame, isW5LGame, budgetPlan]);
+    }, [data, is14PoolGame, isW5LGame, simModel]);
 
     const poolSummary = useMemo(() => {
         if (!is14PoolGame || pool14Strategies.length === 0) {
-            return { bankers: 0, duals: 0, triples: 0, totalLines: 1, totalCost: 1000 };
+            return { bankers: 0, duals: 0, triples: 0 };
         }
         const bankers = pool14Strategies.filter((s) => s.role === "BANKER").length;
         const duals = pool14Strategies.filter((s) => s.role === "DUAL").length;
         const triples = pool14Strategies.filter((s) => s.role === "TRIPLE_TRAP").length;
-        const totalLines = Math.pow(2, duals) * Math.pow(3, triples);
-        const totalCost = totalLines * 1000;
-        return { bankers, duals, triples, totalLines, totalCost };
+        return { bankers, duals, triples };
     }, [is14PoolGame, pool14Strategies]);
 
     const filteredMatches = useMemo(() => {
@@ -392,8 +392,8 @@ export default function ProtoRoundDashboard() {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center bg-[#f4f6f9]">
                 <div className="w-11 h-11 rounded-full border-4 border-[#0046b8] border-t-transparent animate-spin mb-4" />
-                <p className="text-slate-900 font-extrabold text-lg">베트맨 공식 발매 게임 및 AI 통합 마킹 리포트를 불러오는 중입니다...</p>
-                <p className="text-slate-500 text-xs mt-1">승무패 14경기 통합 마킹표 · 승5패 · 스페셜N 득점구간 · 프로토 승부식 동기화</p>
+                <p className="text-slate-900 font-extrabold text-lg">베트맨 공식 대상 경기 및 AI 통합 분석 리포트를 불러오는 중입니다...</p>
+                <p className="text-slate-500 text-xs mt-1">승무패 14경기 통합 분석표 · 승5패 · 스페셜N 득점구간 · 프로토 승부식 데이터 동기화</p>
             </div>
         );
     }
@@ -406,14 +406,14 @@ export default function ProtoRoundDashboard() {
             <div className="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#0046b8] p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-start sm:items-center gap-3">
                     <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold tracking-tight shrink-0">
-                        베트맨 공식 게임 연동
+                        공식 대상경기 데이터 연동
                     </span>
                     <div>
                         <p className="text-slate-900 font-extrabold text-sm sm:text-base">
-                            게임별 맞춤형 AI 통합 리포트 — 승무패·승5패(14경기 통합 마킹 설계표) / 스페셜N(득점구간 마킹표) / 프로토 승부식
+                            종목·회차별 맞춤형 AI 통합 리포트 — 승무패·승5패(14경기 통합 밸런스 분석표) / 스페셜N(6구간 득점 분포표) / 프로토 승부식
                         </p>
                         <p className="text-slate-500 text-xs mt-0.5">
-                            개별 경기 나열이 아닌, 각 베트맨 게임의 실제 구매·마킹 규칙(단통 축 고정 vs 복수마킹 보험 배분)에 맞춘 실전 마킹 리포트를 제공합니다.
+                            단순 개별 경기 나열이 아닌, 회차 전체의 단독 우위 구간과 박빙 경합 구간을 한눈에 파악할 수 있는 통합 통계 리포트를 제공합니다.
                         </p>
                     </div>
                 </div>
@@ -434,21 +434,21 @@ export default function ProtoRoundDashboard() {
                         <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#0046b8]" />
                             <span className="text-[#0046b8] text-xs font-extrabold tracking-wide">
-                                현재 발매 · 운영 중인 공식 게임 목록 ({catalogGames.length}개 회차)
+                                현재 운영 중인 공식 회차 목록 ({catalogGames.length}개 회차)
                             </span>
                         </div>
                         <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                            베트맨 공식 게임별 AI 통합 마킹 리포트 선택
+                            베트맨 공식 회차별 AI 통합 데이터 리포트 선택
                         </h2>
                         <p className="text-xs text-slate-500 mt-0.5">
-                            게임을 선택하면 해당 게임 방식(14경기 승무패 마킹슬립 / 농구 6구간 득점표 / 프로토 승부식)에 최적화된 통합 리포트가 즉시 표시됩니다.
+                            회차를 선택하면 해당 종목 규격(14경기 통합 승무패·승5패 / 농구 6구간 득점 분포 / 프로토 승부식)에 최적화된 통합 리포트가 즉시 표시됩니다.
                         </p>
                     </div>
 
                     {/* 게임 카테고리 필터 탭 */}
                     <div className="flex flex-wrap gap-1.5">
                         {[
-                            { id: "ALL", label: "전체 게임" },
+                            { id: "ALL", label: "전체 회차" },
                             { id: "WDL", label: "⚽ 축구토토 승무패 (14경기)" },
                             { id: "W5L", label: "🏀 농구토토 승5패 (14경기)" },
                             { id: "SPECIAL_N", label: "🏀 스페셜N (NBA 득점구간)" },
@@ -511,14 +511,9 @@ export default function ProtoRoundDashboard() {
                                     <span className="font-semibold text-slate-700">대상 {g.match_count}경기</span>
                                     <span className="text-slate-600 font-medium">{g.sale_end_display}</span>
                                 </div>
-                                {g.forward_amount && g.forward_amount > 0 ? (
-                                    <div className="mt-2 px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800">
-                                        💰 1등 이월금 {(g.forward_amount / 100000000).toFixed(2)}억 원
-                                    </div>
-                                ) : null}
                                 {isSelected && (
                                     <div className="mt-2 text-[11px] font-extrabold text-[#0046b8] flex items-center justify-between">
-                                        <span>✓ 현재 조회 중인 게임</span>
+                                        <span>✓ 현재 조회 중인 회차</span>
                                         <span>통합 리포트 열람 중 ↓</span>
                                     </div>
                                 )}
@@ -534,7 +529,7 @@ export default function ProtoRoundDashboard() {
                     <div className="absolute inset-0 bg-white/85 backdrop-blur-xs z-20 flex items-center justify-center">
                         <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-bold text-sm shadow-lg">
                             <div className="w-5 h-5 rounded-full border-2 border-[#0046b8] border-t-transparent animate-spin" />
-                            <span>선택하신 게임의 통합 AI 마킹 리포트를 생성하는 중...</span>
+                            <span>선택하신 회차의 통합 AI 데이터 리포트를 생성하는 중...</span>
                         </div>
                     </div>
                 )}
@@ -543,10 +538,10 @@ export default function ProtoRoundDashboard() {
                     <div className="space-y-2.5">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="px-2.5 py-1 rounded bg-slate-100 border border-slate-300 text-slate-800 text-xs font-extrabold">
-                                게임코드: {data.gm_id || "G011"} · 제 {data.display_round_no}회차
+                                종목코드: {data.gm_id || "G011"} · 제 {data.display_round_no}회차
                             </span>
                             <span className="px-2.5 py-1 rounded bg-blue-50 border border-blue-200 text-[#0046b8] text-xs font-bold">
-                                ✓ {is14PoolGame ? "14경기 전체 단통·복수마킹 통합 설계" : isSpecialGame ? "전 경기 6구간 득점 분포 통합 설계" : "베트맨 정식 구단 매칭 완료"}
+                                ✓ {is14PoolGame ? "14경기 전체 단독우위·경합구간 통합 분류" : isSpecialGame ? "전 경기 6구간 득점 분포 통합 시뮬레이션" : "베트맨 정식 구단 매칭 완료"}
                             </span>
                             {data.sale_end_display && (
                                 <span className="px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
@@ -558,18 +553,18 @@ export default function ProtoRoundDashboard() {
                             {data.round_title}{" "}
                             <span className="text-[#0046b8]">
                                 {is14PoolGame
-                                    ? "14경기 통합 AI 마킹 설계 리포트"
+                                    ? "14경기 통합 AI 밸런스 분석 리포트"
                                     : isSpecialGame
-                                    ? "전 경기 6구간 득점대 AI 통합 리포트"
-                                    : "AI 핵심 주력 경기 & 전력 리포트"}
+                                    ? "전 경기 6구간 득점 분포 AI 통합 리포트"
+                                    : "AI 핵심 우위 경기 & 전력 리포트"}
                             </span>
                         </h1>
                         <div className="inline-block rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2 text-xs text-slate-700 font-semibold">
-                            📌 <strong>게임 핵심 공략법:</strong>{" "}
+                            📌 <strong>회차 통합 분석 안내:</strong>{" "}
                             {is14PoolGame
-                                ? "14경기를 한 장의 슬립에 모두 마킹해야 하므로, 확실한 경기는 [단통(축)]으로 아끼고 박빙·대중쏠림 함정 경기에 [복수마킹(투마킹·지우개)]을 배분하는 것이 당첨의 핵심입니다."
+                                ? "14경기 전체의 전력 격차와 선호도 분포를 종합 평가하여, 1순위 확률이 뚜렷한 [단독 우위 경기]와 박빙 변수가 존재하는 [경합·복수 검토 경기]를 한 판의 표로 분류해 제공합니다."
                                 : isSpecialGame
-                                ? "대상 2~3경기의 홈·원정 득점 구간(6구간)을 동시에 맞혀야 하므로, 각 팀의 1순위 주력 구간과 2순위 받침 구간을 조합해 마킹 범위를 좁혀야 합니다."
+                                ? "대상 2~3경기의 홈·원정 예상 득점 구간(6구간) 분포를 시뮬레이션하여 각 팀의 1순위 유력 구간과 2순위 보조 구간을 한눈에 제시합니다."
                                 : data.rule_summary}
                         </div>
                     </div>
@@ -581,11 +576,11 @@ export default function ProtoRoundDashboard() {
                                 href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
                                 className="px-4 py-3 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-extrabold text-xs sm:text-sm text-center shadow-xs transition"
                             >
-                                🔓 이번 회차 통합 마킹 리포트 열람권 (1,500원)
+                                🔓 이번 회차 통합 데이터 리포트 열람권 (1,500원)
                             </Link>
                         ) : (
                             <div className="px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs text-center">
-                                ✅ 이번 회차 통합 마킹 리포트 전체 열람 중
+                                ✅ 이번 회차 통합 데이터 리포트 전체 열람 중
                             </div>
                         )}
                         <div className="grid grid-cols-2 gap-2">
@@ -610,46 +605,46 @@ export default function ProtoRoundDashboard() {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════════════════
-                MODE A: 축구토토 승무패(G011) / 농구토토 승5패(G027) — 14경기 통합 마킹 설계 리포트
+                MODE A: 축구토토 승무패(G011) / 농구토토 승5패(G027) — 14경기 통합 밸런스 리포트
                ═══════════════════════════════════════════════════════════════════════════ */}
             {is14PoolGame && (
                 <>
-                    {/* A-1. 예산별 마킹 플랜 선택 & 단통/복수마킹 배분 요약 */}
+                    {/* A-1. 시뮬레이션 모델 선택 & 단독우위/경합구간 자동 분류 요약 */}
                     <section className="rounded-xl bg-white border-2 border-[#0046b8] p-5 sm:p-6 shadow-xs space-y-5">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                             <div>
                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 text-[#0046b8] border border-blue-200 text-xs font-extrabold">
-                                    📋 STEP 1 · 예산별 14경기 단통(축) &amp; 복수마킹 자동 배분 설계
+                                    📋 STEP 1 · 14경기 단독 우위 &amp; 경합 주의 구간 자동 분류 모델
                                 </span>
                                 <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1.5">
-                                    {data.round_title} — 한눈에 보는 14경기 마킹 배분 전략
+                                    {data.round_title} — 한눈에 보는 14경기 전력 밸런스 분류표
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    구매 예산 플랜을 선택하면 AI가 14경기 전체의 승률 격차와 베트맨 대중 투표 쏠림을 계산해 <strong>단통(축) 경기</strong>와 <strong>복수마킹(보험) 경기</strong>를 자동 배분합니다.
+                                    분석 모델을 선택하면 AI가 14경기 전체의 기대 승률 격차와 대중 선호도 괴리를 계산해 <strong>단독 우위 경기(1순위 고정)</strong>와 <strong>경합 주의 경기(1·2순위 병행 검토)</strong>를 자동 분류합니다.
                                 </p>
                             </div>
 
-                            {/* 예산 플랜 선택 버튼 */}
+                            {/* 시뮬레이션 모델 선택 버튼 (베팅 금액 표기 완전 제거, 순수 분석 모델명 사용) */}
                             <div className="flex flex-wrap gap-2">
                                 {(
                                     [
-                                        { id: "PLAN_8K", title: "실속형 (8,000원)", sub: "단통 11 + 복수 3경기 (8조합)" },
-                                        { id: "PLAN_16K", title: "표준형 (16,000원)", sub: "단통 10 + 복수 4경기 (16조합)" },
-                                        { id: "PLAN_32K", title: "주력형 (32,000원)", sub: "단통 9 + 복수 5경기 (32조합)" },
-                                        { id: "PLAN_48K", title: "1등방어형 (48,000원)", sub: "단통 9 + 복수 4 + 지우개 1" },
+                                        { id: "MODEL_CONSERVATIVE", title: "안정형 분석 모델", sub: "단독우위 11 + 경합검토 3경기" },
+                                        { id: "MODEL_STANDARD", title: "표준형 분석 모델", sub: "단독우위 10 + 경합검토 4경기" },
+                                        { id: "MODEL_EXTENDED", title: "정밀형 분석 모델", sub: "단독우위 9 + 경합검토 5경기" },
+                                        { id: "MODEL_DEFENSIVE", title: "심층방어형 모델", sub: "단독우위 9 + 경합 4 + 혼전 1" },
                                     ] as const
                                 ).map((p) => (
                                     <button
                                         key={p.id}
-                                        onClick={() => setBudgetPlan(p.id)}
+                                        onClick={() => setSimModel(p.id)}
                                         className={`px-3.5 py-2 rounded-xl text-left border transition cursor-pointer ${
-                                            budgetPlan === p.id
+                                            simModel === p.id
                                                 ? "bg-[#0046b8] text-white border-[#0046b8] shadow-sm"
                                                 : "bg-slate-50 text-slate-800 border-slate-300 hover:bg-slate-100"
                                         }`}
                                     >
                                         <div className="text-xs font-black">{p.title}</div>
-                                        <div className={`text-[10px] mt-0.5 ${budgetPlan === p.id ? "text-blue-100" : "text-slate-500"}`}>
+                                        <div className={`text-[10px] mt-0.5 ${simModel === p.id ? "text-blue-100" : "text-slate-500"}`}>
                                             {p.sub}
                                         </div>
                                     </button>
@@ -657,18 +652,18 @@ export default function ProtoRoundDashboard() {
                             </div>
                         </div>
 
-                        {/* 3대 분류 요약 박스 (단통 축 / 투마킹 보험 / 3마킹 함정방어) */}
+                        {/* 3대 분류 요약 박스 */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* 1) 단통 축 경기 */}
+                            {/* 1) 단독 우위 경기 */}
                             <div className="rounded-xl bg-blue-50/50 border border-blue-200 p-4 space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="px-2.5 py-1 rounded bg-[#0046b8] text-white text-xs font-extrabold">
-                                        📌 단통(축) 고정 추천 ({poolSummary.bankers}경기)
+                                        📌 단독 우위 구간 ({poolSummary.bankers}경기)
                                     </span>
-                                    <span className="text-xs font-bold text-[#0046b8]">마킹 비용 절감 구간</span>
+                                    <span className="text-xs font-bold text-[#0046b8]">1순위 확률 우세</span>
                                 </div>
                                 <p className="text-xs text-slate-600">
-                                    AI 1순위 확률 우위가 명확하여 <strong>단독 마킹(1개 선택)</strong>으로 고정하는 핵심 축 경기입니다.
+                                    AI 1순위 기대 확률 우위가 명확하여 <strong>단일 방향(1순위)</strong> 신뢰도가 가장 높은 핵심 경기입니다.
                                 </p>
                                 <div className="flex flex-wrap gap-1.5 pt-1">
                                     {pool14Strategies
@@ -684,16 +679,16 @@ export default function ProtoRoundDashboard() {
                                 </div>
                             </div>
 
-                            {/* 2) 투마킹(복수) 보험 경기 */}
+                            {/* 2) 경합 주의 (1·2순위 복수 검토) 경기 */}
                             <div className="rounded-xl bg-amber-50/60 border border-amber-200 p-4 space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="px-2.5 py-1 rounded bg-amber-500 text-white text-xs font-extrabold">
-                                        🛡️ 복수마킹(투마킹) 보험 ({poolSummary.duals}경기)
+                                        🛡️ 경합 주의 구간 ({poolSummary.duals}경기)
                                     </span>
-                                    <span className="text-xs font-bold text-amber-800">무승부·접전 방어 구간</span>
+                                    <span className="text-xs font-bold text-amber-800">1·2순위 병행 검토</span>
                                 </div>
                                 <p className="text-xs text-slate-600">
-                                    전력 차가 좁거나 {isW5LGame ? "5점차 이내 접전(5)" : "무승부"} 가능성이 높아 <strong>2개 복수 마킹</strong>으로 등위 이탈을 막는 경기입니다.
+                                    전력 차가 좁거나 {isW5LGame ? "5점차 이내 접전(5)" : "무승부"} 가능성이 높아 <strong>1·2순위 복수 지표 검토</strong>가 권장되는 경기입니다.
                                 </p>
                                 <div className="flex flex-wrap gap-1.5 pt-1">
                                     {pool14Strategies
@@ -709,16 +704,16 @@ export default function ProtoRoundDashboard() {
                                 </div>
                             </div>
 
-                            {/* 3) 대중 쏠림 함정 & 지우개 승부처 */}
+                            {/* 3) 선호도 쏠림 & 이변 주의 경보 */}
                             <div className="rounded-xl bg-rose-50/60 border border-rose-200 p-4 space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="px-2.5 py-1 rounded bg-rose-600 text-white text-xs font-extrabold">
-                                        💣 대중 쏠림 함정 주의보 ({data.section_c_traps.length}경기)
+                                        ⚠️ 이변 · 혼전 주의보 ({data.section_c_traps.length}경기)
                                     </span>
-                                    <span className="text-xs font-bold text-rose-700">고배당·1등 당첨 승부처</span>
+                                    <span className="text-xs font-bold text-rose-700">선호도·AI 데이터 괴리</span>
                                 </div>
                                 <p className="text-xs text-slate-600">
-                                    베트맨 실투표율은 과열되었으나 AI 승률은 낮아 <strong>이변 발생 시 당첨금이 급등하는 함정 구간</strong>입니다.
+                                    대중 투표 선호도는 한쪽으로 쏠렸으나 AI 기대 승률은 낮아 <strong>이변 및 접전 변수</strong>가 가장 큰 구간입니다.
                                 </p>
                                 <div className="space-y-1 pt-1">
                                     {data.section_c_traps.slice(0, 3).map((tm) => (
@@ -730,7 +725,7 @@ export default function ProtoRoundDashboard() {
                                                 {tm.game_no}번 {tm.betman_home} vs {tm.betman_away}
                                             </span>
                                             <span className="text-[11px] font-bold text-rose-700">
-                                                이변위험 {tm.upset_or_draw_prob}%
+                                                접전·변수 지수 {tm.upset_or_draw_prob}%
                                             </span>
                                         </div>
                                     ))}
@@ -739,23 +734,24 @@ export default function ProtoRoundDashboard() {
                         </div>
                     </section>
 
-                    {/* A-2. 14경기 전체 실전 OMR 마킹 슬립 & 통합 분석표 (개별 팝업 없이 한 판에 모든 정보 표시) */}
+                    {/* A-2. 14경기 전체 통합 시뮬레이션 지표 표 (개별 팝업 없이 한 판에 모든 정보 표시) */}
                     <section className="rounded-xl bg-white border border-slate-300 overflow-hidden shadow-xs">
                         <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="px-2.5 py-0.5 rounded bg-[#0046b8] text-white text-xs font-extrabold">
-                                        STEP 2 · 실전 마킹 슬립
+                                        STEP 2 · 14경기 통합 분석표
                                     </span>
                                     <span className="text-xs font-bold text-slate-600">
-                                        총 {poolSummary.totalLines}조합 ({poolSummary.totalCost.toLocaleString()}원 기준)
+                                        단독 우위 {poolSummary.bankers}경기 · 경합 주의 {poolSummary.duals}경기
+                                        {poolSummary.triples > 0 ? ` · 혼전 경보 ${poolSummary.triples}경기` : ""}
                                     </span>
                                 </div>
                                 <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                                    📝 {data.round_title} — 1번~14번 통합 OMR 마킹표 &amp; 경기별 AI 코멘트
+                                    📊 {data.round_title} — 1번~14번 통합 AI 예측 지표 &amp; 전술 코멘트
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    파란색(<strong className="text-[#0046b8]">● 주력 마킹</strong>)과 주황색(<strong className="text-amber-600">● 복수 보험 마킹</strong>)으로 표시된 마킹란을 그대로 참고하여 14경기 전체 밸런스를 잡으실 수 있습니다.
+                                    파란색(<strong className="text-[#0046b8]">● 1순위 주력 지표</strong>)과 주황색(<strong className="text-amber-600">● 2순위 경합 보조 지표</strong>)으로 표시된 14경기 전체 밸런스를 한눈에 확인하실 수 있습니다.
                                 </p>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
@@ -763,7 +759,7 @@ export default function ProtoRoundDashboard() {
                                     href={`/ko/store/print-report/${data.game_key || data.round_id}`}
                                     className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold transition shadow-xs"
                                 >
-                                    🖨️ 이 14경기 마킹표 A4 출력하기
+                                    🖨️ 이 14경기 통합표 A4 출력하기
                                 </Link>
                             </div>
                         </div>
@@ -776,13 +772,13 @@ export default function ProtoRoundDashboard() {
                                         <th className="py-3 px-3 w-36 border-r border-slate-700">대회 / 경기일시</th>
                                         <th className="py-3 px-3 w-64 border-r border-slate-700">홈팀 vs 원정팀</th>
                                         <th className="py-3 px-3 w-60 border-r border-slate-700 text-center">
-                                            AI 확률 vs 베트맨 투표율 비교
+                                            AI 확률 vs 투표 선호도 비교
                                         </th>
-                                        <th className="py-3 px-3 w-36 border-r border-slate-700 text-center">전략 분류</th>
+                                        <th className="py-3 px-3 w-36 border-r border-slate-700 text-center">구간 분류</th>
                                         <th className="py-3 px-3 w-44 border-r border-slate-700 text-center bg-[#003996]">
-                                            실전 OMR 마킹란 ({isW5LGame ? "승 / 5 / 패" : "승 / 무 / 패"})
+                                            AI 시뮬레이션 지표 ({isW5LGame ? "승 / 5 / 패" : "승 / 무 / 패"})
                                         </th>
-                                        <th className="py-3 px-3">AI 통합 마킹 근거 &amp; 전술 핵심</th>
+                                        <th className="py-3 px-3">AI 통합 분석 근거 &amp; 전술 핵심</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 text-xs">
@@ -793,7 +789,6 @@ export default function ProtoRoundDashboard() {
                                         const pMid = isW5LGame && m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
                                         const pAway = isW5LGame && m.w5l_analysis ? m.w5l_analysis.lose_prob : m.ai_away_prob;
 
-                                        // 비유료 유저의 경우 상위 핵심 3경기의 마킹란만 자물쇠 처리 (나머지 11경기는 전면 공개하여 효용 체감)
                                         const isLockedRow = !isPaidUser && idx >= 2 && idx <= 4;
 
                                         return (
@@ -834,7 +829,7 @@ export default function ProtoRoundDashboard() {
                                                     </div>
                                                 </td>
 
-                                                {/* 4. AI 확률 vs 베트맨 투표율 */}
+                                                {/* 4. AI 확률 vs 투표 선호도 */}
                                                 <td className="py-3 px-3 border-r border-slate-200">
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between text-[11px] font-bold">
@@ -851,7 +846,7 @@ export default function ProtoRoundDashboard() {
                                                         </div>
                                                         {m.vote_total && m.vote_total > 0 ? (
                                                             <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
-                                                                <span>투표율:</span>
+                                                                <span>선호비율:</span>
                                                                 <span>
                                                                     승 {m.vote_home_pct}% · {midLabel} {m.vote_mid_pct}% · 패 {m.vote_away_pct}%
                                                                 </span>
@@ -860,7 +855,7 @@ export default function ProtoRoundDashboard() {
                                                     </div>
                                                 </td>
 
-                                                {/* 5. 전략 분류 배지 */}
+                                                {/* 5. 구간 분류 배지 */}
                                                 <td className="py-3 px-3 border-r border-slate-200 text-center whitespace-nowrap">
                                                     <span
                                                         className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-extrabold border ${
@@ -878,14 +873,14 @@ export default function ProtoRoundDashboard() {
                                                     </div>
                                                 </td>
 
-                                                {/* 6. 실전 OMR 마킹란 ([승] [무/5] [패]) */}
+                                                {/* 6. AI 시뮬레이션 지표 ([승] [무/5] [패]) */}
                                                 <td className="py-3 px-3 border-r border-slate-200 text-center bg-blue-50/20">
                                                     {isLockedRow ? (
                                                         <Link
                                                             href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
                                                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px] hover:bg-amber-100"
                                                         >
-                                                            🔒 승부처 마킹 열기
+                                                            🔒 핵심지표 열기
                                                         </Link>
                                                     ) : (
                                                         <div className="inline-flex items-center gap-1.5">
@@ -911,7 +906,7 @@ export default function ProtoRoundDashboard() {
                                                     )}
                                                 </td>
 
-                                                {/* 7. AI 통합 마킹 근거 (팝업 없이 바로 한눈에 열람) */}
+                                                {/* 7. AI 통합 분석 근거 */}
                                                 <td className="py-3 px-3">
                                                     <p className="text-xs font-bold text-slate-800 leading-snug">
                                                         {item.strategyReason}
@@ -932,20 +927,20 @@ export default function ProtoRoundDashboard() {
 
             {/* ═══════════════════════════════════════════════════════════════════════════
                 MODE B: 농구토토 스페셜N 더블/트리플(G055, G056) · 스페셜(G025, G005) · 매치(G015)
-                — 팝업 없이 전 경기(1~3경기) 홈·원정 6구간 득점 마킹표를 한 화면에 통합 제공
+                — 팝업 없이 전 경기(1~3경기) 홈·원정 6구간 득점 분포표를 한 화면에 통합 제공
                ═══════════════════════════════════════════════════════════════════════════ */}
             {isSpecialGame && (
                 <section className="rounded-xl bg-white border-2 border-[#0046b8] p-5 sm:p-6 shadow-xs space-y-5">
                     <div className="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 text-[#0046b8] border border-blue-200 text-xs font-extrabold">
-                                🏀 {data.game_name} 통합 득점구간 마킹 설계표
+                                🏀 {data.game_name} 통합 득점구간 시뮬레이션 표
                             </span>
                             <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                                {data.round_title} — 대상 {data.matches.length}경기 홈·원정 6구간 실전 마킹 리포트
+                                {data.round_title} — 대상 {data.matches.length}경기 홈·원정 6구간 득점 확률 리포트
                             </h2>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                각 경기의 홈팀·원정팀 6개 득점 구간 중 <strong className="text-[#0046b8]">★1순위 주력 구간</strong>과 <strong className="text-amber-600">☆2순위 복수(받침) 구간</strong>을 한 화면에서 바로 확인하세요.
+                                각 경기의 홈팀·원정팀 6개 득점 구간 중 <strong className="text-[#0046b8]">★1순위 유력 구간</strong>과 <strong className="text-amber-600">☆2순위 보조 구간</strong>을 한 화면에서 바로 확인하세요.
                             </p>
                         </div>
                     </div>
@@ -963,7 +958,7 @@ export default function ProtoRoundDashboard() {
                                     <div className="bg-[#1e293b] text-white px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                                         <div className="flex items-center gap-2.5">
                                             <span className="px-2.5 py-1 rounded bg-[#0046b8] text-white text-xs font-black">
-                                                {m.game_no}경기의 득점구간 설계
+                                                {m.game_no}경기 득점구간 분석
                                             </span>
                                             <span className="text-sm sm:text-base font-black">
                                                 홈 {m.home_ko}({m.betman_home}) vs 원정 {m.away_ko}({m.betman_away})
@@ -974,12 +969,12 @@ export default function ProtoRoundDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* 홈팀 / 원정팀 6구간 OMR 마킹 테이블 */}
+                                    {/* 홈팀 / 원정팀 6구간 테이블 */}
                                     <div className="p-4 space-y-4">
                                         {currentGameType === "BASKETBALL_MATCH" && (
                                             <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
                                                 <span className="font-extrabold text-amber-900">
-                                                    ⏱️ 전반(1·2쿼터 합산) 유력 득점구간 추천:
+                                                    ⏱️ 전반(1·2쿼터 합산) 유력 득점구간 시뮬레이션:
                                                 </span>
                                                 <span className="font-black text-slate-900">
                                                     홈({m.betman_home}) 전반 예상 {sb.half_expected_home_pts}점 →{" "}
@@ -1030,7 +1025,7 @@ export default function ProtoRoundDashboard() {
                                                     })}
                                                 </div>
                                                 <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-                                                    권장 복수 마킹:{" "}
+                                                    유력 구간 분포:{" "}
                                                     <strong className="text-[#0046b8]">1순위 [{sb.home_top1_bracket}]</strong> +{" "}
                                                     <strong className="text-amber-700">2순위 [{sb.home_top2_bracket}]</strong> (합산 기대확률{" "}
                                                     {(sb.home_top1_prob + sb.home_top2_prob).toFixed(1)}%)
@@ -1077,7 +1072,7 @@ export default function ProtoRoundDashboard() {
                                                     })}
                                                 </div>
                                                 <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-                                                    권장 복수 마킹:{" "}
+                                                    유력 구간 분포:{" "}
                                                     <strong className="text-[#0046b8]">1순위 [{sb.away_top1_bracket}]</strong> +{" "}
                                                     <strong className="text-amber-700">2순위 [{sb.away_top2_bracket}]</strong> (합산 기대확률{" "}
                                                     {(sb.away_top1_prob + sb.away_top2_prob).toFixed(1)}%)
@@ -1093,7 +1088,7 @@ export default function ProtoRoundDashboard() {
             )}
 
             {/* ═══════════════════════════════════════════════════════════════════════════
-                MODE C: 프로토 승부식(G101) — 다수 대상 경기 중 핵심 추천 경기 선별 & 전체 경기 일람표
+                MODE C: 프로토 승부식(G101) — 다수 대상 경기 중 핵심 우위 경기 선별 & 전체 경기 일람표
                ═══════════════════════════════════════════════════════════════════════════ */}
             {!is14PoolGame && !isSpecialGame && (
                 <>
@@ -1103,10 +1098,10 @@ export default function ProtoRoundDashboard() {
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <div>
                                     <span className="text-[11px] font-extrabold text-[#0046b8]">
-                                        프로토 승부식 선택형 주력 경기 선별
+                                        프로토 승부식 상위 신뢰도 경기 선별
                                     </span>
                                     <h2 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                                        🎯 [{data.round_title}] AI 확신도 85% 이상 핵심 주력 경기
+                                        🎯 [{data.round_title}] AI 신뢰도 85% 이상 핵심 우위 경기
                                     </h2>
                                 </div>
                                 <span className="px-2.5 py-1 rounded bg-blue-50 text-[#0046b8] text-xs font-bold border border-blue-200">
@@ -1148,10 +1143,10 @@ export default function ProtoRoundDashboard() {
                             ) : (
                                 <div className="rounded-lg bg-slate-50 border border-slate-200 p-5 text-center space-y-3">
                                     <p className="text-slate-900 font-extrabold text-sm">
-                                        🔒 [{data.round_title}] 전체 {data.total_matches}경기 중 AI 엄선 주력 경기 ({data.killer_picks_count}경기)
+                                        🔒 [{data.round_title}] 전체 {data.total_matches}경기 중 AI 핵심 우위 경기 ({data.killer_picks_count}경기)
                                     </p>
                                     <p className="text-slate-500 text-xs">
-                                        수십 개 대상 경기 중 가장 승리 기대치가 높은 핵심 경기만 골라 확인하세요.
+                                        수십 개 대상 경기 중 기대 승률 우위가 가장 뚜렷한 핵심 경기 리포트를 확인하세요.
                                     </p>
                                     <div className="flex flex-wrap justify-center gap-2 pt-1">
                                         <Link
@@ -1169,14 +1164,14 @@ export default function ProtoRoundDashboard() {
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <div>
                                     <span className="text-[11px] font-extrabold text-rose-600">
-                                        피해야 할 고위험 경기 경보 (무료 공개)
+                                        변수가 큰 경합 경기 경보 (무료 공개)
                                     </span>
                                     <h2 className="text-base sm:text-lg font-black text-slate-900 mt-0.5">
                                         ⚠️ [{data.round_title}] 이변 · 무승부 주의보 경기
                                     </h2>
                                 </div>
                                 <span className="px-2.5 py-1 rounded bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">
-                                    제외/보험 권장
+                                    복수검토 권장
                                 </span>
                             </div>
 
@@ -1206,10 +1201,10 @@ export default function ProtoRoundDashboard() {
                         <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                                    📋 {data.round_title} 대상 경기 일정 및 AI 선별 분석표 ({filteredMatches.length}경기)
+                                    📋 {data.round_title} 대상 경기 일정 및 AI 전력 분석표 ({filteredMatches.length}경기)
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    원하는 경기만 선별하는 프로토 승부식 특성에 맞춰 각 경기의 AI 추천 방향과 전술 요약을 한눈에 제공합니다.
+                                    각 대상 경기의 AI 기대 승률과 전술 요약을 한눈에 제공합니다.
                                 </p>
                             </div>
 
@@ -1217,9 +1212,9 @@ export default function ProtoRoundDashboard() {
                                 {(
                                     [
                                         { id: "ALL", label: `전체 경기 (${data.matches.length})` },
-                                        { id: "KILLER", label: `🎯 핵심 주력 (${data.killer_picks_count})` },
+                                        { id: "KILLER", label: `🎯 핵심 우위 (${data.killer_picks_count})` },
                                         { id: "VALUE", label: `📊 데이터 우위 Top 5` },
-                                        { id: "TRAP", label: `⚠️ 함정 주의보` },
+                                        { id: "TRAP", label: `⚠️ 이변 주의보` },
                                     ] as const
                                 ).map((tab) => (
                                     <button
@@ -1252,8 +1247,8 @@ export default function ProtoRoundDashboard() {
                                         <th className="py-3 px-3 w-40 border-r border-slate-700">대회명 / 일시</th>
                                         <th className="py-3 px-3 w-64 border-r border-slate-700">대상 경기</th>
                                         <th className="py-3 px-3 w-60 text-center border-r border-slate-700">AI 기대 확률</th>
-                                        <th className="py-3 px-3 text-center w-36 border-r border-slate-700">AI 선별 결론</th>
-                                        <th className="py-3 px-3">전술 요약 및 선별 사유</th>
+                                        <th className="py-3 px-3 text-center w-36 border-r border-slate-700">AI 분석 결론</th>
+                                        <th className="py-3 px-3">전술 요약 및 분석 사유</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 text-xs">
@@ -1278,7 +1273,7 @@ export default function ProtoRoundDashboard() {
                                                         )}
                                                         {m.is_killer_pick && (
                                                             <span className="px-1.5 py-0.5 rounded bg-blue-100 text-[#0046b8] text-[10px] font-extrabold">
-                                                                주력
+                                                                핵심
                                                             </span>
                                                         )}
                                                         {m.is_trap_candidate && (
@@ -1320,7 +1315,7 @@ export default function ProtoRoundDashboard() {
                                                             href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
                                                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-xs"
                                                         >
-                                                            🔒 주력픽 열기
+                                                            🔒 핵심지표 열기
                                                         </Link>
                                                     ) : (
                                                         <div>

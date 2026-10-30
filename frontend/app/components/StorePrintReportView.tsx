@@ -393,7 +393,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                         <h3 className="text-xs font-black text-slate-900 mt-0.5">{combo2.title}</h3>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-xs font-black text-blue-800">기대적중 {combo2.hit_probability_pct}%</div>
+                                        <div className="text-xs font-black text-blue-800">기대확률 {combo2.hit_probability_pct}%</div>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -425,7 +425,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                         <h3 className="text-xs font-black text-slate-900 mt-0.5">{combo3.title}</h3>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-xs font-black text-emerald-700">기대적중 {combo3.hit_probability_pct}%</div>
+                                        <div className="text-xs font-black text-emerald-700">기대확률 {combo3.hit_probability_pct}%</div>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
@@ -513,7 +513,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                 <span>이변·박빙 주의 경보 (대중 쏠림 대비 무승부·접전 위험이 높은 경기)</span>
                             </h2>
                             <span className="text-[10px] font-bold text-rose-700">
-                                ⚠️ 복수 마킹 또는 주의 권장
+                                ⚠️ 1·2순위 병행 검토 권장
                             </span>
                         </div>
 
@@ -541,14 +541,14 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </div>
                     </section>
 
-                    {/* 5. 이번 회차 대상 경기 통합 마킹 설계표 (최대 14경기 A4 1페이지에 완전 수록!) */}
+                    {/* 5. 이번 회차 대상 경기 통합 밸런스 분석표 (최대 14경기 A4 1페이지에 완전 수록!) */}
                     <section className="mb-3">
                         <div className="flex items-center justify-between mb-1">
                             <h2 className="text-xs font-black text-slate-900">
-                                📊 [{report.round_title}] 14경기 통합 마킹 설계표 (단통 축 고정 vs 복수마킹 보험 배분)
+                                📊 [{report.round_title}] 14경기 통합 AI 밸런스 분석표 (단독 우위 vs 경합 검토 구간)
                             </h2>
                             <span className="text-[10px] font-bold text-[#0046b8]">
-                                📌단통(축): 1개 마킹 고정 &nbsp;|&nbsp; 🛡️복수(보험): 1·2순위 동시 마킹 권장
+                                📌단독우위: 1순위 우세 &nbsp;|&nbsp; 🛡️경합주의: 1·2순위 병행 검토
                             </span>
                         </div>
                         <table className="w-full border-collapse border border-slate-300 text-[10px]">
@@ -558,13 +558,13 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">리그</th>
                                     <th className="border border-slate-300 py-0.5 px-1.5 text-left">베트맨 매치업 (정식 구단명)</th>
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">AI 예측 확률 / 예상 구간</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">실전 마킹 추천 (단통/복수)</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">마킹 구분</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 시뮬레이션 지표</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">구간 분류</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {report.matches.slice(0, 14).map((m) => {
-                                    // 1순위/2순위 마킹 계산
+                                    // 1순위/2순위 지표 계산
                                     const midCode = m.w5l_analysis ? "5" : "무";
                                     const pH = m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
                                     const pM = m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
@@ -579,8 +579,8 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                     const markDisplay = m.special_brackets
                                         ? `홈[${m.special_brackets.home_top1_bracket}]·원[${m.special_brackets.away_top1_bracket}]`
                                         : needDual
-                                        ? `[${sorted[0].c} + ${sorted[1].c}] 복수마킹`
-                                        : `[${sorted[0].c}] 단통 고정`;
+                                        ? `[${sorted[0].c} + ${sorted[1].c}] 병행검토`
+                                        : `[${sorted[0].c}] 단독우위`;
 
                                     return (
                                         <tr key={m.game_no} className={m.is_killer_pick ? "bg-blue-50/50 font-semibold" : needDual ? "bg-amber-50/40" : ""}>
@@ -602,11 +602,11 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                             </td>
                                             <td className="border border-slate-300 py-0.5 px-1 text-center">
                                                 {m.is_trap_candidate ? (
-                                                    <span className="text-[9.5px] font-black text-rose-700 bg-rose-100 px-1 rounded">💣함정·복수필수</span>
+                                                    <span className="text-[9.5px] font-black text-rose-700 bg-rose-100 px-1 rounded">⚠️혼전주의</span>
                                                 ) : needDual ? (
-                                                    <span className="text-[9.5px] font-black text-amber-800 bg-amber-100 px-1 rounded">🛡️투마킹 보험</span>
+                                                    <span className="text-[9.5px] font-black text-amber-800 bg-amber-100 px-1 rounded">🛡️경합검토</span>
                                                 ) : (
-                                                    <span className="text-[9.5px] font-black text-[#0046b8] bg-blue-100 px-1 rounded">📌단통(축) {m.ai_confidence}%</span>
+                                                    <span className="text-[9.5px] font-black text-[#0046b8] bg-blue-100 px-1 rounded">📌단독우위 {m.ai_confidence}%</span>
                                                 )}
                                             </td>
                                         </tr>
