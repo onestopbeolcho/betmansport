@@ -541,14 +541,14 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </div>
                     </section>
 
-                    {/* 5. 이번 회차 대상 경기 요약표 (최대 14경기 A4 1페이지에 완전 수록!) */}
+                    {/* 5. 이번 회차 대상 경기 통합 마킹 설계표 (최대 14경기 A4 1페이지에 완전 수록!) */}
                     <section className="mb-3">
                         <div className="flex items-center justify-between mb-1">
                             <h2 className="text-xs font-black text-slate-900">
-                                📊 [{report.round_title}] 공식 대상 경기 AI 분석 요약표 (경기번호순)
+                                📊 [{report.round_title}] 14경기 통합 마킹 설계표 (단통 축 고정 vs 복수마킹 보험 배분)
                             </h2>
-                            <span className="text-[10px] text-slate-500">
-                                ★표시: AI 확신도 85% 이상 핵심 우위 경기
+                            <span className="text-[10px] font-bold text-[#0046b8]">
+                                📌단통(축): 1개 마킹 고정 &nbsp;|&nbsp; 🛡️복수(보험): 1·2순위 동시 마킹 권장
                             </span>
                         </div>
                         <table className="w-full border-collapse border border-slate-300 text-[10px]">
@@ -558,40 +558,60 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">리그</th>
                                     <th className="border border-slate-300 py-0.5 px-1.5 text-left">베트맨 매치업 (정식 구단명)</th>
                                     <th className="border border-slate-300 py-0.5 px-1 text-center">AI 예측 확률 / 예상 구간</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">AI 1순위 결론</th>
-                                    <th className="border border-slate-300 py-0.5 px-1 text-center">등급</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">실전 마킹 추천 (단통/복수)</th>
+                                    <th className="border border-slate-300 py-0.5 px-1 text-center">마킹 구분</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {report.matches.slice(0, 14).map((m) => (
-                                    <tr key={m.game_no} className={m.is_killer_pick ? "bg-amber-50/70 font-semibold" : ""}>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center font-black">{m.game_no_label}</td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center text-slate-600">{m.league.slice(0, 9)}</td>
-                                        <td className="border border-slate-300 py-0.5 px-1.5 font-bold text-slate-900">
-                                            {m.betman_home} vs {m.betman_away}{" "}
-                                            <span className="text-[9px] text-slate-500 font-normal">({m.home_ko} vs {m.away_ko})</span>
-                                        </td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center">
-                                            {m.special_brackets
-                                                ? `홈 ${m.special_brackets.home_top1_bracket} / 원정 ${m.special_brackets.away_top1_bracket}`
-                                                : m.w5l_analysis
-                                                ? `승 ${m.w5l_analysis.win_prob}% · 5(${m.w5l_analysis.close5_prob}%) · 패 ${m.w5l_analysis.lose_prob}%`
-                                                : `홈 ${m.ai_home_prob}% · 무 ${m.ai_draw_prob}% · 원정 ${m.ai_away_prob}%`}
-                                        </td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center font-black text-blue-800">
-                                            {m.ai_pick_label}
-                                        </td>
-                                        <td className="border border-slate-300 py-0.5 px-1 text-center">
-                                            {m.is_killer_pick ? (
-                                                <span className="text-[9.5px] font-black text-amber-800 bg-amber-200 px-1 rounded">★핵심 {m.ai_confidence}%</span>
-                                            ) : m.is_trap_candidate ? (
-                                                <span className="text-[9.5px] font-bold text-rose-700">⚠️이변주의</span>
-                                            ) : (
-                                                <span className="text-[9.5px] text-slate-500">일반분석</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
+                                {report.matches.slice(0, 14).map((m) => {
+                                    // 1순위/2순위 마킹 계산
+                                    const midCode = m.w5l_analysis ? "5" : "무";
+                                    const pH = m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
+                                    const pM = m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
+                                    const pA = m.w5l_analysis ? m.w5l_analysis.lose_prob : m.ai_away_prob;
+                                    const sorted = [
+                                        { c: "승", p: pH },
+                                        { c: midCode, p: pM },
+                                        { c: "패", p: pA },
+                                    ].sort((a, b) => b.p - a.p);
+                                    const gap = sorted[0].p - sorted[1].p;
+                                    const needDual = m.is_trap_candidate || gap < 18;
+                                    const markDisplay = m.special_brackets
+                                        ? `홈[${m.special_brackets.home_top1_bracket}]·원[${m.special_brackets.away_top1_bracket}]`
+                                        : needDual
+                                        ? `[${sorted[0].c} + ${sorted[1].c}] 복수마킹`
+                                        : `[${sorted[0].c}] 단통 고정`;
+
+                                    return (
+                                        <tr key={m.game_no} className={m.is_killer_pick ? "bg-blue-50/50 font-semibold" : needDual ? "bg-amber-50/40" : ""}>
+                                            <td className="border border-slate-300 py-0.5 px-1 text-center font-black">{m.game_no_label}</td>
+                                            <td className="border border-slate-300 py-0.5 px-1 text-center text-slate-600">{m.league.slice(0, 9)}</td>
+                                            <td className="border border-slate-300 py-0.5 px-1.5 font-bold text-slate-900">
+                                                {m.betman_home} vs {m.betman_away}{" "}
+                                                <span className="text-[9px] text-slate-500 font-normal">({m.home_ko} vs {m.away_ko})</span>
+                                            </td>
+                                            <td className="border border-slate-300 py-0.5 px-1 text-center">
+                                                {m.special_brackets
+                                                    ? `홈 ${m.special_brackets.home_top1_bracket} / 원정 ${m.special_brackets.away_top1_bracket}`
+                                                    : m.w5l_analysis
+                                                    ? `승 ${m.w5l_analysis.win_prob}% · 5(${m.w5l_analysis.close5_prob}%) · 패 ${m.w5l_analysis.lose_prob}%`
+                                                    : `홈 ${m.ai_home_prob}% · 무 ${m.ai_draw_prob}% · 원정 ${m.ai_away_prob}%`}
+                                            </td>
+                                            <td className="border border-slate-300 py-0.5 px-1 text-center font-black text-[#0046b8]">
+                                                {markDisplay}
+                                            </td>
+                                            <td className="border border-slate-300 py-0.5 px-1 text-center">
+                                                {m.is_trap_candidate ? (
+                                                    <span className="text-[9.5px] font-black text-rose-700 bg-rose-100 px-1 rounded">💣함정·복수필수</span>
+                                                ) : needDual ? (
+                                                    <span className="text-[9.5px] font-black text-amber-800 bg-amber-100 px-1 rounded">🛡️투마킹 보험</span>
+                                                ) : (
+                                                    <span className="text-[9.5px] font-black text-[#0046b8] bg-blue-100 px-1 rounded">📌단통(축) {m.ai_confidence}%</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </section>

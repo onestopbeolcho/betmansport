@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.3 - Game-Specific Unified Round Marking Strategy Report (`승무패 14경기 통합 OMR 마킹표`, `승5패`, `스페셜N 6구간 통합 마킹표`)
+- **14-Match Unified OMR Marking Slip & Budget Allocation Engine (`ProtoRoundDashboard.tsx`, `StorePrintReportView.tsx`)**:
+    - Replaced per-match popup buttons on `축구토토 승무패 (G011)` and `농구토토 승5패 (G027)` with a **Single-Sheet 14-Match Unified Marking Strategy Report**:
+        - **Step 1 (Budget Allocation Planner)**: Interactive budget plans (`실속형 8,000원 (단통11+복수3)`, `표준형 16,000원 (단통10+복수4)`, `주력형 32,000원 (단통9+복수5)`, `1등방어형 48,000원 (단통9+복수4+지우개1)`) that automatically classify all 14 matches into **`📌 단통(축) 고정`**, **`🛡️ 복수마킹(투마킹) 보험`**, and **`💣 대중 쏠림 함정·지우개 승부처`**.
+        - **Step 2 (1~14번 실전 OMR 마킹표)**: Displays visual OMR checkmarks (`[승] [무/5] [패]`) with primary (`#0046b8` blue) and secondary insurance (`amber-500`) marks plus inline AI marking rationale for all 14 games on one screen without requiring 14 modal clicks.
+- **Unified Score-Bracket Slip for `농구토토 스페셜N / 스페셜 / 매치` (`G055`, `G056`, `G025`, `G005`, `G015`)**:
+    - Renders the full 6-bracket score probability grid (`1구간~6구간`, `★1순위 주력 구간` & `☆2순위 복수 받침 구간`) for all 1~3 round matches directly on the main screen.
+
 ## v0.8.2 - Clean White & Royal Blue Institutional Portal Design (Betman Official Portal Style)
 - **Global Theme & Typography Overhaul (`globals.css`, `Navbar.tsx`, `Footer.tsx`, `app/[lang]/page.tsx`)**:
     - Replaced dark cyberpunk/neon theme (`#06060a`) with a high-trust **Clean White & Royal Blue Institutional Portal theme** (`--bg-primary: #f4f6f9`, `--bg-surface: #ffffff`, `--accent-primary: #0046b8`, `--text-primary: #0f172a`).
