@@ -11,6 +11,8 @@ export default function Navbar() {
     const { user, logout, loading } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [storeModeActive, setStoreModeActive] = useState(false);
+    const [storeName, setStoreName] = useState("");
     const profileRef = useRef<HTMLDivElement>(null);
 
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
@@ -26,12 +28,32 @@ export default function Navbar() {
     const t = dict?.nav || {};
 
     const navLinks = [
-        { href: `/${currentLang}`, label: "발매 게임별 AI 리포트", icon: "📋", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 공식 경기 분석" },
+        { href: `/${currentLang}`, label: "발매 게임별 AI 리포트", icon: "📋", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 통합 리포트" },
+        { href: `/${currentLang}#community-lounge`, label: "승부예측 커뮤니티 & 매장찾기", icon: "💬", desc: "회차별 유저 예측 토론방 & 우리 동네 판매점 리포트 비치 현황" },
         { href: `/${currentLang}/store/print-report/current`, label: "판매점 A4 출력센터(B2B)", icon: "🖨️", desc: "오프라인 매장 전용 A4 원클릭 분석지 인쇄" },
-        { href: `/${currentLang}/analysis`, label: t.aiPredict || "7-Factor 전력 데이터베이스", icon: "📊", desc: "구단별 포아송 기대득점 및 전술 데이터" },
-        { href: `/${currentLang}/standings`, label: "글로벌 리그 순위표", icon: "🏆", desc: "주요 리그 실시간 정규 순위 및 승점" },
-        { href: `/${currentLang}/pricing`, label: "열람권 / 멤버십 안내", icon: "💳", desc: "회차당 1,500원 리포트 열람권 및 매장 정기구독" },
+        { href: `/${currentLang}/analysis`, label: t.aiPredict || "7-Factor 전력 DB", icon: "📊", desc: "구단별 포아송 기대득점 및 전술 데이터" },
+        { href: `/${currentLang}/pricing`, label: "열람권 / 판매점 구독", icon: "💳", desc: "오프라인 판매점 월간 구독 및 온라인 열람권" },
     ];
+
+    useEffect(() => {
+        const syncStoreState = () => {
+            try {
+                const isStore = localStorage.getItem("scorenix_store_mode") === "true";
+                const sName = localStorage.getItem("scorenix_b2b_store_name") || "공식 제휴 판매점";
+                setStoreModeActive(isStore);
+                setStoreName(sName);
+            } catch {
+                // ignore
+            }
+        };
+        syncStoreState();
+        window.addEventListener("storage", syncStoreState);
+        window.addEventListener("scorenix-store-mode-change", syncStoreState);
+        return () => {
+            window.removeEventListener("storage", syncStoreState);
+            window.removeEventListener("scorenix-store-mode-change", syncStoreState);
+        };
+    }, [pathname]);
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -47,16 +69,37 @@ export default function Navbar() {
         setMobileOpen(false);
     }, [pathname]);
 
+    const exitStoreMode = () => {
+        try {
+            localStorage.removeItem("scorenix_store_mode");
+            localStorage.removeItem("scorenix_store_kiosk");
+            setStoreModeActive(false);
+            window.dispatchEvent(new Event("scorenix-store-mode-change"));
+        } catch {
+            // ignore
+        }
+    };
+
     const linkClass = (path: string) => {
-        const isActive = path === `/${currentLang}` ? pathname === `/${currentLang}` : pathname.startsWith(path);
-        return `group relative px-3.5 py-2 text-sm font-bold transition-all rounded-lg ${isActive
+        const cleanPath = path.split('#')[0];
+        const isActive = path.includes('#')
+            ? false
+            : cleanPath === `/${currentLang}`
+            ? pathname === `/${currentLang}`
+            : pathname.startsWith(cleanPath);
+        return `group relative px-3 py-2 text-sm font-bold transition-all rounded-lg ${isActive
             ? 'text-[#0046b8] bg-blue-50 border border-blue-200/80'
             : 'text-slate-700 hover:text-[#0046b8] hover:bg-slate-50'
             }`;
     };
 
     const mobileLinkClass = (path: string) => {
-        const isActive = path === `/${currentLang}` ? pathname === `/${currentLang}` : pathname.startsWith(path);
+        const cleanPath = path.split('#')[0];
+        const isActive = path.includes('#')
+            ? false
+            : cleanPath === `/${currentLang}`
+            ? pathname === `/${currentLang}`
+            : pathname.startsWith(cleanPath);
         return `flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-all ${isActive
             ? 'bg-blue-50 text-[#0046b8] border border-blue-200'
             : 'text-slate-700 hover:bg-slate-50 border border-transparent'
@@ -65,20 +108,26 @@ export default function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-xs">
-            {/* 상단 공식 유틸리티 바 (베트맨 포털 스타일) */}
+            {/* 상단 공식 유틸리티 바 */}
             <div className="bg-[#003996] text-white text-[11px]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
                     <div className="flex items-center gap-2 font-medium truncate">
-                        <span className="px-1.5 py-0.5 rounded bg-white/15 font-extrabold text-[10px]">공식일정 연동</span>
-                        <span>베트맨(betman.co.kr) 발매 게임(승무패 · 승5패 · 스페셜N · 매치 · 프로토 승부식) AI 전력 데이터 분석 센터</span>
+                        <span className="px-1.5 py-0.5 rounded bg-white/15 font-extrabold text-[10px]">전국 6,500개 판매점 연동</span>
+                        <span>베트맨 발매 게임 AI 통합 리포트 · 오프라인 판매점 PC 전광판 &amp; A4 벽보 출력 솔루션</span>
                     </div>
-                    <div className="hidden sm:flex items-center gap-4 text-white/85 font-medium shrink-0">
-                        <a href={`/${currentLang}/store/print-report/current`} className="hover:text-white hover:underline">
-                            🏪 전국 판매점 A4 인쇄센터
-                        </a>
+                    <div className="hidden sm:flex items-center gap-4 text-white/90 font-medium shrink-0">
+                        {storeModeActive ? (
+                            <span className="text-amber-300 font-extrabold">
+                                🏪 [{storeName}] 판매점 모드 작동 중
+                            </span>
+                        ) : (
+                            <a href={`/${currentLang}/login?mode=store`} className="text-amber-300 font-extrabold hover:underline">
+                                🏪 판매점(점주) 전용 로그인 →
+                            </a>
+                        )}
                         <span>|</span>
-                        <a href={`/${currentLang}/manual`} className="hover:text-white hover:underline">
-                            분석모델 안내
+                        <a href={`/${currentLang}/store/print-report/current`} className="hover:text-white hover:underline">
+                            🖨️ A4 벽보 인쇄센터
                         </a>
                         <span>|</span>
                         <span className="text-white/75">건전이용상담 1336</span>
@@ -88,7 +137,7 @@ export default function Navbar() {
 
             {/* 메인 내비게이션 바 */}
             <nav data-tour="tour-nav" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
-                <div className="flex items-center space-x-7">
+                <div className="flex items-center space-x-6">
                     <a href={`/${currentLang}`} className="flex items-center space-x-2.5 group">
                         <div className="w-9 h-9 rounded-lg bg-[#0046b8] flex items-center justify-center text-white font-black text-sm shadow-xs">
                             SN
@@ -104,7 +153,7 @@ export default function Navbar() {
                     </a>
 
                     {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center space-x-1">
+                    <div className="hidden lg:flex items-center space-x-1">
                         {navLinks.map(link => (
                             <a key={link.href} href={link.href} className={linkClass(link.href)}>
                                 {link.label}
@@ -113,7 +162,27 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-2.5">
+                <div className="flex items-center space-x-2">
+                    {/* 판매점 모드 배지 또는 판매점 로그인 바로가기 버튼 */}
+                    {storeModeActive ? (
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-extrabold">
+                            <span>🏪 {storeName} (매장모드)</span>
+                            <button
+                                onClick={exitStoreMode}
+                                className="ml-1 px-1.5 py-0.5 rounded bg-white border border-emerald-300 text-[10px] text-slate-600 hover:text-rose-600 cursor-pointer"
+                            >
+                                종료
+                            </button>
+                        </div>
+                    ) : (
+                        <a
+                            href={`/${currentLang}/login?mode=store`}
+                            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold transition"
+                        >
+                            🏪 판매점 로그인
+                        </a>
+                    )}
+
                     {!loading && user && <NotificationBell />}
 
                     {!loading && (
@@ -129,9 +198,6 @@ export default function Navbar() {
                                     <span className="hidden sm:block text-sm font-bold text-slate-800 max-w-[90px] truncate">
                                         {user.nickname}
                                     </span>
-                                    <svg className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
                                 </button>
 
                                 {profileOpen && (
@@ -145,8 +211,8 @@ export default function Navbar() {
                                             <a href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
                                                 <span className="text-base">💼</span> 내 분석 보관함 / 구독관리
                                             </a>
-                                            <a href={`/${currentLang}/pricing`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
-                                                <span className="text-base">💎</span> 열람권 및 플랜 안내
+                                            <a href={`/${currentLang}/login?mode=store`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
+                                                <span className="text-base">🏪</span> 판매점 모드 전환
                                             </a>
                                         </div>
                                         <div className="border-t border-slate-100 py-1">
@@ -162,10 +228,10 @@ export default function Navbar() {
                             </div>
                         ) : (
                             <div className="hidden sm:flex items-center space-x-2">
-                                <a href={`/${currentLang}/login`} className="px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition">
-                                    로그인
+                                <a href={`/${currentLang}/login`} className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition">
+                                    회원 로그인
                                 </a>
-                                <a href={`/${currentLang}/register`} className="px-3.5 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-bold transition shadow-xs">
+                                <a href={`/${currentLang}/register`} className="px-3 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-bold transition shadow-xs">
                                     회원가입
                                 </a>
                             </div>
@@ -174,7 +240,7 @@ export default function Navbar() {
 
                     {/* Mobile Hamburger */}
                     <button
-                        className="md:hidden p-2 rounded-lg hover:bg-slate-100 transition-all border border-slate-200"
+                        className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-all border border-slate-200"
                         onClick={() => setMobileOpen(!mobileOpen)}
                         aria-label="Toggle menu"
                     >
@@ -187,7 +253,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile Dropdown */}
-                <div className={`absolute top-16 left-0 right-0 bg-white border-b border-slate-200 shadow-lg z-50 md:hidden transition-all duration-200 ${mobileOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+                <div className={`absolute top-16 left-0 right-0 bg-white border-b border-slate-200 shadow-lg z-50 lg:hidden transition-all duration-200 ${mobileOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
                     <div className="px-4 py-3 space-y-1">
                         {navLinks.map(link => (
                             <a key={link.href} href={link.href} className={mobileLinkClass(link.href)} onClick={() => setMobileOpen(false)}>
@@ -199,31 +265,16 @@ export default function Navbar() {
                             </a>
                         ))}
 
-                        <div className="pt-3 mt-2 border-t border-slate-100">
-                            {user ? (
-                                <>
-                                    <div className="px-4 py-2.5 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#0046b8] text-white flex items-center justify-center text-xs font-bold">
-                                            {user.nickname?.charAt(0)?.toUpperCase() || '👤'}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-900">{user.nickname}</p>
-                                            <p className="text-xs text-slate-500">{user.email}</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => { logout(); setMobileOpen(false); }}
-                                        className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 rounded-xl hover:bg-red-50 transition-all flex items-center gap-2"
-                                    >
-                                        🚪 로그아웃
-                                    </button>
-                                </>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-2 pb-2">
-                                    <a href={`/${currentLang}/login`} className="block px-4 py-2.5 text-sm font-bold text-center rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50" onClick={() => setMobileOpen(false)}>
-                                        로그인
+                        <div className="border-t border-slate-200 pt-2 mt-2 flex flex-col gap-2">
+                            <a href={`/${currentLang}/login?mode=store`} className="block text-center py-2.5 text-sm font-extrabold rounded-xl bg-amber-50 border border-amber-300 text-amber-900" onClick={() => setMobileOpen(false)}>
+                                🏪 판매점(점주) 전용 로그인 (PC전광판/인쇄)
+                            </a>
+                            {!user && (
+                                <div className="grid grid-cols-2 gap-2">
+                                    <a href={`/${currentLang}/login`} className="block text-center py-2.5 text-sm font-bold rounded-xl border border-slate-300 text-slate-700" onClick={() => setMobileOpen(false)}>
+                                        회원 로그인
                                     </a>
-                                    <a href={`/${currentLang}/register`} className="block px-4 py-2.5 text-sm font-bold text-center rounded-lg bg-[#0046b8] text-white" onClick={() => setMobileOpen(false)}>
+                                    <a href={`/${currentLang}/register`} className="block text-center py-2.5 text-sm font-bold rounded-xl bg-[#0046b8] text-white" onClick={() => setMobileOpen(false)}>
                                         회원가입
                                     </a>
                                 </div>

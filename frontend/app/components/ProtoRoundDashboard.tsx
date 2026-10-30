@@ -7,6 +7,7 @@ import {
     DEFAULT_BETMAN_CATALOG,
     BetmanGameCatalogItem,
 } from "../lib/protoFallback";
+import CommunityAndStoreLounge from "./CommunityAndStoreLounge";
 
 interface W5LAnalysis {
     win_prob: number;
@@ -190,14 +191,21 @@ export default function ProtoRoundDashboard() {
     const [filterTab, setFilterTab] = useState<"ALL" | "KILLER" | "VALUE" | "TRAP">("ALL");
     const [searchQuery, setSearchQuery] = useState("");
     const [unlockedDemo, setUnlockedDemo] = useState(false);
+    const [unlockReasonBanner, setUnlockReasonBanner] = useState<string | null>(null);
     const [activeReportMatch, setActiveReportMatch] = useState<ProtoMatch | null>(null);
 
+    // 🏪 판매점(점주) 전용 모드 & 매장 PC 전광판 상태
+    const [isStoreMode, setIsStoreMode] = useState(false);
+    const [storeName, setStoreName] = useState("역삼 행운복권방");
+    const [kioskMode, setKioskMode] = useState(false);
+    const [autoRotateGames, setAutoRotateGames] = useState(false);
+
     const isPaidUser = useMemo(() => {
-        if (unlockedDemo) return true;
+        if (isStoreMode || unlockedDemo) return true;
         if (!user) return false;
         const role = (user.role || "").toLowerCase();
         return ["pro", "vip", "premium", "admin", "round_pass", "store_b2b"].includes(role);
-    }, [user, unlockedDemo]);
+    }, [user, unlockedDemo, isStoreMode]);
 
     const loadGameReport = async (gameKey: string, isInitial = false) => {
         if (isInitial) setLoading(true);
@@ -216,11 +224,31 @@ export default function ProtoRoundDashboard() {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const savedPass = localStorage.getItem("scorenix_round_pass_unlocked");
-            if (savedPass === "true") {
+            // 매장 QR코드(?utm_source=b2b_qr)로 접속한 오프라인 매장 방문객은 자동 잠금 해제
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("utm_source") === "b2b_qr") {
+                localStorage.setItem("scorenix_round_pass_unlocked", "true");
+                setUnlockedDemo(true);
+                setUnlockReasonBanner("🏪 오프라인 판매점 방문 QR 인증이 완료되어 전체 리포트가 무료 개방되었습니다.");
+            } else if (localStorage.getItem("scorenix_round_pass_unlocked") === "true") {
                 setUnlockedDemo(true);
             }
+
+            const syncStore = () => {
+                const stMode = localStorage.getItem("scorenix_store_mode") === "true";
+                const stName = localStorage.getItem("scorenix_b2b_store_name") || "공식 제휴 판매점";
+                const stKiosk = localStorage.getItem("scorenix_store_kiosk") === "true";
+                setIsStoreMode(stMode);
+                setStoreName(stName);
+                setKioskMode(stMode && stKiosk);
+            };
+            syncStore();
+            window.addEventListener("scorenix-store-mode-change", syncStore);
+            return () => window.removeEventListener("scorenix-store-mode-change", syncStore);
         }
+    }, []);
+
+    useEffect(() => {
         loadGameReport("G011_260065", true);
     }, []);
 
@@ -230,6 +258,17 @@ export default function ProtoRoundDashboard() {
         }
         return DEFAULT_BETMAN_CATALOG;
     }, [data]);
+
+    // 매장 PC 전광판 자동 순환 타이머 (20초 간격)
+    useEffect(() => {
+        if (!isStoreMode || !autoRotateGames || catalogGames.length <= 1) return;
+        const timer = setInterval(() => {
+            const idx = catalogGames.findIndex((g) => g.game_key === selectedGameKey);
+            const nextIdx = (idx + 1) % catalogGames.length;
+            loadGameReport(catalogGames[nextIdx].game_key);
+        }, 20000);
+        return () => clearInterval(timer);
+    }, [isStoreMode, autoRotateGames, catalogGames, selectedGameKey]);
 
     const filteredCatalogGames = useMemo(() => {
         if (gameCatFilter === "ALL") return catalogGames;
@@ -251,7 +290,6 @@ export default function ProtoRoundDashboard() {
         if (!data?.matches || !is14PoolGame) return [];
         const midCode: "무" | "5" = isW5LGame ? "5" : "무";
 
-        // 시뮬레이션 모델별 경합 검토(복수 지표) 개수 설정
         const dualCountTarget =
             simModel === "MODEL_CONSERVATIVE"
                 ? 3
@@ -262,7 +300,6 @@ export default function ProtoRoundDashboard() {
                 : 4;
         const tripleCountTarget = simModel === "MODEL_DEFENSIVE" ? 1 : 0;
 
-        // 각 경기의 1순위, 2순위, 3순위 후보와 '단독 우위 안정도 점수' 계산
         const evaluated = data.matches.map((m) => {
             const pHome = isW5LGame && m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
             const pMid = isW5LGame && m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
@@ -279,14 +316,12 @@ export default function ProtoRoundDashboard() {
             const secondary = candidates[1];
             const tertiary = candidates[2];
 
-            // 대중 투표율과 AI 확률의 괴리 계산
             const voteHome = m.vote_home_pct || 0;
             const voteAway = m.vote_away_pct || 0;
             const maxVote = Math.max(voteHome, voteAway);
             const correspAi = voteHome >= voteAway ? pHome : pAway;
-            const voteOverheat = maxVote - correspAi; // 양수면 대중 선호 과열
+            const voteOverheat = maxVote - correspAi;
 
-            // 단독 우위 안정도: 1순위 확률이 높고, 2순위와 격차가 크며, 주의 후보가 아닐수록 높음
             const gap12 = primary.prob - secondary.prob;
             const bankerScore = primary.prob * 1.2 + gap12 - (m.is_trap_candidate ? 18 : 0) - Math.max(0, voteOverheat * 0.4);
 
@@ -301,7 +336,6 @@ export default function ProtoRoundDashboard() {
             };
         });
 
-        // bankerScore가 가장 낮은 순(가장 혼전이거나 이변 위험이 큰 순)으로 정렬하여 경합 검토 배정
         const sortedByRisk = [...evaluated].sort((a, b) => a.bankerScore - b.bankerScore);
         const tripleSet = new Set<number>();
         const dualSet = new Set<number>();
@@ -388,6 +422,26 @@ export default function ProtoRoundDashboard() {
         });
     }, [data, filterTab, searchQuery]);
 
+    const handleUnlockReward = (reason: string) => {
+        try {
+            localStorage.setItem("scorenix_round_pass_unlocked", "true");
+        } catch {
+            // ignore
+        }
+        setUnlockedDemo(true);
+        setUnlockReasonBanner(`✅ [${reason}] 혜택이 적용되어 이번 회차 모든 경합·핵심 구간의 잠금이 해제되었습니다.`);
+    };
+
+    const toggleStoreKiosk = () => {
+        const next = !kioskMode;
+        setKioskMode(next);
+        try {
+            localStorage.setItem("scorenix_store_kiosk", next ? "true" : "false");
+        } catch {
+            // ignore
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center bg-[#f4f6f9]">
@@ -400,32 +454,135 @@ export default function ProtoRoundDashboard() {
 
     if (!data) return null;
 
+    const qrTargetUrl = `https://scorenix.com/ko?utm_source=b2b_qr&round=${data.round_id || "current"}`;
+    const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=2&data=${encodeURIComponent(qrTargetUrl)}`;
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 text-slate-900">
-            {/* 상단 공식 안내 배너 */}
-            <div className="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#0046b8] p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
-                <div className="flex items-start sm:items-center gap-3">
-                    <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold tracking-tight shrink-0">
-                        공식 대상경기 데이터 연동
-                    </span>
-                    <div>
-                        <p className="text-slate-900 font-extrabold text-sm sm:text-base">
-                            종목·회차별 맞춤형 AI 통합 리포트 — 승무패·승5패(14경기 통합 밸런스 분석표) / 스페셜N(6구간 득점 분포표) / 프로토 승부식
-                        </p>
-                        <p className="text-slate-500 text-xs mt-0.5">
-                            단순 개별 경기 나열이 아닌, 회차 전체의 단독 우위 구간과 박빙 경합 구간을 한눈에 파악할 수 있는 통합 통계 리포트를 제공합니다.
-                        </p>
+            {/* ═══════════════════════════════════════════════════════════════════════════
+                🏪 판매점(점주) 전용 컨트롤 바 & 매장 PC 모니터 전광판 헤더
+               ═══════════════════════════════════════════════════════════════════════════ */}
+            {isStoreMode ? (
+                <div className="rounded-2xl bg-[#003996] text-white p-5 sm:p-6 shadow-lg border-2 border-amber-400 space-y-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2.5 py-1 rounded bg-amber-400 text-slate-950 text-xs font-black">
+                                    🏪 판매점(점주) 전용 모드 작동 중
+                                </span>
+                                <span className="px-2.5 py-1 rounded bg-white/15 text-white text-xs font-bold">
+                                    전 경기 잠금 100% 해제됨
+                                </span>
+                                {kioskMode && (
+                                    <span className="px-2.5 py-1 rounded bg-emerald-400 text-slate-950 text-xs font-black">
+                                        🖥️ 매장 PC 모니터 전광판 뷰 활성화
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                                [{storeName}] 방문 고객 전용 — 베트맨 전 게임 AI 통합 분석 전광판
+                            </h2>
+                            <p className="text-xs sm:text-sm text-blue-100">
+                                매장 PC 모니터에 이 화면을 띄워두시거나, 우측 <strong>[🖨️ A4 벽보 원클릭 인쇄]</strong> 버튼으로 출력하여 매장 게시판에 부착해 두세요.
+                            </p>
+                        </div>
+
+                        {/* 우측 매장 방문객 스마트폰 연동 QR + 컨트롤 버튼 */}
+                        <div className="flex flex-wrap items-center gap-3 shrink-0">
+                            <div className="flex items-center gap-2.5 bg-white text-slate-900 rounded-xl p-2.5 shadow-sm">
+                                <img
+                                    src={qrImgUrl}
+                                    alt="매장 방문객 무료 열람 QR"
+                                    className="w-14 h-14 rounded border border-slate-200"
+                                />
+                                <div className="text-xs pr-1">
+                                    <div className="font-black text-[#003996]">📱 매장 손님 전용 QR</div>
+                                    <div className="text-[11px] text-slate-600 leading-tight mt-0.5">
+                                        스캔 시 스마트폰에서도
+                                        <br />
+                                        전 경기 무료 잠금해제!
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={toggleStoreKiosk}
+                                    className={`px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer ${
+                                        kioskMode
+                                            ? "bg-emerald-400 text-slate-950"
+                                            : "bg-white text-[#003996] hover:bg-blue-50"
+                                    }`}
+                                >
+                                    {kioskMode ? "🖥️ PC 전광판 모드 켜짐" : "🖥️ PC 전광판 모드 켜기"}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAutoRotateGames(!autoRotateGames)}
+                                    className={`px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer ${
+                                        autoRotateGames
+                                            ? "bg-amber-400 text-slate-950"
+                                            : "bg-white/15 text-white hover:bg-white/25"
+                                    }`}
+                                >
+                                    {autoRotateGames ? "🔄 20초 게임 자동순환 중" : "🔄 전 게임 자동순환 켜기"}
+                                </button>
+                                <Link
+                                    href={`/ko/store/print-report/${data.game_key || data.round_id}`}
+                                    className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black text-center transition"
+                                >
+                                    🖨️ 현재 게임 A4 벽보 인쇄
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                        href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                        className="px-3.5 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-bold transition shadow-xs"
-                    >
-                        🖨️ 현재 회차 A4 인쇄뷰
-                    </Link>
+            ) : (
+                /* 일반 방문자용 상단 O2O 안내 배너 (오프라인 판매점 유도 + 점주 로그인 안내) */
+                <div className="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#0046b8] p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-xs">
+                    <div className="flex items-start sm:items-center gap-3">
+                        <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold tracking-tight shrink-0">
+                            전국 6,500개 판매점 O2O 연동
+                        </span>
+                        <div>
+                            <p className="text-slate-900 font-extrabold text-sm sm:text-base">
+                                온라인 무료 화면에서는 핵심 승부처 지표가 일부 제한됩니다 — <span className="text-[#0046b8]">동네 판매점 비치본 또는 커뮤니티 참여로 전체 열람하세요!</span>
+                            </p>
+                            <p className="text-slate-500 text-xs mt-0.5">
+                                전국 스코어닉스 등록 판매점(매장 내 PC 모니터 전광판 &amp; A4 출력 벽보)에서는 14경기 전체 리포트가 100% 무료 개방됩니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <a
+                            href="#community-lounge"
+                            className="px-3.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#0046b8] text-xs font-extrabold transition"
+                        >
+                            💬 커뮤니티 참여 · 단골매장 신청 (무료해금) ↓
+                        </a>
+                        <Link
+                            href="/ko/login?mode=store"
+                            className="px-3.5 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold transition shadow-xs"
+                        >
+                            🏪 판매점(점주) 로그인 (PC전광판/인쇄)
+                        </Link>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {unlockReasonBanner && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-300 px-4 py-3 text-xs sm:text-sm font-extrabold text-emerald-900 flex items-center justify-between">
+                    <span>{unlockReasonBanner}</span>
+                    <button
+                        type="button"
+                        onClick={() => setUnlockReasonBanner(null)}
+                        className="text-xs text-emerald-700 hover:underline cursor-pointer"
+                    >
+                        닫기
+                    </button>
+                </div>
+            )}
 
             {/* 1. 베트맨 공식 운영 게임 선택 섹션 */}
             <section className="rounded-xl bg-white border border-slate-200 border-t-4 border-t-[#0046b8] p-5 sm:p-6 shadow-xs space-y-4">
@@ -569,37 +726,55 @@ export default function ProtoRoundDashboard() {
                         </div>
                     </div>
 
-                    {/* 우측 열람권 / A4 출력 버튼 영역 */}
-                    <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0 min-w-[280px] bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    {/* 우측 오프라인 판매점 & 온라인 열람 안내 박스 */}
+                    <div className="flex flex-col gap-2 shrink-0 min-w-[300px] bg-slate-50 p-4 rounded-xl border border-slate-200">
                         {!isPaidUser ? (
-                            <Link
-                                href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
-                                className="px-4 py-3 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-extrabold text-xs sm:text-sm text-center shadow-xs transition"
-                            >
-                                🔓 이번 회차 통합 데이터 리포트 열람권 (1,500원)
-                            </Link>
+                            <>
+                                <div className="text-xs font-extrabold text-slate-800 text-center mb-0.5">
+                                    🔒 핵심 승부처 잠금 해제 방법 (택 1)
+                                </div>
+                                <a
+                                    href="#community-lounge"
+                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-extrabold text-xs text-center shadow-xs transition"
+                                >
+                                    💬 커뮤니티 의견 남기거나 단골매장 신청 (무료)
+                                </a>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Link
+                                        href="/ko/login?mode=store"
+                                        className="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold text-center transition"
+                                    >
+                                        🏪 판매점 점주 로그인
+                                    </Link>
+                                    <Link
+                                        href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
+                                        className="px-3 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold text-center transition"
+                                    >
+                                        ⚡ 즉시 열람 (1,500원)
+                                    </Link>
+                                </div>
+                            </>
                         ) : (
-                            <div className="px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs text-center">
-                                ✅ 이번 회차 통합 데이터 리포트 전체 열람 중
-                            </div>
+                            <>
+                                <div className="px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs text-center">
+                                    ✅ {isStoreMode ? `[${storeName}] 판매점 모드 전체 개방 중` : "이번 회차 통합 리포트 전체 열람 중"}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Link
+                                        href={`/ko/store/print-report/${data.game_key || data.round_id}`}
+                                        className="px-3 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold text-center transition"
+                                    >
+                                        🖨️ A4 한장 인쇄뷰
+                                    </Link>
+                                    <a
+                                        href="#community-lounge"
+                                        className="px-3 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold text-center transition"
+                                    >
+                                        💬 승부예측 토론방
+                                    </a>
+                                </div>
+                            </>
                         )}
-                        <div className="grid grid-cols-2 gap-2">
-                            <button
-                                onClick={() => {
-                                    localStorage.setItem("scorenix_round_pass_unlocked", "true");
-                                    setUnlockedDemo(true);
-                                }}
-                                className="px-3 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold text-center transition cursor-pointer"
-                            >
-                                🔓 미리보기 즉시 열기
-                            </button>
-                            <Link
-                                href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                className="px-3 py-2 rounded-lg bg-white hover:bg-blue-50 border border-[#0046b8] text-[#0046b8] text-xs font-extrabold text-center transition"
-                            >
-                                🖨️ A4 한장 인쇄뷰
-                            </Link>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -624,7 +799,6 @@ export default function ProtoRoundDashboard() {
                                 </p>
                             </div>
 
-                            {/* 시뮬레이션 모델 선택 버튼 (베팅 금액 표기 완전 제거, 순수 분석 모델명 사용) */}
                             <div className="flex flex-wrap gap-2">
                                 {(
                                     [
@@ -679,29 +853,40 @@ export default function ProtoRoundDashboard() {
                                 </div>
                             </div>
 
-                            {/* 2) 경합 주의 (1·2순위 복수 검토) 경기 */}
+                            {/* 2) 경합 주의 (오프라인 매장 / 커뮤니티 해금 대상) */}
                             <div className="rounded-xl bg-amber-50/60 border border-amber-200 p-4 space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="px-2.5 py-1 rounded bg-amber-500 text-white text-xs font-extrabold">
                                         🛡️ 경합 주의 구간 ({poolSummary.duals}경기)
                                     </span>
-                                    <span className="text-xs font-bold text-amber-800">1·2순위 병행 검토</span>
+                                    <span className="text-xs font-bold text-amber-800">
+                                        {isPaidUser ? "전체 공개됨" : "🏪 판매점/커뮤니티 공개"}
+                                    </span>
                                 </div>
                                 <p className="text-xs text-slate-600">
-                                    전력 차가 좁거나 {isW5LGame ? "5점차 이내 접전(5)" : "무승부"} 가능성이 높아 <strong>1·2순위 복수 지표 검토</strong>가 권장되는 경기입니다.
+                                    전력 차가 좁거나 {isW5LGame ? "5점차 이내 접전(5)" : "무승부"} 가능성이 높아 <strong>1·2순위 복수 지표 검토</strong>가 권장되는 핵심 승부처입니다.
                                 </p>
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {pool14Strategies
-                                        .filter((s) => s.role === "DUAL")
-                                        .map((s) => (
-                                            <span
-                                                key={s.match.game_no}
-                                                className="px-2 py-1 rounded bg-white border border-amber-300 text-xs font-extrabold text-amber-900"
-                                            >
-                                                {s.match.game_no}번 {s.match.betman_home} ({s.activeMarks.join("+")})
-                                            </span>
-                                        ))}
-                                </div>
+                                {isPaidUser ? (
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {pool14Strategies
+                                            .filter((s) => s.role === "DUAL")
+                                            .map((s) => (
+                                                <span
+                                                    key={s.match.game_no}
+                                                    className="px-2 py-1 rounded bg-white border border-amber-300 text-xs font-extrabold text-amber-900"
+                                                >
+                                                    {s.match.game_no}번 {s.match.betman_home} ({s.activeMarks.join("+")})
+                                                </span>
+                                            ))}
+                                    </div>
+                                ) : (
+                                    <div className="p-2.5 rounded-lg bg-white border border-amber-300 text-xs text-amber-900 font-bold flex items-center justify-between">
+                                        <span>🔒 경합 {poolSummary.duals}경기 복수 지표는 판매점 비치본 또는 커뮤니티 참여 시 열립니다.</span>
+                                        <a href="#community-lounge" className="text-[#0046b8] underline shrink-0 ml-2">
+                                            무료 열기 ↓
+                                        </a>
+                                    </div>
+                                )}
                             </div>
 
                             {/* 3) 선호도 쏠림 & 이변 주의 경보 */}
@@ -734,7 +919,7 @@ export default function ProtoRoundDashboard() {
                         </div>
                     </section>
 
-                    {/* A-2. 14경기 전체 통합 시뮬레이션 지표 표 (개별 팝업 없이 한 판에 모든 정보 표시) */}
+                    {/* A-2. 14경기 전체 통합 시뮬레이션 지표 표 */}
                     <section className="rounded-xl bg-white border border-slate-300 overflow-hidden shadow-xs">
                         <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
@@ -775,7 +960,7 @@ export default function ProtoRoundDashboard() {
                                             AI 확률 vs 투표 선호도 비교
                                         </th>
                                         <th className="py-3 px-3 w-36 border-r border-slate-700 text-center">구간 분류</th>
-                                        <th className="py-3 px-3 w-44 border-r border-slate-700 text-center bg-[#003996]">
+                                        <th className="py-3 px-3 w-48 border-r border-slate-700 text-center bg-[#003996]">
                                             AI 시뮬레이션 지표 ({isW5LGame ? "승 / 5 / 패" : "승 / 무 / 패"})
                                         </th>
                                         <th className="py-3 px-3">AI 통합 분석 근거 &amp; 전술 핵심</th>
@@ -789,7 +974,9 @@ export default function ProtoRoundDashboard() {
                                         const pMid = isW5LGame && m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
                                         const pAway = isW5LGame && m.w5l_analysis ? m.w5l_analysis.lose_prob : m.ai_away_prob;
 
-                                        const isLockedRow = !isPaidUser && idx >= 2 && idx <= 4;
+                                        // 온라인 무료 유저에게는 경합/혼전 승부처(DUAL/TRIPLE_TRAP) 및 핵심 경기(총 6경기 내외)의 지표를 제한하여 오프라인 매장 방문 또는 커뮤니티 참여 유도
+                                        const isLockedRow =
+                                            !isPaidUser && (item.role !== "BANKER" || m.is_killer_pick);
 
                                         return (
                                             <tr
@@ -876,12 +1063,14 @@ export default function ProtoRoundDashboard() {
                                                 {/* 6. AI 시뮬레이션 지표 ([승] [무/5] [패]) */}
                                                 <td className="py-3 px-3 border-r border-slate-200 text-center bg-blue-50/20">
                                                     {isLockedRow ? (
-                                                        <Link
-                                                            href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px] hover:bg-amber-100"
-                                                        >
-                                                            🔒 핵심지표 열기
-                                                        </Link>
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <a
+                                                                href="#community-lounge"
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px] hover:bg-amber-100"
+                                                            >
+                                                                🔒 판매점 비치본 / 라운지 열람
+                                                            </a>
+                                                        </div>
                                                     ) : (
                                                         <div className="inline-flex items-center gap-1.5">
                                                             {(["승", midLabel, "패"] as ("승" | "무" | "5" | "패")[]).map((code) => {
@@ -908,12 +1097,20 @@ export default function ProtoRoundDashboard() {
 
                                                 {/* 7. AI 통합 분석 근거 */}
                                                 <td className="py-3 px-3">
-                                                    <p className="text-xs font-bold text-slate-800 leading-snug">
-                                                        {item.strategyReason}
-                                                    </p>
-                                                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                                        {m.ai_detail_report?.tactical_summary || m.trap_reason}
-                                                    </p>
+                                                    {isLockedRow ? (
+                                                        <p className="text-xs text-slate-500 font-semibold">
+                                                            🔒 핵심 경합·승부처 상세 해설은 <strong className="text-[#0046b8]">오프라인 판매점 전광판/A4 벽보</strong> 또는 아래 <a href="#community-lounge" className="text-[#0046b8] underline">승부예측 커뮤니티 참여</a> 시 즉시 공개됩니다.
+                                                        </p>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-xs font-bold text-slate-800 leading-snug">
+                                                                {item.strategyReason}
+                                                            </p>
+                                                            <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                                                {m.ai_detail_report?.tactical_summary || m.trap_reason}
+                                                            </p>
+                                                        </>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -927,7 +1124,6 @@ export default function ProtoRoundDashboard() {
 
             {/* ═══════════════════════════════════════════════════════════════════════════
                 MODE B: 농구토토 스페셜N 더블/트리플(G055, G056) · 스페셜(G025, G005) · 매치(G015)
-                — 팝업 없이 전 경기(1~3경기) 홈·원정 6구간 득점 분포표를 한 화면에 통합 제공
                ═══════════════════════════════════════════════════════════════════════════ */}
             {isSpecialGame && (
                 <section className="rounded-xl bg-white border-2 border-[#0046b8] p-5 sm:p-6 shadow-xs space-y-5">
@@ -946,15 +1142,15 @@ export default function ProtoRoundDashboard() {
                     </div>
 
                     <div className="space-y-6">
-                        {data.matches.map((m) => {
+                        {data.matches.map((m, mIdx) => {
                             const sb = m.special_brackets;
                             if (!sb) return null;
+                            const isSpecialLocked = !isPaidUser && mIdx >= 1;
                             return (
                                 <div
                                     key={m.game_no}
                                     className="rounded-xl bg-slate-50 border border-slate-300 overflow-hidden"
                                 >
-                                    {/* 경기 헤더 */}
                                     <div className="bg-[#1e293b] text-white px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                                         <div className="flex items-center gap-2.5">
                                             <span className="px-2.5 py-1 rounded bg-[#0046b8] text-white text-xs font-black">
@@ -969,117 +1165,136 @@ export default function ProtoRoundDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* 홈팀 / 원정팀 6구간 테이블 */}
-                                    <div className="p-4 space-y-4">
-                                        {currentGameType === "BASKETBALL_MATCH" && (
-                                            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-                                                <span className="font-extrabold text-amber-900">
-                                                    ⏱️ 전반(1·2쿼터 합산) 유력 득점구간 시뮬레이션:
-                                                </span>
-                                                <span className="font-black text-slate-900">
-                                                    홈({m.betman_home}) 전반 예상 {sb.half_expected_home_pts}점 →{" "}
-                                                    <strong className="text-[#0046b8]">[{sb.half_home_top_bracket}]</strong> / 원정({m.betman_away}) 전반 예상 {sb.half_expected_away_pts}점 →{" "}
-                                                    <strong className="text-[#0046b8]">[{sb.half_away_top_bracket}]</strong>
-                                                </span>
+                                    {isSpecialLocked ? (
+                                        <div className="p-6 text-center space-y-3 bg-white">
+                                            <p className="text-sm font-black text-slate-900">
+                                                🔒 {m.game_no}경기 ({m.home_ko} vs {m.away_ko}) 6구간 유력 득점 분포는 오프라인 판매점 비치본 또는 커뮤니티 참여 시 열람됩니다.
+                                            </p>
+                                            <div className="flex flex-wrap justify-center gap-2">
+                                                <a
+                                                    href="#community-lounge"
+                                                    className="px-4 py-2 rounded-lg bg-[#0046b8] text-white text-xs font-extrabold"
+                                                >
+                                                    💬 아래 커뮤니티 의견 남기고 무료 열기 ↓
+                                                </a>
+                                                <Link
+                                                    href="/ko/login?mode=store"
+                                                    className="px-4 py-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-xs font-extrabold"
+                                                >
+                                                    🏪 판매점 모드 로그인
+                                                </Link>
                                             </div>
-                                        )}
-
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                            {/* 홈팀 6구간 */}
-                                            <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-                                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                                    <div>
-                                                        <span className="px-2 py-0.5 rounded bg-blue-50 text-[#0046b8] text-[11px] font-extrabold mr-1.5">
-                                                            홈팀
-                                                        </span>
-                                                        <strong className="text-sm font-black text-slate-900">
-                                                            {m.home_ko} ({m.betman_home})
-                                                        </strong>
-                                                    </div>
-                                                    <span className="text-xs font-extrabold text-[#0046b8]">
-                                                        AI 예상 {sb.expected_home_pts}점
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 space-y-4">
+                                            {currentGameType === "BASKETBALL_MATCH" && (
+                                                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                                    <span className="font-extrabold text-amber-900">
+                                                        ⏱️ 전반(1·2쿼터 합산) 유력 득점구간 시뮬레이션:
+                                                    </span>
+                                                    <span className="font-black text-slate-900">
+                                                        홈({m.betman_home}) 전반 예상 {sb.half_expected_home_pts}점 →{" "}
+                                                        <strong className="text-[#0046b8]">[{sb.half_home_top_bracket}]</strong> / 원정({m.betman_away}) 전반 예상 {sb.half_expected_away_pts}점 →{" "}
+                                                        <strong className="text-[#0046b8]">[{sb.half_away_top_bracket}]</strong>
                                                     </span>
                                                 </div>
-                                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
-                                                    {sb.home_brackets.map((b) => {
-                                                        const isTop1 = b.rank === 1;
-                                                        const isTop2 = b.rank === 2;
-                                                        return (
-                                                            <div
-                                                                key={b.bracket_no}
-                                                                className={`rounded-lg p-2 border ${
-                                                                    isTop1
-                                                                        ? "bg-[#0046b8] text-white border-[#0046b8] shadow-xs"
-                                                                        : isTop2
-                                                                        ? "bg-amber-500 text-white border-amber-600"
-                                                                        : "bg-slate-50 text-slate-600 border-slate-200"
-                                                                }`}
-                                                            >
-                                                                <div className="text-[10px] font-extrabold">
-                                                                    {b.bracket_no}구간 {isTop1 ? "★1순위" : isTop2 ? "☆2순위" : ""}
-                                                                </div>
-                                                                <div className="text-[11px] font-black mt-0.5">{b.label}</div>
-                                                                <div className="text-xs font-extrabold mt-1">{b.prob_pct}%</div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                                <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-                                                    유력 구간 분포:{" "}
-                                                    <strong className="text-[#0046b8]">1순위 [{sb.home_top1_bracket}]</strong> +{" "}
-                                                    <strong className="text-amber-700">2순위 [{sb.home_top2_bracket}]</strong> (합산 기대확률{" "}
-                                                    {(sb.home_top1_prob + sb.home_top2_prob).toFixed(1)}%)
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            {/* 원정팀 6구간 */}
-                                            <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-                                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                                    <div>
-                                                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-extrabold mr-1.5">
-                                                            원정팀
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                                                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                                        <div>
+                                                            <span className="px-2 py-0.5 rounded bg-blue-50 text-[#0046b8] text-[11px] font-extrabold mr-1.5">
+                                                                홈팀
+                                                            </span>
+                                                            <strong className="text-sm font-black text-slate-900">
+                                                                {m.home_ko} ({m.betman_home})
+                                                            </strong>
+                                                        </div>
+                                                        <span className="text-xs font-extrabold text-[#0046b8]">
+                                                            AI 예상 {sb.expected_home_pts}점
                                                         </span>
-                                                        <strong className="text-sm font-black text-slate-900">
-                                                            {m.away_ko} ({m.betman_away})
-                                                        </strong>
                                                     </div>
-                                                    <span className="text-xs font-extrabold text-indigo-700">
-                                                        AI 예상 {sb.expected_away_pts}점
-                                                    </span>
-                                                </div>
-                                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
-                                                    {sb.away_brackets.map((b) => {
-                                                        const isTop1 = b.rank === 1;
-                                                        const isTop2 = b.rank === 2;
-                                                        return (
-                                                            <div
-                                                                key={b.bracket_no}
-                                                                className={`rounded-lg p-2 border ${
-                                                                    isTop1
-                                                                        ? "bg-[#0046b8] text-white border-[#0046b8] shadow-xs"
-                                                                        : isTop2
-                                                                        ? "bg-amber-500 text-white border-amber-600"
-                                                                        : "bg-slate-50 text-slate-600 border-slate-200"
-                                                                }`}
-                                                            >
-                                                                <div className="text-[10px] font-extrabold">
-                                                                    {b.bracket_no}구간 {isTop1 ? "★1순위" : isTop2 ? "☆2순위" : ""}
+                                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
+                                                        {sb.home_brackets.map((b) => {
+                                                            const isTop1 = b.rank === 1;
+                                                            const isTop2 = b.rank === 2;
+                                                            return (
+                                                                <div
+                                                                    key={b.bracket_no}
+                                                                    className={`rounded-lg p-2 border ${
+                                                                        isTop1
+                                                                            ? "bg-[#0046b8] text-white border-[#0046b8] shadow-xs"
+                                                                            : isTop2
+                                                                            ? "bg-amber-500 text-white border-amber-600"
+                                                                            : "bg-slate-50 text-slate-600 border-slate-200"
+                                                                    }`}
+                                                                >
+                                                                    <div className="text-[10px] font-extrabold">
+                                                                        {b.bracket_no}구간 {isTop1 ? "★1순위" : isTop2 ? "☆2순위" : ""}
+                                                                    </div>
+                                                                    <div className="text-[11px] font-black mt-0.5">{b.label}</div>
+                                                                    <div className="text-xs font-extrabold mt-1">{b.prob_pct}%</div>
                                                                 </div>
-                                                                <div className="text-[11px] font-black mt-0.5">{b.label}</div>
-                                                                <div className="text-xs font-extrabold mt-1">{b.prob_pct}%</div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+                                                        유력 구간 분포:{" "}
+                                                        <strong className="text-[#0046b8]">1순위 [{sb.home_top1_bracket}]</strong> +{" "}
+                                                        <strong className="text-amber-700">2순위 [{sb.home_top2_bracket}]</strong> (합산 기대확률{" "}
+                                                        {(sb.home_top1_prob + sb.home_top2_prob).toFixed(1)}%)
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-                                                    유력 구간 분포:{" "}
-                                                    <strong className="text-[#0046b8]">1순위 [{sb.away_top1_bracket}]</strong> +{" "}
-                                                    <strong className="text-amber-700">2순위 [{sb.away_top2_bracket}]</strong> (합산 기대확률{" "}
-                                                    {(sb.away_top1_prob + sb.away_top2_prob).toFixed(1)}%)
+
+                                                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                                                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                                        <div>
+                                                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-extrabold mr-1.5">
+                                                                원정팀
+                                                            </span>
+                                                            <strong className="text-sm font-black text-slate-900">
+                                                                {m.away_ko} ({m.betman_away})
+                                                            </strong>
+                                                        </div>
+                                                        <span className="text-xs font-extrabold text-indigo-700">
+                                                            AI 예상 {sb.expected_away_pts}점
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center">
+                                                        {sb.away_brackets.map((b) => {
+                                                            const isTop1 = b.rank === 1;
+                                                            const isTop2 = b.rank === 2;
+                                                            return (
+                                                                <div
+                                                                    key={b.bracket_no}
+                                                                    className={`rounded-lg p-2 border ${
+                                                                        isTop1
+                                                                            ? "bg-[#0046b8] text-white border-[#0046b8] shadow-xs"
+                                                                            : isTop2
+                                                                            ? "bg-amber-500 text-white border-amber-600"
+                                                                            : "bg-slate-50 text-slate-600 border-slate-200"
+                                                                    }`}
+                                                                >
+                                                                    <div className="text-[10px] font-extrabold">
+                                                                        {b.bracket_no}구간 {isTop1 ? "★1순위" : isTop2 ? "☆2순위" : ""}
+                                                                    </div>
+                                                                    <div className="text-[11px] font-black mt-0.5">{b.label}</div>
+                                                                    <div className="text-xs font-extrabold mt-1">{b.prob_pct}%</div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+                                                        유력 구간 분포:{" "}
+                                                        <strong className="text-[#0046b8]">1순위 [{sb.away_top1_bracket}]</strong> +{" "}
+                                                        <strong className="text-amber-700">2순위 [{sb.away_top2_bracket}]</strong> (합산 기대확률{" "}
+                                                        {(sb.away_top1_prob + sb.away_top2_prob).toFixed(1)}%)
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             );
                         })}
@@ -1092,7 +1307,6 @@ export default function ProtoRoundDashboard() {
                ═══════════════════════════════════════════════════════════════════════════ */}
             {!is14PoolGame && !isSpecialGame && (
                 <>
-                    {/* C-1. 핵심 우위 경기 & 이변 주의보 요약 */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         <div className="rounded-xl bg-white border border-slate-200 p-5 space-y-3.5 shadow-xs">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1105,7 +1319,7 @@ export default function ProtoRoundDashboard() {
                                     </h2>
                                 </div>
                                 <span className="px-2.5 py-1 rounded bg-blue-50 text-[#0046b8] text-xs font-bold border border-blue-200">
-                                    {isPaidUser ? "전체 공개" : "🔒 1,500원 열람권"}
+                                    {isPaidUser ? "전체 공개" : "🔒 판매점/커뮤니티 공개"}
                                 </span>
                             </div>
 
@@ -1146,15 +1360,15 @@ export default function ProtoRoundDashboard() {
                                         🔒 [{data.round_title}] 전체 {data.total_matches}경기 중 AI 핵심 우위 경기 ({data.killer_picks_count}경기)
                                     </p>
                                     <p className="text-slate-500 text-xs">
-                                        수십 개 대상 경기 중 기대 승률 우위가 가장 뚜렷한 핵심 경기 리포트를 확인하세요.
+                                        오프라인 판매점 전광판/A4 벽보에서 확인하시거나 아래 승부예측 커뮤니티에 의견을 남기면 무료로 열립니다.
                                     </p>
                                     <div className="flex flex-wrap justify-center gap-2 pt-1">
-                                        <Link
-                                            href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
+                                        <a
+                                            href="#community-lounge"
                                             className="px-4 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-extrabold text-xs transition"
                                         >
-                                            🔓 1,500원으로 이번 회차 리포트 열기
-                                        </Link>
+                                            💬 커뮤니티 참여하고 무료 열기 ↓
+                                        </a>
                                     </div>
                                 </div>
                             )}
@@ -1196,7 +1410,6 @@ export default function ProtoRoundDashboard() {
                         </div>
                     </div>
 
-                    {/* C-2. 프로토 승부식 전체 대상 경기 테이블 */}
                     <section className="rounded-xl bg-white border border-slate-300 overflow-hidden shadow-xs">
                         <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
@@ -1311,12 +1524,12 @@ export default function ProtoRoundDashboard() {
                                                 </td>
                                                 <td className="py-3.5 px-3 text-center border-r border-slate-200 whitespace-nowrap">
                                                     {lockedKiller ? (
-                                                        <Link
-                                                            href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
+                                                        <a
+                                                            href="#community-lounge"
                                                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-xs"
                                                         >
-                                                            🔒 핵심지표 열기
-                                                        </Link>
+                                                            🔒 판매점/라운지 열기
+                                                        </a>
                                                     ) : (
                                                         <div>
                                                             <span className="px-2.5 py-1 rounded bg-blue-50 border border-blue-200 text-[#0046b8] font-extrabold text-xs inline-block">
@@ -1329,15 +1542,23 @@ export default function ProtoRoundDashboard() {
                                                     )}
                                                 </td>
                                                 <td className="py-3.5 px-3">
-                                                    <p className="text-xs text-slate-700 leading-relaxed">
-                                                        {m.ai_detail_report?.tactical_summary || m.trap_reason}
-                                                    </p>
-                                                    <button
-                                                        onClick={() => setActiveReportMatch(m)}
-                                                        className="mt-1 text-[11px] font-extrabold text-[#0046b8] hover:underline cursor-pointer"
-                                                    >
-                                                        + 7-Factor 세부 지표 보기
-                                                    </button>
+                                                    {lockedKiller ? (
+                                                        <p className="text-xs text-slate-500">
+                                                            🔒 핵심 우위 경기 상세 해설은 오프라인 판매점 비치본 또는 아래 커뮤니티 참여 시 공개됩니다.
+                                                        </p>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-xs text-slate-700 leading-relaxed">
+                                                                {m.ai_detail_report?.tactical_summary || m.trap_reason}
+                                                            </p>
+                                                            <button
+                                                                onClick={() => setActiveReportMatch(m)}
+                                                                className="mt-1 text-[11px] font-extrabold text-[#0046b8] hover:underline cursor-pointer"
+                                                            >
+                                                                + 7-Factor 세부 지표 보기
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -1348,6 +1569,16 @@ export default function ProtoRoundDashboard() {
                     </section>
                 </>
             )}
+
+            {/* ═══════════════════════════════════════════════════════════════════════════
+                💬 회차별 승부예측 커뮤니티 & 전국 6,500개 판매점 비치 현황 / 단골매장 제보 라운지
+               ═══════════════════════════════════════════════════════════════════════════ */}
+            <CommunityAndStoreLounge
+                roundTitle={data.round_title}
+                matches={data.matches}
+                userNickname={user?.nickname}
+                onUnlockReward={handleUnlockReward}
+            />
 
             {/* 프로토 승부식 등에서 7-Factor 세부 지표를 볼 때만 열리는 보조 모달 */}
             {activeReportMatch && (

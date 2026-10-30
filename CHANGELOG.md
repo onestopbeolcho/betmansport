@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.4 - Store Owner Mode (PC Kiosk Display & A4 Print), Online Info Restriction & Round Prediction Community Lounge
+- **Store Owner Dedicated Login & PC Kiosk Display Mode (`login/page.tsx`, `Navbar.tsx`, `ProtoRoundDashboard.tsx`)**:
+    - Added **`[🏪 판매점(점주) 전용 모드]`** tab on `/ko/login?mode=store` and top navbar switcher.
+    - Store owners logging in with their store name (e.g. `역삼 행운복권방`) unlock **100% of all Betman games** and activate the **Store Owner Control Bar**:
+        - **`🖥️ 매장 PC 전광판 모드`**: Displays the store header, customer QR code (`?utm_source=b2b_qr` for automatic customer phone unlock), and a **`🔄 20초 간격 전 게임 자동 순환`** mode for in-store PC monitors.
+        - **`🖨️ A4 벽보 원클릭 인쇄`**: Jumps directly to `/ko/store/print-report/[round_id]` with the store's name pre-loaded.
+- **Online Information Restriction & Offline Store Funnel (`ProtoRoundDashboard.tsx`)**:
+    - Restricted online free view by locking all `경합 주의 (DUAL)` / `혼전 경보 (TRIPLE_TRAP)` battleground rows and high-confidence matches, guiding online users to **visit a local Scorenix-partnered Toto store**, **recommend their neighborhood store**, or **participate in the round prediction community**.
+- **Round Prediction Community & Neighborhood Store Directory (`CommunityAndStoreLounge.tsx`)**:
+    - Built a 2-tab O2O Lounge (`💬 회차별 승부예측 토론방` & `🏪 전국 판매점 비치 현황 & 단골매장 신청`) with PG-compliant keyword filtering and instant round unlock rewards when a user posts a prediction opinion or registers their neighborhood Toto store.
+
 ## v0.8.3 - Game-Specific Unified Round Marking Strategy Report (`승무패 14경기 통합 OMR 마킹표`, `승5패`, `스페셜N 6구간 통합 마킹표`)
 - **14-Match Unified OMR Marking Slip & Budget Allocation Engine (`ProtoRoundDashboard.tsx`, `StorePrintReportView.tsx`)**:
     - Replaced per-match popup buttons on `축구토토 승무패 (G011)` and `농구토토 승5패 (G027)` with a **Single-Sheet 14-Match Unified Marking Strategy Report**:
