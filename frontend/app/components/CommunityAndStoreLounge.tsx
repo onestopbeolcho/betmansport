@@ -592,13 +592,13 @@ export default function CommunityAndStoreLounge({
                             <div className="space-y-2">
                                 <Link
                                     href="/ko/login?mode=store"
-                                    className="block w-full py-2.5 px-4 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs text-center transition"
+                                    className="block w-full py-2.5 px-4 rounded-lg bg-amber-400 hover:bg-amber-300 !text-slate-950 font-black text-xs text-center transition"
                                 >
                                     🖥️ 판매점 모드 로그인 (PC 전광판/인쇄)
                                 </Link>
                                 <Link
                                     href="/ko/store/print-report/current"
-                                    className="block w-full py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs text-center transition"
+                                    className="block w-full py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 !text-white font-bold text-xs text-center transition"
                                 >
                                     🖨️ A4 벽보 출력 샘플 바로보기
                                 </Link>

@@ -530,7 +530,7 @@ export default function ProtoRoundDashboard() {
                                 </button>
                                 <Link
                                     href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                    className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black text-center transition"
+                                    className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 !text-slate-950 text-xs font-black text-center transition"
                                 >
                                     🖨️ 현재 게임 A4 벽보 인쇄
                                 </Link>
@@ -557,16 +557,10 @@ export default function ProtoRoundDashboard() {
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <a
                             href="#community-lounge"
-                            className="px-3.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#0046b8] text-xs font-extrabold transition"
+                            className="px-4 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs whitespace-nowrap"
                         >
                             💬 커뮤니티 참여 · 단골매장 신청 (무료해금) ↓
                         </a>
-                        <Link
-                            href="/ko/login?mode=store"
-                            className="px-3.5 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold transition shadow-xs"
-                        >
-                            🏪 판매점(점주) 로그인 (PC전광판/인쇄)
-                        </Link>
                     </div>
                 </div>
             )}
@@ -735,7 +729,7 @@ export default function ProtoRoundDashboard() {
                                 </div>
                                 <a
                                     href="#community-lounge"
-                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-extrabold text-xs text-center shadow-xs transition"
+                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white font-extrabold text-xs text-center shadow-xs transition"
                                 >
                                     💬 커뮤니티 의견 남기거나 단골매장 신청 (무료)
                                 </a>
@@ -762,7 +756,7 @@ export default function ProtoRoundDashboard() {
                                 <div className="grid grid-cols-2 gap-2">
                                     <Link
                                         href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                        className="px-3 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold text-center transition"
+                                        className="px-3 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold text-center transition"
                                     >
                                         🖨️ A4 한장 인쇄뷰
                                     </Link>
@@ -942,7 +936,7 @@ export default function ProtoRoundDashboard() {
                             <div className="flex items-center gap-2 shrink-0">
                                 <Link
                                     href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-extrabold transition shadow-xs"
+                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs"
                                 >
                                     🖨️ 이 14경기 통합표 A4 출력하기
                                 </Link>

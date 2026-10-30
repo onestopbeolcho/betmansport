@@ -589,15 +589,13 @@ body::before {
   color: #fff;
 }
 
-/* Link reset */
-a {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-a:hover {
-  color: var(--accent-hover);
+/* Link reset (inside @layer base so Tailwind text-* utilities take priority) */
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
 }
 
 /* Divider */

@@ -87,7 +87,7 @@ export default function Navbar() {
             : cleanPath === `/${currentLang}`
             ? pathname === `/${currentLang}`
             : pathname.startsWith(cleanPath);
-        return `group relative px-3 py-2 text-sm font-bold transition-all rounded-lg ${isActive
+        return `group relative px-3 py-2 text-sm font-bold whitespace-nowrap shrink-0 transition-all rounded-lg ${isActive
             ? 'text-[#0046b8] bg-blue-50 border border-blue-200/80'
             : 'text-slate-700 hover:text-[#0046b8] hover:bg-slate-50'
             }`;
@@ -115,22 +115,22 @@ export default function Navbar() {
                         <span className="px-1.5 py-0.5 rounded bg-white/15 font-extrabold text-[10px]">전국 6,500개 판매점 연동</span>
                         <span>베트맨 발매 게임 AI 통합 리포트 · 오프라인 판매점 PC 전광판 &amp; A4 벽보 출력 솔루션</span>
                     </div>
-                    <div className="hidden sm:flex items-center gap-4 text-white/90 font-medium shrink-0">
+                    <div className="hidden sm:flex items-center gap-4 text-white font-medium shrink-0">
                         {storeModeActive ? (
                             <span className="text-amber-300 font-extrabold">
                                 🏪 [{storeName}] 판매점 모드 작동 중
                             </span>
                         ) : (
-                            <a href={`/${currentLang}/login?mode=store`} className="text-amber-300 font-extrabold hover:underline">
+                            <a href={`/${currentLang}/login?mode=store`} className="!text-amber-300 font-extrabold hover:underline">
                                 🏪 판매점(점주) 전용 로그인 →
                             </a>
                         )}
-                        <span>|</span>
-                        <a href={`/${currentLang}/store/print-report/current`} className="hover:text-white hover:underline">
+                        <span className="text-white/40">|</span>
+                        <a href={`/${currentLang}/store/print-report/current`} className="!text-white hover:!text-amber-200 hover:underline">
                             🖨️ A4 벽보 인쇄센터
                         </a>
-                        <span>|</span>
-                        <span className="text-white/75">건전이용상담 1336</span>
+                        <span className="text-white/40">|</span>
+                        <span className="text-white/85">건전이용상담 1336</span>
                     </div>
                 </div>
             </div>
@@ -138,7 +138,7 @@ export default function Navbar() {
             {/* 메인 내비게이션 바 */}
             <nav data-tour="tour-nav" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
                 <div className="flex items-center space-x-6">
-                    <a href={`/${currentLang}`} className="flex items-center space-x-2.5 group">
+                    <a href={`/${currentLang}`} className="flex items-center space-x-2.5 group shrink-0">
                         <div className="w-9 h-9 rounded-lg bg-[#0046b8] flex items-center justify-center text-white font-black text-sm shadow-xs">
                             SN
                         </div>
@@ -162,10 +162,10 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                    {/* 판매점 모드 배지 또는 판매점 로그인 바로가기 버튼 */}
-                    {storeModeActive ? (
-                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-extrabold">
+                <div className="flex items-center space-x-2 shrink-0">
+                    {/* 판매점 모드 작동 중에만 상태/종료 배지 노출 (로그인 버튼은 상단 유틸리티 바에서 제공) */}
+                    {storeModeActive && (
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-extrabold whitespace-nowrap">
                             <span>🏪 {storeName} (매장모드)</span>
                             <button
                                 onClick={exitStoreMode}
@@ -174,13 +174,6 @@ export default function Navbar() {
                                 종료
                             </button>
                         </div>
-                    ) : (
-                        <a
-                            href={`/${currentLang}/login?mode=store`}
-                            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold transition"
-                        >
-                            🏪 판매점 로그인
-                        </a>
                     )}
 
                     {!loading && user && <NotificationBell />}
