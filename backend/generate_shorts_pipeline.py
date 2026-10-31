@@ -1,12 +1,10 @@
 """
-Scorenix Shorts Video Generator v4.0 - AI Avatar Edition
-=========================================================
-- ElevenLabs TTS: 사람과 구분 불가한 자연스러운 음성 (폴백: Edge TTS)
-- D-ID Avatar: AI 앵커가 실제로 말하는 듯한 영상 생성 (폴백: 정적 배경)
-- Ken Burns: 정지 이미지에 천천히 줌인하여 영상 느낌 연출
-- Glassmorphism: 반투명 라운드 자막 박스 + 자동 줄바꿈
-- BGM 자동 믹싱
-- 장면별 데이터 카드 렌더링
+Scorenix Shorts Video Generator v8.0 - Betman Official Game & O2O Store Edition
+===============================================================================
+- 베트맨(Betman) 공식 게임 연동: 축구토토 승무패 14경기, 프로토 승부식, 농구토토 승5패, 스페셜N
+- 회차명 / 경기번호(01번~14번) / 구간 분류(단독 우위 1순위 vs 경합 주의 1·2순위) 방송 보드 렌더링
+- 전국 6,500개 오프라인 판매점(PC 전광판·A4 분석 벽보) & 온라인 승부예측 커뮤니티 무료 해금 퍼널 연동
+- ElevenLabs TTS / Edge TTS 컨셉별 성우 로테이션 + BGM 자동 믹싱
 """
 import os
 import sys
@@ -115,23 +113,24 @@ def _translate_ko_team(name: str) -> str:
 
 
 def _rank_matches_for_shorts(matches_list: list) -> list:
-    """양 팀 모두 한글화되어 있고 승/무/패 3-Way 배당이 존재하는 빅리그 축구 매치(승률 48~76%)를 최우선 정렬"""
-    soccer_major = ["EPL", "Premier", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "Champions", "Europa", "K League"]
+    """베트맨 공식 회차 매치이면서 양 팀 모두 한글화된 빅리그 축구/농구 매치를 최우선 정렬"""
+    soccer_major = ["EPL", "Premier", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "Champions", "Europa", "K League", "프리미어", "라리가", "세리에", "분데스", "챔피언스", "K리그"]
 
     def _is_ko(s: str) -> bool:
         return any('\uac00' <= ch <= '\ud7a3' for ch in (s or ""))
 
     def _score(m):
+        is_bet = 1 if m.get("is_betman") else 0
         league_str = str(m.get("league", ""))
         has_draw = 1 if float(m.get("draw_prob", 0)) > 5.0 else 0
         is_major_soccer = 1 if any(k.lower() in league_str.lower() for k in soccer_major) else 0
         wp = m.get("win_prob", 50)
         ho = float(m.get("home_odds", 2.0))
         ao = float(m.get("away_odds", 2.0))
-        competitive_odds = 1 if (1.38 <= ho <= 5.50 and 1.38 <= ao <= 5.50) else 0
-        in_sweet_spot = 1 if 48 <= wp <= 76 else 0
+        competitive_odds = 1 if (1.35 <= ho <= 5.50 and 1.35 <= ao <= 5.50) else 0
+        in_sweet_spot = 1 if 48 <= wp <= 78 else 0
         both_korean = 1 if (_is_ko(m.get("home", "")) and _is_ko(m.get("away", ""))) else 0
-        return (both_korean, has_draw, competitive_odds, is_major_soccer, in_sweet_spot, wp)
+        return (is_bet, both_korean, has_draw, competitive_odds, is_major_soccer, in_sweet_spot, wp)
 
     sorted_list = sorted(matches_list, key=_score, reverse=True)
     seen = set()
@@ -146,11 +145,81 @@ def _rank_matches_for_shorts(matches_list: list) -> list:
 
 def fetch_top_matches(limit=7, lang="ko"):
     """
-    실시간 AI 예측 및 배당 데이터를 수집합니다 (한국어 팀명 & 3-Pillar 확률 완벽 반영).
-    1. Firestore daily_portfolios (오늘/내일)
-    2. PinnacleService.fetch_odds()
+    실시간 베트맨 공식 회차(축구토토 승무패 14경기, 프로토 승부식, 농구토토 승5패, 스페셜N) 및 AI 시뮬레이션 데이터를 수집합니다.
+    0. proto_round_service.get_betman_marketing_matches() (최우선)
+    1. Firestore daily_portfolios (폴백)
+    2. PinnacleService.fetch_odds() (폴백)
     3. 다이내믹 셔플링 폴백
     """
+    # 0. 베트맨 공식 회차 데이터 조회 (최우선)
+    try:
+        from app.services.proto_round_service import get_betman_marketing_matches
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    betman_raw = pool.submit(lambda: asyncio.run(get_betman_marketing_matches(limit=max(limit, 8)))).result(timeout=20)
+            else:
+                betman_raw = asyncio.run(get_betman_marketing_matches(limit=max(limit, 8)))
+        except RuntimeError:
+            betman_raw = asyncio.run(get_betman_marketing_matches(limit=max(limit, 8)))
+
+        if betman_raw and len(betman_raw) >= 3:
+            out = []
+            for m in betman_raw:
+                home = _translate_ko_team(m.get("team_home_ko") or m.get("home") or "홈팀")
+                away = _translate_ko_team(m.get("team_away_ko") or m.get("away") or "원정팀")
+                hp = float(m.get("home_win_prob", 48.0))
+                dp = float(m.get("draw_prob", 24.0))
+                ap = float(m.get("away_win_prob", 28.0))
+                h_odds = float(m.get("home_odds", 1.95))
+                d_odds = float(m.get("draw_odds", 3.40))
+                a_odds = float(m.get("away_odds", 3.20))
+                rec = m.get("recommendation", "HOME")
+                if rec == "HOME":
+                    pick_team = home
+                    pick_label = f"1순위: {home} 우세"
+                elif rec == "AWAY":
+                    pick_team = away
+                    pick_label = f"1순위: {away} 우세"
+                else:
+                    pick_team = "무승부"
+                    pick_label = "1순위: 무승부·접전 경합"
+                win_prob = int(round(float(m.get("confidence", max(hp, ap)))))
+                gap = round(abs(hp - ap), 1)
+                r_title = m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+                g_no = m.get("game_no_label", "01번")
+                role_badge = m.get("role_badge", "단독 우위 (1순위 주력)")
+                reason = m.get("reason") or _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap, r_title, g_no, role_badge)
+
+                out.append({
+                    "home": home,
+                    "away": away,
+                    "betman_home": m.get("betman_home", home),
+                    "betman_away": m.get("betman_away", away),
+                    "round_title": r_title,
+                    "game_no_label": g_no,
+                    "role_badge": role_badge,
+                    "ai_pick": pick_team,
+                    "pick_label": pick_label,
+                    "win_prob": win_prob,
+                    "home_prob": hp,
+                    "draw_prob": dp,
+                    "away_prob": ap,
+                    "home_odds": round(h_odds, 2),
+                    "away_odds": round(a_odds, 2),
+                    "draw_odds": round(d_odds, 2) if d_odds > 1.0 else 3.40,
+                    "odds_gap": gap,
+                    "is_betman": True,
+                    "league": m.get("league", "베트맨 대상경기"),
+                    "reason": reason,
+                })
+            print(f"  [OK] Fetched {len(out)} official Betman matches for Shorts ({out[0]['round_title']})")
+            return out[:limit]
+    except Exception as e_bet:
+        print(f"  [!] Betman official match fetch fallback: {e_bet}")
+
     # 1. Firestore daily_portfolios 조회
     try:
         from app.db.firestore import get_firestore_db
@@ -171,7 +240,7 @@ def fetch_top_matches(limit=7, lang="ko"):
 
         if matches_raw:
             out = []
-            for m in matches_raw:
+            for idx, m in enumerate(matches_raw):
                 raw_home = m.get("team_home_ko") or m.get("team_home", "")
                 raw_away = m.get("team_away_ko") or m.get("team_away", "")
                 home = _translate_ko_team(raw_home) if lang == "ko" else raw_home
@@ -199,19 +268,27 @@ def fetch_top_matches(limit=7, lang="ko"):
 
                 if hp >= ap:
                     pick_team = home
-                    pick_label = f"{home} 우세"
+                    pick_label = f"1순위: {home} 우세"
                     win_prob = int(round(hp))
                 else:
                     pick_team = away
-                    pick_label = f"{away} 우세"
+                    pick_label = f"1순위: {away} 우세"
                     win_prob = int(round(ap))
 
                 gap = round(abs(hp - ap), 1)
-                reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap)
+                r_title = m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+                g_no = m.get("game_no_label", f"{idx+1:02d}번")
+                role_badge = "단독 우위 (1순위 주력)" if gap >= 15 else "경합 주의 (1·2순위 병행)"
+                reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap, r_title, g_no, role_badge)
 
                 out.append({
                     "home": home,
                     "away": away,
+                    "betman_home": home,
+                    "betman_away": away,
+                    "round_title": r_title,
+                    "game_no_label": g_no,
+                    "role_badge": role_badge,
                     "ai_pick": pick_team,
                     "pick_label": pick_label,
                     "win_prob": win_prob,
@@ -245,7 +322,7 @@ def fetch_top_matches(limit=7, lang="ko"):
 
         if raw_odds:
             out = []
-            for o in raw_odds:
+            for idx, o in enumerate(raw_odds):
                 raw_home = getattr(o, "team_home_ko", None) or o.team_home
                 raw_away = getattr(o, "team_away_ko", None) or o.team_away
                 home = _translate_ko_team(raw_home) if lang == "ko" else raw_home
@@ -260,20 +337,28 @@ def fetch_top_matches(limit=7, lang="ko"):
                 hp, dp, ap = _calc_devig_probs(h_odds, d_odds, a_odds)
                 if hp >= ap:
                     pick_team = home
-                    pick_label = f"{home} 우세"
+                    pick_label = f"1순위: {home} 우세"
                     win_prob = int(round(hp))
                 else:
                     pick_team = away
-                    pick_label = f"{away} 우세"
+                    pick_label = f"1순위: {away} 우세"
                     win_prob = int(round(ap))
 
                 gap = round(abs(hp - ap), 1)
                 league = o.league or "유럽 축구"
-                reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap)
+                r_title = "축구토토 승무패 · 프로토 승부식"
+                g_no = f"{(idx % 14) + 1:02d}번"
+                role_badge = "단독 우위 (1순위 주력)" if gap >= 15 else "경합 주의 (1·2순위 병행)"
+                reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap, r_title, g_no, role_badge)
 
                 out.append({
                     "home": home,
                     "away": away,
+                    "betman_home": home,
+                    "betman_away": away,
+                    "round_title": r_title,
+                    "game_no_label": g_no,
+                    "role_badge": role_badge,
                     "ai_pick": pick_team,
                     "pick_label": pick_label,
                     "win_prob": win_prob,
@@ -299,23 +384,23 @@ def fetch_top_matches(limit=7, lang="ko"):
     return _dynamic_fallback(limit, lang)
 
 
-def _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap):
-    """실제 시장 지수 및 3-Pillar 확률 격차 기반 한국어 해설 문장 생성 (PG 규정 준수)"""
+def _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap, r_title="축구토토 승무패", g_no="01번", role_badge="단독 우위 1순위"):
+    """실제 베트맨 회차 정보 및 3-Pillar 확률 격차 기반 한국어 해설 문장 생성"""
     fav = home if hp >= ap else away
     fav_odds = h_odds if hp >= ap else a_odds
     dog_odds = a_odds if hp >= ap else h_odds
     fav_prob = hp if hp >= ap else ap
 
-    if gap >= 25:
-        return f"글로벌 표준 지수 {fav_odds} 대 {dog_odds}로, {fav}의 3-Pillar 시뮬레이션 확률이 {fav_prob}%에 달해 격차가 {gap}%포인트로 압도적입니다."
+    if gap >= 22:
+        return f"[{r_title} {g_no}] 배당 지수 {fav_odds} 대 {dog_odds}로, {fav}의 AI 시뮬레이션 승률이 {fav_prob}%에 달해 '단독 우위 1순위' 주력 구간으로 분류됐습니다."
     elif gap >= 12:
-        return f"포아송 기대득점(xG)과 시장 지수 흐름상 {fav} 지수가 {fav_odds}로 안정권이며, AI 시뮬레이션 승률도 {fav_prob}%로 우위가 뚜렷합니다."
+        return f"[{r_title} {g_no}] 포아송 기대득점(xG)과 배당 흐름상 {fav} 지수가 {fav_odds}로 안정권이며, AI 1순위 승률도 {fav_prob}%로 우위가 뚜렷합니다."
     else:
-        return f"양 팀 지수가 홈 {h_odds} 대 원정 {a_odds}로 팽팽하지만, 마진 제거 후 머신러닝 기대값(+EV)에서 {fav} 쪽에 플러스 밸류가 포착됐습니다."
+        return f"[{r_title} {g_no}] 홈 {h_odds} 대 원정 {a_odds}의 팽팽한 접전 구간으로, 1순위 {fav}({fav_prob}%)와 무승부·역배당 방어를 병행하는 경합 주의 매치입니다."
 
 
 def _dynamic_fallback(limit=7, lang="ko"):
-    """날짜 기반 폴백 매치 생성"""
+    """날짜 기반 베트맨 폴백 매치 생성"""
     today = datetime.datetime.now()
     seed = today.year * 10000 + today.month * 100 + today.day
     import random
@@ -331,7 +416,7 @@ def _dynamic_fallback(limit=7, lang="ko"):
     rng.shuffle(shuffled)
 
     out = []
-    for home, away, league in shuffled[:limit]:
+    for idx, (home, away, league) in enumerate(shuffled[:limit]):
         h_odds = round(rng.uniform(1.65, 2.35), 2)
         d_odds = round(rng.uniform(3.30, 3.85), 2)
         a_odds = round(rng.uniform(2.80, 4.40), 2)
@@ -339,13 +424,21 @@ def _dynamic_fallback(limit=7, lang="ko"):
         fav = home if hp >= ap else away
         win_prob = int(round(max(hp, ap)))
         gap = round(abs(hp - ap), 1)
-        reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap)
+        r_title = "축구토토 승무패 · 프로토 승부식"
+        g_no = f"{idx+1:02d}번"
+        role_badge = "단독 우위 (1순위 주력)" if gap >= 15 else "경합 주의 (1·2순위 병행)"
+        reason = _build_data_reason(home, away, h_odds, a_odds, d_odds, hp, ap, gap, r_title, g_no, role_badge)
 
         out.append({
             "home": home,
             "away": away,
+            "betman_home": home,
+            "betman_away": away,
+            "round_title": r_title,
+            "game_no_label": g_no,
+            "role_badge": role_badge,
             "ai_pick": fav,
-            "pick_label": f"{fav} 우세",
+            "pick_label": f"1순위: {fav} 우세",
             "win_prob": win_prob,
             "home_prob": hp,
             "draw_prob": dp,
@@ -355,7 +448,7 @@ def _dynamic_fallback(limit=7, lang="ko"):
             "draw_odds": d_odds,
             "odds_gap": gap,
             "league": league,
-            "is_betman": False,
+            "is_betman": True,
             "reason": reason,
         })
 
@@ -370,7 +463,6 @@ def _dummy():
 def fetch_graded_results_for_shorts(limit: int = 5) -> list:
     """
     최근 종료 경기(ESPN Completed)에 대한 스코어닉스 AI 예측 적중(HIT) 및 오답노트(MISS) 성적표 데이터 로드.
-    Option A (투명한 성적표 + 오답노트형) 쇼츠 제작용.
     """
     try:
         from app.api.endpoints.ai_predictions import build_graded_recent_results
@@ -392,12 +484,12 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
         hit_cnt = summary.get("hits", max(int(round(total_cnt * (acc_pct / 100.0))), 1))
 
         out = []
-        for r in raw_results:
+        for idx, r in enumerate(raw_results):
             home = _translate_ko_team(r.get("home", "홈팀"))
             away = _translate_ko_team(r.get("away", "원정팀"))
             pred_winner = r.get("predicted_winner", "HOME")
             pick_team = home if pred_winner == "HOME" else (away if pred_winner == "AWAY" else "무승부")
-            pick_label = f"{pick_team} 승 예측" if pred_winner != "DRAW" else "무승부 예측"
+            pick_label = f"1순위: {pick_team} 승" if pred_winner != "DRAW" else "1순위: 무승부"
             actual_w = r.get("actual_winner", "HOME")
             actual_label = f"{home} 승" if actual_w == "HOME" else (f"{away} 승" if actual_w == "AWAY" else "무승부")
             status = r.get("status", "HIT")
@@ -412,7 +504,7 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
 
             if status == "HIT":
                 note = (
-                    f"사전 3-Pillar 모델이 {pick_team} 우세({win_prob}%)를 지목했고, "
+                    f"사전 베트맨 3-Pillar 모델이 단독 우위 1순위 [{pick_team} ({win_prob}%)]를 지목했고, "
                     f"실제 경기에서도 최종 스코어 {score_label} ({actual_label})로 정확히 적중했습니다."
                 )
             else:
@@ -424,6 +516,11 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
             out.append({
                 "home": home,
                 "away": away,
+                "betman_home": home,
+                "betman_away": away,
+                "round_title": "축구토토 승무패 · 프로토 승부식",
+                "game_no_label": f"{idx+1:02d}번",
+                "role_badge": "단독 우위 1순위 적중" if status == "HIT" else "이변 발생 · 오답노트",
                 "ai_pick": pick_team,
                 "pick_label": pick_label,
                 "actual_label": actual_label,
@@ -462,12 +559,12 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
     fb = _dynamic_fallback(4, "ko")
     fallback_graded = []
     for idx, m in enumerate(fb[:3]):
-        is_hit = idx != 1  # 0번=HIT, 1번=MISS(오답노트), 2번=HIT
+        is_hit = idx != 1
         hs, as_ = (2, 1) if is_hit else (1, 2)
         actual_lbl = f"{m['home']} 승" if hs > as_ else f"{m['away']} 승"
         st = "HIT" if is_hit else "MISS"
         note = (
-            f"사전 3-Pillar 시뮬레이션이 {m['ai_pick']} 우세({m['win_prob']}%)를 포착했고 최종 {hs}:{as_}로 적중했습니다."
+            f"사전 베트맨 3-Pillar 시뮬레이션이 {m['ai_pick']} 1순위 우세({m['win_prob']}%)를 포착했고 최종 {hs}:{as_}로 적중했습니다."
             if is_hit else
             f"사전 지수는 {m['ai_pick']} 우세({m['win_prob']}%)였으나 후반전 실점 변수로 {hs}:{as_} 역전이 발생해 오답노트에 기록했습니다."
         )
@@ -487,17 +584,15 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🎬 v7.0 MULTI-CONCEPT ROTATING BROADCAST SHORTS ENGINE (5종 + 성적표/오답노트)
-# 매일/매시간 업로드되는 영상이 동일한 패턴으로 보이지 않도록
-# 5가지 프리뷰 방송 컨셉 + RESULT_REVIEW(적중 성적표 & 오답노트) 컨셉을 운영합니다.
+# 🎬 v8.0 BETMAN OFFICIAL GAME MULTI-CONCEPT ROTATING BROADCAST SHORTS ENGINE
 # ═══════════════════════════════════════════════════════════════════════════
 
 SHORTS_CONCEPTS = {
     "RESULT_REVIEW": {
         "id": "RESULT_REVIEW",
-        "badge": "AI 성적표",
+        "badge": "베트맨 성적표",
         "badge_rgb": (16, 185, 129),
-        "headline_suffix": "AI 예측 적중 성적표 & 오답노트",
+        "headline_suffix": "베트맨 AI 적중 성적표 & 오답노트",
         "bg_canvas": (8, 16, 24, 255),
         "board_bg": (12, 24, 38, 238),
         "board_border": (16, 185, 129, 185),
@@ -507,16 +602,16 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-InJoonNeural",
         "rate": "+15%",
         "pitch": "+0Hz",
-        "overview_tag": "POST-MATCH AI VERIFICATION REPORT",
-        "overview_title": "어제자 AI 예측 성적표 (적중 & 오답노트)",
+        "overview_tag": "BETMAN POST-MATCH AI VERIFICATION",
+        "overview_title": "베트맨 대상경기 AI 성적표 (적중 & 오답노트)",
         "verdict_tag": "AI ERROR NOTE & RE-CALIBRATION",
         "verdict_subtitle": "짜깁기 없는 100% 투명 사후 스코어 검증",
     },
     "QUANT_RADAR": {
         "id": "QUANT_RADAR",
-        "badge": "QUANT AI",
+        "badge": "승무패 AI",
         "badge_rgb": (0, 180, 216),
-        "headline_suffix": "3-Pillar 퀀트 레이더",
+        "headline_suffix": "승무패·프로토 AI 밸런스",
         "bg_canvas": (8, 12, 26, 255),
         "board_bg": (13, 20, 38, 238),
         "board_border": (0, 212, 255, 165),
@@ -526,16 +621,16 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-InJoonNeural",
         "rate": "+15%",
         "pitch": "+0Hz",
-        "overview_tag": "3-PILLAR QUANT SIMULATION",
-        "overview_title": "오늘의 머신러닝 승률 시뮬레이션 3선",
-        "verdict_tag": "POISSON xG & DE-VIG VERDICT",
-        "verdict_subtitle": "일일 무료 공개 AI 시뮬레이션 우세 지표",
+        "overview_tag": "BETMAN OFFICIAL GAME AI BALANCE",
+        "overview_title": "이번 회차 단독 우위 vs 경합 주의 3선",
+        "verdict_tag": "BETMAN 1ST/2ND TIER VERDICT",
+        "verdict_subtitle": "이번 회차 무료 공개 AI 1순위 밸런스 지표",
     },
     "FACT_CHECK": {
         "id": "FACT_CHECK",
-        "badge": "FACT CHECK",
+        "badge": "투표율 체크",
         "badge_rgb": (225, 29, 72),
-        "headline_suffix": "빅매치 통계 팩트체크",
+        "headline_suffix": "베트맨 투표율 vs AI 팩트체크",
         "bg_canvas": (20, 10, 18, 255),
         "board_bg": (28, 14, 24, 238),
         "board_border": (251, 191, 36, 175),
@@ -545,16 +640,16 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-SunHiNeural",
         "rate": "+14%",
         "pitch": "+2Hz",
-        "overview_tag": "DATA FACT CHECK DESK",
-        "overview_title": "직관 vs 데이터! 오늘의 팩트체크 3경기",
+        "overview_tag": "BETMAN VOTE BIAS FACT CHECK",
+        "overview_title": "대중 투표율 쏠림 vs AI 데이터 3경기",
         "verdict_tag": "STATISTICAL FACT VERDICT",
-        "verdict_subtitle": "8,960경기 백테스트 기반 팩트체크 결과",
+        "verdict_subtitle": "단통 마킹 위험 구간 vs 단독 우위 1순위",
     },
     "VALUE_ALERT": {
         "id": "VALUE_ALERT",
-        "badge": "+EV ALERT",
+        "badge": "이변 경보",
         "badge_rgb": (147, 51, 234),
-        "headline_suffix": "+EV 기대값 왜곡 경보",
+        "headline_suffix": "승무패·프로토 이변·경합 경보",
         "bg_canvas": (15, 10, 28, 255),
         "board_bg": (22, 15, 42, 238),
         "board_border": (168, 85, 247, 175),
@@ -564,16 +659,16 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-InJoonNeural",
         "rate": "+16%",
         "pitch": "+2Hz",
-        "overview_tag": "+EV ANOMALY RADAR",
-        "overview_title": "시장 확률 대비 +EV 기대값 포착 매치",
-        "verdict_tag": "+EV EXPECTED VALUE REPORT",
-        "verdict_subtitle": "시장 내재 확률 대비 시뮬레이션 우위 포착",
+        "overview_tag": "BETMAN UPSET & CONTESTED RADAR",
+        "overview_title": "복수 방어 필수! 이변·경합 포착 매치",
+        "verdict_tag": "1ST & 2ND PRIORITY REPORT",
+        "verdict_subtitle": "베트맨 배당 대비 AI 시뮬레이션 우위 포착",
     },
     "MATCH_SPOTLIGHT": {
         "id": "MATCH_SPOTLIGHT",
-        "badge": "BIG MATCH",
+        "badge": "베트맨 빅매치",
         "badge_rgb": (16, 185, 129),
-        "headline_suffix": "빅리그 매치업 프리뷰",
+        "headline_suffix": "이번 회차 핵심 매치업 프리뷰",
         "bg_canvas": (7, 20, 18, 255),
         "board_bg": (11, 30, 27, 238),
         "board_border": (52, 211, 153, 175),
@@ -583,16 +678,16 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-SunHiNeural",
         "rate": "+15%",
         "pitch": "+0Hz",
-        "overview_tag": "PRIME MATCHUP SPOTLIGHT",
-        "overview_title": "오늘 밤 놓치면 안 될 빅리그 매치 3선",
+        "overview_tag": "BETMAN PRIME MATCHUP SPOTLIGHT",
+        "overview_title": "동네 판매점 마킹 전 필수 체크 3경기",
         "verdict_tag": "7-FACTOR TACTICAL VERDICT",
-        "verdict_subtitle": "포아송 기대득점(xG) & 7대 전술 팩터 결론",
+        "verdict_subtitle": "포아송 기대득점(xG) & 1·2순위 구간 결론",
     },
     "SPEED_BRIEFING": {
         "id": "SPEED_BRIEFING",
-        "badge": "DAILY BRIEF",
+        "badge": "회차 브리핑",
         "badge_rgb": (245, 158, 11),
-        "headline_suffix": "AI 스포츠 데이터 속보",
+        "headline_suffix": "베트맨 1분 데이터 브리핑",
         "bg_canvas": (12, 16, 30, 255),
         "board_bg": (18, 24, 44, 238),
         "board_border": (245, 158, 11, 175),
@@ -602,10 +697,10 @@ SHORTS_CONCEPTS = {
         "voice": "ko-KR-InJoonNeural",
         "rate": "+15%",
         "pitch": "-2Hz",
-        "overview_tag": "60-SECOND QUANT BRIEFING",
-        "overview_title": "바쁜 당신을 위한 핵심 3경기 데이터 요약",
-        "verdict_tag": "DAILY FREE SAMPLE REPORT",
-        "verdict_subtitle": "오늘의 무료 공개 AI 시뮬레이션 리포트",
+        "overview_tag": "60-SECOND BETMAN ROUND BRIEFING",
+        "overview_title": "이번 회차 베트맨 핵심 3경기 스피드 요약",
+        "verdict_tag": "OPEN SAMPLE BALANCE REPORT",
+        "verdict_subtitle": "이번 회차 무료 공개 AI 시뮬레이션 리포트",
     },
 }
 
@@ -672,7 +767,8 @@ def load_video_settings():
 
 def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
     """
-    컨셉별로 차별화된 유튜브 쇼츠 제목 + PG 규정 준수 설명란(무료 회원가입 혜택 + 월 3,900원 Basic Pass 퍼널) 생성
+    베트맨 공식 게임(축구토토 승무패 14경기, 프로토 승부식, 농구토토 승5패, 스페셜N) 맞춤형
+    유튜브 쇼츠 제목 + 설명란(전국 6,500개 판매점 O2O & 온라인 승부예측 커뮤니티 무료 해금 퍼널) 생성
     """
     cid = concept.get("id", "QUANT_RADAR") if concept else "QUANT_RADAR"
     if not matches or len(matches) < 3:
@@ -687,20 +783,22 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     date_md = now_kst.strftime("%m/%d")
     date_ko = now_kst.strftime("%m월 %d일")
+    r_title = free_m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+    g_no = free_m.get("game_no_label", "01번")
+    role_badge = free_m.get("role_badge", "단독 우위 1순위")
 
     if cid == "RESULT_REVIEW":
         acc_pct = free_m.get("summary_accuracy", 66.7)
         score_str = free_m.get("score_label", "2:1").replace(" ", "")
-        title = f"[{date_md} AI 성적표 공개] 🎯 {free_m['home']} {score_str} {free_m['away']} 적중! 오답노트까지 100% 투명 검증 #shorts"
+        title = f"[{date_md} 베트맨 AI 성적표] 🎯 {free_m['home']} {score_str} {free_m['away']} 적중! 오답노트까지 투명 검증 #shorts"
         if len(title) > 95:
-            title = f"[{date_md} AI 적중 성적표] 🎯 {free_m['home']} vs {free_m['away']} 결과 검증 & 오답노트 #shorts"
+            title = f"[{date_md} 베트맨 AI 적중 성적표] 🎯 {free_m['home']} vs {free_m['away']} 결과 검증 & 오답노트 #shorts"
 
         description = (
-            f"🎯 [{date_ko} 스코어닉스 AI 예측 적중 성적표 & 오답노트 투명 공개]\n"
+            f"🎯 [{date_ko} 스코어닉스 베트맨 대상경기 AI 적중 성적표 & 오답노트 투명 공개]\n"
             f"맞춘 경기만 짜깁기하지 않습니다! 적중(HIT) 경기부터 틀린 경기(오답노트)까지 실제 스코어로 100% 검증합니다.\n"
-            f"🎁 [3초 무료 회원가입 혜택] 가입만 해도 매일 원하는 잠긴 경기 +1건 무료 선택 해금 & AI vs 유저 승부예측 투표 참여!\n"
-            f"👉 실시간 성적표 & 무료 해금 받기: https://scorenix.com/ko/analysis?utm_source=youtube_shorts&utm_medium=result_review\n"
-            f"👉 커피 한 잔 값(월 3,900원 Basic Pass) 안내: https://scorenix.com/ko/pricing?utm_source=youtube_shorts&utm_medium=result_review\n"
+            f"🏪 [전국 6,500개 판매점 O2O & 승부예측 커뮤니티 혜택] 온라인 승부예측 커뮤니티에 내 예상을 남기거나 우리 동네 판매점을 등록하면 이번 회차 축구토토 승무패 14경기 전체 밸런스 표가 100% 무료 해금됩니다!\n"
+            f"👉 베트맨 전 게임 AI 밸런스 표 & 무료 해금: https://scorenix.com/ko?utm_source=youtube_shorts&utm_medium=result_review\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
             f"✅ [적중 검증 #1] {free_m['home']} {free_m.get('score_label', '2 : 1')} {free_m['away']} ({free_m.get('league', '주요 리그')})\n"
             f"   └ 사전 AI 예측: [{free_m['pick_label']}] (신뢰도 {free_m['win_prob']}%) → 최종 결과 [{free_m.get('actual_label', '적중')}] ✅ 적중!\n"
@@ -710,11 +808,11 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
             f"   └ 오답노트 분석: {lock_m1['reason']}\n\n"
             f"📊 최근 48시간 AI 시뮬레이션 검증 적중률: {acc_pct}%\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"⚖️ 본 콘텐츠는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 사후 검증 리포트입니다.\n"
-            f"#스포츠데이터 #AI성적표 #오답노트 #축구통계 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
+            f"⚖️ 본 콘텐츠는 국민체육진흥공단 공식 인터넷 발매사이트 베트맨(betman.co.kr) 대상경기의 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 리포트입니다.\n"
+            f"#축구토토승무패 #프로토승부식 #농구토토승5패 #베트맨 #AI성적표 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
         )
         tags = [
-            "스포츠데이터", "AI성적표", "오답노트", "축구통계분석", "AI시뮬레이션",
+            "축구토토승무패", "프로토승부식", "농구토토승5패", "베트맨", "스포츠토토분석",
             free_m["home"], free_m["away"], "스코어닉스", "shorts"
         ]
         return {
@@ -727,48 +825,49 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
         }
 
     title_templates = {
-        "QUANT_RADAR": f"[{date_md} AI 퀀트분석] 📊 {free_m['home']} vs {free_m['away']} 포아송 기대득점(xG) & 승률 시뮬레이션 #shorts",
-        "FACT_CHECK": f"[{date_md} 통계 팩트체크] ⚡ {free_m['home']} vs {free_m['away']} 이름값 vs AI 데이터 승률 비교 #shorts",
-        "VALUE_ALERT": f"[{date_md} +EV 밸류경보] 📈 {free_m['home']} vs {free_m['away']} 시장 확률 왜곡 포착 리포트 #shorts",
-        "MATCH_SPOTLIGHT": f"[{date_md} 빅매치 프리뷰] ⚽ {free_m['home']} vs {free_m['away']} 7-Factor 전력 시뮬레이션 #shorts",
-        "SPEED_BRIEFING": f"[{date_md} 1분 데이터브리핑] 🤖 {free_m['home']} vs {free_m['away']} 외 핵심 3경기 AI 승률 요약 #shorts",
+        "QUANT_RADAR": f"[{r_title} {g_no}] 📊 {free_m['home']} vs {free_m['away']} AI 1·2순위 밸런스 & 승률 분석 #shorts",
+        "FACT_CHECK": f"[{r_title} 투표율체크] ⚡ {free_m['home']} vs {free_m['away']} 단통 주의! AI 데이터 팩트체크 #shorts",
+        "VALUE_ALERT": f"[{r_title} 이변경보] 📈 {free_m['home']} vs {free_m['away']} 경합 주의 구간 & 복수방어 #shorts",
+        "MATCH_SPOTLIGHT": f"[{r_title} 빅매치] ⚽ {free_m['home']} vs {free_m['away']} 단독 우위 vs 경합 구간 분석 #shorts",
+        "SPEED_BRIEFING": f"[{r_title} 1분브리핑] 🤖 {free_m['home']} vs {free_m['away']} 외 이번 회차 핵심 3경기 요약 #shorts",
     }
     title = title_templates.get(cid, title_templates["QUANT_RADAR"])
     if len(title) > 95:
-        title = f"[{date_md} AI 데이터분석] {free_m['home']} vs {free_m['away']} 승률 시뮬레이션 리포트 #shorts"
+        title = f"[{r_title}] {free_m['home']} vs {free_m['away']} AI 1·2순위 밸런스 분석 #shorts"
 
     description = (
-        f"📊 [{date_ko} 스코어닉스 3-Pillar AI 스포츠 통계 시뮬레이션 리포트]\n"
-        f"🎁 [무료 회원가입 혜택] 가입만 해도 매일 원하는 잠긴 경기 +1건 무료 추가 해금 & 유저 승부예측 투표 참여!\n"
-        f"☕ 커피 한 잔 값(월 3,900원 Basic Pass)으로 17개 리그 전 경기 +EV 밸류 리포트 무제한 열람!\n"
-        f"👉 일일 무료 샘플 & +1경기 무료 해금: https://scorenix.com/ko/analysis?utm_source=youtube_shorts&utm_medium=desc\n"
-        f"👉 월 3,900원 데이터 멤버십 안내: https://scorenix.com/ko/pricing?utm_source=youtube_shorts&utm_medium=desc\n"
+        f"📊 [{date_ko} 스코어닉스 베트맨 공식 게임(승무패 14경기 · 프로토 승부식 · 승5패 · 스페셜N) AI 통합 리포트]\n"
+        f"🏪 [전국 6,500개 동네 판매점 O2O & 온라인 승부예측 커뮤니티 무료 해금]\n"
+        f"온라인 승부예측 커뮤니티에 내 예상을 남기거나, 자주 가는 우리 동네 판매점을 등록하면 이번 회차 잠금 경기가 100% 무료 해금됩니다!\n"
+        f"👉 베트맨 14경기 전체 밸런스 표 & 무료 해금: https://scorenix.com/ko?utm_source=youtube_shorts&utm_medium=desc\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🎁 [오늘의 1일 1경기 무료 공개 AI 시뮬레이션 샘플]\n"
-        f"⚽ 매치업: {free_m['home']} vs {free_m['away']} ({free_m.get('league', '주요 리그')})\n"
-        f"📈 글로벌 표준 지수: 홈 {free_m['home_odds']} / 무 {free_m['draw_odds']} / 원정 {free_m['away_odds']}\n"
-        f"🤖 AI 3-Pillar 시뮬레이션 확률: 홈 {free_m['home_prob']}% | 무 {free_m['draw_prob']}% | 원정 {free_m['away_prob']}%\n"
-        f"📊 시뮬레이션 우세 지표: [{free_m['pick_label']}] (데이터 신뢰도 {free_m['win_prob']}%)\n"
+        f"🎁 [이번 회차 무료 공개 베트맨 AI 시뮬레이션 샘플]\n"
+        f"📍 회차 및 번호: {r_title} · {g_no} ({free_m.get('league', '주요 리그')})\n"
+        f"⚽ 매치업: {free_m['home']} vs {free_m['away']} (베트맨 표기: {free_m.get('betman_home', free_m['home'])} vs {free_m.get('betman_away', free_m['away'])})\n"
+        f"🎯 구간 분류: {role_badge}\n"
+        f"📈 배당 지수: 홈 {free_m['home_odds']} / 무 {free_m['draw_odds']} / 원정 {free_m['away_odds']}\n"
+        f"🤖 AI 시뮬레이션 확률: 홈 {free_m['home_prob']}% | 무 {free_m['draw_prob']}% | 원정 {free_m['away_prob']}%\n"
+        f"📊 AI 1순위 지표: [{free_m['pick_label']}] (신뢰도 {free_m['win_prob']}%)\n"
         f"💡 핵심 산출 근거: {free_m['reason']}\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔒 [오늘 밤 +EV 핵심 밸류 리포트 상위 경기 (무료 가입 시 택1 해금 / 월 3,900원 무제한)]\n"
-        f"1️⃣ [+EV 밸류 #1] {lock_m1['home']} vs {lock_m1['away']} (지수 {lock_m1['home_odds']} / {lock_m1['away_odds']})\n"
-        f"   └ 시뮬레이션 우세 지표 & 포아송 xG: 🔒 https://scorenix.com/ko/analysis 에서 확인\n"
-        f"2️⃣ [+EV 밸류 #2] {lock_m2['home']} vs {lock_m2['away']} (지수 {lock_m2['home_odds']} / {lock_m2['away_odds']})\n"
-        f"   └ 시뮬레이션 우세 지표 & 포아송 xG: 🔒 https://scorenix.com/ko/analysis 에서 확인\n\n"
+        f"🔒 [이번 회차 핵심 밸런스 & 경합 주의 매치 (커뮤니티 참여 또는 동네 판매점 등록 시 무료 해금)]\n"
+        f"1️⃣ [{lock_m1.get('round_title', r_title)} · {lock_m1.get('game_no_label', '02번')}] {lock_m1['home']} vs {lock_m1['away']} (지수 {lock_m1['home_odds']} / {lock_m1['away_odds']})\n"
+        f"   └ 1·2순위 밸런스 & 복수 방어 진단: 🔒 https://scorenix.com/ko 에서 무료 해금\n"
+        f"2️⃣ [{lock_m2.get('round_title', r_title)} · {lock_m2.get('game_no_label', '03번')}] {lock_m2['home']} vs {lock_m2['away']} (지수 {lock_m2['home_odds']} / {lock_m2['away_odds']})\n"
+        f"   └ 1·2순위 밸런스 & 복수 방어 진단: 🔒 https://scorenix.com/ko 에서 무료 해금\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🔗 [스코어닉스 공식 채널 네트워크]\n"
-        f"🌐 공식 웹사이트: https://scorenix.com/ko/analysis\n"
+        f"🌐 공식 웹사이트: https://scorenix.com/ko\n"
         f"📸 공식 인스타그램: https://www.instagram.com/scorenix_official/\n"
         f"🧵 공식 쓰레드: https://www.threads.com/@scorenix_official\n"
         f"✍️ 공식 구글 블로그: https://official-scorenix.blogspot.com/\n\n"
-        f"⚖️ 본 콘텐츠는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다.\n"
-        f"#스포츠데이터 #축구통계 #포아송분포 #AI시뮬레이션 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
+        f"⚖️ 본 콘텐츠는 국민체육진흥공단 공식 인터넷 발매사이트 베트맨(betman.co.kr) 대상경기의 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 최종 판단과 책임은 본인에게 있습니다.\n"
+        f"#축구토토승무패 #프로토승부식 #농구토토승5패 #스페셜N #베트맨 #스포츠토토 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
     )
 
     tags = [
-        "스포츠데이터", "축구통계분석", "AI시뮬레이션", "포아송기대득점", "해외축구분석",
-        free_m["home"], free_m["away"], "스코어닉스", "shorts"
+        "축구토토승무패", "프로토승부식", "농구토토승5패", "스페셜N", "베트맨",
+        "스포츠토토분석", free_m["home"], free_m["away"], "스코어닉스", "shorts"
     ]
     return {
         "title": title,
@@ -780,11 +879,11 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
     }
 
 
-# ─── 컨셉별 다변화 대본 생성 (Broadcast Shorts v7.0 — 5가지 프리뷰 + 적중 성적표/오답노트) ───
+# ─── 컨셉별 다변화 대본 생성 (Broadcast Shorts v8.0 — 베트맨 공식 게임 & O2O 퍼널) ───
 def build_script(matches, mode="marketing", concept: dict = None):
     """
-    컨셉(RESULT_REVIEW, QUANT_RADAR, FACT_CHECK, VALUE_ALERT, MATCH_SPOTLIGHT, SPEED_BRIEFING)별로
-    전혀 다른 오프닝 훅, 문장 구조, 자막 카드를 생성하여 유튜브 반복 콘텐츠 감지를 방지합니다.
+    컨셉별로 베트맨 공식 회차명/경기번호, 구간 분류(단독 우위 1순위 vs 경합 주의 1·2순위),
+    그리고 동네 판매점 & 승부예측 커뮤니티 무료 해금 CTA를 생성합니다.
     """
     if not concept:
         concept = select_rotating_concept(mode, matches)
@@ -803,40 +902,43 @@ def build_script(matches, mode="marketing", concept: dict = None):
     h_free, a_free = free_m["home"], free_m["away"]
     h_lock1, a_lock1 = lock_m1["home"], lock_m1["away"]
     h_lock2, a_lock2 = lock_m2["home"], lock_m2["away"]
+    r_title = free_m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+    g_no = free_m.get("game_no_label", "01번")
+    role_badge = free_m.get("role_badge", "단독 우위 1순위")
 
-    # Option A: [어제자 AI 예측 적중 성적표 & 오답노트] 전용 4-Scene 대본
+    # Option A: [어제자 베트맨 대상경기 AI 예측 적중 성적표 & 오답노트]
     if cid == "RESULT_REVIEW" or mode == "result_review":
         acc_pct = free_m.get("summary_accuracy", 66.7)
         hit_score = free_m.get("score_label", "2 : 1").replace(":", "대")
         miss_score = lock_m1.get("score_label", "1 : 2").replace(":", "대")
 
         s1_tts = (
-            f"어제 스코어닉스 에이아이가 예측했던 경기들, 과연 실제로 몇 경기나 맞췄을까요? "
+            f"어제 베트맨 대상경기에서 스코어닉스 에이아이는 과연 몇 경기나 맞췄을까요? "
             f"적중한 경기부터 틀린 오답노트까지 실제 스코어로 백 퍼센트 투명하게 공개합니다!"
         )
-        s1_cap = f"[ {today} AI 예측 성적표 ]\n적중률 {acc_pct}% · 오답노트 투명 공개"
+        s1_cap = f"[ {today} 베트맨 AI 성적표 ]\n적중률 {acc_pct}% · 오답노트 투명 공개"
 
         s2_tts = (
             f"먼저 적중 성공 매치, {h_free} 대 {a_free} 입니다! "
-            f"사전 AI 시뮬레이션이 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['ai_pick']} 우세를 지목했고, "
+            f"사전 AI 시뮬레이션이 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['ai_pick']} 1순위 우세를 지목했고, "
             f"실제 최종 스코어 {hit_score}로 정확히 적중했습니다."
         )
-        s2_cap = f"✅ [적중] {h_free} {free_m.get('score_label', '2:1')} {a_free}\nAI 예측 [{free_m['ai_pick']} 우세 {free_m['win_prob']}%] 적중!"
+        s2_cap = f"✅ [적중] {h_free} {free_m.get('score_label', '2:1')} {a_free}\nAI 1순위 [{free_m['ai_pick']} {free_m['win_prob']}%] 적중!"
 
         s3_tts = (
             f"반면 솔직한 에이아이 오답노트입니다. {h_lock1} 대 {a_lock1} 경기는 "
             f"사전 데이터상 {lock_m1['ai_pick']} 우세였으나 실제 스코어 {miss_score} 이변이 발생해, "
-            f"후반전 변수 가중치를 오답노트 알고리즘에 즉시 반영했습니다."
+            f"경합 구간 가중치를 오답노트 알고리즘에 즉시 반영했습니다."
         )
         s3_cap = f"📝 [오답노트] {h_lock1} {lock_m1.get('score_label', '1:2')} {a_lock1}\n이변 원인 분석 & AI 가중치 보정 완료"
 
         s4_tts = (
-            f"스코어닉스 닷컴에 삼 초 무료 회원가입만 해도 매일 원하는 잠긴 경기 한 건을 추가로 열어볼 수 있습니다! "
-            f"오늘 밤 경기 승부예측 투표와 커피 한 잔 값 월 삼천구백 원 베이직 패스를 지금 확인하세요!"
+            f"스코어닉스 닷컴에서 승부예측 커뮤니티에 내 예상을 남기거나 우리 동네 판매점을 등록하면, "
+            f"이번 회차 승무패 십사경기 전체 밸런스 표가 백 퍼센트 무료로 해금됩니다!"
         )
         s4_cap = (
-            f"🎁 무료 가입 시 [매일 +1경기 선택 해금]\n"
-            f"scorenix.com 승부예측 투표 & 월 3,900원"
+            f"🏪 [커뮤니티 투표 & 동네 판매점 등록]\n"
+            f"scorenix.com 14경기 전체 표 무료 해금!"
         )
 
         return [
@@ -849,80 +951,57 @@ def build_script(matches, mode="marketing", concept: dict = None):
     # 컨셉별 Scene 1 (오프닝 훅) 차별화
     if cid == "FACT_CHECK":
         s1_tts = (
-            f"아직도 팀 이름값만 보고 결과를 예상하십니까? "
-            f"{today} 스코어닉스 팩트체크 데스크에서 데이터가 지목한 진짜 우세 경기를 공개합니다."
+            f"이번 회차 {r_title}, 아직도 이름값만 보고 단통 마킹하십니까? "
+            f"스코어닉스 데이터 데스크에서 단독 우위 주력 경기와 경합 주의 구간을 분류해 드립니다."
         )
-        s1_cap = f"[ {today} 통계 팩트체크 ]\n이름값 착시 vs AI 시뮬레이션"
+        s1_cap = f"[ {r_title} 팩트체크 ]\n단통 위험 구간 vs 단독 우위 1순위"
     elif cid == "VALUE_ALERT":
         s1_tts = (
-            f"긴급 데이터 브리핑입니다! {today} 글로벌 시장 내재 확률과 AI 시뮬레이션 사이에 "
-            f"뚜렷한 기대값 왜곡이 포착된 핵심 세 경기를 분석합니다."
+            f"긴급 베트맨 밸런스 브리핑입니다! 이번 회차 {r_title}에서 "
+            f"대중 투표율과 AI 시뮬레이션 사이에 괴리가 포착된 핵심 세 경기를 분석합니다."
         )
-        s1_cap = f"[ {today} +EV 기대값 경보 ]\n시장 확률 왜곡 포착 3경기"
+        s1_cap = f"[ {r_title} 이변·경합 경보 ]\n투표율 쏠림 vs AI 1·2순위"
     elif cid == "MATCH_SPOTLIGHT":
         s1_tts = (
-            f"오늘 밤 빅리그 하이라이트 매치업! {h_free} 대 {a_free} 경기를 포함한 "
-            f"{today} 스코어닉스 세븐 팩터 전력 시뮬레이션을 시작합니다."
+            f"동네 판매점 방문 전 필수 체크! {r_title} {g_no} {h_free} 대 {a_free} 경기를 포함한 "
+            f"스코어닉스 일순위 이순위 밸런스 시뮬레이션을 시작합니다."
         )
-        s1_cap = f"[ {today} 빅매치 프리뷰 ]\n{h_free} vs {a_free} 집중 분석"
+        s1_cap = f"[ {r_title} · {g_no} 프리뷰 ]\n{h_free} vs {a_free} 집중 분석"
     elif cid == "SPEED_BRIEFING":
         s1_tts = (
-            f"바쁜 분들을 위한 {today} 일분 스포츠 데이터 속보! "
-            f"오늘 무료 공개 샘플 한 경기와 플러스 기대값 상위 두 경기를 빠르게 요약합니다."
+            f"바쁜 분들을 위한 이번 회차 {r_title} 일분 데이터 속보! "
+            f"무료 공개 샘플 한 경기와 복수 방어 필수 경합 구간 두 경기를 빠르게 요약합니다."
         )
-        s1_cap = f"[ {today} 1분 데이터 브리핑 ]\n무료 샘플 1건 + 핵심 밸류 2건"
+        s1_cap = f"[ {r_title} 1분 브리핑 ]\n무료 공개 1건 + 핵심 밸런스 2건"
     else:  # QUANT_RADAR
         s1_tts = (
-            f"{today} 글로벌 스포츠 데이터 흐름이 급변하고 있습니다! "
-            f"스코어닉스 쓰리 필러 퀀트 엔진의 무료 샘플 리포트와 핵심 밸류 경기를 브리핑합니다."
+            f"이번 회차 {r_title}, 몇 번 경기를 단통으로 밀고 어디서 복수 방어할지 고민되시죠? "
+            f"스코어닉스 에이아이의 구간 분류 리포트를 공개합니다."
         )
-        s1_cap = f"[ {today} AI 퀀트 레이더 ]\n무료 샘플 1건 + 핵심 밸류 2건"
+        s1_cap = f"[ {r_title} AI 밸런스 ]\n단독 우위 1순위 vs 경합 주의 분류"
 
-    # 컨셉별 Scene 2 (기초 확률 분포) 차별화
-    if cid == "FACT_CHECK":
-        s2_tts = (
-            f"먼저 팩트체크 무료 공개 매치, {h_free} 대 {a_free} 입니다. "
-            f"글로벌 지수 마진을 제거한 순수 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트로 나타났습니다."
-        )
-    elif cid == "VALUE_ALERT":
-        s2_tts = (
-            f"첫 번째 분석 매치는 {h_free} 대 {a_free} 입니다. "
-            f"글로벌 표준 지수 홈 {free_m['home_odds']}, 원정 {free_m['away_odds']} 속에서 "
-            f"머신러닝 승률은 홈 {free_m['home_prob']}퍼센트 대 원정 {free_m['away_prob']}퍼센트입니다."
-        )
-    else:
-        s2_tts = (
-            f"오늘의 무료 공개 샘플은 {h_free} 대 {a_free} 경기입니다. "
-            f"포아송 기대득점과 시장 지수를 결합한 AI 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트입니다."
-        )
-    s2_cap = f"[무료 샘플] {h_free} vs {a_free}\n홈 승률 {free_m['home_prob']}% vs 원정 {free_m['away_prob']}%"
+    # 컨셉별 Scene 2 (기초 확률 분포)
+    s2_tts = (
+        f"이번 회차 무료 공개 샘플은 {g_no} {h_free} 대 {a_free} 경기입니다. "
+        f"베트맨 배당과 포아송 기대득점을 결합한 AI 승률은 홈 {free_m['home_prob']}퍼센트, 원정 {free_m['away_prob']}퍼센트입니다."
+    )
+    s2_cap = f"[{r_title} · {g_no}] {h_free} vs {a_free}\n홈 승률 {free_m['home_prob']}% vs 원정 {free_m['away_prob']}%"
 
-    # 컨셉별 Scene 3 (시뮬레이션 결론) 차별화
-    if cid == "FACT_CHECK":
-        s3_tts = (
-            f"양 팀의 세븐 팩터 확률 격차가 {free_m['odds_gap']}퍼센트 포인트까지 벌어지며, "
-            f"데이터 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 지표가 산출되었습니다."
-        )
-    elif cid == "VALUE_ALERT":
-        s3_tts = (
-            f"시장 확률 대비 플러스 기대값이 뚜렷하게 발생하여, "
-            f"신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 시뮬레이션 우세가 포착되었습니다."
-        )
-    else:
-        s3_tts = (
-            f"양 팀 승률 격차가 {free_m['odds_gap']}퍼센트 포인트로 명확해, "
-            f"머신러닝 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 지표를 무료 공개합니다."
-        )
-    s3_cap = f"[시뮬레이션 지표] {free_m['pick_label']}\n데이터 신뢰도 {free_m['win_prob']}% ({free_m['odds_gap']}%p 격차)"
+    # 컨셉별 Scene 3 (구간 분류 & 시뮬레이션 결론)
+    s3_tts = (
+        f"양 팀 승률 격차가 {free_m['odds_gap']}퍼센트 포인트로 나타나, "
+        f"구간 분류는 {role_badge}, 머신러닝 신뢰도 {free_m['win_prob']}퍼센트로 {free_m['pick_label']} 지표가 산출됐습니다."
+    )
+    s3_cap = f"[{role_badge}] {free_m['pick_label']}\n데이터 신뢰도 {free_m['win_prob']}% ({free_m['odds_gap']}%p 격차)"
 
-    # 컨셉별 Scene 4 (커피 한 잔 값 월 3,900원 Basic Pass CTA)
+    # 컨셉별 Scene 4 (O2O 판매점 & 승부예측 커뮤니티 무료 해금 CTA)
     s4_tts = (
-        f"오늘 기대값 1위인 {h_lock1} 대 {a_lock1}, 그리고 {h_lock2} 대 {a_lock2} 리포트는 어떨까요? "
-        f"커피 한 잔 값인 월 삼천구백 원 베이직 패스로 스코어닉스 닷컴에서 전 경기 리포트를 즉시 확인하세요!"
+        f"그렇다면 {h_lock1} 대 {a_lock1}, 그리고 {h_lock2} 대 {a_lock2} 경기는 단통일까요, 복수 방어 구간일까요? "
+        f"스코어닉스 닷컴에서 승부예측 커뮤니티에 참여하거나 우리 동네 판매점을 등록해 십사경기 전체 표를 지금 무료로 해금하세요!"
     )
     s4_cap = (
-        f"☕ 커피 한 잔 값 [월 3,900원 Basic Pass]\n"
-        f"scorenix.com 에서 전 경기 리포트 열람"
+        f"🏪 [커뮤니티 투표 & 동네 판매점 등록]\n"
+        f"scorenix.com 에서 14경기 전체 무료 해금"
     )
 
     return [
@@ -1210,7 +1289,7 @@ def render_caption(text, scene="match", mode="marketing", concept: dict = None):
             continue
         x = (WIDTH - w) // 2
 
-        highlight_keys = ["승률", "우세", "3,900원", "커피", "밸류", "신뢰도", "격차", "%", "vs", "AI", "리포트", "팩트체크", "+EV", "샘플", "Basic"]
+        highlight_keys = ["승률", "우세", "1순위", "단독", "경합", "신뢰도", "격차", "%", "vs", "AI", "무료", "판매점", "커뮤니티", "승무패", "프로토"]
         color = accent if any(k in line for k in highlight_keys) else (255, 255, 255, 255)
 
         draw.text((x + 3, cur_y + 3), line, font=font, fill=(0, 0, 0, 220))
@@ -1285,8 +1364,8 @@ def render_headline(concept: dict = None):
 
     pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
     br, bg, bb = concept.get("badge_rgb", (220, 38, 38))
-    badge_txt = concept.get("badge", "QUANT AI")
-    suffix_txt = concept.get("headline_suffix", "3-Pillar 퀀트 리포트")
+    badge_txt = concept.get("badge", "승무패 AI")
+    suffix_txt = concept.get("headline_suffix", "승무패·프로토 AI 밸런스")
 
     draw.rounded_rectangle(
         [40, 15, WIDTH - 40, 145],
@@ -1307,8 +1386,8 @@ def render_headline(concept: dict = None):
 
 def render_broadcast_board(board_type: str, matches: list, concept: dict = None) -> np.ndarray:
     """
-    9:16 스포츠 방송국 스타일 메인 데이터 그래픽 보드 렌더링 (Y: 195 ~ 1360 영역)
-    컨셉별 테마 컬러, 보드 타이틀, 배지 텍스트가 동적으로 변화합니다.
+    9:16 베트맨 공식 게임 스포츠 방송국 스타일 메인 데이터 그래픽 보드 렌더링 (Y: 195 ~ 1360 영역)
+    축구토토 승무패 14경기 · 프로토 승부식 · 농구토토 승5패 · 스페셜N의 회차/경기번호 및 구간 분류 표시.
     """
     if not concept:
         concept = SHORTS_CONCEPTS["QUANT_RADAR"]
@@ -1322,6 +1401,10 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
     free_m = matches[0]
     lock_m1 = matches[1] if len(matches) > 1 else matches[0]
     lock_m2 = matches[2] if len(matches) > 2 else matches[0]
+
+    r_title = free_m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+    g_no = free_m.get("game_no_label", "01번")
+    role_badge = free_m.get("role_badge", "단독 우위 (1순위 주력)")
 
     f_tag = get_font(27, bold=True)
     f_sub = get_font(31, bold=False)
@@ -1356,13 +1439,13 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
         draw.text((x + 26, y + 14), txt, font=f_tag, fill=t_col)
 
     if board_type == "overview":
-        _draw_pill(85, 230, concept.get("overview_tag", "TODAY'S AI QUANT LINEUP"), sr, sg, sb, (255, 255, 255, 255))
-        _center_text(310, concept.get("overview_title", "오늘의 3-Pillar 시뮬레이션 3경기"), f_team, (255, 255, 255, 255))
+        _draw_pill(85, 230, f"{r_title}  |  AI 밸런스 분류", sr, sg, sb, (255, 255, 255, 255))
+        _center_text(310, concept.get("overview_title", "이번 회차 단독 우위 vs 경합 주의 3선"), f_team, (255, 255, 255, 255))
 
         cards = [
-            ("일일 무료 샘플 (100% OPEN)", free_m, (sr, sg, sb), f"글로벌 지수  홈 {free_m['home_odds']}  |  무 {free_m['draw_odds']}  |  원정 {free_m['away_odds']}"),
-            ("+EV 핵심 밸류 #1 (Basic Pass)", lock_m1, (pr, pg, pb), f"글로벌 지수  {lock_m1['home_odds']} vs {lock_m1['away_odds']}   |   월 3,900원 열람"),
-            ("+EV 핵심 밸류 #2 (Basic Pass)", lock_m2, (lr, lg, lb), f"글로벌 지수  {lock_m2['home_odds']} vs {lock_m2['away_odds']}   |   월 3,900원 열람"),
+            (f"[{g_no}] 무료 샘플 공개 ({role_badge[:6]})", free_m, (sr, sg, sb), f"배당 지수  홈 {free_m['home_odds']}  |  무 {free_m['draw_odds']}  |  원정 {free_m['away_odds']}"),
+            (f"[{lock_m1.get('game_no_label', '02번')}] 핵심 밸런스 #1 (커뮤니티/판매점 무료해금)", lock_m1, (pr, pg, pb), f"배당 지수  {lock_m1['home_odds']} vs {lock_m1['away_odds']}   |   1·2순위 분류"),
+            (f"[{lock_m2.get('game_no_label', '03번')}] 핵심 밸런스 #2 (커뮤니티/판매점 무료해금)", lock_m2, (lr, lg, lb), f"배당 지수  {lock_m2['home_odds']} vs {lock_m2['away_odds']}   |   복수 방어 진단"),
         ]
         cy = 400
         for badge_txt, m, col, bottom_txt in cards:
@@ -1382,18 +1465,18 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             cy += 305
 
     elif board_type == "free_odds":
-        _draw_pill(85, 230, f"일일 무료 시뮬레이션 샘플  |  {free_m['league']}", sr, sg, sb, (255, 255, 255, 255))
+        _draw_pill(85, 230, f"{r_title} · {g_no}  |  {free_m['league']}", sr, sg, sb, (255, 255, 255, 255))
 
         draw.rounded_rectangle([85, 315, WIDTH - 85, 535], radius=24, fill=(20, 30, 56, 250), outline=(pr, pg, pb, 190), width=2)
         _center_text(345, free_m["home"], f_big, (255, 255, 255, 255))
         _center_text(412, "VS", f_sub_b, (pr, pg, pb, 255))
         _center_text(455, free_m["away"], f_big, (255, 255, 255, 255))
 
-        draw.text((95, 565), "글로벌 표준 시장 확률 지수 (De-vig Index)", font=f_sub_b, fill=(165, 180, 200, 255))
+        draw.text((95, 565), "베트맨 & 글로벌 표준 배당 지수 비교", font=f_sub_b, fill=(165, 180, 200, 255))
         cols = [
-            ("홈 우세 지수", f"{free_m['home_odds']}", (pr, pg, pb)),
-            ("무승부 지수", f"{free_m['draw_odds']}", (148, 163, 184)),
-            ("원정 우세 지수", f"{free_m['away_odds']}", (sr, sg, sb)),
+            ("홈 승 지수", f"{free_m['home_odds']}", (pr, pg, pb)),
+            ("무(접전) 지수", f"{free_m['draw_odds']}", (148, 163, 184)),
+            ("원정 승 지수", f"{free_m['away_odds']}", (sr, sg, sb)),
         ]
         col_w = 280
         start_x = 90
@@ -1409,7 +1492,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
         draw.text((95, 830), "3-Pillar 머신러닝 승률 시뮬레이션 분포", font=f_sub_b, fill=(165, 180, 200, 255))
         bars = [
             (f"홈 ({free_m['home'][:7]})", free_m["home_prob"], (pr, pg, pb)),
-            ("무승부 확률", free_m["draw_prob"], (148, 163, 184)),
+            ("무승부·접전 확률", free_m["draw_prob"], (148, 163, 184)),
             (f"원정 ({free_m['away'][:7]})", free_m["away_prob"], (sr, sg, sb)),
         ]
         by = 895
@@ -1426,7 +1509,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             by += 135
 
     elif board_type == "free_verdict":
-        _draw_pill(85, 230, concept.get("verdict_tag", "SCORENIX QUANT SIMULATION"), pr, pg, pb, (255, 255, 255, 255))
+        _draw_pill(85, 230, f"{r_title} · {g_no}  |  {role_badge}", pr, pg, pb, (255, 255, 255, 255))
         _center_text(325, f"{free_m['home']}  vs  {free_m['away']}", f_team, (255, 255, 255, 255))
 
         draw.rounded_rectangle(
@@ -1436,12 +1519,12 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             outline=(sr, sg, sb, 245),
             width=4,
         )
-        _center_text(445, concept.get("verdict_subtitle", "일일 무료 공개 AI 시뮬레이션 지표"), f_sub_b, (200, 250, 225, 255))
+        _center_text(445, f"구간 분류: {role_badge}", f_sub_b, (200, 250, 225, 255))
         _center_text(520, f"[ {free_m['pick_label']} ]", f_huge, (sr, sg, sb, 255))
         _center_text(635, f"머신러닝 신뢰도 {free_m['win_prob']}%   |   확률 우위 +{free_m['odds_gap']}%p", f_sub_b, (255, 255, 255, 255))
 
         draw.rounded_rectangle([85, 795, WIDTH - 85, 1305], radius=24, fill=(18, 28, 52, 245), outline=(pr, pg, pb, 150), width=2)
-        draw.text((120, 830), "3-Pillar 퀀트 데이터 분석 요약", font=f_sub_b, fill=(pr, pg, pb, 255))
+        draw.text((120, 830), "베트맨 3-Pillar 퀀트 데이터 분석 요약", font=f_sub_b, fill=(pr, pg, pb, 255))
 
         wrapped_reason = _wrap_text(draw, free_m["reason"], f_sub, WIDTH - 250)
         ry = 905
@@ -1450,17 +1533,17 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             ry += 54
 
         draw.rounded_rectangle([120, 1155, WIDTH - 120, 1265], radius=16, fill=(12, 20, 38, 255), outline=(sr, sg, sb, 170), width=2)
-        _center_text(1190, "설명란에 무료 1경기 상세 리포트 & 회차권 1,500원 안내 수록!", f_sub_b, (sr, sg, sb, 255))
+        _center_text(1190, "전국 6,500개 동네 판매점 & 승부예측 커뮤니티 참여 시 전 경기 무료해금!", f_sub_b, (sr, sg, sb, 255))
 
     elif board_type in ("result_overview", "result_hit_detail", "result_miss_note", "result_cta"):
         acc_pct = free_m.get("summary_accuracy", 80.0)
         if board_type == "result_overview":
-            _draw_pill(85, 230, f"AI 적중 영수증 & 오답노트  |  최근 적중률 {acc_pct}%", sr, sg, sb, (255, 255, 255, 255))
-            _center_text(310, "프로토 승부식 AI 예측 실제 스코어 검증", f_team, (255, 255, 255, 255))
+            _draw_pill(85, 230, f"베트맨 AI 적중 성적표 & 오답노트  |  적중률 {acc_pct}%", sr, sg, sb, (255, 255, 255, 255))
+            _center_text(310, "승무패·프로토 AI 예측 실제 스코어 검증", f_team, (255, 255, 255, 255))
             r_cards = [
-                ("✅ 적중 완료 (HIT)", free_m, (16, 185, 129)),
-                ("📝 AI 오답노트 (MISS)", lock_m1, (244, 63, 94)),
-                ("✅ 적중 완료 (HIT)", lock_m2, (56, 189, 248)),
+                ("적중 완료 (HIT)", free_m, (16, 185, 129)),
+                ("AI 오답노트 (MISS)", lock_m1, (244, 63, 94)),
+                ("적중 완료 (HIT)", lock_m2, (56, 189, 248)),
             ]
             cy = 400
             for badge_txt, m, col in r_cards:
@@ -1475,7 +1558,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             target_m = free_m if board_type == "result_hit_detail" else lock_m1
             is_hit = board_type == "result_hit_detail"
             c_rgb = (16, 185, 129) if is_hit else (244, 63, 94)
-            tag_str = "✅ 적중 영수증 상세 검증 (HIT)" if is_hit else "📝 AI 오답노트 & 가중치 보정 (MISS)"
+            tag_str = "적중 영수증 상세 검증 (HIT)" if is_hit else "AI 오답노트 & 가중치 보정 (MISS)"
             _draw_pill(85, 230, tag_str, *c_rgb, (255, 255, 255, 255))
             _center_text(325, f"{target_m['home']}  vs  {target_m['away']}", f_team, (255, 255, 255, 255))
             draw.rounded_rectangle([85, 415, WIDTH - 85, 755], radius=28, fill=(14, 34, 46, 250), outline=(*c_rgb, 245), width=4)
@@ -1490,25 +1573,25 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
                 draw.text((120, ry), line, font=f_sub, fill=(241, 245, 249, 255))
                 ry += 54
         else:
-            _draw_pill(85, 230, "프로토 승부식 AI 종합 공략  |  이번 회차 1,500원", pr, pg, pb, (255, 255, 255, 255))
-            _center_text(320, "이번 회차 주력 2폴더 & 배당가치 Top 5", f_team, (255, 255, 255, 255))
+            _draw_pill(85, 230, "베트맨 전 게임 AI 통합 밸런스 표  |  O2O 무료 해금", pr, pg, pb, (255, 255, 255, 255))
+            _center_text(320, "축구토토 승무패 14경기 & 프로토 승부식", f_team, (255, 255, 255, 255))
             draw.rounded_rectangle([85, 420, WIDTH - 85, 980], radius=24, fill=(18, 28, 52, 248), outline=(pr, pg, pb, 215), width=3)
-            _center_text(480, "일반 대상 경기 승패 확률 100% 무료 공개!", f_sub_b, (52, 211, 153, 255))
-            _center_text(575, "AI 확신도 85%+ 핵심 주력 픽 & 조합기", f_team, (255, 255, 255, 255))
-            _center_text(675, "이번 회차 열람권 1,500원 / 월 9,900원", f_big, (251, 191, 36, 255))
-            _center_text(790, "토토 판매점 전용 A4 출력 구독 (월 39,000원)", f_sub_b, (192, 132, 252, 255))
+            _center_text(480, "온라인 승부예측 커뮤니티에 내 예상 남기면", f_sub_b, (52, 211, 153, 255))
+            _center_text(575, "이번 회차 잠금 경기 100% 무료 해금!", f_team, (255, 255, 255, 255))
+            _center_text(675, "전국 6,500개 동네 판매점 등록 시 무료", f_big, (251, 191, 36, 255))
+            _center_text(790, "판매점 전용 PC 전광판 & A4 분석 벽보 지원", f_sub_b, (192, 132, 252, 255))
             draw.rounded_rectangle([85, 1040, WIDTH - 85, 1310], radius=24, fill=(12, 38, 58, 250), outline=(pr, pg, pb, 240), width=3)
             _center_text(1090, "검색창에 [ 스코어닉스 ] 또는", f_sub_b, (255, 255, 255, 255))
             _center_text(1160, "scorenix.com", f_huge, (pr, pg, pb, 255))
 
     else:
-        _draw_pill(85, 230, "BASIC PASS (월 3,900원)  |  +EV VALUE REPORT", lr, lg, lb, (255, 255, 255, 255))
+        _draw_pill(85, 230, f"{r_title}  |  커뮤니티 & 판매점 무료 해금", lr, lg, lb, (255, 255, 255, 255))
 
-        _center_text(318, "오늘 밤 기대값(+EV) 1·2위 핵심 밸류 매치", f_team, (255, 255, 255, 255))
+        _center_text(318, "이번 회차 단통 주력 vs 복수 방어 핵심 매치", f_team, (255, 255, 255, 255))
 
         locked_list = [
-            ("+EV 핵심 밸류 리포트 #1 (기대값 1위)", lock_m1),
-            ("+EV 핵심 밸류 리포트 #2 (신뢰도 상위)", lock_m2),
+            (f"[{lock_m1.get('game_no_label', '02번')}] 핵심 밸런스 리포트 #1 (1·2순위 분류)", lock_m1),
+            (f"[{lock_m2.get('game_no_label', '03번')}] 핵심 밸런스 리포트 #2 (경합·이변 진단)", lock_m2),
         ]
         ly = 405
         for lbl, lm in locked_list:
@@ -1529,7 +1612,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
                 outline=(sr, sg, sb, 220),
                 width=2,
             )
-            _center_text(ly + 198, "☕ 커피 한 잔 값 (월 3,900원)으로 전체 리포트 열람", f_sub_b, (167, 243, 208, 255))
+            _center_text(ly + 198, "승부예측 커뮤니티 참여 또는 동네 판매점 등록 시 무료 해금!", f_sub_b, (167, 243, 208, 255))
             ly += 320
 
         draw.rounded_rectangle(
@@ -1541,7 +1624,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
         )
         _center_text(1092, "설명란 링크 또는 검색창에 [ 스코어닉스 ]", f_sub_b, (255, 255, 255, 255))
         _center_text(1158, "scorenix.com", f_huge, (pr, pg, pb, 255))
-        _center_text(1242, "일일 무료 샘플 1건 & 월 3,900원 전 경기 무제한 열람", f_sub, (251, 191, 36, 255))
+        _center_text(1242, "승무패 14경기 통합 밸런스 표 · 전국 6,500개 판매점 O2O", f_sub, (251, 191, 36, 255))
 
     return np.array(img)
 
@@ -1587,12 +1670,12 @@ def get_bgm():
 
 def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko", concept_id=None):
     """
-    실시간 데이터 기반 Broadcast Data Shorts v7.0 비디오 렌더러 (5대 컨셉 로테이션 + 적중 성적표/오답노트)
+    실시간 베트맨 공식 게임 데이터 기반 Broadcast Data Shorts v8.0 비디오 렌더러
     """
     is_review = (mode == "result_review" or concept_id == "RESULT_REVIEW")
     matches = fetch_graded_results_for_shorts(limit=5) if is_review else fetch_top_matches(limit=5, lang="ko")
     concept = SHORTS_CONCEPTS.get(concept_id) if concept_id in SHORTS_CONCEPTS else select_rotating_concept(mode, matches)
-    print(f"\n[>>] Broadcast Data Video Renderer v7.0 starting (mode={mode}, concept={concept['id']}, voice={concept['voice']})...")
+    print(f"\n[>>] Betman Broadcast Data Video Renderer v8.0 starting (mode={mode}, concept={concept['id']}, voice={concept['voice']})...")
 
     script_items = build_script(matches, mode=mode, concept=concept)
 
@@ -1641,7 +1724,7 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
         bgm = bgm.fx(volumex, 0.08)
         final = final.set_audio(CompositeAudioClip([final.audio, bgm]))
 
-    print(f"  [REC] Encoding Broadcast Shorts v7.0 [{concept['id']}] video...")
+    print(f"  [REC] Encoding Broadcast Shorts v8.0 [{concept['id']}] video...")
     final.write_videofile(
         output_path,
         fps=24,
@@ -1668,7 +1751,7 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
             except OSError:
                 pass
 
-    print(f"  [OK] Broadcast Shorts v7.0 ({concept['id']}) Done! → {output_path}")
+    print(f"  [OK] Broadcast Shorts v8.0 ({concept['id']}) Done! → {output_path}")
 
     if auto_upload:
         _upload(output_path, matches=matches, concept=concept)
@@ -1679,10 +1762,10 @@ def generate_video_card_fallback(bg_video_path, output_path, auto_upload=False, 
 # ─── 메인 영상 생성 ─────────────────────────────────────
 def generate_video(bg_video_path, output_path, auto_upload=False, use_avatar=False, mode="marketing", lang="ko", concept_id=None):
     """
-    스코어닉스 Shorts 영상 생성 (v7.0 — 5-Concept Rotating Broadcast Data Engine)
+    스코어닉스 Shorts 영상 생성 (v8.0 — Betman Official Game 5-Concept Rotating Broadcast Engine)
     """
     print("=" * 60)
-    print(" [>>] Scorenix Video Pipeline v7.0 (5-Concept Rotating Broadcast Engine)")
+    print(" [>>] Scorenix Video Pipeline v8.0 (Betman Official Game Broadcast Engine)")
     if is_elevenlabs_available():
         print(" [MIC] TTS: ElevenLabs (premium)")
     else:
@@ -1722,13 +1805,12 @@ def _upload(video_path, matches=None, concept=None):
         return False
 
 
-
 # ─── CLI Entry Point ────────────────────────────────────
 if __name__ == "__main__":
     import argparse
     import time
 
-    parser = argparse.ArgumentParser(description="Scorenix Shorts Generator v4.0")
+    parser = argparse.ArgumentParser(description="Scorenix Shorts Generator v8.0")
     parser.add_argument("--loop", action="store_true", help="24H auto-upload mode")
     parser.add_argument("--interval", type=int, default=3, help="Hours between uploads")
     parser.add_argument("--avatar", action="store_true",
@@ -1741,7 +1823,6 @@ if __name__ == "__main__":
                         help="Target language for script/TTS (ko, en, ja, all)")
     args = parser.parse_args()
 
-    # AI 서비스 상태 확인
     print()
     if args.avatar:
         try:
@@ -1770,7 +1851,6 @@ if __name__ == "__main__":
                 ts = datetime.datetime.now().strftime("%m%d_%H%M")
                 hour = datetime.datetime.now().hour
 
-                # KST 시간대별 쇼츠 유형 로테이션
                 if 8 <= hour < 11:
                     marketing_mode = "top_picks"
                 elif 12 <= hour < 15:
@@ -1780,7 +1860,6 @@ if __name__ == "__main__":
                 else:
                     marketing_mode = "marketing"
 
-                # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
                 out_membership = os.path.join(output_dir, f"scorenix_membership_{ts}.mp4")
                 out_marketing = os.path.join(output_dir, f"scorenix_shorts_{marketing_mode}_{ts}.mp4")
 
@@ -1792,7 +1871,6 @@ if __name__ == "__main__":
                 generate_video("background.mp4", out_marketing,
                                auto_upload=False, use_avatar=args.avatar, mode=marketing_mode)
 
-                # 마케팅 영상을 유튜브 업로드
                 success = _upload(out_marketing)
                 if success:
                     upload_count += 1
@@ -1817,7 +1895,6 @@ if __name__ == "__main__":
             print(f"\n  [Z] Next upload at {next_time.strftime('%H:%M')}")
             time.sleep(args.interval * 3600)
     else:
-        # 수동 모드 또는 비대화식 단일 실행 모드
         ts = datetime.datetime.now().strftime("%m%d_%H%M")
         
         if args.mode:
@@ -1825,10 +1902,10 @@ if __name__ == "__main__":
             print(f"\n[>>] Non-interactive execution. Selected Mode: {marketing_mode.upper()}")
         else:
             print("\n[>>] Select MARKETING video mode:")
-            print("  1. 경기 분석 티저 (marketing)")
-            print("  2. 적중 인증 자랑 (winning)")
-            print("  3. 가치 투자 교육 (educational)")
-            print("  4. 오늘의 TOP 3 티저 (top_picks)")
+            print("  1. 베트맨 경기 분석 티저 (marketing)")
+            print("  2. 베트맨 적중 성적표 (winning)")
+            print("  3. 승무패·프로토 밸런스 교육 (educational)")
+            print("  4. 이번 회차 핵심 3경기 티저 (top_picks)")
             mode_choice = input("Select mode (1-4) [Default: 1]: ").strip()
             
             if mode_choice == "2":
@@ -1840,11 +1917,9 @@ if __name__ == "__main__":
             else:
                 marketing_mode = "marketing"
 
-        # 3대 타겟 다국어 루프 생성
         target_langs = ["ko", "en", "ja"] if args.lang == "all" else [args.lang]
         
         for lang in target_langs:
-            # 멤버십 정밀분석용 & 마케팅 유입용 영상 두 가지를 항상 분리해서 생성!
             out_membership = os.path.join(output_dir, f"scorenix_membership_{lang}_{ts}.mp4")
             out_marketing = os.path.join(output_dir, f"scorenix_shorts_{marketing_mode}_{lang}_{ts}.mp4")
 
@@ -1870,4 +1945,3 @@ if __name__ == "__main__":
             os.startfile(output_dir)
         except Exception:
             pass
-

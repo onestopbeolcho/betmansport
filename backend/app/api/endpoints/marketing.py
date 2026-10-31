@@ -1,7 +1,7 @@
 """
-Marketing API — SNS 콘텐츠 자동 생성 및 Buffer 발행
-- 미리보기 (preview): Gemini로 콘텐츠 생성만
-- 발행 (publish): Buffer API로 실제 SNS 발행
+Marketing API — 베트맨 공식 게임 기반 SNS 콘텐츠 자동 생성 및 Buffer 발행
+- 미리보기 (preview): 베트맨 공식 회차(승무패 14경기, 프로토 승부식, 승5패, 스페셜N) 경기 기반 Gemini 콘텐츠 생성
+- 발행 (publish / publish_rotation): Buffer API로 실제 SNS 발행
 - 이력 조회, 채널 상태 확인
 """
 from fastapi import APIRouter, HTTPException
@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# 발행 이력 (메모리 캐시 — 프로덕션에서는 Firestore 전환 권장)
+# 발행 이력 (메모리 캐시 — 프로덕션에서는 Firestore 병행)
 _publish_history: list = []
 
 
@@ -27,6 +27,38 @@ class ManualPostRequest(BaseModel):
     text: str
     profile_ids: Optional[List[str]] = None
     image_url: Optional[str] = None  # 이미지 URL 직접 지정
+
+
+async def _load_marketing_predictions(limit: int = 10) -> list:
+    """
+    1순위: 베트맨 공식 발매 회차(축구토토 승무패 14경기, 프로토 승부식, 농구토토 승5패, 스페셜N) 경기 로드.
+    2순위: 베트맨 데이터 비어있을 시 기존 AI 예측 캐시 폴백.
+    """
+    try:
+        from app.services.proto_round_service import get_betman_marketing_matches
+        betman_matches = await get_betman_marketing_matches(limit=limit)
+        if betman_matches:
+            logger.info(f"✅ Loaded {len(betman_matches)} official Betman matches for marketing")
+            return betman_matches
+    except Exception as e:
+        logger.warning(f"Betman marketing match load warning: {e}")
+
+    from app.api.endpoints import ai_predictions as ai_pred_module
+    if not ai_pred_module._predictions_cache:
+        await ai_pred_module.get_ai_predictions_internal()
+    predictions = ai_pred_module._predictions_cache or []
+    pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
+
+    from app.services.team_mapper import TeamMapper
+    mapper = TeamMapper()
+    for p in pred_dicts:
+        th = p.get("team_home") or ""
+        ta = p.get("team_away") or ""
+        if not p.get("team_home_ko") or p.get("team_home_ko") == th:
+            p["team_home_ko"] = mapper.get_korean_name(th) or th
+        if not p.get("team_away_ko") or p.get("team_away_ko") == ta:
+            p["team_away_ko"] = mapper.get_korean_name(ta) or ta
+    return pred_dicts
 
 
 # ─── 채널 상태 ───
@@ -52,31 +84,25 @@ async def get_buffer_channels():
 @router.get("/preview")
 async def preview_sns_content():
     """
-    오늘의 Top 3 고신뢰 경기를 기반으로 SNS 콘텐츠 미리보기.
+    이번 회차 베트맨 공식 게임 핵심 경기를 기반으로 SNS 콘텐츠 미리보기.
     Buffer로 발행하지 않고 Gemini 생성 결과만 반환.
     """
     from app.services.gemini_service import generate_sns_content
-    from app.api.endpoints.ai_predictions import _predictions_cache
 
     try:
-        # 기존 예측 캐시에서 가져오기
-        predictions = _predictions_cache
+        pred_dicts = await _load_marketing_predictions(limit=8)
 
-        if not predictions:
+        if not pred_dicts:
             return {
                 "posts": [],
-                "message": "현재 예측 데이터가 없습니다. /scheduler/collect_odds 먼저 실행하세요.",
+                "message": "현재 예측 데이터가 없습니다.",
             }
 
-        # dict 변환
-        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
-
-        # SNS 콘텐츠 생성
         posts = await generate_sns_content(pred_dicts)
 
         return {
             "posts": posts,
-            "total_predictions": len(predictions),
+            "total_predictions": len(pred_dicts),
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -90,34 +116,22 @@ async def preview_sns_content():
 @router.post("/publish")
 async def publish_sns_content(req: PublishRequest = PublishRequest()):
     """
-    Gemini로 생성한 SNS 콘텐츠를 Buffer를 통해 발행.
+    베트맨 공식 게임 기반 SNS 콘텐츠를 Buffer를 통해 발행.
     post_index 지정 시 해당 게시물만, 미지정 시 전체 발행.
     """
     from app.services.buffer_service import buffer_service
     from app.services.gemini_service import generate_sns_content
-    from app.api.endpoints.ai_predictions import _predictions_cache
 
     if not buffer_service.is_configured:
         raise HTTPException(status_code=503, detail="BUFFER_ACCESS_TOKEN not configured")
 
     try:
-        # 콘텐츠 생성
-        from app.api.endpoints import ai_predictions as ai_pred_module
-        
-        if not ai_pred_module._predictions_cache:
-            logger.info("Predictions cache is empty. Forcing prediction generation...")
-            await ai_pred_module.get_ai_predictions_internal()
-            
-        predictions = ai_pred_module._predictions_cache
-        
-        if not predictions:
+        pred_dicts = await _load_marketing_predictions(limit=8)
+        if not pred_dicts:
             raise HTTPException(status_code=404, detail="No predictions available for publishing")
-            
-        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
-        from app.services.gemini_service import generate_sns_content
+
         posts = await generate_sns_content(pred_dicts)
 
-        # 발행 대상 선택
         if req.post_index is not None:
             if req.post_index >= len(posts):
                 raise HTTPException(status_code=400, detail=f"post_index {req.post_index} out of range (0-{len(posts)-1})")
@@ -125,10 +139,8 @@ async def publish_sns_content(req: PublishRequest = PublishRequest()):
         else:
             targets = posts
 
-        # Buffer 발행
         results = []
         for i, post in enumerate(targets):
-            # 이미지 카드 생성
             image_url = None
             if req.with_image:
                 try:
@@ -156,7 +168,6 @@ async def publish_sns_content(req: PublishRequest = PublishRequest()):
                 "buffer_result": result,
             })
 
-            # 이력 저장
             _publish_history.append({
                 "match_id": post["match_id"],
                 "text": post["text"][:100] + "...",
@@ -214,7 +225,7 @@ class RotationPublishRequest(BaseModel):
 @router.post("/publish_rotation")
 async def publish_rotation_post(req: RotationPublishRequest = RotationPublishRequest()):
     """
-    시간대별/지정 타입별 SNS 로테이션 발행 실행 (X/Twitter + Facebook + Instagram 동시 발행).
+    시간대별/지정 타입별 베트맨 공식 게임 SNS 로테이션 발행 실행 (Threads + Facebook + Instagram 동시 발행).
     """
     from app.services.buffer_service import buffer_service
     from app.services.gemini_service import (
@@ -224,14 +235,12 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
         generate_top_picks_sns,
         generate_generic_promo
     )
-    from app.api.endpoints import ai_predictions as ai_pred_module
     from app.models.prediction_db import get_recent_ai_predictions
 
     if not buffer_service.is_configured:
         raise HTTPException(status_code=503, detail="BUFFER_ACCESS_TOKEN not configured")
 
     try:
-        # 1. KST 시간대 자동 분석 또는 지정 타입 결정
         from datetime import datetime, timezone, timedelta
         KST = timezone(timedelta(hours=9))
         now_kst = datetime.now(KST)
@@ -239,9 +248,9 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
         post_type = req.post_type
         if not post_type:
-            # 09:30 KST (hour=9) -> 오늘의 핵심 매치 AI 퀀트 리포트 ("prediction")
-            # 13:30 KST (hour=13) -> 무료 샘플 1건 + TOP 3 +EV 밸류 리포트 브리핑 ("top_picks")
-            # 17:30 KST (hour=17) -> 백테스트 적중 검증 리포트 (없으면 다른 경기 "prediction")
+            # 09:30 KST (hour=9) -> 이번 회차 베트맨 핵심 매치 AI 밸런스 리포트 ("prediction")
+            # 13:30 KST (hour=13) -> 무료 샘플 1건 + TOP 3 핵심 밸런스 브리핑 ("top_picks")
+            # 17:30 KST (hour=17) -> 백테스트 적중 검증 리포트 (없으면 다른 베트맨 경기 "prediction")
             if 7 <= hour <= 11:
                 post_type = "prediction"
             elif 12 <= hour <= 15:
@@ -251,28 +260,13 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
 
         logger.info(f"📱 SNS Rotation triggering: type={post_type} (KST Hour: {hour})")
 
-        # 2. 타입별 실행 및 데이터 매핑
         text = None
         image_url = None
         match_id = "rotation"
         confidence = 0
 
-        # 캐시된 경기 예측 로드
-        if not ai_pred_module._predictions_cache:
-            await ai_pred_module.get_ai_predictions_internal()
-        predictions = ai_pred_module._predictions_cache
-        pred_dicts = [p.dict() if hasattr(p, "dict") else p for p in predictions]
-
-        # 한글 팀명 보강
-        from app.services.team_mapper import TeamMapper
-        mapper = TeamMapper()
-        for p in pred_dicts:
-            th = p.get("team_home") or ""
-            ta = p.get("team_away") or ""
-            if not p.get("team_home_ko") or p.get("team_home_ko") == th:
-                p["team_home_ko"] = mapper.get_korean_name(th) or th
-            if not p.get("team_away_ko") or p.get("team_away_ko") == ta:
-                p["team_away_ko"] = mapper.get_korean_name(ta) or ta
+        # 베트맨 공식 경기 우선 로드
+        pred_dicts = await _load_marketing_predictions(limit=12)
 
         # 최근 발행된 match_id 목록 조회 (당일 및 전일 중복 경기 발행 원천 차단)
         published_today_ids = set()
@@ -310,13 +304,13 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
                     match_id = f"hit_{best_hit.get('match_id', '')}"
                     confidence = best_hit.get("confidence", 80)
                 else:
-                    logger.info("No unposted HIT history found, falling back to match prediction...")
+                    logger.info("No unposted HIT history found, falling back to Betman match prediction...")
                     post_type = "prediction"
             except Exception as e:
                 logger.error(f"Winning proof rotation error: {e}")
                 post_type = "prediction"
 
-        # B. 무료 AI 샘플 1건 공개 + 오늘의 +EV 상위 3경기 티저 브리핑
+        # B. 무료 AI 샘플 1건 공개 + 이번 회차 베트맨 핵심 3경기 티저 브리핑
         if post_type == "top_picks" and pred_dicts and not text:
             try:
                 sorted_preds = sorted(pred_dicts, key=lambda x: x.get("confidence", 0), reverse=True)
@@ -332,7 +326,7 @@ async def publish_rotation_post(req: RotationPublishRequest = RotationPublishReq
             except Exception as e:
                 logger.error(f"Top picks rotation error: {e}")
 
-        # C. 단일 경기 정밀 AI 3-Pillar 리포트 (당일 중복 경기 제외)
+        # C. 단일 베트맨 경기 정밀 AI 밸런스 리포트 (당일 중복 경기 제외)
         if post_type in ["prediction", "preview"] or not text:
             post_type = "prediction"
             if pred_dicts:

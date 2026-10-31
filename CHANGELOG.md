@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.5 - Betman Official Game Marketing & YouTube Shorts v8.0 Alignment (O2O Store & Community Funnel)
+- **Unified Betman Official Match Provider (`proto_round_service.py`)**:
+    - Added `get_betman_marketing_matches(limit, preferred_gm_id)` pulling live matches from active Betman official games (`G011 축구토토 승무패 14경기`, `G101 프로토 승부식`, `G027 농구토토 승5패`, `G055 스페셜N`) with official round titles, match numbers (`01번~14번`), Betman team abbreviations, and role classifications (`📌 단독 우위 (1순위 주력)`, `🛡️ 경합 주의 (1·2순위 병행)`, `⚠️ 이변·혼전 경보`).
+- **SNS, Card News & SEO Blog Pipeline Alignment (`marketing.py`, `gemini_service.py`, `card_generator.py`, `blogger.py`, `wordpress.py`, `post-to-buffer.mjs`)**:
+    - Updated all SNS posts, 1080x1080 PIL match cards, and Blogger/WordPress SEO articles to feature official Betman round titles, match numbers, 1st/2nd priority tier classifications, and the **Nationwide 6,500+ Store O2O (`PC 전광판 · A4 분석 벽보`) & Online Prediction Community Free Unlock (`https://scorenix.com/ko`)** funnel.
+- **YouTube Broadcast Shorts v8.0 — Betman Official Game Edition (`generate_shorts_pipeline.py`, `distribution_scheduler.py`)**:
+    - Upgraded the 9:16 Broadcast Data Shorts engine (`v8.0`) to prioritize official Betman round matches, display round titles/match numbers/role badges on the broadcast board, and narrate Betman-aligned scripts and CTAs.
+
 ## v0.8.4 - Store Owner Mode (PC Kiosk Display & A4 Print), Online Info Restriction & Round Prediction Community Lounge
 - **Store Owner Dedicated Login & PC Kiosk Display Mode (`login/page.tsx`, `Navbar.tsx`, `ProtoRoundDashboard.tsx`)**:
     - Added **`[🏪 판매점(점주) 전용 모드]`** tab on `/ko/login?mode=store` and top navbar switcher.

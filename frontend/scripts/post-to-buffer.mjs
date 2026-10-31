@@ -1,13 +1,9 @@
 /**
- * Buffer SNS 자동 포스팅 스크립트 (GraphQL API)
- * 빌드 후 실행: 오늘 경기 분석 URL을 Buffer에 자동 포스팅
+ * Buffer SNS 자동 포스팅 스크립트 (베트맨 공식 게임 & O2O 판매점/커뮤니티 퍼널)
+ * 빌드 후 실행: 이번 회차 베트맨 공식 게임(승무패 14경기, 프로토 승부식, 승5패, 스페셜N) 분석을 Buffer에 자동 포스팅
  *
  * 환경변수:
  *   BUFFER_ACCESS_TOKEN  - Buffer API Bearer 토큰
- *
- * 채널 (자동 감지):
- *   - Instagram: scorenix_official
- *   - Facebook: Scorenix
  *
  * Usage: node scripts/post-to-buffer.mjs
  */
@@ -104,43 +100,50 @@ async function createPost(channelId, text) {
 function generatePostText(match, platform) {
     const bestProb = Math.max(match.home_prob, match.draw_prob, match.away_prob);
     const favorite = match.home_prob >= match.away_prob ? match.home_ko : match.away_ko;
+    const gap = Math.abs((match.home_prob || 50) - (match.away_prob || 50));
+    const roleLabel = gap >= 15 ? '📌 단독 우위 (1순위 주력)' : '🛡️ 경합 주의 (1·2순위 복수병행)';
+    const roundTitle = match.round_title || '축구토토 승무패 · 프로토 승부식';
+    const gameNo = match.game_no_label || '핵심매치';
     const emoji = LEAGUE_EMOJI[match.league] || '⚽';
     const league = LEAGUE_NAMES[match.league] || match.league;
-    const url = `${SITE_URL}/ko/match/${match.date}/${match.slug}/`;
+    const url = `${SITE_URL}/ko`;
 
     if (platform === 'instagram') {
-        return `🤖 AI 경기분석 | ${match.date}
+        return `📊 [${roundTitle} · ${gameNo}] AI 밸런스 리포트 | ${match.date}
 
-${emoji} ${match.home_ko} vs ${match.away_ko}
-🏟️ ${league}
-📊 AI 예측: ${favorite} 우세 ${bestProb}%
-💰 배당: 홈 ${match.home_odds} / 무 ${match.draw_odds} / 원정 ${match.away_odds}
+${emoji} ${match.home_ko} vs ${match.away_ko} (${league})
+🎯 구간 분류: ${roleLabel}
+📈 AI 1순위 시뮬레이션: ${favorite} 우세 ${bestProb}%
+💰 배당 지수: 홈 ${match.home_odds} / 무 ${match.draw_odds} / 원정 ${match.away_odds}
+
+🏪 전국 6,500개 동네 판매점(PC 전광판·A4 벽보) & 온라인 승부예측 커뮤니티 참여 시 14경기 전체 밸런스 표 100% 무료 해금!
 
 🔗 [스코어닉스 공식 채널]
-🌐 AI 분석 본진: https://scorenix.com/ko/analysis (프로필 링크!)
+🌐 베트맨 전 게임 AI리포트: https://scorenix.com/ko (프로필 링크!)
 🎬 공식 유튜브: https://www.youtube.com/@스코어닉스
 🧵 공식 쓰레드: https://www.threads.com/@scorenix_official
 ✍️ 공식 블로그: https://official-scorenix.blogspot.com
 
-#축구분석 #AI예측 #스포츠분석 #Scorenix #스코어닉스
+#축구토토승무패 #프로토승부식 #농구토토승5패 #베트맨 #Scorenix #스코어닉스
 #${match.home_ko.replace(/\s/g, '')} #${match.away_ko.replace(/\s/g, '')}
-#${league.replace(/\s/g, '')} #해외축구 #배당분석`;
+#${league.replace(/\s/g, '')} #스포츠토토분석 #배당분석`;
     }
 
     // Threads / default
-    return `🤖 AI 경기분석 | ${match.date}
+    return `📊 [${roundTitle} · ${gameNo}] AI 밸런스 리포트 | ${match.date}
 
 ${emoji} ${match.home_ko} vs ${match.away_ko} (${league})
-📊 AI 예측: ${favorite} 우세 ${bestProb}%
+🎯 구간 분류: ${roleLabel}
+📈 AI 1순위: ${favorite} 우세 ${bestProb}%
 💰 배당: 홈 ${match.home_odds} / 무 ${match.draw_odds} / 원정 ${match.away_odds}
 
-🔗 공식 채널
-🌐 AI분석: ${url}
+🏪 승부예측 커뮤니티 투표 또는 동네 판매점 등록 시 14경기 전체 표 무료 해금!
+🌐 베트맨 AI리포트: ${url}
 🎬 유튜브: https://www.youtube.com/@스코어닉스
 📸 인스타: https://www.instagram.com/scorenix_official/
 ✍️ 블로그: https://official-scorenix.blogspot.com
 
-#축구분석 #AI예측 #Scorenix`;
+#축구토토승무패 #프로토승부식 #베트맨 #Scorenix`;
 }
 
 // ── Select top matches ──
@@ -157,14 +160,12 @@ function selectTopMatches(matches, maxPosts = 5) {
 async function main() {
     console.log('📱 Buffer SNS 포스팅 시작...\n');
 
-    // Check token
     if (!BUFFER_TOKEN) {
         console.log('⚠️  BUFFER_ACCESS_TOKEN 미설정 — Buffer 포스팅 건너뜀');
         console.log('   환경변수를 추가해주세요: BUFFER_ACCESS_TOKEN=your_token\n');
         return;
     }
 
-    // 1. Get channels
     const channels = await getChannels();
     if (channels.length === 0) {
         console.log('⚠️  연결된 SNS 채널 없음');
@@ -174,7 +175,6 @@ async function main() {
     channels.forEach(ch => console.log(`   • ${ch.service} — ${ch.name} (${ch.id})`));
     console.log('');
 
-    // 2. Fetch matches
     let matches = [];
     try {
         const res = await fetch(`${API_BASE}/api/ai/match-list`);
@@ -192,7 +192,6 @@ async function main() {
         return;
     }
 
-    // 3. Select top matches
     const today = new Date().toISOString().split('T')[0];
     const todayMatches = matches.filter(m => m.date === today);
     const target = todayMatches.length > 0 ? todayMatches : matches;
@@ -200,7 +199,6 @@ async function main() {
 
     console.log(`📊 총 ${matches.length}개 중 ${selected.length}개 포스팅 대상:\n`);
 
-    // 4. Post to each channel
     let totalSuccess = 0;
     for (const match of selected) {
         const label = `${match.home_ko} vs ${match.away_ko}`;
@@ -219,7 +217,6 @@ async function main() {
             } catch (e) {
                 console.log(`     ❌ ${ch.service} → ${e.message}`);
             }
-            // Rate limit: 500ms between posts
             await new Promise(r => setTimeout(r, 500));
         }
         console.log('');

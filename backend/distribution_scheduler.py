@@ -1,24 +1,21 @@
 """
 Scorenix Shorts Distribution Scheduler
 ======================================
-1. 지정한 모드로 하이브리드 쇼츠 영상을 제작합니다.
+1. 베트맨 공식 게임(승무패 14경기, 프로토 승부식, 농구토토 승5패, 스페셜N) 기반으로 하이브리드 쇼츠 영상을 제작합니다.
 2. 유튜브 숏츠에 영상을 자동으로 업로드합니다.
-3. 구글 드라이브 지정 공유 폴더로 자동 동기화(업로드)합니다.
-4. 등록된 텔레그램(Telegram) 채널/봇으로 업로드 완료 알림 및 릴스/틱톡 수동 복사용 제목 & 태그 텍스트를 발송합니다.
+3. 등록된 텔레그램(Telegram) 채널/봇으로 업로드 완료 알림을 발송합니다.
 """
 import os
 import sys
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 import requests
 
-# 프로젝트 루트 경로 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.models.config_db import load_config_to_env
-from app.services.google_drive_service import google_drive_service
-from generate_shorts_pipeline import generate_video, build_script, fetch_top_matches, fetch_graded_results_for_shorts, build_youtube_metadata, select_rotating_concept
+from generate_shorts_pipeline import generate_video, fetch_top_matches, fetch_graded_results_for_shorts, build_youtube_metadata, select_rotating_concept
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,10 +57,10 @@ def send_telegram_alert(message: str) -> bool:
 
 async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = False, langs: list = None):
     """
-    한국어 유료 전환 퍼널 집중 — Broadcast Shorts v7.0 (5종 컨셉 자동 로테이션) 제작 및 유튜브 자동 배포 파이프라인
+    베트맨 공식 게임 & O2O 판매점/커뮤니티 무료 해금 퍼널 집중 — Broadcast Shorts v8.0 제작 및 유튜브 자동 배포 파이프라인
     """
     langs = ["ko"]
-    logger.info(f"🚀 [Broadcast Shorts v7.0] 배포 파이프라인 트리거됨. 모드: {mode} (대상 언어: {langs})")
+    logger.info(f"🚀 [Broadcast Shorts v8.0 - Betman Edition] 배포 파이프라인 트리거됨. 모드: {mode}")
 
     load_config_to_env()
 
@@ -78,11 +75,10 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
         concept_id = concept.get("id", "QUANT_RADAR")
         meta = build_youtube_metadata(matches, concept=concept)
 
-        logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v7.0 [{concept_id}] 빌드 및 배포 시작...")
+        logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v8.0 [{concept_id}] 빌드 및 배포 시작...")
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         video_path = os.path.join(output_dir, f"scorenix_shorts_{concept_id}_{lang}_{ts}.mp4")
 
-        # 1. 숏폼 비디오 생성 (Broadcast Data Card v7.0 — 5종 컨셉 로테이션)
         try:
             loop = asyncio.get_running_loop()
             rendered_path = await loop.run_in_executor(
@@ -106,7 +102,6 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
 
         logger.info(f"✅ [{lang.upper()}] 비디오 렌더링 완료: {rendered_path}")
 
-        # 2. 유튜브 숏츠 자동 업로드
         logger.info(f"📤 [{lang.upper()}] 유튜브 숏츠 자동 업로드 시도 중...")
         youtube_url = None
         try:
@@ -125,15 +120,16 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
         except Exception as yt_err:
             logger.error(f"❌ [{lang.upper()}] 유튜브 업로드 실패: {yt_err}")
 
+        free_m = meta["free_match"]
         results[lang] = {
             "youtube_url": youtube_url,
             "concept": concept_id,
             "voice": concept.get("voice"),
             "title": meta["title"],
-            "free_match": f"{meta['free_match']['home']} vs {meta['free_match']['away']} ({meta['free_match']['pick_label']})",
+            "round_title": free_m.get("round_title", "베트맨"),
+            "free_match": f"[{free_m.get('game_no_label', '01번')}] {free_m['home']} vs {free_m['away']} ({free_m['pick_label']})",
         }
 
-        # 3. 로컬 임시 파일 정리
         try:
             if os.path.exists(rendered_path):
                 os.remove(rendered_path)
@@ -141,22 +137,21 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
         except OSError as clean_err:
             logger.warning(f"⚠️ [{lang.upper()}] 로컬 임시 비디오 정리 오류: {clean_err}")
 
-    # 4. 텔레그램 알림 전송
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     ko_res = results.get("ko", {})
     yt_link = ko_res.get("youtube_url") or "업로드 대기/실패"
     alert_msg = (
-        f"<b>🎬 스코어닉스 Broadcast Shorts v7.0 자동 발행 완료</b>\n"
+        f"<b>🎬 스코어닉스 베트맨 Broadcast Shorts v8.0 자동 발행 완료</b>\n"
         f"일시: {now_str}\n"
+        f"대상 회차: <b>{ko_res.get('round_title', '베트맨 공식 게임')}</b>\n"
         f"컨셉 테마: <b>{ko_res.get('concept', 'QUANT_RADAR')} ({ko_res.get('voice', '-')})</b>\n"
         f"무료 샘플: <b>{ko_res.get('free_match', '-')}</b>\n"
         f"📺 유튜브 쇼츠: <a href=\"{yt_link}\">{yt_link}</a>\n"
-        f"🌐 분석 페이지: https://scorenix.com/ko/analysis"
+        f"🌐 베트맨 전 게임 통합 리포트: https://scorenix.com/ko"
     )
     send_telegram_alert(alert_msg)
 
     return {"status": "success", "results": results}
-
 
 
 if __name__ == "__main__":

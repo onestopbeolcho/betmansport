@@ -1,7 +1,6 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException
 import logging
 from datetime import datetime, timezone
-import random
 
 from app.services.gemini_service import generate_blogger_content
 from app.services.blogger_service import blogger_service
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 @router.post("/post")
 async def trigger_daily_blogger_post():
     """
-    Trigger generation of Blogger SEO post. Finds one high-value match and posts it.
+    Trigger generation of Blogger SEO post based on active Betman official round matches.
     Can be called manually or from Cloud Scheduler.
     Runs synchronously to prevent Cloud Run sleep.
     """
@@ -23,23 +22,33 @@ async def trigger_daily_blogger_post():
         from app.db.firestore import get_firestore_db
         db = get_firestore_db()
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        doc = db.collection("daily_portfolios").document(today_str).get()
-        
+
         matches = []
-        if not doc.exists:
-            logger.warning(f"No daily_portfolios found for {today_str}. Fetching from pinnacle")
-            from app.services.pinnacle_api import pinnacle_service
-            raw_matches = await pinnacle_service.fetch_odds()
-            matches = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in raw_matches]
-        else:
-            data = doc.to_dict()
-            matches = data.get("matches", [])
-        
+        # 1순위: 베트맨 공식 발매 회차 경기 로드
+        try:
+            from app.services.proto_round_service import get_betman_marketing_matches
+            matches = await get_betman_marketing_matches(limit=8)
+            if matches:
+                logger.info(f"✅ Loaded {len(matches)} official Betman matches for Blogger")
+        except Exception as e_bet:
+            logger.warning(f"Betman matches load warning for Blogger: {e_bet}")
+
+        # 2순위: 폴백
+        if not matches:
+            doc = db.collection("daily_portfolios").document(today_str).get()
+            if not doc.exists:
+                logger.warning(f"No daily_portfolios found for {today_str}. Fetching from pinnacle")
+                from app.services.pinnacle_api import pinnacle_service
+                raw_matches = await pinnacle_service.fetch_odds()
+                matches = [m.model_dump() if hasattr(m, 'model_dump') else m.__dict__ for m in raw_matches]
+            else:
+                data = doc.to_dict()
+                matches = data.get("matches", [])
+
         if not matches:
             logger.warning("No matches found to post on Blogger.")
             return {"status": "error", "message": "No matches found"}
-            
-        # Filter valid matches
+
         from app.services.team_mapper import TeamMapper
         mapper = TeamMapper()
         for m in matches:
@@ -58,10 +67,9 @@ async def trigger_daily_blogger_post():
         import re
         published_count = 0
         skipped_count = 0
-        max_per_run = 2  # 하루 2건 고신뢰 경기 집중 발행 (Blogger 스팸 한도 및 Gemini 429 방지)
+        max_per_run = 2  # 하루 2건 고신뢰 베트맨 경기 집중 발행
         urls = []
 
-        # Loop through top matches of today to post each one individually
         for match in valid:
             if published_count >= max_per_run:
                 break
@@ -79,7 +87,6 @@ async def trigger_daily_blogger_post():
             else:
                 date_param = match_time
 
-            # Firestore-based duplicate check by match date AND run date (sanitize '/' to prevent invalid path error)
             safe_date = re.sub(r'[^a-zA-Z0-9_-]', '-', str(date_param))
             safe_match_id = re.sub(r'[/\\]', '_', str(match_id))
             pub_doc_id = f"{safe_date}_{safe_match_id}"
@@ -104,7 +111,6 @@ async def trigger_daily_blogger_post():
             slug = f"{to_en_slug(t_home_en)}-vs-{to_en_slug(t_away_en)}"
             url_path = f"{safe_date}/{slug}"
 
-            # Generate SEO HTML via Gemini (with brief pause to avoid 429)
             if published_count > 0:
                 await asyncio.sleep(2.5)
             logger.info(f"Generating Blogger content for match: {slug}")
@@ -113,17 +119,11 @@ async def trigger_daily_blogger_post():
                 logger.error(f"Failed to generate HTML content from Gemini for {slug}")
                 continue
 
-            # Format SEO title: [YYYY년 MM월 DD일] 홈팀 vs 원정팀 경기 분석 및 AI 승률 예측
-            try:
-                date_obj = datetime.strptime(date_param, "%Y-%m-%d")
-                formatted_date = f"{date_obj.year}년 {date_obj.month}월 {date_obj.day}일"
-            except Exception:
-                formatted_date = date_param
-            
-            seo_title = f"[{formatted_date}] {t_home_ko} vs {t_away_ko} 경기 분석 및 AI 승률 예측"
+            round_title = match.get("round_title", "축구토토 승무패 · 프로토 승부식")
+            game_no_label = match.get("game_no_label", "핵심매치")
+            seo_title = f"[{round_title} · {game_no_label}] {t_home_ko} vs {t_away_ko} AI 1·2순위 밸런스 및 승률 예측"
             content_res["title"] = seo_title
 
-            # Post to blogger
             logger.info(f"Publishing {seo_title} to Blogger...")
             res = await blogger_service.publish_post(
                 title=content_res["title"],
