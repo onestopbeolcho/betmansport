@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.7 - B2B Store 100% Free Partner Model, B2C Mobile Subscription Alignment (₩3,900 / ₩29,900 / ₩39,000) & Nationwide ~230 District Local SEO Pages
+- **B2B Store 100% Free Partner & Offline-to-Online B2C Funnel (StorePrintReportView.tsx, login/page.tsx, CommunityAndStoreLounge.tsx)**:
+    - Converted Store Owner A4 Wall Poster Print (🖨️ A4 벽보 원클릭 인쇄) & Store Kiosk Mode into a **100% Free Forever Store Partner Program (구독료 평생 0원)** for all 6,277 official stores.
+    - Upgraded the A4 print sheet footer (StorePrintReportView.tsx) with a high-converting **Offline-to-Online B2C Mobile Banner & QR Code**.
+    - Added official store code (TOTO-xxxx) + contact phone verification for in-store PC Kiosk Mode (login/page.tsx) to prevent personal users at home from bypassing B2C subscriptions while keeping 1-click A4 printing frictionless.
+- **B2C Individual Mobile Subscription Pricing (payments.py, rontend/app/[lang]/pricing/page.tsx, rontend/app/[lang]/payment/request/page.tsx, ProtoRoundDashboard.tsx)**:
+    - Aligned B2C personal pricing: 
+ound_pass (₩3,900/회차), pro (₩29,900/월), ip (₩39,000/월), and store_b2b (₩0 무료 상생 파트너).
+- **Nationwide Regional Proto Store Local SEO Landing Pages & Sitemap (rontend/scripts/generate-seo.mjs)**:
+    - Generated static Local SEO landing pages at /ko/stores/ and /ko/stores/[sido-sigungu]/ for all ~230 districts nationwide from proto_stores_master.json and added all URLs to sitemap.xml.
+
 ## v0.8.6 - Nationwide 6,277 Official Proto/Toto Store Cross-Validated Master DB, GPS Store Finder & Local SEO Marketing Integration
 - **Official Sportstoto (6,236) × MOEF 2026 (21,190) Cross-Validation (`DATA/스코어닉스_전국_프로토판매점_교차검증_마스터.csv`, `backend/app/data/proto_stores_master.json`)**:
     - Collected all 6,236 official Sports Toto/Proto stores nationwide (with 100% GPS longitude/latitude coordinates and Smart Slip status) and cross-validated them against the 2026-08-20 MOEF store dataset.

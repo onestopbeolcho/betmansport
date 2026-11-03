@@ -720,29 +720,37 @@ export default function CommunityAndStoreLounge({
                         {/* 판매점 사장님 전용 바로가기 박스 */}
                         <div className="rounded-xl bg-slate-900 text-white p-5 flex flex-col justify-between space-y-3">
                             <div>
-                                <span className="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 text-[11px] font-black">
-                                    🏪 전국 {totalStoresDb.toLocaleString()}개 판매점 점주님 전용
+                                <span className="px-2.5 py-0.5 rounded bg-emerald-400 text-slate-950 text-[11px] font-black">
+                                    🏪 전국 {totalStoresDb.toLocaleString()}개 판매점 사장님 100% 무료 지원
                                 </span>
                                 <h3 className="text-base font-black mt-2">
-                                    사장님 매장에 PC 전광판 &amp; A4 분석벽보를 설치하세요!
+                                    사장님 매장에 A4 분석벽보 &amp; PC 전광판을 무료로 설치하세요!
                                 </h3>
                                 <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                                    점주 모드로 로그인하시면 <strong>매장 모니터용 전광판 화면</strong>과 <strong>고객용 A4 원클릭 인쇄물</strong>을 즉시 이용하실 수 있습니다.
+                                    점주님께는 <strong>매장 게시판용 A4 원클릭 인쇄물</strong>과 <strong>모니터 전광판 화면</strong>을 일체의 유료 비용 없이 <strong>평생 0원(무료)</strong>으로 지원합니다.
                                 </p>
                             </div>
                             <div className="space-y-2">
                                 <Link
-                                    href="/ko/login?mode=store"
-                                    className="block w-full py-2.5 px-4 rounded-lg bg-amber-400 hover:bg-amber-300 !text-slate-950 font-black text-xs text-center transition"
-                                >
-                                    🖥️ 판매점 모드 로그인 (PC 전광판/인쇄)
-                                </Link>
-                                <Link
                                     href="/ko/store/print-report/current"
-                                    className="block w-full py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 !text-white font-bold text-xs text-center transition"
+                                    className="block w-full py-2.5 px-4 rounded-lg bg-emerald-400 hover:bg-emerald-300 !text-slate-950 font-black text-xs text-center transition"
                                 >
-                                    🖨️ A4 벽보 출력 샘플 바로보기
+                                    🖨️ 사장님 무료 A4 분석벽보 지금 인쇄하기
                                 </Link>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    <Link
+                                        href="/ko/login?mode=store"
+                                        className="block py-2 px-2 rounded-lg bg-white/10 hover:bg-white/20 !text-white font-bold text-[11px] text-center transition"
+                                    >
+                                        🖥️ PC 전광판 켜기
+                                    </Link>
+                                    <a
+                                        href="/ko/stores/"
+                                        className="block py-2 px-2 rounded-lg bg-white/10 hover:bg-white/20 !text-white font-bold text-[11px] text-center transition"
+                                    >
+                                        🗺️ 지역별 매장 백과
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

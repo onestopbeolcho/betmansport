@@ -42,9 +42,10 @@ function LoginContent() {
 
     // 판매점 전용 로그인 상태 (전국 6,277개 공식 판매점 검색 자동완성 연동)
     const [storeName, setStoreName] = useState('');
+    const [storeCode, setStoreCode] = useState('');
     const [storeRegion, setStoreRegion] = useState('서울/수도권');
     const [storePhone, setStorePhone] = useState('');
-    const [storeLaunchType, setStoreLaunchType] = useState<'pc_kiosk' | 'a4_print'>('pc_kiosk');
+    const [storeLaunchType, setStoreLaunchType] = useState<'pc_kiosk' | 'a4_print'>('a4_print');
     const [storeSuggestions, setStoreSuggestions] = useState<Array<{ id: string; name: string; address: string; sido: string; sigungu: string }>>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -76,9 +77,13 @@ function LoginContent() {
         }
         try {
             const savedName = localStorage.getItem('scorenix_b2b_store_name');
+            const savedCode = localStorage.getItem('scorenix_b2b_store_code');
             const savedRegion = localStorage.getItem('scorenix_b2b_store_region');
+            const savedPhone = localStorage.getItem('scorenix_b2b_store_phone');
             if (savedName) setStoreName(savedName);
+            if (savedCode) setStoreCode(savedCode);
             if (savedRegion) setStoreRegion(savedRegion);
+            if (savedPhone) setStorePhone(savedPhone);
         } catch {
             // ignore
         }
@@ -95,16 +100,24 @@ function LoginContent() {
     const handleStoreModeLogin = (e: React.FormEvent) => {
         e.preventDefault();
         if (!storeName.trim()) {
-            setError('매장 상호명(예: 행운복권방)을 입력해주세요.');
+            setError('매장 상호명(예: 역삼 / CU중곡본점)을 검색하여 선택해주세요.');
             return;
         }
+        if (storeLaunchType === 'pc_kiosk') {
+            const digits = storePhone.replace(/\D/g, '');
+            if (!storeCode.startsWith('TOTO-') || digits.length < 9) {
+                setError('🖥️ 매장 PC 전광판 모드는 위 자동완성 목록에서 공식 판매점(TOTO-xxxx)을 선택하고 매장(점주) 연락처를 입력하셔야 활성화됩니다. (A4 벽보 인쇄는 즉시 가능)');
+                return;
+            }
+        }
         try {
-            localStorage.setItem('scorenix_store_mode', 'true');
             localStorage.setItem('scorenix_b2b_store_name', storeName.trim());
+            localStorage.setItem('scorenix_b2b_store_code', storeCode || 'TOTO-PARTNER');
             localStorage.setItem('scorenix_b2b_store_region', storeRegion);
             localStorage.setItem('scorenix_b2b_store_phone', storePhone.trim());
-            localStorage.setItem('scorenix_round_pass_unlocked', 'true');
             if (storeLaunchType === 'pc_kiosk') {
+                localStorage.setItem('scorenix_store_mode', 'true');
+                localStorage.setItem('scorenix_round_pass_unlocked', 'true');
                 localStorage.setItem('scorenix_store_kiosk', 'true');
                 router.push(`/${currentLang}`);
             } else {
@@ -231,24 +244,31 @@ function LoginContent() {
                         {loginMode === 'store' ? (
                             /* ─── 🏪 판매점(점주) 전용 로그인 & 즉시 실행 폼 ─── */
                             <form onSubmit={handleStoreModeLogin} className="space-y-5">
-                                <div className="rounded-xl bg-blue-50/70 border border-blue-200 p-4 space-y-1.5">
+                                <div className="rounded-xl bg-emerald-50/80 border border-emerald-300 p-4 space-y-1.5">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-extrabold text-[#0046b8]">
-                                            🎁 전국 프로토 판매점 점주님 2주 무료 체험 오픈
+                                        <span className="text-xs font-extrabold text-emerald-900">
+                                            🏪 전국 6,277개 공식 판매점 사장님 100% 평생 무상 지원
                                         </span>
-                                        <span className="px-2 py-0.5 rounded bg-[#0046b8] text-white text-[10px] font-bold">
-                                            즉시 실행 가능
+                                        <span className="px-2 py-0.5 rounded bg-emerald-700 text-white text-[10px] font-bold">
+                                            구독료 0원 (무료)
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-600 leading-relaxed">
-                                        매장 상호명을 입력하고 로그인하시면 <strong>① 매장 PC 모니터 전광판 모드(전 경기 자동 순환 &amp; 잠금 100% 해제)</strong>와 <strong>② A4 벽보 원클릭 인쇄 기능</strong>이 즉시 활성화됩니다.
+                                    <p className="text-xs text-slate-700 leading-relaxed">
+                                        복권방·토토 판매점 사장님께서는 <strong>① 매장 게시판 부착용 A4 1장 요약 벽보 원클릭 인쇄</strong>와 <strong>② 매장 모니터 전광판 모드</strong>를 일체의 유료 결제 없이 평생 무료로 이용하실 수 있습니다!
                                     </p>
                                 </div>
 
                                 <div className="relative">
-                                    <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                                        매장 상호명 또는 동네 검색 (전국 6,277개 공식 판매점 DB 연동)
-                                    </label>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="block text-xs font-extrabold text-slate-700">
+                                            매장 상호명 또는 동네 검색 (전국 6,277개 공식 판매점 DB 연동)
+                                        </label>
+                                        {storeCode && (
+                                            <span className="px-2 py-0.5 rounded bg-blue-100 text-[#0046b8] text-[10px] font-black">
+                                                ✓ 공식인증 {storeCode}
+                                            </span>
+                                        )}
+                                    </div>
                                     <input
                                         type="text"
                                         required
@@ -264,7 +284,7 @@ function LoginContent() {
                                     {showSuggestions && storeSuggestions.length > 0 && (
                                         <div className="mt-1.5 rounded-xl bg-white border border-blue-300 shadow-md overflow-hidden divide-y divide-slate-100">
                                             <div className="px-3 py-1.5 bg-blue-50 text-[11px] font-extrabold text-[#0046b8]">
-                                                🏪 전국 공식 판매점 검색 결과 (클릭 시 자동 선택)
+                                                🏪 전국 공식 판매점 검색 결과 (클릭 시 매장코드 자동 등록)
                                             </div>
                                             {storeSuggestions.map((st) => (
                                                 <button
@@ -272,6 +292,7 @@ function LoginContent() {
                                                     type="button"
                                                     onClick={() => {
                                                         setStoreName(st.name);
+                                                        setStoreCode(st.id);
                                                         if (st.sido) setStoreRegion(`${st.sido} ${st.sigungu || ''}`.trim());
                                                         setShowSuggestions(false);
                                                     }}

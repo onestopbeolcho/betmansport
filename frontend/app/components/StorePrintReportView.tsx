@@ -122,7 +122,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
     const [selectedGameKey, setSelectedGameKey] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [storeName, setStoreName] = useState("공식 스포츠토토 판매점 VIP 고객용");
-    const [storeNotice, setStoreNotice] = useState("발매 마감 10분 전까지 마킹을 완료해 주세요. 스마트폰으로 우측 QR코드를 스캔하면 전 경기 AI 상세 전력 리포트를 확인할 수 있습니다.");
+    const [storeNotice, setStoreNotice] = useState("매번 판매점 오기 번거로우신가요? 마감 직전 해외배당 급변동·결장자 반영 최종 픽과 14경기 예산별 자동 마킹 조합기는 우측 QR코드를 스마트폰으로 스캔해 집에서 편하게 확인하세요!");
     const [includePage2, setIncludePage2] = useState(true);
     const [trialModalOpen, setTrialModalOpen] = useState(false);
     const [trialPhone, setTrialPhone] = useState("");
@@ -301,9 +301,9 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
 
                         <button
                             onClick={() => setTrialModalOpen(true)}
-                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm"
+                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm cursor-pointer"
                         >
-                            🎁 점주 2주 무료체험 / 월 39,000원 구독
+                            🏪 점주 100% 평생 무료 파트너 등록
                         </button>
 
                         <button
@@ -616,27 +616,32 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                         </table>
                     </section>
 
-                    {/* 6. 푸터: 매장 전용 안내문구 + 스코어닉스 연결 QR 코드 */}
-                    <footer className="border-t-2 border-slate-900 pt-2.5 mt-2 flex items-center justify-between gap-4 bg-slate-50 rounded-lg p-2.5">
+                    {/* 6. 푸터: 오프라인 매장 손님 → 모바일 개인 구독 전환 배너 + 스코어닉스 연결 QR 코드 */}
+                    <footer className="border-t-2 border-slate-900 pt-2.5 mt-2 flex items-center justify-between gap-4 bg-blue-50/70 rounded-lg p-2.5 border border-blue-200">
                         <div className="space-y-1">
-                            <div className="text-xs font-black text-slate-950">
-                                📌 [{storeName}] 방문 고객 전용 AI 스포츠 데이터 리포트 안내
+                            <div className="flex items-center gap-1.5">
+                                <span className="px-1.5 py-0.5 rounded bg-[#0046b8] text-white text-[9.5px] font-black">
+                                    📱 스마트폰 실시간 연동
+                                </span>
+                                <span className="text-xs font-black text-slate-950">
+                                    매번 판매점 오기 번거로우신가요? 마감 직전 배당 급변동·결장자 반영 최종 픽은 모바일에서!
+                                </span>
                             </div>
-                            <p className="text-[10.5px] text-slate-700 leading-snug">
+                            <p className="text-[10.5px] text-slate-800 font-semibold leading-snug">
                                 {storeNotice}
                             </p>
-                            <p className="text-[9.5px] text-slate-500">
-                                ⚖️ 본 리포트는 스코어닉스(scorenix.com) 3-Pillar 머신러닝 모델의 통계적 스포츠 데이터 참고자료입니다.
+                            <p className="text-[9.5px] text-slate-600 font-medium">
+                                💡 <strong>우측 QR코드 스캔 시:</strong> [{storeName}] 방문 손님 전용 이번 회차 무료 열람 &amp; 집에서 보는 개인 올인원 무제한 패스 즉시 이용 가능 (scorenix.com)
                             </p>
                         </div>
 
-                        <div className="flex items-center gap-2.5 shrink-0 border border-slate-300 bg-white rounded-lg p-2">
+                        <div className="flex items-center gap-2.5 shrink-0 border-2 border-[#0046b8] bg-white rounded-lg p-2 shadow-xs">
                             <div className="text-right">
-                                <div className="text-[10px] font-black text-blue-700 uppercase">스마트폰 카메라 스캔</div>
+                                <div className="text-[10px] font-black text-[#0046b8] uppercase">📱 카메라로 QR 스캔</div>
                                 <div className="text-xs font-black text-slate-950 leading-tight mt-0.5">
-                                    전 게임 AI 리포트 &amp;<br />실시간 데이터 확인
+                                    집에서 스마트폰으로<br />마감 직전 최종 픽 확인
                                 </div>
-                                <div className="text-[9.5px] font-bold text-slate-500 mt-1">scorenix.com</div>
+                                <div className="text-[9.5px] font-extrabold text-emerald-700 mt-1">scorenix.com</div>
                             </div>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -706,41 +711,41 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                 )}
             </div>
 
-            {/* 점주 2주 무료체험 / B2B 구독 모달 */}
+            {/* 점주 100% 평생 무상 상생 파트너 등록 모달 */}
             {trialModalOpen && (
                 <div className="no-print fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-white shadow-2xl">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black">
-                                🏪 전국 복권방·토토 판매점 점주 전용
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black">
+                                🏪 전국 6,277개 공식 판매점 상생 캠페인
                             </span>
                             <button onClick={() => setTrialModalOpen(false)} className="text-slate-400 hover:text-white text-lg">✕</button>
                         </div>
-                        <h3 className="text-lg font-black">점주 전용 A4 데일리 리포트 2주 무료 체험 &amp; 월 구독</h3>
+                        <h3 className="text-lg font-black">점주 전용 A4 분석 벽보 &amp; 전광판 100% 평생 무료 지원</h3>
                         <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                            승무패·승5패·스페셜N·프로토 승부식 매 회차 발매 직후 A4 1장으로 인쇄해 매장 벽면·테이블에 비치하세요!
+                            스코어닉스는 전국 복권방·스포츠토토 판매점 사장님들의 매장 매출 활성화와 방문 손님 유치를 위해 매 회차 A4 인쇄 벽보를 <strong>일체의 비용 없이 평생 무상</strong>으로 지원합니다!
                         </p>
 
-                        <div className="my-4 p-3.5 rounded-xl bg-slate-800/90 border border-slate-700 space-y-1.5 text-xs">
+                        <div className="my-4 p-3.5 rounded-xl bg-slate-800/90 border border-emerald-500/40 space-y-1.5 text-xs">
                             <div className="flex justify-between">
-                                <span className="text-slate-400">정상 구독가</span>
-                                <span className="line-through text-slate-500">월 49,000원</span>
+                                <span className="text-slate-400">기존 B2B 솔루션 정가</span>
+                                <span className="line-through text-slate-500">월 39,000원</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="font-bold text-emerald-300">런칭 특가 (초기 가맹점 평생 할인가)</span>
-                                <span className="text-base font-black text-white">월 39,000원</span>
+                                <span className="font-bold text-emerald-300">공식 판매점 상생 파트너 혜택</span>
+                                <span className="text-base font-black text-emerald-400">평생 0원 (100% 무료)</span>
                             </div>
                         </div>
 
                         {trialSubmitted ? (
                             <div className="p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-center space-y-2">
-                                <p className="text-sm font-black text-emerald-300">✅ 2주 무료 체험 계정이 즉시 활성화되었습니다!</p>
-                                <p className="text-xs text-slate-200">지금 바로 상단 [🖨️ A4 원클릭 인쇄] 버튼을 눌러 매장에 비치해 보세요.</p>
+                                <p className="text-sm font-black text-emerald-300">✅ 우리 매장 무료 상생 파트너 등록 완료!</p>
+                                <p className="text-xs text-slate-200">우측 상단 제공 매장란에 사장님 매장명이 반영되었습니다. 지금 바로 [🖨️ A4 원클릭 인쇄] 버튼을 눌러 매장 게시판에 부착해 보세요.</p>
                                 <button
                                     onClick={() => setTrialModalOpen(false)}
-                                    className="mt-2 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs"
+                                    className="mt-2 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs cursor-pointer"
                                 >
-                                    닫기 및 인쇄 계속하기
+                                    닫기 및 무료 A4 인쇄하기
                                 </button>
                             </div>
                         ) : (
@@ -749,33 +754,25 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
                                     type="text"
                                     value={trialStore}
                                     onChange={(e) => setTrialStore(e.target.value)}
-                                    placeholder="판매점 상호명 (예: 대박로또토토 판매점)"
+                                    placeholder="우리 매장 상호명 (예: 역삼 대박로또토토)"
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
                                 />
                                 <input
                                     type="tel"
                                     value={trialPhone}
                                     onChange={(e) => setTrialPhone(e.target.value)}
-                                    placeholder="점주님 연락처 (회차 발행 알림톡 수신용)"
+                                    placeholder="점주님 연락처 (새 회차 발행 시 무료 알림용 · 선택)"
                                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
                                 />
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                    <button
-                                        onClick={() => {
-                                            if (trialStore.trim()) handleStoreNameChange(trialStore.trim());
-                                            setTrialSubmitted(true);
-                                        }}
-                                        className="py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs cursor-pointer"
-                                    >
-                                        🎁 2주 무료 체험 즉시 시작
-                                    </button>
-                                    <Link
-                                        href="/ko/payment/request?plan=store_b2b&billing=monthly"
-                                        className="py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xs text-center flex items-center justify-center"
-                                    >
-                                        💳 월 39,000원 바로 구독
-                                    </Link>
-                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (trialStore.trim()) handleStoreNameChange(trialStore.trim());
+                                        setTrialSubmitted(true);
+                                    }}
+                                    className="w-full py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs cursor-pointer"
+                                >
+                                    🏪 우리 매장 상호명 적용 &amp; 평생 무료 인쇄 시작
+                                </button>
                             </div>
                         )}
                     </div>

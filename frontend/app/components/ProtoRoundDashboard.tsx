@@ -543,23 +543,29 @@ export default function ProtoRoundDashboard() {
                 <div className="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#0046b8] p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-xs">
                     <div className="flex items-start sm:items-center gap-3">
                         <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold tracking-tight shrink-0">
-                            전국 6,500개 판매점 O2O 연동
+                            전국 6,277개 판매점 상생 연동
                         </span>
                         <div>
                             <p className="text-slate-900 font-extrabold text-sm sm:text-base">
-                                온라인 무료 화면에서는 핵심 승부처 지표가 일부 제한됩니다 — <span className="text-[#0046b8]">동네 판매점 비치본 또는 커뮤니티 참여로 전체 열람하세요!</span>
+                                동네 프로토 판매점 벽보에서는 기본 요약이 무료! — <span className="text-[#0046b8]">집에서 편하게 실시간 배당 변동·전 경기 조합기를 보려면 모바일 패스를 이용하세요!</span>
                             </p>
                             <p className="text-slate-500 text-xs mt-0.5">
-                                전국 스코어닉스 등록 판매점(매장 내 PC 모니터 전광판 &amp; A4 출력 벽보)에서는 14경기 전체 리포트가 100% 무료 개방됩니다.
+                                전국 6,277개 공식 판매점 사장님께는 매장 비치용 A4 분석 벽보를 100% 무료로 제공하며, 개인 고객은 모바일 구독 또는 커뮤니티 참여로 해금하실 수 있습니다.
                             </p>
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <a
+                            href="/ko/stores/"
+                            className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-extrabold transition whitespace-nowrap"
+                        >
+                            🗺️ 시·구별 공식 판매점 지도
+                        </a>
+                        <a
                             href="#community-lounge"
                             className="px-4 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs whitespace-nowrap"
                         >
-                            💬 커뮤니티 참여 · 단골매장 신청 (무료해금) ↓
+                            💬 커뮤니티 참여 · 단골매장 추천 ↓
                         </a>
                     </div>
                 </div>
@@ -721,30 +727,30 @@ export default function ProtoRoundDashboard() {
                     </div>
 
                     {/* 우측 오프라인 판매점 & 온라인 열람 안내 박스 */}
-                    <div className="flex flex-col gap-2 shrink-0 min-w-[300px] bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex flex-col gap-2 shrink-0 min-w-[310px] bg-slate-50 p-4 rounded-xl border border-slate-200">
                         {!isPaidUser ? (
                             <>
                                 <div className="text-xs font-extrabold text-slate-800 text-center mb-0.5">
-                                    🔒 핵심 승부처 잠금 해제 방법 (택 1)
+                                    🔒 스마트폰 전 경기 실시간 해금 (개인 / 점주)
                                 </div>
-                                <a
-                                    href="#community-lounge"
+                                <Link
+                                    href="/ko/pricing"
                                     className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white font-extrabold text-xs text-center shadow-xs transition"
                                 >
-                                    💬 커뮤니티 의견 남기거나 단골매장 신청 (무료)
-                                </a>
+                                    📱 집에서 편하게! 개인 월 무제한 패스 (29,900원)
+                                </Link>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Link
-                                        href="/ko/login?mode=store"
+                                        href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
                                         className="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold text-center transition"
                                     >
-                                        🏪 판매점 점주 로그인
+                                        ⚡ 이번 회차만 (3,900원)
                                     </Link>
                                     <Link
-                                        href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
-                                        className="px-3 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold text-center transition"
+                                        href="/ko/login?mode=store"
+                                        className="px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-extrabold text-center transition"
                                     >
-                                        ⚡ 즉시 열람 (1,500원)
+                                        🏪 점주 무료 A4 인쇄
                                     </Link>
                                 </div>
                             </>
