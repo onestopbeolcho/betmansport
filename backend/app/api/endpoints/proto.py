@@ -11,6 +11,12 @@ from app.services.proto_round_service import (
     get_proto_archive_history,
     match_betman_entities_with_gemini,
 )
+from app.services.store_directory_service import (
+    get_marketing_spotlight_stores,
+    get_store_directory_stats,
+    recommend_proto_store,
+    search_proto_stores,
+)
 
 router = APIRouter()
 
@@ -106,4 +112,61 @@ async def get_marketing_receipt_json():
             "main_2folder_prob": current["section_a_combos"]["main_2folder"]["hit_probability_pct"],
             "killer_picks_count": current["killer_picks_count"],
         },
+        "spotlight_stores": get_marketing_spotlight_stores(count=5, seed_key=current["round_id"]),
     }
+
+
+class StoreRecommendRequest(BaseModel):
+    store_id: Optional[str] = None
+    store_name: Optional[str] = None
+    region: Optional[str] = None
+    address_hint: Optional[str] = None
+
+
+@router.get("/stores")
+async def list_official_proto_stores(
+    sido: Optional[str] = Query(default=None, description="시도 또는 권역 필터 (예: 서울, 경기, 부산)"),
+    sigungu: Optional[str] = Query(default=None, description="시군구 필터 (예: 강남구, 수원시)"),
+    q: Optional[str] = Query(default=None, description="상호명(베트맨/2026간판), 도로명, 동네명 검색어"),
+    lat: Optional[float] = Query(default=None, description="사용자 현재 위도 (GPS 거리순 정렬용)"),
+    lon: Optional[float] = Query(default=None, description="사용자 현재 경도 (GPS 거리순 정렬용)"),
+    limit: int = Query(default=24, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """전국 6,277개 교차검증 공식 스포츠토토/프로토 판매점 검색 및 내 주변(GPS) 매장 조회."""
+    return search_proto_stores(
+        sido=sido,
+        sigungu=sigungu,
+        q=q,
+        lat=lat,
+        lon=lon,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/stores/stats")
+async def get_official_proto_store_stats():
+    """전국 6,277개 공식 판매점 시도/시군구 통계 및 교차검증 현황 조회."""
+    return get_store_directory_stats()
+
+
+@router.get("/stores/spotlight")
+async def get_spotlight_proto_stores(count: int = Query(default=6, ge=1, le=20)):
+    """오늘의 권역별 마케팅 스포트라이트 실제 공식 판매점 목록 조회."""
+    return {
+        "total_official_stores": 6277,
+        "spotlight_stores": get_marketing_spotlight_stores(count=count),
+    }
+
+
+@router.post("/stores/recommend")
+async def post_recommend_proto_store(req: StoreRecommendRequest):
+    """단골 공식 프로토 판매점 리포트 비치 요청(추천수 +1) 및 무료 해금 처리."""
+    return recommend_proto_store(
+        store_id=req.store_id,
+        store_name=req.store_name,
+        region=req.region,
+        address_hint=req.address_hint,
+    )
+

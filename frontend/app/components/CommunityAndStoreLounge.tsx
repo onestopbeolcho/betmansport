@@ -1,6 +1,8 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://scorenix-backend-n5dv44kdaa-du.a.run.app";
 
 interface MatchOption {
     game_no: number;
@@ -26,11 +28,20 @@ interface CommunityPost {
 
 interface StoreDirectoryItem {
     id: string;
+    sido?: string;
+    sigungu?: string;
     name: string;
+    toto_name?: string;
+    moef_name?: string;
     region: string;
+    address?: string;
     address_hint: string;
-    display_mode: "PC_AND_A4" | "A4_POSTER" | "REQUESTED";
+    smart_slip?: string;
+    verify_grade?: string;
+    display_mode: "PC_AND_A4" | "A4_POSTER" | "OFFICIAL_VERIFIED" | "REQUESTED";
     request_count: number;
+    distance_m?: number;
+    distance_label?: string;
 }
 
 const FORBIDDEN_KEYWORDS = [
@@ -51,70 +62,117 @@ const FORBIDDEN_KEYWORDS = [
     ".net",
 ];
 
-const INITIAL_STORES: StoreDirectoryItem[] = [
+const SIDO_TABS = [
+    { key: "ALL", label: "전국 전체 (6,277)" },
+    { key: "경기", label: "경기 (1,636)" },
+    { key: "서울", label: "서울 (1,197)" },
+    { key: "경남", label: "경남 (404)" },
+    { key: "부산", label: "부산 (347)" },
+    { key: "인천", label: "인천 (339)" },
+    { key: "대구", label: "대구 (307)" },
+    { key: "충남", label: "충남 (292)" },
+    { key: "경북", label: "경북 (286)" },
+    { key: "전북", label: "전북 (210)" },
+    { key: "강원", label: "강원 (209)" },
+    { key: "충북", label: "충북 (194)" },
+    { key: "전남", label: "전남 (193)" },
+    { key: "광주", label: "광주 (187)" },
+    { key: "대전", label: "대전 (173)" },
+    { key: "울산", label: "울산 (170)" },
+    { key: "제주", label: "제주 (88)" },
+    { key: "세종", label: "세종 (26)" },
+];
+
+const FALLBACK_STORES: StoreDirectoryItem[] = [
     {
-        id: "st-1",
-        name: "역삼 스포토토 명당점",
-        region: "서울/수도권",
-        address_hint: "서울 강남구 역삼역 인근 공식 판매점",
+        id: "TOTO-0001",
+        sido: "서울",
+        sigungu: "강남구",
+        name: "씨티마트 (우정)",
+        toto_name: "씨티마트",
+        moef_name: "우정",
+        region: "서울 강남구",
+        address: "서울 강남구 도산대로 49길 8",
+        address_hint: "서울 강남구 도산대로 49길 8",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
         display_mode: "PC_AND_A4",
         request_count: 42,
     },
     {
-        id: "st-2",
-        name: "종로 1번가 복권·프로토",
-        region: "서울/수도권",
-        address_hint: "서울 종로구 종각역 인근 공식 판매점",
+        id: "TOTO-0014",
+        sido: "서울",
+        sigungu: "중구",
+        name: "신당백석점 (태양비디오)",
+        toto_name: "신당백석점",
+        moef_name: "태양비디오",
+        region: "서울 중구",
+        address: "서울 중구 동호로 193-22",
+        address_hint: "서울 중구 동호로 193-22",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
         display_mode: "PC_AND_A4",
         request_count: 38,
     },
     {
-        id: "st-3",
-        name: "분당 서현 스포츠토토 센터",
-        region: "경기/인천",
-        address_hint: "경기 성남시 분당구 서현역 로데오 인근",
+        id: "TOTO-0015",
+        sido: "서울",
+        sigungu: "광진구",
+        name: "CU중곡본점",
+        toto_name: "중곡본점",
+        moef_name: "CU중곡본점",
+        region: "서울 광진구",
+        address: "서울 광진구 능동로 337-1",
+        address_hint: "서울 광진구 능동로 337-1",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
         display_mode: "A4_POSTER",
         request_count: 29,
     },
     {
-        id: "st-4",
-        name: "부평 중앙 복권방",
-        region: "경기/인천",
-        address_hint: "인천 부평구 부평역 북부광장 인근",
-        display_mode: "PC_AND_A4",
-        request_count: 24,
-    },
-    {
-        id: "st-5",
-        name: "나주 빛가람 혁신 복권명당",
-        region: "광주/전남/전북",
-        address_hint: "전남 나주시 빛가람동 한전KDN 인근",
+        id: "TOTO-0025",
+        sido: "경기",
+        sigungu: "수원시",
+        name: "GS25수원장안점 (순이네)",
+        toto_name: "수원장안점",
+        moef_name: "GS25수원장안점",
+        region: "경기 수원시",
+        address: "경기 수원시 장안구 경수대로 1079",
+        address_hint: "경기 수원시 장안구 경수대로 1079",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
         display_mode: "PC_AND_A4",
         request_count: 51,
     },
     {
-        id: "st-6",
-        name: "광주 상무지구 토토명당",
-        region: "광주/전남/전북",
-        address_hint: "광주 서구 치평동 상무역 인근",
+        id: "TOTO-0048",
+        sido: "경기",
+        sigungu: "성남시",
+        name: "IGA마트 분당차병원점",
+        toto_name: "IGA마트 분당차병원점",
+        moef_name: "아이지에이마트 분당차병원점",
+        region: "경기 성남시",
+        address: "경기 성남시 분당구 야탑로69번길 3",
+        address_hint: "경기 성남시 분당구 야탑로69번길 3",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
+        display_mode: "PC_AND_A4",
+        request_count: 34,
+    },
+    {
+        id: "TOTO-0039",
+        sido: "인천",
+        sigungu: "부평구",
+        name: "시티라이프",
+        toto_name: "시티라이프",
+        moef_name: "시티라이프",
+        region: "인천 부평구",
+        address: "인천 부평구 주부토로 265",
+        address_hint: "인천 부평구 주부토로 265",
+        smart_slip: "O",
+        verify_grade: "교차검증완료(공식토토+복권겸영)",
         display_mode: "A4_POSTER",
-        request_count: 33,
-    },
-    {
-        id: "st-7",
-        name: "대전 둔산 타임월드 복권방",
-        region: "대전/충청/강원",
-        address_hint: "대전 서구 둔산동 갤러리아 인근",
-        display_mode: "PC_AND_A4",
         request_count: 27,
-    },
-    {
-        id: "st-8",
-        name: "부산 서면 1등 프로토샵",
-        region: "부산/대구/울산/경상",
-        address_hint: "부산 부산진구 서면교차로 인근",
-        display_mode: "PC_AND_A4",
-        request_count: 46,
     },
 ];
 
@@ -134,18 +192,26 @@ export default function CommunityAndStoreLounge({
     // 커뮤니티 글쓰기 폼 상태
     const [nickname, setNickname] = useState(userNickname || "");
     const [selectedMatchNo, setSelectedMatchNo] = useState<string>("ALL");
-    const [selectedPick, setSelectedPick] = useState<string>("홈승 우세");
+    const [selectedPick, setSelectedPick] = useState<string>("홈승 단독우위");
     const [storeTagInput, setStoreTagInput] = useState("");
     const [commentText, setCommentText] = useState("");
     const [postAlert, setPostAlert] = useState<{ type: "success" | "error"; msg: string } | null>(null);
     const [customPosts, setCustomPosts] = useState<CommunityPost[]>([]);
     const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
 
-    // 전국 판매점 찾기 & 단골 매장 신청 상태
-    const [regionFilter, setRegionFilter] = useState<string>("ALL");
-    const [stores, setStores] = useState<StoreDirectoryItem[]>(INITIAL_STORES);
+    // 전국 6,277개 공식 판매점 검색 & GPS & 단골 매장 신청 상태
+    const [sidoFilter, setSidoFilter] = useState<string>("ALL");
+    const [searchQuery, setSearchQuery] = useState<string>("");
+    const [debouncedQuery, setDebouncedQuery] = useState<string>("");
+    const [stores, setStores] = useState<StoreDirectoryItem[]>(FALLBACK_STORES);
+    const [totalStoresDb, setTotalStoresDb] = useState<number>(6277);
+    const [matchedCount, setMatchedCount] = useState<number>(6277);
+    const [loadingStores, setLoadingStores] = useState<boolean>(false);
+    const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+    const [gpsStatus, setGpsStatus] = useState<string | null>(null);
+
     const [reqStoreName, setReqStoreName] = useState("");
-    const [reqStoreRegion, setReqStoreRegion] = useState("서울/수도권");
+    const [reqStoreRegion, setReqStoreRegion] = useState("서울");
     const [reqStoreHint, setReqStoreHint] = useState("");
     const [storeAlert, setStoreAlert] = useState<string | null>(null);
 
@@ -154,19 +220,75 @@ export default function CommunityAndStoreLounge({
     }, [userNickname]);
 
     useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(searchQuery.trim());
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    useEffect(() => {
         try {
             const savedPosts = localStorage.getItem("scorenix_community_posts_v1");
             if (savedPosts) {
                 setCustomPosts(JSON.parse(savedPosts));
             }
-            const savedStores = localStorage.getItem("scorenix_store_directory_v1");
-            if (savedStores) {
-                setStores(JSON.parse(savedStores));
-            }
         } catch {
             // ignore
         }
     }, []);
+
+    const fetchOfficialStores = useCallback(async () => {
+        setLoadingStores(true);
+        try {
+            const params = new URLSearchParams();
+            if (sidoFilter && sidoFilter !== "ALL") params.set("sido", sidoFilter);
+            if (debouncedQuery) params.set("q", debouncedQuery);
+            if (userCoords) {
+                params.set("lat", String(userCoords.lat));
+                params.set("lon", String(userCoords.lon));
+            }
+            params.set("limit", "20");
+
+            const res = await fetch(`${API_BASE}/api/proto/stores?${params.toString()}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.stores) && data.stores.length > 0) {
+                    setStores(data.stores);
+                } else if (debouncedQuery || sidoFilter !== "ALL") {
+                    setStores([]);
+                }
+                if (typeof data.total_stores_in_db === "number") setTotalStoresDb(data.total_stores_in_db);
+                if (typeof data.matched_count === "number") setMatchedCount(data.matched_count);
+            }
+        } catch {
+            // keep fallback stores
+        } finally {
+            setLoadingStores(false);
+        }
+    }, [sidoFilter, debouncedQuery, userCoords]);
+
+    useEffect(() => {
+        fetchOfficialStores();
+    }, [fetchOfficialStores]);
+
+    const handleFindNearbyGps = () => {
+        if (typeof window === "undefined" || !("geolocation" in navigator)) {
+            setGpsStatus("현재 브라우저에서 위치(GPS) 기능을 지원하지 않습니다. 상호명이나 동네 이름으로 검색해주세요.");
+            return;
+        }
+        setGpsStatus("📡 내 주변 가장 가까운 공식 프로토 판매점 좌표를 탐색 중입니다...");
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setSidoFilter("ALL");
+                setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                setGpsStatus("✅ 내 현재 위치에서 가장 가까운 공식 프로토 판매점 순으로 정렬되었습니다!");
+            },
+            () => {
+                setGpsStatus("⚠️ 위치 권한이 거부되었습니다. 검색창에 동네 이름(예: 강남, 수원, 서면)이나 상호명을 입력해주세요.");
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+        );
+    };
 
     const seedPosts: CommunityPost[] = useMemo(() => {
         const m1 = matches[0];
@@ -178,9 +300,9 @@ export default function CommunityAndStoreLounge({
             {
                 id: "seed-1",
                 round_title: roundTitle,
-                author: "빛가람전술분석가",
+                author: "수원장안분석가",
                 badge: "🏆 직전회차 12경기 예측성공",
-                store_tag: "🏪 나주 빛가람 혁신 복권명당 방문",
+                store_tag: "🏪 [경기 수원시] GS25수원장안점 (순이네)",
                 match_label: m2 ? `${m2.game_no_label} ${m2.betman_home} vs ${m2.betman_away}` : "주요 경합 경기",
                 pick_badge: "무승부·접전 병행",
                 content: `방금 동네 판매점 PC 전광판에서 AI 밸런스 표 확인하고 왔습니다. ${
@@ -192,9 +314,9 @@ export default function CommunityAndStoreLounge({
             {
                 id: "seed-2",
                 round_title: roundTitle,
-                author: "역삼데이터헌터",
+                author: "강남데이터헌터",
                 badge: "📊 7-Factor 분석회원",
-                store_tag: "🏪 역삼 스포토토 명당점 단골",
+                store_tag: "🏪 [서울 강남구] 씨티마트 (우정) 단골",
                 match_label: m3 ? `${m3.game_no_label} ${m3.betman_home} vs ${m3.betman_away}` : "단독 우위 구간",
                 pick_badge: "1순위 단독우위",
                 content: `${
@@ -206,11 +328,11 @@ export default function CommunityAndStoreLounge({
             {
                 id: "seed-3",
                 round_title: roundTitle,
-                author: "서면언더독연구소",
+                author: "구포언더독연구소",
                 badge: "🔥 5주 연속 참여",
-                store_tag: "🏪 부산 서면 1등 프로토샵",
+                store_tag: "🏪 [부산 북구] 와따 로또앤토토",
                 match_label: m4 ? `${m4.game_no_label} ${m4.betman_home} vs ${m4.betman_away}` : "혼전 주의 구간",
-                pick_badge: "이변·복수 검토",
+                pick_badge: "1·2순위 복수검토",
                 content: `${
                     m4 ? `${m4.game_no_label} ${m4.home_ko} vs ${m4.away_ko} 빅매치는 대중 선호도가 한쪽으로 쏠릴 때 항상 무승부 변수가 나왔습니다.` : ""
                 } 다들 이번 회차 경합 4경기 어떻게 배분하셨나요?`,
@@ -222,9 +344,9 @@ export default function CommunityAndStoreLounge({
                 round_title: roundTitle,
                 author: "분당승무패장인",
                 badge: "✅ 실전 예측러",
-                store_tag: "🏪 분당 서현 스포츠토토 센터",
+                store_tag: "🏪 [경기 성남시] IGA마트 분당차병원점",
                 match_label: m1 ? `${m1.game_no_label} ${m1.betman_home} vs ${m1.betman_away}` : "1번 경기",
-                pick_badge: "홈팀 우세",
+                pick_badge: "홈승 단독우위",
                 content: `사장님이 매장 모니터에 스코어닉스 전광판 켜두셔서 손님들끼리 보면서 토론하기 딱 좋습니다. 첫 경기 홈 흐름 좋아 보입니다!`,
                 likes: 9,
                 created_at: "45분 전",
@@ -246,7 +368,6 @@ export default function CommunityAndStoreLounge({
             return;
         }
 
-        // PG 준수 금칙어(사설, 카톡, 텔레, 링크 등) 자동 차단
         const lower = `${cleanComment} ${nickname} ${storeTagInput}`.toLowerCase();
         const foundForbidden = FORBIDDEN_KEYWORDS.find((kw) => lower.includes(kw));
         if (foundForbidden) {
@@ -291,39 +412,57 @@ export default function CommunityAndStoreLounge({
         });
     };
 
-    const handleRegisterStoreRequest = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!reqStoreName.trim()) return;
-
-        const newItem: StoreDirectoryItem = {
-            id: `st-${Date.now()}`,
-            name: reqStoreName.trim(),
-            region: reqStoreRegion,
-            address_hint: reqStoreHint.trim() || `${reqStoreRegion} 공식 프로토 판매점`,
-            display_mode: "REQUESTED",
-            request_count: 1,
-        };
-
-        const updated = [newItem, ...stores];
-        setStores(updated);
-        setReqStoreName("");
-        setReqStoreHint("");
+    const handleRecommendStoreCard = async (st: StoreDirectoryItem) => {
+        setStores((prev) =>
+            prev.map((item) => (item.id === st.id ? { ...item, request_count: item.request_count + 1 } : item))
+        );
         try {
-            localStorage.setItem("scorenix_store_directory_v1", JSON.stringify(updated));
+            await fetch(`${API_BASE}/api/proto/stores/recommend`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ store_id: st.id, store_name: st.name, region: st.region }),
+            });
         } catch {
-            // ignore
+            // ignore network error
         }
-
-        onUnlockReward("내 단골 프로토 판매점 제보 보상");
+        onUnlockReward(`[${st.name}] 공식 판매점 단골 추천 보상`);
         setStoreAlert(
-            `🎉 [${newItem.name}] 단골 매장 비치 요청이 접수되었습니다! 제보 보상으로 이번 회차 전체 리포트 잠금이 해제되었습니다.`
+            `🎉 [${st.region}] ${st.name} 매장에 AI 리포트 비치 추천(+1)이 완료되었습니다! 보상으로 이번 회차 전 경기 잠금이 즉시 해제되었습니다.`
         );
     };
 
-    const filteredStores = useMemo(() => {
-        if (regionFilter === "ALL") return stores;
-        return stores.filter((s) => s.region === regionFilter);
-    }, [stores, regionFilter]);
+    const handleRegisterStoreRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reqStoreName.trim()) return;
+
+        const targetName = reqStoreName.trim();
+        try {
+            const res = await fetch(`${API_BASE}/api/proto/stores/recommend`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    store_name: targetName,
+                    region: reqStoreRegion,
+                    address_hint: reqStoreHint.trim(),
+                }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.store) {
+                    setStores((prev) => [data.store, ...prev.filter((p) => p.id !== data.store.id)]);
+                }
+                setStoreAlert(data.message || `🎉 [${targetName}] 단골 매장 비치 요청이 접수되어 이번 회차 잠금이 해제되었습니다!`);
+            } else {
+                setStoreAlert(`🎉 [${targetName}] 단골 매장 비치 요청이 접수되어 이번 회차 잠금이 해제되었습니다!`);
+            }
+        } catch {
+            setStoreAlert(`🎉 [${targetName}] 단골 매장 비치 요청이 접수되어 이번 회차 잠금이 해제되었습니다!`);
+        }
+
+        setReqStoreName("");
+        setReqStoreHint("");
+        onUnlockReward("내 단골 프로토 판매점 등록 보상");
+    };
 
     return (
         <section
@@ -333,16 +472,16 @@ export default function CommunityAndStoreLounge({
             {/* 상단 탭 헤더 */}
             <div className="bg-[#003996] text-white px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[11px] font-black">
-                            O2O 커뮤니티 &amp; 전국 6,500개 판매점 네트워크
+                            O2O 커뮤니티 &amp; 전국 {totalStoresDb.toLocaleString()}개 공식 프로토 판매점 교차검증 DB
                         </span>
                         <span className="text-xs text-blue-100 font-semibold">
-                            의견 남기기 또는 단골 판매점 제보 시 이번 회차 잠금 즉시 해제!
+                            의견 남기기 또는 우리 동네 공식 판매점 추천 시 이번 회차 잠금 즉시 해제!
                         </span>
                     </div>
                     <h2 className="text-lg sm:text-xl font-black mt-1">
-                        💬 [{roundTitle}] 실시간 승부예측 토론방 &amp; 우리 동네 판매점 리포트 비치 현황
+                        💬 [{roundTitle}] 실시간 승부예측 토론방 &amp; 전국 {totalStoresDb.toLocaleString()}개 공식 판매점 검색 (GPS 지원)
                     </h2>
                 </div>
 
@@ -367,7 +506,7 @@ export default function CommunityAndStoreLounge({
                                 : "bg-white/15 text-white hover:bg-white/25"
                         }`}
                     >
-                        🏪 전국 판매점 비치 현황 &amp; 단골매장 신청 ({stores.length})
+                        🏪 전국 공식 판매점 찾기 ({totalStoresDb.toLocaleString()}개소)
                     </button>
                 </div>
             </div>
@@ -428,7 +567,7 @@ export default function CommunityAndStoreLounge({
                                 type="text"
                                 value={storeTagInput}
                                 onChange={(e) => setStoreTagInput(e.target.value)}
-                                placeholder="방문 판매점명 (선택, 예: 역삼복권방)"
+                                placeholder="방문 판매점명 (선택, 예: CU중곡본점)"
                                 className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-[#0046b8]"
                             />
                         </div>
@@ -516,71 +655,73 @@ export default function CommunityAndStoreLounge({
                     </div>
                 </div>
             ) : (
-                /* ─── TAB 2: 전국 판매점 AI 리포트 비치 현황 & 단골 매장 신청 ─── */
+                /* ─── TAB 2: 전국 6,277개 공식 프로토 판매점 교차검증 검색 & GPS & 단골 매장 추천 ─── */
                 <div className="p-5 sm:p-6 space-y-6">
-                    {/* 단골 판매점 제보 / 점주 입점 신청 폼 */}
+                    {/* 상단 검색창 + 내 주변 GPS 찾기 + 판매점 사장님 안내 */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <form
-                            onSubmit={handleRegisterStoreRequest}
-                            className="lg:col-span-2 rounded-xl bg-blue-50/50 border border-blue-200 p-4 sm:p-5 space-y-3"
-                        >
-                            <div className="flex items-center justify-between">
+                        <div className="lg:col-span-2 rounded-xl bg-blue-50/60 border border-blue-200 p-4 sm:p-5 space-y-3.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="px-2.5 py-0.5 rounded bg-[#0046b8] text-white text-xs font-extrabold">
-                                    📢 내 단골 프로토 판매점에 스코어닉스 리포트 비치 요청하기
+                                    🔍 전국 {totalStoresDb.toLocaleString()}개 공식 프로토·스마트슬립 판매점 통합 검색
                                 </span>
                                 <span className="text-xs font-extrabold text-[#0046b8]">
-                                    제보 즉시 이번 회차 잠금 100% 해제!
+                                    베트맨 등록 상호 &amp; 2026년 최신 간판 상호 이중 검색 지원!
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-600">
-                                자주 방문하시는 동네 복권방·프로토 판매점 상호를 남겨주시면, 해당 매장에 <strong>스코어닉스 A4 리포트 및 매장 PC 전광판 2주 무료 공급</strong>을 안내해 드리며 회원님께는 즉시 무료 열람 혜택이 제공됩니다.
+
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                                스포츠토토 공식 판매점(<strong>6,236개 · 전 매장 GPS 위경도 포함</strong>)과 기획예산처 2026년 최신 등록 상호를 교차 검증했습니다.
+                                아래에서 <strong>우리 동네 단골 판매점을 검색해 [추천 &amp; 무료 해금]</strong>을 누르시면 이번 회차 전 경기 잠금이 즉시 해제됩니다!
                             </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                <select
-                                    value={reqStoreRegion}
-                                    onChange={(e) => setReqStoreRegion(e.target.value)}
-                                    className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-900"
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="동네명, 도로명, 상호명 검색 (예: 강남, 수원, 서면, CU, GS25, 복권명당)"
+                                    className="flex-1 px-3.5 py-2.5 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:border-[#0046b8]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleFindNearbyGps}
+                                    className="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shrink-0 transition cursor-pointer"
                                 >
-                                    <option value="서울/수도권">서울/수도권</option>
-                                    <option value="경기/인천">경기/인천</option>
-                                    <option value="대전/충청/강원">대전/충청/강원</option>
-                                    <option value="광주/전남/전북">광주/전남/전북</option>
-                                    <option value="부산/대구/울산/경상">부산/대구/울산/경상</option>
-                                </select>
-                                <input
-                                    type="text"
-                                    required
-                                    value={reqStoreName}
-                                    onChange={(e) => setReqStoreName(e.target.value)}
-                                    placeholder="단골 판매점 상호 (예: OO복권방)"
-                                    className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-900"
-                                />
-                                <input
-                                    type="text"
-                                    value={reqStoreHint}
-                                    onChange={(e) => setReqStoreHint(e.target.value)}
-                                    placeholder="위치 힌트 (예: OO역 2번출구 앞)"
-                                    className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900"
-                                />
+                                    📍 내 주변 가장 가까운 매장 (GPS)
+                                </button>
+                                {(searchQuery || userCoords || sidoFilter !== "ALL") && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            setSidoFilter("ALL");
+                                            setUserCoords(null);
+                                            setGpsStatus(null);
+                                        }}
+                                        className="px-3 py-2.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs shrink-0 transition cursor-pointer"
+                                    >
+                                        초기화
+                                    </button>
+                                )}
                             </div>
-                            <button
-                                type="submit"
-                                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-black text-xs transition cursor-pointer"
-                            >
-                                📍 우리 동네 단골 판매점 등록하고 오늘 리포트 열기
-                            </button>
+
+                            {gpsStatus && (
+                                <div className="px-3 py-2 rounded-lg bg-white border border-blue-200 text-xs font-bold text-slate-800">
+                                    {gpsStatus}
+                                </div>
+                            )}
                             {storeAlert && (
-                                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                                <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-extrabold">
                                     {storeAlert}
                                 </div>
                             )}
-                        </form>
+                        </div>
 
                         {/* 판매점 사장님 전용 바로가기 박스 */}
                         <div className="rounded-xl bg-slate-900 text-white p-5 flex flex-col justify-between space-y-3">
                             <div>
                                 <span className="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 text-[11px] font-black">
-                                    🏪 전국 6,500개 판매점 점주님 전용
+                                    🏪 전국 {totalStoresDb.toLocaleString()}개 판매점 점주님 전용
                                 </span>
                                 <h3 className="text-base font-black mt-2">
                                     사장님 매장에 PC 전광판 &amp; A4 분석벽보를 설치하세요!
@@ -606,68 +747,160 @@ export default function CommunityAndStoreLounge({
                         </div>
                     </div>
 
-                    {/* 지역별 판매점 필터 및 리스트 */}
+                    {/* 17개 시·도별 공식 판매점 필터 탭 */}
                     <div className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h3 className="text-sm font-black text-slate-900">
-                                📍 스코어닉스 AI 리포트 제공 판매점 &amp; 손님 비치 요청 매장 현황
+                                📍 시·도별 공식 프로토 판매점 조회{" "}
+                                <span className="text-[#0046b8]">
+                                    (검색 결과 {matchedCount.toLocaleString()}개소 중 상위 {stores.length}개 표시)
+                                </span>
                             </h3>
-                            <div className="flex flex-wrap gap-1.5">
-                                {["ALL", "서울/수도권", "경기/인천", "대전/충청/강원", "광주/전남/전북", "부산/대구/울산/경상"].map(
-                                    (reg) => (
-                                        <button
-                                            key={reg}
-                                            type="button"
-                                            onClick={() => setRegionFilter(reg)}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer ${
-                                                regionFilter === reg
-                                                    ? "bg-[#0046b8] text-white border-[#0046b8]"
-                                                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                                            }`}
-                                        >
-                                            {reg === "ALL" ? "전국 전체" : reg}
-                                        </button>
-                                    )
-                                )}
-                            </div>
+                            {loadingStores && (
+                                <span className="text-xs font-bold text-[#0046b8]">🔄 실시간 매장 데이터 조회 중...</span>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {filteredStores.map((st) => (
-                                <div
-                                    key={st.id}
-                                    className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 flex flex-col justify-between space-y-2"
+                        <div className="flex flex-wrap gap-1.5">
+                            {SIDO_TABS.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setSidoFilter(tab.key)}
+                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                                        sidoFilter === tab.key
+                                            ? "bg-[#0046b8] text-white border-[#0046b8]"
+                                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                                    }`}
                                 >
-                                    <div>
-                                        <div className="flex items-center justify-between gap-1">
-                                            <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-extrabold text-slate-600">
-                                                {st.region}
-                                            </span>
-                                            {st.display_mode === "PC_AND_A4" ? (
-                                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                                                    🖥️ PC전광판 + 🖨️ A4비치
-                                                </span>
-                                            ) : st.display_mode === "A4_POSTER" ? (
-                                                <span className="px-2 py-0.5 rounded bg-blue-100 text-[#0046b8] text-[10px] font-extrabold">
-                                                    🖨️ A4 리포트 비치매장
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-extrabold">
-                                                    📢 손님 비치요청 접수
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="font-black text-slate-900 text-sm mt-2">{st.name}</div>
-                                        <div className="text-[11px] text-slate-500 mt-0.5">{st.address_hint}</div>
-                                    </div>
-                                    <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
-                                        <span className="text-slate-500 font-medium">동네 손님 관심도</span>
-                                        <span className="font-extrabold text-[#0046b8]">🔥 {st.request_count}명 추천</span>
-                                    </div>
-                                </div>
+                                    {tab.label}
+                                </button>
                             ))}
                         </div>
+
+                        {/* 공식 판매점 카드 그리드 */}
+                        {stores.length === 0 ? (
+                            <div className="rounded-xl bg-slate-50 border border-slate-200 p-8 text-center space-y-2">
+                                <div className="text-sm font-black text-slate-800">
+                                    조건에 맞는 공식 판매점을 찾지 못했습니다.
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                    다른 동네 이름이나 도로명, 혹은 하단의 신규 단골 판매점 직접 제보 폼을 이용해 주세요!
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                {stores.map((st) => (
+                                    <div
+                                        key={st.id}
+                                        className="rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0046b8] p-3.5 flex flex-col justify-between space-y-2.5 transition"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between gap-1 flex-wrap">
+                                                <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-extrabold text-slate-700">
+                                                    {st.region || st.sido} · {st.id}
+                                                </span>
+                                                {st.distance_label ? (
+                                                    <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">
+                                                        📍 내 위치에서 {st.distance_label}
+                                                    </span>
+                                                ) : st.display_mode === "PC_AND_A4" ? (
+                                                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+                                                        🖥️ 전광판 + 🖨️ A4비치
+                                                    </span>
+                                                ) : st.display_mode === "A4_POSTER" ? (
+                                                    <span className="px-2 py-0.5 rounded bg-blue-100 text-[#0046b8] text-[10px] font-extrabold">
+                                                        🖨️ A4 리포트 비치
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-extrabold">
+                                                        ✅ 공식 스마트슬립 {st.smart_slip || "O"}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="font-black text-slate-900 text-sm mt-2 leading-snug">
+                                                {st.name}
+                                            </div>
+                                            <div className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                                                📍 {st.address || st.address_hint}
+                                            </div>
+                                            {st.verify_grade && (
+                                                <div className="text-[10px] font-bold text-[#0046b8] mt-1">
+                                                    🛡️ {st.verify_grade}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="pt-2 border-t border-slate-200/80 space-y-1.5">
+                                            <div className="flex items-center justify-between text-[11px]">
+                                                <span className="text-slate-500 font-medium">동네 손님 비치 추천</span>
+                                                <span className="font-extrabold text-[#0046b8]">
+                                                    🔥 {st.request_count}명 추천
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRecommendStoreCard(st)}
+                                                className="w-full py-1.5 px-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white font-black text-[11px] transition cursor-pointer"
+                                            >
+                                                👍 내 단골매장 추천 &amp; 무료 해금
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+
+                    {/* 수동 단골 판매점 제보 폼 */}
+                    <form
+                        onSubmit={handleRegisterStoreRequest}
+                        className="rounded-xl bg-slate-50 border border-slate-200 p-4 sm:p-5 space-y-3"
+                    >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-black text-slate-900">
+                                📢 찾는 매장이 없거나 신규 오픈한 동네 프로토 판매점이 있다면 직접 알려주세요!
+                            </span>
+                            <span className="text-xs font-extrabold text-[#0046b8]">
+                                제보 즉시 이번 회차 잠금 100% 해제
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                            <select
+                                value={reqStoreRegion}
+                                onChange={(e) => setReqStoreRegion(e.target.value)}
+                                className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-900"
+                            >
+                                {SIDO_TABS.filter((t) => t.key !== "ALL").map((t) => (
+                                    <option key={t.key} value={t.key}>
+                                        {t.key}
+                                    </option>
+                                ))}
+                            </select>
+                            <input
+                                type="text"
+                                required
+                                value={reqStoreName}
+                                onChange={(e) => setReqStoreName(e.target.value)}
+                                placeholder="단골 판매점 상호 (예: 행운프로토방)"
+                                className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-900"
+                            />
+                            <input
+                                type="text"
+                                value={reqStoreHint}
+                                onChange={(e) => setReqStoreHint(e.target.value)}
+                                placeholder="도로명주소 또는 위치 힌트"
+                                className="px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900"
+                            />
+                            <button
+                                type="submit"
+                                className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-black text-xs transition cursor-pointer"
+                            >
+                                📍 신규 매장 등록 &amp; 해금
+                            </button>
+                        </div>
+                    </form>
                 </div>
             )}
         </section>

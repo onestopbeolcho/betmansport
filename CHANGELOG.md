@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.8.6 - Nationwide 6,277 Official Proto/Toto Store Cross-Validated Master DB, GPS Store Finder & Local SEO Marketing Integration
+- **Official Sportstoto (6,236) × MOEF 2026 (21,190) Cross-Validation (`DATA/스코어닉스_전국_프로토판매점_교차검증_마스터.csv`, `backend/app/data/proto_stores_master.json`)**:
+    - Collected all 6,236 official Sports Toto/Proto stores nationwide (with 100% GPS longitude/latitude coordinates and Smart Slip status) and cross-validated them against the 2026-08-20 MOEF store dataset.
+    - Resolved 1,409 outdated/abbreviated Betman store names (`신당백석점` ↔ `태양비디오`, `중곡본점` ↔ `CU중곡본점`, `수원장안점` ↔ `GS25수원장안점`), split merged `전남광주` addresses into `광주` and `전남`, and added 41 newly registered 2026 Toto/Proto stores (`total: 6,277 stores`).
+- **Backend Store Directory & GPS Search API (`store_directory_service.py`, `proto.py`)**:
+    - Added `GET /api/proto/stores` (17 `sido` filters, `sigungu`, dual-name keyword search `q`, and Haversine GPS nearest-store sorting via `lat`/`lon`), `GET /api/proto/stores/stats`, `GET /api/proto/stores/spotlight`, and `POST /api/proto/stores/recommend`.
+- **Frontend O2O Store Search, GPS Nearest Store & Store Owner Autocomplete (`CommunityAndStoreLounge.tsx`, `login/page.tsx`)**:
+    - Connected the O2O store directory tab to all 6,277 official stores with 17 regional tabs, real-time keyword search, **`[📍 내 주변 가장 가까운 매장 (GPS)]`** geolocation sorting, and 1-click store recommendation unlock.
+    - Added live official store autocomplete in `/ko/login?mode=store` so any of the 6,277 store owners can select their store in one click.
+- **Hyper-Local Store Spotlight Marketing Integration (`gemini_service.py`, `generate_shorts_pipeline.py`)**:
+    - Injected daily rotating regional official store spotlights (store name + road address) into SNS posts, Blogger/WordPress SEO articles (`<h2>🏪 오늘의 권역별 공식 프로토·스마트슬립 판매점 안내</h2>`), and YouTube Shorts descriptions.
+
 ## v0.8.5 - Betman Official Game Marketing & YouTube Shorts v8.0 Alignment (O2O Store & Community Funnel)
 - **Unified Betman Official Match Provider (`proto_round_service.py`)**:
     - Added `get_betman_marketing_matches(limit, preferred_gm_id)` pulling live matches from active Betman official games (`G011 축구토토 승무패 14경기`, `G101 프로토 승부식`, `G027 농구토토 승5패`, `G055 스페셜N`) with official round titles, match numbers (`01번~14번`), Betman team abbreviations, and role classifications (`📌 단독 우위 (1순위 주력)`, `🛡️ 경합 주의 (1·2순위 병행)`, `⚠️ 이변·혼전 경보`).

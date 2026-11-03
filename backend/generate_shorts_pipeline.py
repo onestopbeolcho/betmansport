@@ -835,11 +835,17 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
     if len(title) > 95:
         title = f"[{r_title}] {free_m['home']} vs {free_m['away']} AI 1·2순위 밸런스 분석 #shorts"
 
+    try:
+        from app.services.store_directory_service import format_marketing_store_spotlight_text
+        store_spotlight = format_marketing_store_spotlight_text(count=4, seed_key=f"{r_title}_{g_no}_{date_md}")
+    except Exception:
+        store_spotlight = "• 전국 6,277개 공식 프로토·스마트슬립 판매점 (베트맨·복권위 교차검증 완료)"
+
     description = (
         f"📊 [{date_ko} 스코어닉스 베트맨 공식 게임(승무패 14경기 · 프로토 승부식 · 승5패 · 스페셜N) AI 통합 리포트]\n"
-        f"🏪 [전국 6,500개 동네 판매점 O2O & 온라인 승부예측 커뮤니티 무료 해금]\n"
-        f"온라인 승부예측 커뮤니티에 내 예상을 남기거나, 자주 가는 우리 동네 판매점을 등록하면 이번 회차 잠금 경기가 100% 무료 해금됩니다!\n"
-        f"👉 베트맨 14경기 전체 밸런스 표 & 무료 해금: https://scorenix.com/ko?utm_source=youtube_shorts&utm_medium=desc\n"
+        f"🏪 [전국 6,277개 공식 판매점 O2O & 온라인 승부예측 커뮤니티 무료 해금]\n"
+        f"온라인 승부예측 커뮤니티에 내 예상을 남기거나, 자주 가는 우리 동네 판매점을 추천하면 이번 회차 잠금 경기가 100% 무료 해금됩니다!\n"
+        f"👉 베트맨 14경기 전체 밸런스 표 & 내 주변 판매점 GPS 찾기: https://scorenix.com/ko?utm_source=youtube_shorts&utm_medium=desc\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"🎁 [이번 회차 무료 공개 베트맨 AI 시뮬레이션 샘플]\n"
         f"📍 회차 및 번호: {r_title} · {g_no} ({free_m.get('league', '주요 리그')})\n"
@@ -850,11 +856,15 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
         f"📊 AI 1순위 지표: [{free_m['pick_label']}] (신뢰도 {free_m['win_prob']}%)\n"
         f"💡 핵심 산출 근거: {free_m['reason']}\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🔒 [이번 회차 핵심 밸런스 & 경합 주의 매치 (커뮤니티 참여 또는 동네 판매점 등록 시 무료 해금)]\n"
+        f"🔒 [이번 회차 핵심 밸런스 & 경합 주의 매치 (커뮤니티 참여 또는 동네 판매점 추천 시 무료 해금)]\n"
         f"1️⃣ [{lock_m1.get('round_title', r_title)} · {lock_m1.get('game_no_label', '02번')}] {lock_m1['home']} vs {lock_m1['away']} (지수 {lock_m1['home_odds']} / {lock_m1['away_odds']})\n"
         f"   └ 1·2순위 밸런스 & 복수 방어 진단: 🔒 https://scorenix.com/ko 에서 무료 해금\n"
         f"2️⃣ [{lock_m2.get('round_title', r_title)} · {lock_m2.get('game_no_label', '03번')}] {lock_m2['home']} vs {lock_m2['away']} (지수 {lock_m2['home_odds']} / {lock_m2['away_odds']})\n"
         f"   └ 1·2순위 밸런스 & 복수 방어 진단: 🔒 https://scorenix.com/ko 에서 무료 해금\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📍 [오늘의 권역별 공식 프로토·스마트슬립 판매점 스포트라이트 (전국 6,277개 교차검증 DB)]\n"
+        f"{store_spotlight}\n"
+        f"👉 내 주변 가장 가까운 프로토 판매점 검색: https://scorenix.com/ko#community-lounge\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🔗 [스코어닉스 공식 채널 네트워크]\n"
         f"🌐 공식 웹사이트: https://scorenix.com/ko\n"
@@ -862,11 +872,11 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
         f"🧵 공식 쓰레드: https://www.threads.com/@scorenix_official\n"
         f"✍️ 공식 구글 블로그: https://official-scorenix.blogspot.com/\n\n"
         f"⚖️ 본 콘텐츠는 국민체육진흥공단 공식 인터넷 발매사이트 베트맨(betman.co.kr) 대상경기의 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 최종 판단과 책임은 본인에게 있습니다.\n"
-        f"#축구토토승무패 #프로토승부식 #농구토토승5패 #스페셜N #베트맨 #스포츠토토 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
+        f"#축구토토승무패 #프로토승부식 #농구토토승5패 #스포츠토토판매점 #프로토판매점 #베트맨 #{free_m['home'].replace(' ', '')} #{free_m['away'].replace(' ', '')} #스코어닉스 #shorts"
     )
 
     tags = [
-        "축구토토승무패", "프로토승부식", "농구토토승5패", "스페셜N", "베트맨",
+        "축구토토승무패", "프로토승부식", "농구토토승5패", "스포츠토토판매점", "프로토판매점", "베트맨",
         "스포츠토토분석", free_m["home"], free_m["away"], "스코어닉스", "shorts"
     ]
     return {

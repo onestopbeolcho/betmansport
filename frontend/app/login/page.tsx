@@ -40,11 +40,35 @@ function LoginContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // 판매점 전용 로그인 상태
+    // 판매점 전용 로그인 상태 (전국 6,277개 공식 판매점 검색 자동완성 연동)
     const [storeName, setStoreName] = useState('');
     const [storeRegion, setStoreRegion] = useState('서울/수도권');
     const [storePhone, setStorePhone] = useState('');
     const [storeLaunchType, setStoreLaunchType] = useState<'pc_kiosk' | 'a4_print'>('pc_kiosk');
+    const [storeSuggestions, setStoreSuggestions] = useState<Array<{ id: string; name: string; address: string; sido: string; sigungu: string }>>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    useEffect(() => {
+        if (loginMode !== 'store' || storeName.trim().length < 2) {
+            setStoreSuggestions([]);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            try {
+                const apiBase = process.env.NEXT_PUBLIC_API_URL || 'https://scorenix-backend-n5dv44kdaa-du.a.run.app';
+                const res = await fetch(`${apiBase}/api/proto/stores?q=${encodeURIComponent(storeName.trim())}&limit=6`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data.stores)) {
+                        setStoreSuggestions(data.stores);
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }, 220);
+        return () => clearTimeout(timer);
+    }, [storeName, loginMode]);
 
     useEffect(() => {
         if (searchParams.get('mode') === 'store') {
@@ -221,18 +245,47 @@ function LoginContent() {
                                     </p>
                                 </div>
 
-                                <div>
+                                <div className="relative">
                                     <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                                        매장 상호명 (필수 — 전광판 상단 및 A4 인쇄물에 표시됩니다)
+                                        매장 상호명 또는 동네 검색 (전국 6,277개 공식 판매점 DB 연동)
                                     </label>
                                     <input
                                         type="text"
                                         required
                                         value={storeName}
-                                        onChange={(e) => setStoreName(e.target.value)}
-                                        placeholder="예: 역삼 행운복권방 / 빛가람 스포츠토토 판매점"
+                                        onFocus={() => setShowSuggestions(true)}
+                                        onChange={(e) => {
+                                            setStoreName(e.target.value);
+                                            setShowSuggestions(true);
+                                        }}
+                                        placeholder="예: 역삼 / 수원 / CU중곡본점 / 신당백석점"
                                         className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#0046b8] focus:bg-white"
                                     />
+                                    {showSuggestions && storeSuggestions.length > 0 && (
+                                        <div className="mt-1.5 rounded-xl bg-white border border-blue-300 shadow-md overflow-hidden divide-y divide-slate-100">
+                                            <div className="px-3 py-1.5 bg-blue-50 text-[11px] font-extrabold text-[#0046b8]">
+                                                🏪 전국 공식 판매점 검색 결과 (클릭 시 자동 선택)
+                                            </div>
+                                            {storeSuggestions.map((st) => (
+                                                <button
+                                                    key={st.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setStoreName(st.name);
+                                                        if (st.sido) setStoreRegion(`${st.sido} ${st.sigungu || ''}`.trim());
+                                                        setShowSuggestions(false);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 hover:bg-blue-50/70 transition cursor-pointer"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-black text-slate-900">{st.name}</span>
+                                                        <span className="text-[10px] font-bold text-[#0046b8]">{st.id}</span>
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500">{st.address}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

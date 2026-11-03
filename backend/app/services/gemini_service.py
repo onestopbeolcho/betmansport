@@ -559,6 +559,9 @@ def _generate_sns_fallback(predictions: list) -> list:
 
         betman_pair = f" (베트맨 표기: {betman_home} vs {betman_away})" if betman_home != home or betman_away != away else ""
 
+        from app.services.store_directory_service import format_marketing_store_spotlight_text
+        store_spotlight = format_marketing_store_spotlight_text(count=3, seed_key=match_id or f"{home}_{away}")
+
         text = (
             f"📊 [{round_title} · {game_no_label}] AI 퀀트 밸런스 리포트\n"
             f"📅 일시: {date_param} | 🏟️ 리그: {league}\n"
@@ -568,14 +571,16 @@ def _generate_sns_fallback(predictions: list) -> list:
             f"{prob_line}\n\n"
             f"💡 3-Pillar 퀀트 핵심 산출 근거:\n"
             f"{factor_lines}\n"
-            f"🏪 전국 6,500개 동네 판매점(PC 전광판·A4 벽보) & 온라인 승부예측 커뮤니티 참여 시 14경기 전체 밸런스 표 100% 무료 해금!\n"
+            f"📍 오늘의 스포트라이트 공식 판매점 (전국 6,277개 매장 검색 지원):\n"
+            f"{store_spotlight}\n\n"
+            f"🏪 우리 동네 판매점 추천 또는 온라인 승부예측 커뮤니티 참여 시 14경기 전체 밸런스 표 100% 무료 해금!\n"
             f"🔗 공식 채널\n"
-            f"🌐 베트맨 전 게임 AI리포트: https://scorenix.com/ko?utm_source=sns&utm_medium=auto_post\n"
+            f"🌐 베트맨 전 게임 AI리포트 & 내 주변 판매점 찾기: https://scorenix.com/ko?utm_source=sns&utm_medium=auto_post\n"
             f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
             f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
             f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
             f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
-            f"#Scorenix #스코어닉스 #축구토토승무패 #프로토승부식 #농구토토승5패 #베트맨 #스포츠데이터 #{league.split('(')[0].replace(' ', '')}"
+            f"#Scorenix #스코어닉스 #축구토토승무패 #프로토승부식 #스포츠토토판매점 #프로토판매점 #베트맨 #{league.split('(')[0].replace(' ', '')}"
         )
         results.append({
             "match_id": match_id,
@@ -788,20 +793,25 @@ async def generate_top_picks_sns(predictions: list) -> Optional[str]:
         conf = p.get("confidence", 0)
         matches_text += f"📊 [{r_title} · {g_no}] {home} vs {away} (신뢰도 {conf:.0f}% · 🔒커뮤니티/판매점 무료해금)\n"
 
+    from app.services.store_directory_service import format_marketing_store_spotlight_text
+    store_spotlight = format_marketing_store_spotlight_text(count=3, seed_key=f"{s_round}_{s_no}")
+
     fallback_text = (
         f"🎁 [이번 회차 베트맨 무료 AI 시뮬레이션 공개]\n"
         f"📍 [{s_round} · {s_no}] {s_home} vs {s_away}\n"
         f"🎯 구간 분류: {s_role} → AI 1순위: [{s_rec_ko}] (신뢰도 {s_conf:.0f}%)\n\n"
         f"📈 [이번 회차 AI 핵심 밸런스 3경기 (단독 우위 & 이변 경보)]\n"
         f"{matches_text}\n"
-        f"🏪 온라인 승부예측 커뮤니티에 내 예상 남기거나 우리 동네 판매점 등록 시 14경기 전체 밸런스 표 100% 무료 해금!\n"
+        f"📍 오늘의 권역별 공식 프로토 판매점 스포트라이트 (전국 6,277개 매장 GPS 검색):\n"
+        f"{store_spotlight}\n\n"
+        f"🏪 온라인 승부예측 커뮤니티에 내 예상 남기거나 우리 동네 판매점 추천 시 14경기 전체 밸런스 표 100% 무료 해금!\n"
         f"🔗 공식 채널\n"
-        f"🌐 베트맨 전 게임 AI리포트: https://scorenix.com/ko\n"
+        f"🌐 베트맨 전 게임 AI리포트 & 내 주변 판매점 찾기: https://scorenix.com/ko\n"
         f"🎬 유튜브: https://www.youtube.com/@스코어닉스\n"
         f"📸 인스타: https://www.instagram.com/scorenix_official/\n"
         f"🧵 쓰레드: https://www.threads.com/@scorenix_official\n"
         f"✍️ 블로그: https://official-scorenix.blogspot.com\n\n"
-        f"#Scorenix #스코어닉스 #축구토토승무패 #프로토승부식 #농구토토승5패 #베트맨"
+        f"#Scorenix #스코어닉스 #축구토토승무패 #프로토승부식 #스포츠토토판매점 #프로토판매점 #베트맨"
     )
 
     if _init_gemini() and _client is not None:
@@ -882,6 +892,31 @@ BLOGGER_SEO_PROMPT = """당신은 Scorenix(스코어닉스)의 수석 스포츠 
 """
 
 
+def _build_blogger_store_seo_html(seed_key: str) -> str:
+    """블로그/워드프레스 로컬 SEO('강남 프로토 판매점', '수원 스포츠토토 판매점' 등) 유입을 위한 실제 공식 판매점 섹션 생성."""
+    from app.services.store_directory_service import get_marketing_spotlight_stores
+    spots = get_marketing_spotlight_stores(count=6, seed_key=seed_key)
+    if not spots:
+        return ""
+    rows_html = ""
+    for s in spots:
+        rows_html += (
+            f"<li><strong>[{s['sido']} {s['sigungu']}] {s['name']}</strong> — "
+            f"도로명주소: {s['address']} | 스마트슬립: {s.get('smart_slip', 'O')} | "
+            f"<span style='color:#0046b8; font-weight:bold;'>{s.get('verify_grade', '공식등록')}</span></li>"
+        )
+    return f"""
+    <div style="margin-top: 28px; padding: 20px; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px;">
+      <h2 style="margin-top: 0; font-size: 18px; color: #0f172a;">🏪 오늘의 권역별 공식 프로토·스마트슬립 판매점 안내 (전국 6,277개 교차검증 DB)</h2>
+      <p style="font-size: 13px; color: #475569;">스코어닉스는 스포츠토토(베트맨) 공식 판매점 데이터와 기획예산처 2026년 최신 간판 상호를 교차 검증하여 <strong>전국 6,277개 공식 프로토 판매점 위치(GPS) 및 매장용 PC 전광판·A4 분석 벽보</strong>를 지원합니다.</p>
+      <ul style="font-size: 13px; color: #1e293b; line-height: 1.7;">
+        {rows_html}
+      </ul>
+      <p style="font-size: 12px; color: #0046b8; font-weight: bold; margin-bottom: 0;">👉 <a href="https://scorenix.com/ko?utm_source=blogger&utm_medium=local_store_seo#community-lounge" style="color: #0046b8; text-decoration: underline;">내 주변 가장 가까운 프로토 판매점 GPS로 찾고 이번 회차 14경기 전체 리포트 무료 해금하기</a></p>
+    </div>
+    """
+
+
 async def generate_blogger_content(match_data: dict, match_url_path: str) -> Optional[dict]:
     """
     Generate an SEO-optimized HTML article for Google Blogger / WordPress.
@@ -891,6 +926,7 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
     game_no_label = match_data.get("game_no_label", "핵심매치")
     home_ko = match_data.get("team_home_ko", match_data.get("team_home", ""))
     away_ko = match_data.get("team_away_ko", match_data.get("team_away", ""))
+    store_seo_block = _build_blogger_store_seo_html(f"{round_title}_{game_no_label}_{home_ko}")
 
     if _init_gemini() and _client is not None:
         try:
@@ -911,6 +947,8 @@ async def generate_blogger_content(match_data: dict, match_url_path: str) -> Opt
             text = text.replace("https://www.youtube.com/@scorenix", "https://www.youtube.com/@%EC%8A%A4%EC%BD%94%EC%96%B4%EB%8B%89%EC%8A%A4")
             text = text.replace("https://www.instagram.com/scorenix/", "https://www.instagram.com/scorenix_official/")
             text = text.replace("https://www.threads.com/@scorenix\"", "https://www.threads.com/@scorenix_official\"")
+            if store_seo_block and "6,277개 교차검증 DB" not in text:
+                text = text + "\n" + store_seo_block
             
             title = f"[{round_title} · {game_no_label}] {home_ko} vs {away_ko} AI 1·2순위 밸런스 및 포아송 기대득점(xG) 분석 리포트"
             import re
@@ -953,6 +991,8 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
     if not factors_html:
         factors_html = f"<li><strong>시장 내재 확률:</strong> 배당 지수 홈 {ho} / 원정 {ao} 기반 순수 확률 산출</li>"
 
+    store_seo_block = _build_blogger_store_seo_html(f"{round_title}_{game_no_label}_{home}")
+
     html = f"""
     <h1>{title}</h1>
     <p>안녕하세요. 베트맨(Betman) 공식 게임 AI 데이터 인텔리전스 플랫폼 <strong>Scorenix(스코어닉스)</strong>입니다.</p>
@@ -975,8 +1015,8 @@ def _generate_blogger_fallback(match_data: dict, match_url_path: str) -> dict:
 
     <h2>💡 3. 축구토토 승무패 14경기 통합 밸런스 표 & 동네 판매점/커뮤니티 무료 해금 안내</h2>
     <p>14경기를 모두 단통으로 맞추려 하면 예상치 못한 이변 1경기에 전체 밸런스가 무너집니다. <strong>AI가 분류한 '단독 우위(1순위 주력)' 구간과 '경합 주의(1·2순위 복수 병행)' 구간을 구분하여 마킹 비중을 배분</strong>하는 것이 핵심입니다. 
-    현재 스코어닉스 공식 웹사이트에서는 <strong>온라인 승부예측 커뮤니티에 내 예상을 남기거나, 전국 6,500개 동네 판매점을 등록하면 이번 회차 잠금 경기를 100% 무료로 즉시 해금</strong>해 드리고 있습니다.</p>
-    
+    현재 스코어닉스 공식 웹사이트에서는 <strong>온라인 승부예측 커뮤니티에 내 예상을 남기거나, 전국 6,277개 교차검증 공식 프로토 판매점을 추천·등록하면 이번 회차 잠금 경기를 100% 무료로 즉시 해금</strong>해 드리고 있습니다.</p>
+    {store_seo_block}
     <div style="margin-top: 36px; padding: 28px; background: linear-gradient(135deg, #0b1120, #1e293b); border: 1px solid #334155; border-radius: 16px; text-align: center; color: #f8fafc;">
       <div style="display:inline-block; padding: 4px 12px; background: rgba(16,185,129,0.2); color: #34d399; border-radius: 999px; font-size: 12px; font-weight: bold; margin-bottom: 10px;">🏪 전국 6,500개 동네 판매점 O2O · 온라인 승부예측 커뮤니티 참여 시 100% 무료 해금</div>
       <h3 style="margin-top: 0; color: #ffffff; font-size: 20px;">📊 이번 회차 축구토토 승무패 14경기 전체 밸런스 표 & 프로토 승부식 AI 1·2순위가 궁금하다면?</h3>
