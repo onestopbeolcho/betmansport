@@ -41,6 +41,58 @@ interface ProtoMatch {
     vote_home_pct?: number;
     vote_mid_pct?: number;
     vote_away_pct?: number;
+    home_stat?: {
+        rank: number;
+        total_teams: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        points: number;
+        goal_diff: number;
+        avg_gf: number;
+        avg_ga: number;
+        form_hyphen: string;
+        record_summary: string;
+        form_summary: string;
+    };
+    away_stat?: {
+        rank: number;
+        total_teams: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        points: number;
+        goal_diff: number;
+        avg_gf: number;
+        avg_ga: number;
+        form_hyphen: string;
+        record_summary: string;
+        form_summary: string;
+    };
+    poisson_simulation?: {
+        expected_home_goals: number;
+        expected_away_goals: number;
+        expected_total_goals: number;
+        poisson_home_prob: number;
+        poisson_draw_prob: number;
+        poisson_away_prob: number;
+        over_25_prob: number;
+        btts_prob: number;
+        top_exact_scores: { score: string; prob_pct: number }[];
+    } | null;
+    pillar_breakdown?: {
+        mkt_home_prob: number;
+        mkt_away_prob: number;
+        stat_home_prob: number;
+        stat_away_prob: number;
+        fac_home_prob: number;
+        fac_away_prob: number;
+        mkt_pick_prob: number;
+        stat_pick_prob: number;
+        fac_pick_prob: number;
+        consensus_count: number;
+        consensus_label: string;
+    };
     w5l_analysis?: {
         win_prob: number;
         close5_prob: number;
@@ -498,20 +550,32 @@ export default function AnalysisPage() {
                                             <div>
                                                 <div className="text-base sm:text-lg font-black text-slate-950 leading-snug">
                                                     {m.home_ko} <span className="text-[#0046b8]">({m.betman_home})</span>
+                                                    {isUnlocked && m.home_stat?.rank ? (
+                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-blue-50 text-[#0046b8] text-[10px] font-extrabold border border-blue-200">
+                                                            {m.home_stat.rank}위 · {m.home_stat.form_hyphen}
+                                                        </span>
+                                                    ) : null}
                                                     <span className="mx-1.5 text-slate-400 font-bold text-sm">vs</span>
                                                     {m.away_ko} <span className="text-slate-700">({m.betman_away})</span>
+                                                    {isUnlocked && m.away_stat?.rank ? (
+                                                        <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-extrabold border border-slate-300">
+                                                            {m.away_stat.rank}위 · {m.away_stat.form_hyphen}
+                                                        </span>
+                                                    ) : null}
                                                 </div>
-                                                <p className="text-xs text-slate-600 mt-1 font-medium">
+                                                <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
                                                     {isUnlocked
                                                         ? m.ai_detail_report?.tactical_summary || m.value_reason || m.trap_reason
-                                                        : '🔒 7-Factor 전술 요약 및 최종 추천 방향은 열람권 활성화 시 즉시 공개됩니다.'}
+                                                        : '🔒 양 팀 실제 리그 순위·최근 5경기 승무패·Dixon-Coles 포아송 스코어 및 7-Factor 지표는 열람권 활성화 시 즉시 공개됩니다.'}
                                                 </p>
                                             </div>
 
                                             <div className="text-right shrink-0">
                                                 {isUnlocked ? (
                                                     <div className="rounded-xl bg-blue-50 border border-blue-200 px-3 py-2 text-center">
-                                                        <div className="text-[10px] font-bold text-slate-500">AI 분석 결론</div>
+                                                        <div className="text-[10px] font-bold text-slate-500">
+                                                            {m.pillar_breakdown?.consensus_label || 'AI 분석 결론'}
+                                                        </div>
                                                         <div className="text-sm font-black text-[#0046b8] mt-0.5">
                                                             {m.ai_pick_label}
                                                         </div>
@@ -530,6 +594,50 @@ export default function AnalysisPage() {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* 구단 실제 시즌 성적 & 포아송 기대득점 요약 박스 (해제 시 노출) */}
+                                        {isUnlocked && (m.home_stat || m.poisson_simulation) && (
+                                            <div className="rounded-xl bg-blue-50/50 border border-blue-200 p-3 space-y-2 text-xs">
+                                                {m.home_stat && m.away_stat && (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                        <div className="rounded-lg bg-white border border-slate-200 px-2.5 py-1.5">
+                                                            <div className="text-[10px] font-bold text-slate-500">🏠 홈팀 시즌 성적 · 최근 5경기</div>
+                                                            <div className="font-extrabold text-slate-900 mt-0.5">
+                                                                {m.home_ko}: {m.home_stat.record_summary}
+                                                            </div>
+                                                            <div className="text-[11px] font-bold text-[#0046b8]">
+                                                                최근 흐름: {m.home_stat.form_summary}
+                                                            </div>
+                                                        </div>
+                                                        <div className="rounded-lg bg-white border border-slate-200 px-2.5 py-1.5">
+                                                            <div className="text-[10px] font-bold text-slate-500">✈️ 원정팀 시즌 성적 · 최근 5경기</div>
+                                                            <div className="font-extrabold text-slate-900 mt-0.5">
+                                                                {m.away_ko}: {m.away_stat.record_summary}
+                                                            </div>
+                                                            <div className="text-[11px] font-bold text-slate-700">
+                                                                최근 흐름: {m.away_stat.form_summary}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {m.poisson_simulation && (
+                                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-blue-200/70 text-[11px] font-bold text-slate-800">
+                                                        <span>
+                                                            ⚽ <strong>Dixon-Coles 기대득점(xG):</strong> 홈 {m.poisson_simulation.expected_home_goals}골 vs 원정 {m.poisson_simulation.expected_away_goals}골 (2.5골 오버 {m.poisson_simulation.over_25_prob}%)
+                                                        </span>
+                                                        {m.poisson_simulation.top_exact_scores?.length > 0 && (
+                                                            <span className="px-2 py-0.5 rounded bg-white border border-blue-200 text-[#0046b8] font-extrabold">
+                                                                🎯 유력 스코어:{' '}
+                                                                {m.poisson_simulation.top_exact_scores
+                                                                    .slice(0, 3)
+                                                                    .map((s, idx) => `${idx + 1}순위 ${s.score}(${s.prob_pct}%)`)
+                                                                    .join(' · ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* 고대비 승/무/패 확률 바 */}
                                         <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2.5">

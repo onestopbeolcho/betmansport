@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 ESPN_LEAGUES: List[Dict[str, Any]] = [
     # ─── 유럽 빅5 및 주요 축구 리그 ───
     {"key": "soccer_epl", "sport": "Soccer", "espn_path": "soccer/eng.1", "title": "EPL (프리미어리그)", "home_adv": 1.06},
+    {"key": "soccer_efl_champ", "sport": "Soccer", "espn_path": "soccer/eng.2", "title": "Championship (챔피언십)", "home_adv": 1.07},
     {"key": "soccer_spain_la_liga", "sport": "Soccer", "espn_path": "soccer/esp.1", "title": "La Liga (라리가)", "home_adv": 1.10},
+    {"key": "soccer_spain_segunda", "sport": "Soccer", "espn_path": "soccer/esp.2", "title": "La Liga 2 (라리가2)", "home_adv": 1.09},
     {"key": "soccer_germany_bundesliga", "sport": "Soccer", "espn_path": "soccer/ger.1", "title": "Bundesliga (분데스리가)", "home_adv": 1.08},
     {"key": "soccer_italy_serie_a", "sport": "Soccer", "espn_path": "soccer/ita.1", "title": "Serie A (세리에 A)", "home_adv": 1.09},
     {"key": "soccer_france_ligue_one", "sport": "Soccer", "espn_path": "soccer/fra.1", "title": "Ligue 1 (리그 1)", "home_adv": 1.07},

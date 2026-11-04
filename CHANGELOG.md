@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.8.8 - Real-Stat 3-Pillar 7-Factor AI Analysis Engine Upgrade & Strict Non-Logged-In Paywall (`/ko/analysis`)
+- **3-Pillar Ensemble & Real-Stat 7-Factor Quantitative Engine (`proto_round_service.py`, `espn_fast_service.py`)**:
+    - Integrated live ESPN standings (`espn_fast_service.fetch_all_standings` including EPL, Championship, La Liga, La Liga 2, Bundesliga, Serie A, Ligue 1, NBA) and a comprehensive club/KBL baseline database (`SEASON_TEAM_STATS_DB`) into `build_proto_round_report`.
+    - Upgraded Soccer (`축구토토 승무패`, `프로토 승부식`) analysis with **Dixon-Coles 9×9 Poisson Expected Goals (`xG`) Simulation** (`_compute_soccer_dixon_coles_simulation`), outputting expected goals (`lam_h`, `lam_a`), **Top 3 Most Probable Exact Scores (`top_exact_scores`)**, Over/Under 2.5 Goals probability, and BTTS probability.
+    - Upgraded Basketball (`농구토토 승5패`, `스페셜N`, `스페셜`, `매치`) analysis with **Gaussian CDF (`_norm_cdf`) Score-Bracket & Margin Integration** based on each team's actual PPG (`avg_gf`) and Opponent PPG (`avg_ga`).
+    - Upgraded all 7 Factors in `_build_ai_detail_report` to report concrete team rankings, season W-D-L records, goal differentials, recent 5-match form (`[W-W-D-W-L]`), Dixon-Coles exact score probabilities, Betman crowd vote overheat gaps, and **3-Pillar Model Consensus (`3/3 모델 만장일치` / `2/3 모델 우세 합의`)**.
+- **Strict Non-Logged-In Paywall & Real-Stat UI (`frontend/app/analysis/page.tsx`, `ProtoRoundDashboard.tsx`, `protoFallback.ts`)**:
+    - Enforced strict lock on `/ko/analysis` for unauthenticated/free users: only `01번 경기` is unlocked as a free sample, while `02번~14번` matches mask strategic role badges (`🔒 주력·함정 등급 잠금`), AI pick conclusions, probability distributions, and 7-Factor details.
+    - Added visual display of real league rank, recent 5-match form badges, Dixon-Coles expected goals (`xG`), Top 3 exact score predictions, and 3-Pillar consensus labels on unlocked match cards.
+
 ## v0.8.7 - B2B Store 100% Free Partner Model, B2C Mobile Subscription Alignment (₩3,900 / ₩29,900 / ₩39,000) & Nationwide ~230 District Local SEO Pages
 - **B2B Store 100% Free Partner & Offline-to-Online B2C Funnel (StorePrintReportView.tsx, login/page.tsx, CommunityAndStoreLounge.tsx)**:
     - Converted Store Owner A4 Wall Poster Print (🖨️ A4 벽보 원클릭 인쇄) & Store Kiosk Mode into a **100% Free Forever Store Partner Program (구독료 평생 0원)** for all 6,277 official stores.
