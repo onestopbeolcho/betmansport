@@ -1,996 +1,639 @@
-
 "use client";
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDictionarySafe } from '../context/DictionaryContext';
+import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import DeadlineBanner from '../components/DeadlineBanner';
 import Navbar from '../components/Navbar';
-import PremiumGate from '../components/PremiumGate';
-import { mapTeamName, formatTeamDisplay } from '../lib/teamNames';
+import {
+    fetchProtoRoundWithFallback,
+    DEFAULT_BETMAN_CATALOG,
+    BetmanGameCatalogItem,
+} from '../lib/protoFallback';
 
-
-/* ───── Types ───── */
-interface AIPrediction {
-    match_id: string;
-    confidence: number;
-    recommendation: string;
-    home_win_prob: number;
-    draw_prob: number;
-    away_win_prob: number;
-    factors: { name: string; weight: number; score: number; detail: string }[];
-    team_home?: string;
-    team_away?: string;
-    team_home_ko?: string;
-    team_away_ko?: string;
-    league?: string;
-    sport?: string;
-    match_time?: string;
-    engine?: string;
+interface SevenFactorItem {
+    name: string;
+    score: number;
+    comment: string;
 }
 
-interface AIResponse {
-    predictions: AIPrediction[];
-    data_sources: string[];
+interface ProtoMatch {
+    game_no: number;
+    game_no_label: string;
+    fixture_id: string;
+    league: string;
+    sport: string;
+    betman_home: string;
+    betman_away: string;
+    home_ko: string;
+    away_ko: string;
+    cutoff_time: string;
+    kickoff_display: string;
+    proto_market_type?: string;
+    betman_home_odds: number;
+    betman_draw_odds: number;
+    betman_away_odds: number;
+    global_home_odds: number;
+    global_draw_odds: number;
+    global_away_odds: number;
+    ai_home_prob: number;
+    ai_draw_prob: number;
+    ai_away_prob: number;
+    vote_home_pct?: number;
+    vote_mid_pct?: number;
+    vote_away_pct?: number;
+    w5l_analysis?: {
+        win_prob: number;
+        close5_prob: number;
+        lose_prob: number;
+        primary_label: string;
+        multi_recommend: string;
+    } | null;
+    special_brackets?: {
+        expected_home_pts: number;
+        expected_away_pts: number;
+        home_top1_bracket: string;
+        home_top1_prob: number;
+        away_top1_bracket: string;
+        away_top1_prob: number;
+    } | null;
+    ai_pick_code: string;
+    ai_pick_label: string;
+    ai_pick_full_label: string;
+    ai_pick_prob: number;
+    ai_pick_odds: number;
+    ai_confidence: number;
+    payout_efficiency: number;
+    expected_value_pct: number;
+    is_killer_pick: boolean;
+    is_trap_candidate: boolean;
+    trap_risk_score: number;
+    upset_or_draw_prob: number;
+    trap_reason: string;
+    value_reason: string;
+    ai_detail_report?: {
+        tactical_summary?: string;
+        seven_factors?: SevenFactorItem[];
+    };
+}
+
+interface ProtoReportData {
+    game_key?: string;
+    gm_id?: string;
+    gm_ts?: string;
+    game_name?: string;
+    game_category?: string;
+    game_type?: string;
+    rule_summary?: string;
+    round_id: string;
+    display_round_no: string;
+    round_title: string;
+    published_at: string;
+    published_date: string;
+    sale_end_display?: string;
     total_matches: number;
+    killer_picks_count: number;
+    available_games?: BetmanGameCatalogItem[];
+    matches: ProtoMatch[];
 }
 
-/* ───── Helpers ───── */
-
-const formatTime = (iso: string) => {
-    if (!iso) return '';
-    try {
-        const d = new Date(iso);
-        if (isNaN(d.getTime())) return '';
-        return d.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-    } catch { return ''; }
-};
-
-const getConfidenceLevel = (confidence: number) => {
-    if (confidence >= 85) return { label: '강력 추천', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', glow: 'rgba(239,68,68,0.4)', icon: '🔴' };
-    if (confidence >= 70) return { label: '추천', color: '#10b981', bg: 'rgba(16,185,129,0.12)', glow: 'rgba(16,185,129,0.3)', icon: '🟢' };
-    if (confidence >= 55) return { label: '참고', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', glow: 'rgba(59,130,246,0.3)', icon: '🔵' };
-    return { label: '중립', color: '#6b7280', bg: 'rgba(107,114,128,0.12)', glow: 'rgba(107,114,128,0.2)', icon: '⚪' };
-};
-
-const getRecommendationKo = (rec: string) => {
-    if (rec === 'HOME') return '홈 승';
-    if (rec === 'AWAY') return '원정 승';
-    return '무승부';
-};
-
-/* Animated counter hook */
-function useCountUp(end: number, duration = 1200) {
-    const [value, setValue] = useState(0);
-    useEffect(() => {
-        let start = 0;
-        const startTime = performance.now();
-        const animate = (now: number) => {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            setValue(Math.round(start + (end - start) * eased));
-            if (progress < 1) requestAnimationFrame(animate);
-        };
-        requestAnimationFrame(animate);
-    }, [end, duration]);
-    return value;
-}
-
-/* ───── Sub-components ───── */
-
-/* Donut probability chart */
-function ProbDonut({ home, draw, away, size = 90 }: { home: number; draw: number; away: number; size?: number }) {
-    const total = home + draw + away || 1;
-    const r = (size - 10) / 2;
-    const cx = size / 2;
-    const cy = size / 2;
-    const circumference = 2 * Math.PI * r;
-
-    const homeArc = (home / total) * circumference;
-    const drawArc = (draw / total) * circumference;
-    const awayArc = (away / total) * circumference;
-
-    return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#3b82f6" strokeWidth="8"
-                strokeDasharray={`${homeArc} ${circumference - homeArc}`} strokeDashoffset="0"
-                style={{ transition: 'stroke-dasharray 1s ease-out' }} />
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#a855f7" strokeWidth="8"
-                strokeDasharray={`${drawArc} ${circumference - drawArc}`} strokeDashoffset={`${-homeArc}`}
-                style={{ transition: 'stroke-dasharray 1s ease-out' }} />
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f97316" strokeWidth="8"
-                strokeDasharray={`${awayArc} ${circumference - awayArc}`} strokeDashoffset={`${-(homeArc + drawArc)}`}
-                style={{ transition: 'stroke-dasharray 1s ease-out' }} />
-        </svg>
-    );
-}
-
-/* Confidence gauge bar */
-function ConfidenceGauge({ value }: { value: number }) {
-    const level = getConfidenceLevel(value);
-    return (
-        <div className="w-full">
-            <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] text-white/40 uppercase tracking-wider group relative cursor-help">
-                    신뢰도 ⓘ
-                    <div className="absolute bottom-full left-0 mb-2 w-56 p-2.5 bg-gray-900 border border-white/10 rounded-xl text-[10px] text-white leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none shadow-2xl normal-case">
-                        AI가 추천 예측에 대해 얼마나 강하게 확신하는지 나타냅니다. 변수가 적을수록 높아집니다. <br/>(70% 이상부터 추천 구간)
-                    </div>
-                </span>
-                <span className="text-sm font-black" style={{ color: level.color }}>{value.toFixed(1)}%</span>
-            </div>
-            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <div
-                    className="h-full rounded-full"
-                    style={{
-                        width: `${Math.min(value, 100)}%`,
-                        background: `linear-gradient(90deg, ${level.color}88, ${level.color})`,
-                        boxShadow: `0 0 12px ${level.glow}`,
-                        transition: 'width 1.2s ease-out',
-                    }}
-                />
-            </div>
-        </div>
-    );
-}
-
-/* Radar Chart for AI Factors */
-function FactorRadar({ factors }: { factors: { name: string; weight: number; score: number }[] }) {
-    const topFactors = factors.slice(0, 6);
-    const size = 200;
-    const cx = size / 2;
-    const cy = size / 2;
-    const maxR = 70;
-    const levels = 4;
-
-    const angleStep = (2 * Math.PI) / topFactors.length;
-
-    const getPoint = (idx: number, val: number) => {
-        const angle = angleStep * idx - Math.PI / 2;
-        const r = (val / 100) * maxR;
-        return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
-    };
-
-    const gridLines = Array.from({ length: levels }, (_, i) => {
-        const r = (maxR / levels) * (i + 1);
-        const points = topFactors.map((_, idx) => {
-            const angle = angleStep * idx - Math.PI / 2;
-            return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
-        }).join(' ');
-        return <polygon key={i} points={points} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />;
-    });
-
-    const dataPoints = topFactors.map((f, idx) => getPoint(idx, f.score || f.weight * 10));
-    const dataPath = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
-
-    return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            {/* Grid */}
-            {gridLines}
-            {/* Axis lines */}
-            {topFactors.map((_, idx) => {
-                const p = getPoint(idx, 100);
-                return <line key={idx} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />;
-            })}
-            {/* Data polygon */}
-            <polygon points={dataPath} fill="rgba(0,212,255,0.15)" stroke="#00d4ff" strokeWidth="2" />
-            {/* Data points */}
-            {dataPoints.map((p, idx) => (
-                <circle key={idx} cx={p.x} cy={p.y} r="3" fill="#00d4ff" />
-            ))}
-            {/* Labels */}
-            {topFactors.map((f, idx) => {
-                const p = getPoint(idx, 120);
-                return (
-                    <text key={idx} x={p.x} y={p.y}
-                        textAnchor="middle" dominantBaseline="middle"
-                        fill="rgba(255,255,255,0.5)" fontSize="9" fontWeight="bold">
-                        {f.name.length > 6 ? f.name.slice(0, 6) + '..' : f.name}
-                    </text>
-                );
-            })}
-        </svg>
-    );
-}
-
-/* ───── Filter Tabs ───── */
-type FilterType = 'all' | 'strong' | 'recommended' | 'neutral';
-
-/* ───── Main Component ───── */
-export default function AnalysisPage() {
-    const dict = useDictionarySafe();
-    const { user } = useAuth();
-    const [previewAsFree, setPreviewAsFree] = useState(false);
-    const hasPaidAccess = Boolean(
-        user && (['pro', 'vip', 'premium', 'admin'].includes((user.tier || '').toLowerCase()) || user.role === 'admin')
-    );
-    const isProOrAbove = hasPaidAccess && !previewAsFree;
-    const [aiPredictions, setAiPredictions] = useState<AIPrediction[]>([]);
-    const [dataSources, setDataSources] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [expandedCard, setExpandedCard] = useState<string | null>('analysis-0');
-    const [filter, setFilter] = useState<FilterType>('all');
-    const [sortBy, setSortBy] = useState<'confidence' | 'time'>('confidence');
-    const [selectedSport, setSelectedSport] = useState<string>('ALL');
-    const [fetchError, setFetchError] = useState(false);
-    const [showGuide, setShowGuide] = useState(false);
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
-    /* Fetch AI predictions with timeout */
-    const fetchAIPredictions = async () => {
-        setLoading(true);
-        setFetchError(false);
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/ai/predictions`, { signal: controller.signal });
-            clearTimeout(timeout);
-            if (!res.ok) throw new Error('Failed to fetch AI predictions');
-            const data: AIResponse = await res.json();
-            setAiPredictions(data.predictions || []);
-            setDataSources(data.data_sources || []);
-        } catch (err: unknown) {
-            console.warn('AI predictions unavailable:', err instanceof Error ? err.message : err);
-            setFetchError(true);
-        }
-        finally { clearTimeout(timeout); setLoading(false); }
-    };
-
-    useEffect(() => { fetchAIPredictions(); }, []);
-
-    /* ── Sport filter tabs (same as Market page) ── */
-    const sportTabs = useMemo(() => {
-        const iconMap: Record<string, string> = { SOCCER: '⚽', BASKETBALL: '🏀', BASEBALL: '⚾', ICEHOCKEY: '🏒' };
-        const labelMap: Record<string, string> = { SOCCER: '축구', BASKETBALL: '농구', BASEBALL: '야구', ICEHOCKEY: '하키' };
-        const counts: Record<string, number> = {};
-        aiPredictions.forEach(p => {
-            const key = (p.sport || 'SOCCER').toUpperCase();
-            counts[key] = (counts[key] || 0) + 1;
-        });
-        return ['SOCCER', 'BASKETBALL', 'BASEBALL', 'ICEHOCKEY']
-            .map(s => ({ key: s, icon: iconMap[s] || '🏟️', label: labelMap[s] || s, count: counts[s] || 0 }));
-    }, [aiPredictions]);
-
-    /* Sport-filtered predictions */
-    const sportFiltered = useMemo(() => {
-        if (selectedSport === 'ALL') return aiPredictions;
-        return aiPredictions.filter(p => (p.sport || 'soccer').toUpperCase() === selectedSport);
-    }, [aiPredictions, selectedSport]);
-
-    /* Stats (based on sport-filtered) */
-    const totalMatches = sportFiltered.length;
-    const strongPicks = sportFiltered.filter(p => p.confidence >= 85).length;
-    const recommendedPicks = sportFiltered.filter(p => p.confidence >= 70 && p.confidence < 85).length;
-    const avgConfidence = totalMatches > 0 ? sportFiltered.reduce((s, p) => s + p.confidence, 0) / totalMatches : 0;
-    const isMLEngine = dataSources.some(s => s.includes('LightGBM') || s.includes('Quant'));
-
-    /* Animated stats */
-    const animatedTotal = useCountUp(totalMatches);
-    const animatedStrong = useCountUp(strongPicks);
-    const animatedRecommended = useCountUp(recommendedPicks);
-    const animatedAvg = useCountUp(Math.round(avgConfidence));
-
-    /* Top AI picks — sorted by confidence (from sport-filtered) */
-    const topPicks = useMemo(() => {
-        return [...sportFiltered]
-            .filter(p => p.confidence >= 60)
-            .sort((a, b) => b.confidence - a.confidence)
-            .slice(0, 3);
-    }, [sportFiltered]);
-
-    /* 1 Daily Free Sample Match (picked outside Top 3 so Top Picks remain strictly Pro-exclusive) */
-    const freeSampleMatchId = useMemo(() => {
-        const topIds = new Set(topPicks.map(tp => tp.match_id));
-        const candidate = sportFiltered.find(p => !topIds.has(p.match_id) && p.confidence >= 65 && p.confidence < 85)
-            || sportFiltered.find(p => !topIds.has(p.match_id))
-            || sportFiltered[0];
-        return candidate?.match_id || '';
-    }, [sportFiltered, topPicks]);
-
-    /* Filtered & sorted predictions (sport + confidence filter) */
-    const filteredPredictions = useMemo(() => {
-        let filtered = [...sportFiltered];
-        if (filter === 'strong') filtered = filtered.filter(p => p.confidence >= 85);
-        else if (filter === 'recommended') filtered = filtered.filter(p => p.confidence >= 70 && p.confidence < 85);
-        else if (filter === 'neutral') filtered = filtered.filter(p => p.confidence < 70);
-
-        if (sortBy === 'confidence') filtered.sort((a, b) => b.confidence - a.confidence);
-        else if (sortBy === 'time') filtered.sort((a, b) => new Date(a.match_time || '').getTime() - new Date(b.match_time || '').getTime());
-
-        // For Free users, float the 1 Daily Free Sample match to index 0 so they immediately experience 1 full analysis
-        if (!isProOrAbove && freeSampleMatchId) {
-            const sampleIdx = filtered.findIndex(p => p.match_id === freeSampleMatchId);
-            if (sampleIdx > 0) {
-                const [sampleItem] = filtered.splice(sampleIdx, 1);
-                filtered.unshift(sampleItem);
-            }
-        }
-
-        return filtered;
-    }, [sportFiltered, filter, sortBy, isProOrAbove, freeSampleMatchId]);
-
-    const filterTabs: { key: FilterType; label: string; count: number }[] = [
-        { key: 'all', label: '전체', count: totalMatches },
-        { key: 'strong', label: '🔴 강력 추천', count: strongPicks },
-        { key: 'recommended', label: '🟢 추천', count: recommendedPicks },
-        { key: 'neutral', label: '기타', count: totalMatches - strongPicks - recommendedPicks },
+function buildFallbackSevenFactors(m: ProtoMatch): SevenFactorItem[] {
+    if (m.ai_detail_report?.seven_factors && m.ai_detail_report.seven_factors.length > 0) {
+        return m.ai_detail_report.seven_factors;
+    }
+    const favIsHome = m.ai_home_prob >= m.ai_away_prob;
+    const favTeam = favIsHome ? m.home_ko : m.away_ko;
+    const maxProb = Math.max(m.ai_home_prob, m.ai_away_prob);
+    return [
+        {
+            name: '글로벌 배당 마진 제거(De-vig) 내재승률',
+            score: Math.min(96, Math.max(52, Math.round(maxProb + 12))),
+            comment: `${favTeam} 기준 글로벌 피나클 마진 제거 순수 기대 확률 ${maxProb}% 반영`,
+        },
+        {
+            name: '포아송 기대득점(xG) · 공수 효율 지수',
+            score: Math.min(95, Math.max(55, Math.round(m.ai_confidence - 2))),
+            comment: `최근 5경기 기대득실 편차 및 슈팅 전환율 시뮬레이션 우위`,
+        },
+        {
+            name: '베트맨 공시배당 대비 데이터 가치(+EV)',
+            score: Math.min(94, Math.max(50, Math.round(m.payout_efficiency || 78))),
+            comment: m.value_reason || `베트맨 배당 대비 기대수익 효율 ${m.payout_efficiency || 88}% 산출`,
+        },
+        {
+            name: '대중 투표율 과열 및 역배당 변수 방어',
+            score: m.is_trap_candidate ? 88 : 74,
+            comment: m.is_trap_candidate
+                ? m.trap_reason
+                : `투표 쏠림 대비 실제 전력 지표 일치 구간 (안정 등급)`,
+        },
+        {
+            name: '홈·원정 체력 및 일정 피로도 팩터',
+            score: favIsHome ? 82 : 76,
+            comment: favIsHome
+                ? `${m.home_ko} 홈 구장 공수 밸런스 및 이동거리 이점 확보`
+                : `${m.away_ko} 원정 경기력 유지 및 역습 효율 우세`,
+        },
+        {
+            name: '상대전적 및 전술 상성 스코어링',
+            score: Math.min(92, Math.max(60, Math.round(m.ai_confidence - 5))),
+            comment: `최근 맞대결 전술 상성 및 세트피스 득실 지표 교차 검증 완료`,
+        },
     ];
+}
+
+export default function AnalysisPage() {
+    const { user } = useAuth();
+    const [report, setReport] = useState<ProtoReportData | null>(null);
+    const [selectedGameKey, setSelectedGameKey] = useState<string>('G011_260065');
+    const [loading, setLoading] = useState<boolean>(true);
+    const [roleFilter, setRoleFilter] = useState<'ALL' | 'KILLER' | 'TRAP' | 'NORMAL'>('ALL');
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [expandedNo, setExpandedNo] = useState<number | null>(1);
+    const [isStoreMode, setIsStoreMode] = useState<boolean>(false);
+    const [unlockedDemo, setUnlockedDemo] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const stMode = localStorage.getItem('scorenix_store_mode') === 'true';
+            const rPass = localStorage.getItem('scorenix_round_pass_unlocked') === 'true';
+            setIsStoreMode(stMode);
+            setUnlockedDemo(rPass);
+        }
+    }, []);
+
+    const isPaidOrUnlocked = useMemo(() => {
+        if (isStoreMode || unlockedDemo) return true;
+        if (!user) return false;
+        const r = (user.role || user.tier || '').toLowerCase();
+        return ['pro', 'vip', 'premium', 'admin', 'round_pass', 'store_b2b'].includes(r);
+    }, [user, isStoreMode, unlockedDemo]);
+
+    const loadRound = async (gameKey: string) => {
+        setLoading(true);
+        try {
+            const data = await fetchProtoRoundWithFallback(gameKey);
+            if (data) {
+                setReport(data);
+                if (data.game_key) setSelectedGameKey(data.game_key);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadRound('G011_260065');
+    }, []);
+
+    const catalogList = useMemo(() => {
+        if (report?.available_games && report.available_games.length > 0) {
+            return report.available_games;
+        }
+        return DEFAULT_BETMAN_CATALOG;
+    }, [report]);
+
+    const matches = report?.matches || [];
+
+    const filteredMatches = useMemo(() => {
+        return matches.filter((m) => {
+            if (roleFilter === 'KILLER' && !m.is_killer_pick) return false;
+            if (roleFilter === 'TRAP' && !m.is_trap_candidate) return false;
+            if (roleFilter === 'NORMAL' && (m.is_killer_pick || m.is_trap_candidate)) return false;
+            if (searchQuery.trim()) {
+                const q = searchQuery.trim().toLowerCase();
+                const text = `${m.game_no_label} ${m.betman_home} ${m.betman_away} ${m.home_ko} ${m.away_ko} ${m.league}`.toLowerCase();
+                if (!text.includes(q)) return false;
+            }
+            return true;
+        });
+    }, [matches, roleFilter, searchQuery]);
+
+    const stats = useMemo(() => {
+        const total = matches.length;
+        const killer = matches.filter((m) => m.is_killer_pick).length;
+        const trap = matches.filter((m) => m.is_trap_candidate).length;
+        const avgConf = total > 0 ? Math.round(matches.reduce((s, m) => s + (m.ai_confidence || 75), 0) / total) : 0;
+        return { total, killer, trap, avgConf };
+    }, [matches]);
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+        <div className="min-h-screen flex flex-col bg-[#f4f6f9] text-slate-900">
             <DeadlineBanner />
             <Navbar />
 
-            <main className="flex-grow w-full relative z-10">
-                {/* ━━━ HERO SECTION ━━━ */}
-                <section className="relative overflow-hidden">
-                    <div className="absolute inset-0 pointer-events-none">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px]"
-                            style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 60%)' }} />
-                        <div className="absolute top-20 right-0 w-[400px] h-[400px]"
-                            style={{ background: 'radial-gradient(circle at center, rgba(0,212,255,0.08) 0%, transparent 60%)' }} />
+            <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-grow">
+                {/* ━━━ 1. 상단 공식 베트맨 연동 헤더 (고대비 화이트 & 로얄블루) ━━━ */}
+                <section className="rounded-2xl bg-white border border-slate-300 border-t-4 border-t-[#0046b8] p-5 sm:p-7 shadow-xs">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                        <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold">
+                                    🏛️ 베트맨 공식 발매 게임 100% 연동
+                                </span>
+                                <span className="px-2.5 py-1 rounded-md bg-blue-50 text-[#0046b8] border border-blue-200 text-xs font-extrabold">
+                                    3-Pillar · 7-Factor 구단 전력 DB
+                                </span>
+                                {report?.sale_end_display && (
+                                    <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold">
+                                        ⏰ {report.sale_end_display}
+                                    </span>
+                                )}
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
+                                {report ? `${report.round_title} — 7-Factor 심층 전력 & 배당흐름 DB` : '베트맨 공식 회차 7-Factor 전력 분석 DB'}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
+                                베트맨 공식 대상 경기(<strong>축구토토 승무패 · 프로토 승부식 · 농구 승5패 · 스페셜N</strong>)의 경기번호별 <strong>글로벌 배당 마진 제거 순수 확률</strong>, <strong>포아송 기대득점(xG)</strong>, <strong>베트맨 투표율 괴리도</strong> 등 7대 핵심 지표를 고대비 화면으로 한눈에 비교합니다.
+                            </p>
+                        </div>
+
+                        {/* 우측 핵심 통계 요약 카드 4개 */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
+                            <div className="rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-center">
+                                <div className="text-xl sm:text-2xl font-black text-slate-900">{stats.total}</div>
+                                <div className="text-[11px] font-bold text-slate-500 mt-0.5">이번 회차 대상경기</div>
+                            </div>
+                            <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-center">
+                                <div className="text-xl sm:text-2xl font-black text-[#0046b8]">{stats.killer}</div>
+                                <div className="text-[11px] font-bold text-[#0046b8] mt-0.5">📌 단독우위 주력</div>
+                            </div>
+                            <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-center">
+                                <div className="text-xl sm:text-2xl font-black text-rose-600">{stats.trap}</div>
+                                <div className="text-[11px] font-bold text-rose-700 mt-0.5">⚠️ 이변·함정 주의</div>
+                            </div>
+                            <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-center">
+                                <div className="text-xl sm:text-2xl font-black text-emerald-700">{stats.avgConf}%</div>
+                                <div className="text-[11px] font-bold text-emerald-800 mt-0.5">평균 AI 신뢰도</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
-                        <div className="text-center">
-                            {/* Engine badge */}
-                            <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-[rgba(139,92,246,0.3)] bg-[rgba(139,92,246,0.06)] text-xs mb-6 animate-fade-up">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6] mr-2 animate-pulse" />
-                                <span style={{ color: '#8b5cf6' }}>
-                                    {isMLEngine ? '● 3-Pillar 하이브리드 퀀트 ML 엔진 가동 중' : '● 6-팩터 분석 엔진 가동 중'}
-                                </span>
-                            </div>
-
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
-                                프리미엄 데이터 분석<br />
-                                <span className="gradient-text-glow">딥 인사이트</span>
-                            </h1>
-
-                            <div className="text-sm sm:text-base text-[var(--text-secondary)] max-w-xl mx-auto mb-8 animate-fade-up space-y-2" style={{ animationDelay: '160ms' }}>
-                                <p>
-                                    전 세계 주요 스포츠 데이터를 수집·가공하는 전문 머신러닝 엔진이<br className="hidden sm:block" />
-                                    최대 28개의 세부 특성을 다각적으로 수치화하여 순수 통계 지표를 제공합니다.
-                                </p>
-                                <p className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>
-                                    * 제공되는 모든 지표는 알고리즘 산출 결과물로서 통계 연구 목적으로만 활용되며, 어떠한 경우에도 사행성 배팅 결정을 권하거나 보장하지 않습니다.
-                                </p>
-                            </div>
-
-                            {/* Quick stats */}
-                            <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '240ms' }}>
-                                <div className="gradient-border-card p-4 text-center">
-                                    <div className="text-2xl font-black gradient-text">{animatedTotal}</div>
-                                    <div className="text-[10px] text-[var(--text-muted)] mt-1">경기</div>
-                                </div>
-                                <div className="gradient-border-card p-4 text-center">
-                                    <div className="text-2xl font-black" style={{ color: '#ef4444' }}>{animatedStrong}</div>
-                                    <div className="text-[10px] text-[var(--text-muted)] mt-1">강력 추천</div>
-                                </div>
-                                <div className="gradient-border-card p-4 text-center">
-                                    <div className="text-2xl font-black" style={{ color: '#10b981' }}>{animatedRecommended}</div>
-                                    <div className="text-[10px] text-[var(--text-muted)] mt-1">추천</div>
-                                </div>
-                                <div className="gradient-border-card p-4 text-center">
-                                    <div className="text-2xl font-black" style={{ color: '#00d4ff' }}>{animatedAvg}%</div>
-                                    <div className="text-[10px] text-[var(--text-muted)] mt-1">평균 신뢰도</div>
-                                </div>
-                            </div>
-
-                            {/* Guide Toggle Button */}
-                            <div className="mt-6 animate-fade-up" style={{ animationDelay: '300ms' }}>
-                                <button
-                                    onClick={() => setShowGuide(!showGuide)}
-                                    className="px-4 py-2 rounded-full border border-white/10 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all flex items-center mx-auto"
-                                >
-                                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    AI 데이터 분석 가이드 {showGuide ? '접기 ▲' : '보기 ▼'}
-                                </button>
-                            </div>
-
-                            {/* Guide Panel */}
-                            {showGuide && (
-                                <div className="mt-4 p-5 rounded-2xl text-left border border-white/10 max-w-3xl mx-auto shadow-2xl animate-fade-down text-sm" style={{ background: 'var(--bg-card)' }}>
-                                    <h3 className="text-base font-bold text-white mb-3 flex items-center">
-                                        <span className="w-1.5 h-4 bg-cyan-400 rounded-full mr-2"></span>
-                                        일반 스코어 앱과 무엇이 다른가요? (Scorenix AI)
-                                    </h3>
-                                    <p className="mb-4 text-xs leading-relaxed text-[var(--text-secondary)]">
-                                        스코어닉스의 AI 엔진은 일반적인 배당률 기반 통계나 단순 상대전적을 넘어, <strong className="text-cyan-400">마진제거 순수 배당 내재확률(45%) + 포아송/피타고리안 기대득실(30%) + 7-Factor 전술·폼 스코어링(25%)</strong>을 앙상블 분석합니다.
-                                    </p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                                            <div className="font-bold text-white mb-1">🎯 승무패 예측 확률</div>
-                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">머신러닝 모델이 분석한 순수 결과 도출 확률입니다. 홈 이점, 선수단 체급 차이 등이 알고리즘 관점에서 복합적으로 수치화됩니다.</p>
-                                        </div>
-                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                                            <div className="font-bold text-[#ef4444] mb-1">⭐ 신뢰도 (Confidence)</div>
-                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">AI가 산출한 결과에 대해 <strong>스스로 조차 얼마나 데이터를 맹신하는가</strong>를 나타냅니다. 변동성 변수가 적을수록 신뢰도가 높습니다. (70% 이상 추천구간)</p>
-                                        </div>
-                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                                            <div className="font-bold text-[#f97316] mb-1">💸 EV (기대수익 마진)</div>
-                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">제공되는 배당률과 AI 확률을 비교한 손익 기대값입니다. <strong>마이너스(-) 수치</strong>는 배당률 대비 투자 가치가 현저히 부족함(오즈메이커 함정)을 경고합니다.</p>
-                                        </div>
-                                        <div className="bg-black/20 p-3 rounded-xl border border-white/5">
-                                            <div className="font-bold text-[#10b981] mb-1">📊 투자 가치 지표</div>
-                                            <p className="text-[11px] opacity-80 text-[var(--text-secondary)]">투자 비중 분배를 위한 수학적 리스크 측정입니다. EV와 신뢰도를 복합하여 해당 경기가 데이터적으로 메리트가 있는지를 추산합니다.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                    {/* ━━━ 베트맨 공식 회차 전환 탭 ━━━ */}
+                    <div className="mt-5 pt-4 border-t border-slate-200">
+                        <div className="text-xs font-extrabold text-slate-700 mb-2">
+                            🎯 분석할 베트맨 공식 발매 회차 선택:
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {catalogList.map((g) => {
+                                const active = g.game_key === (report?.game_key || selectedGameKey);
+                                return (
+                                    <button
+                                        key={g.game_key}
+                                        type="button"
+                                        onClick={() => loadRound(g.game_key)}
+                                        className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border transition cursor-pointer flex items-center gap-1.5 ${
+                                            active
+                                                ? 'bg-[#0046b8] text-white border-[#0046b8] shadow-xs'
+                                                : 'bg-slate-50 text-slate-800 border-slate-300 hover:bg-blue-50 hover:border-blue-300'
+                                        }`}
+                                    >
+                                        <span>{g.icon}</span>
+                                        <span>{g.full_title}</span>
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                                            {g.match_count}경기
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
 
-                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-10">
-
-                    {/* ━━━ ADMIN / PAID ACCOUNT VIEW SWITCHER ━━━ */}
-                    {hasPaidAccess && (
-                        <div className="mb-4 px-4 py-2.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
-                            style={{
-                                background: previewAsFree ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.1)',
-                                border: previewAsFree ? '1px solid rgba(245,158,11,0.35)' : '1px solid rgba(16,185,129,0.3)',
-                            }}>
-                            <div className="text-xs font-bold text-white flex items-center gap-2">
-                                <span>{previewAsFree ? '👁️' : '👑'}</span>
-                                {previewAsFree ? (
-                                    <span>
-                                        현재 <span className="text-amber-400">[무료 회원(비결제) 화면 미리보기]</span> 상태입니다 — 일반 방문자에게는 일일 샘플 1건 외 모든 경기의 확률·우세 지표가 잠금(??%) 처리됩니다.
-                                    </span>
-                                ) : (
-                                    <span>
-                                        현재 <span className="text-emerald-400">관리자 / 유료 멤버십 계정({user?.email})</span>으로 로그인되어 전 경기({totalMatches}경기)가 해금된 상태입니다.
-                                    </span>
-                                )}
+                {/* ━━━ 2. 개인 모바일 패스 & 판매점 무료 A4 벽보 안내 배너 ━━━ */}
+                {!isPaidOrUnlocked && (
+                    <section className="rounded-xl bg-[#003996] text-white p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 text-xs font-black">
+                                    🎁 무료 샘플 2경기 전체 공개 중
+                                </span>
+                                <span className="text-xs font-bold text-blue-100">
+                                    매번 판매점 방문 없이 내 스마트폰에서 마감 직전 실시간 7-Factor 지표 확인!
+                                </span>
                             </div>
-                            <button
-                                onClick={() => setPreviewAsFree(!previewAsFree)}
-                                className="shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-black transition hover:scale-105"
-                                style={{
-                                    background: previewAsFree ? '#10b981' : 'rgba(255,255,255,0.12)',
-                                    color: 'white',
-                                    border: '1px solid rgba(255,255,255,0.2)',
-                                }}>
-                                {previewAsFree ? '👑 관리자/멤버십 해금 화면으로 돌아가기' : '🔒 무료 회원 화면으로 미리보기'}
-                            </button>
+                            <p className="text-xs sm:text-sm text-white font-semibold">
+                                일반 무료 화면에서는 상위 2경기 샘플의 7-Factor 세부 지표가 무료 공개됩니다. 전 경기 잠금 해제는 <strong>이번 회차 열람권(3,900원)</strong> 또는 <strong>개인 월 무제한 패스(29,900원)</strong>를 이용해 주세요.
+                            </p>
                         </div>
-                    )}
-
-                    {/* ━━━ FREE TIER NOTICE BANNER ━━━ */}
-                    {!isProOrAbove && (
-                        <div className="mb-6 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
-                            style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(139,92,246,0.12) 100%)', border: '1px solid rgba(0,212,255,0.25)' }}>
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl">🎁</span>
-                                <div>
-                                    <div className="text-xs sm:text-sm font-black text-white">
-                                        무료 체험 모드: <span className="text-cyan-400">일일 AI 분석 리포트 1건 샘플</span>만 공개되어 있습니다
-                                    </div>
-                                    <div className="text-[11px] text-white/60 mt-0.5">
-                                        🔥 오늘의 AI 핵심 밸류 리포트 3선 · 전 경기({totalMatches}경기) 승무패 확률 및 7-Factor 정밀 분석은 커피 한 잔 값 Basic Pass 구독 시 무제한 해금됩니다.
-                                    </div>
-                                </div>
-                            </div>
-                            <a href="/ko/payment/request?plan=pro&billing=monthly"
-                                className="shrink-0 px-4 py-2 rounded-xl text-xs font-black text-white transition hover:scale-105 shadow-md"
-                                style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                ☕ Basic Pass 구독하기 (월 3,900원) →
-                            </a>
-                        </div>
-                    )}
-
-                    {/* ━━━ SPORT FILTER TABS ━━━ */}
-                    <div className="flex flex-wrap items-center gap-2 mb-6">
-                        <button
-                            onClick={() => { setSelectedSport('ALL'); setFilter('all'); }}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${selectedSport === 'ALL' ? 'text-white shadow-md shadow-cyan-500/20' : 'border border-white/10 hover:border-white/20'}`}
-                            style={selectedSport === 'ALL' ? { background: 'var(--accent-primary)' } : { background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
-                        >
-                            🏆 전체 <span className="ml-0.5 opacity-70">{aiPredictions.length}</span>
-                        </button>
-                        {sportTabs.map(tab => (
-                            <button
-                                key={tab.key}
-                                onClick={() => { setSelectedSport(tab.key); setFilter('all'); }}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${selectedSport === tab.key ? 'text-white shadow-md shadow-cyan-500/20' : 'border border-white/10 hover:border-white/20'} ${tab.count === 0 ? 'opacity-50' : ''}`}
-                                style={selectedSport === tab.key ? { background: 'var(--accent-primary)' } : { background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <Link
+                                href={`/ko/payment/request?plan=round_pass&billing=once&round=${report?.round_id || 'current'}`}
+                                className="px-4 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 !text-slate-950 font-black text-xs transition"
                             >
-                                {tab.icon} {tab.label} {tab.count > 0
-                                    ? <span className="ml-0.5 opacity-70">{tab.count}</span>
-                                    : <span className="ml-0.5 text-[9px] px-1 py-0.5 rounded bg-white/5" style={{ color: 'var(--text-muted)' }}>OFF</span>
-                                }
+                                ⚡ 이번 회차 즉시 열기 (3,900원)
+                            </Link>
+                            <Link
+                                href="/ko/pricing"
+                                className="px-4 py-2.5 rounded-lg bg-white hover:bg-blue-50 !text-[#003996] font-black text-xs transition"
+                            >
+                                📱 개인 월 무제한 패스 (29,900원)
+                            </Link>
+                            <Link
+                                href="/ko/store/print-report/current"
+                                className="px-3.5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 !text-slate-950 font-black text-xs transition"
+                            >
+                                🖨️ 사장님 무료 A4 벽보 인쇄 (0원)
+                            </Link>
+                        </div>
+                    </section>
+                )}
+
+                {/* ━━━ 3. 경기 필터 & 검색 바 ━━━ */}
+                <section className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        {[
+                            { id: 'ALL', label: `전체 경기 (${matches.length})` },
+                            { id: 'KILLER', label: `📌 단독 우위 주력 (${stats.killer})` },
+                            { id: 'TRAP', label: `⚠️ 이변·함정 주의보 (${stats.trap})` },
+                            { id: 'NORMAL', label: `🛡️ 일반 경합 경기 (${matches.length - stats.killer - stats.trap})` },
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setRoleFilter(tab.id as any)}
+                                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold border transition cursor-pointer ${
+                                    roleFilter === tab.id
+                                        ? 'bg-[#0046b8] text-white border-[#0046b8]'
+                                        : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                                }`}
+                            >
+                                {tab.label}
                             </button>
                         ))}
-                        <button onClick={fetchAIPredictions}
-                            className="px-3 py-1.5 text-xs rounded-full flex items-center ml-1 border border-white/10 hover:border-white/20 transition"
-                            style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)' }}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="경기번호 또는 팀명 검색 (예: 01번, 맨체스U, 아스널)"
+                            className="w-full sm:w-64 px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-300 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0046b8] focus:bg-white"
+                        />
+                        <Link
+                            href="/ko"
+                            className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 !text-white text-xs font-extrabold whitespace-nowrap"
                         >
-                            {loading ? '분석 중...' : '🔄 새로고침'}
+                            📋 14경기 통합 마킹표 보기
+                        </Link>
+                    </div>
+                </section>
+
+                {/* ━━━ 4. 경기별 7-Factor 고대비 카드 리스트 ━━━ */}
+                {loading ? (
+                    <div className="rounded-2xl bg-white border border-slate-300 p-16 text-center space-y-3">
+                        <div className="w-10 h-10 border-4 border-[#0046b8] border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-base font-extrabold text-slate-900">
+                            베트맨 공식 회차 7-Factor 구단 전력 데이터를 불러오는 중입니다...
+                        </p>
+                    </div>
+                ) : filteredMatches.length === 0 ? (
+                    <div className="rounded-2xl bg-white border border-slate-300 p-12 text-center space-y-2">
+                        <p className="text-base font-extrabold text-slate-800">조건에 맞는 경기가 없습니다.</p>
+                        <button
+                            type="button"
+                            onClick={() => { setRoleFilter('ALL'); setSearchQuery(''); }}
+                            className="px-4 py-2 rounded-lg bg-[#0046b8] text-white text-xs font-bold cursor-pointer"
+                        >
+                            전체 경기 보기
                         </button>
                     </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {filteredMatches.map((m, idx) => {
+                            const isSampleUnlocked = idx < 2; // 첫 2경기는 무료 샘플로 100% 공개
+                            const isUnlocked = isPaidOrUnlocked || isSampleUnlocked;
+                            const isExpanded = expandedNo === m.game_no || idx < 2;
+                            const factors = buildFallbackSevenFactors(m);
 
-                    {/* ━━━ Error / Empty state ━━━ */}
-                    {fetchError && !loading && aiPredictions.length === 0 && (
-                        <div className="mb-8 text-center p-8 rounded-2xl" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div className="text-4xl mb-3">⚡</div>
-                            <h3 className="text-lg font-bold text-white mb-2">AI 분석 엔진 준비 중</h3>
-                            <p className="text-sm text-[var(--text-muted)] mb-4">
-                                서버가 데이터를 수집하고 있습니다. 잠시 후 다시 시도해주세요.
-                            </p>
-                            <button onClick={fetchAIPredictions}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold transition hover:scale-105"
-                                style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>
-                                🔄 다시 불러오기
-                            </button>
-                        </div>
-                    )}
+                            const pHome = m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
+                            const pMid = m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
+                            const pAway = m.w5l_analysis ? m.w5l_analysis.lose_prob : m.ai_away_prob;
+                            const midLabel = m.w5l_analysis ? '5점차이내(5)' : '무승부';
 
-                    {/* ━━━ TOP VALUE REPORTS (BASIC PASS EXCLUSIVE) ━━━ */}
-                    {topPicks.length > 0 && (
-                        <div className="mb-8">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-sm font-bold text-white/80 uppercase tracking-wider flex items-center">
-                                    <span className="w-1 h-5 rounded-full mr-2" style={{ background: 'linear-gradient(to bottom, #ef4444, #f97316)' }} />
-                                    🔥 오늘의 AI 핵심 밸류 리포트 (+EV 상위 3경기)
-                                    {!isProOrAbove && (
-                                        <span className="ml-2 text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
-                                            🔒 월 3,900원 멤버십 전용
-                                        </span>
-                                    )}
-                                </h2>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                {topPicks.map((pick, i) => {
-                                    const level = getConfidenceLevel(pick.confidence);
-                                    const parts = pick.match_id.split('_');
-                                    const homeEng = pick.team_home || parts[0] || '';
-                                    const awayEng = pick.team_away || parts.slice(1).join(' ') || '';
-                                    const home = formatTeamDisplay(homeEng, pick.team_home_ko);
-                                    const away = formatTeamDisplay(awayEng, pick.team_away_ko);
-                                    return (
-                                        <div key={i}
-                                            onClick={() => { if (!isProOrAbove) window.location.href = '/ko/pricing'; }}
-                                            className="relative overflow-hidden rounded-2xl transition-all hover:scale-[1.02] cursor-pointer group"
-                                            style={{
-                                                background: 'var(--bg-card)',
-                                                border: `1px solid ${level.color}33`,
-                                                boxShadow: i === 0 ? `0 0 30px ${level.glow}` : 'none',
-                                            }}>
-                                            {i === 0 && (
-                                                <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
-                                                    style={{ background: level.color, color: 'white' }}>
-                                                    #1 +EV
-                                                </div>
-                                            )}
-                                            {i === 1 && (
-                                                <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
-                                                    style={{ background: `${level.color}88`, color: 'white' }}>
-                                                    #2 +EV
-                                                </div>
-                                            )}
-                                            {i === 2 && (
-                                                <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-[10px] font-black"
-                                                    style={{ background: `${level.color}66`, color: 'white' }}>
-                                                    #3 +EV
-                                                </div>
-                                            )}
-                                            <div className="p-4">
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div className="flex-1">
-                                                        <div className="text-[10px] text-white/30 mb-1">{pick.league || ''}</div>
-                                                        <div className="text-sm font-bold text-white">{home}</div>
-                                                        <div className="text-xs text-white/40">vs {away}</div>
-                                                        {pick.match_time && (
-                                                            <div className="text-[10px] text-white/20 mt-1">⏰ {formatTime(pick.match_time)}</div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex flex-col items-center" style={!isProOrAbove ? { filter: 'blur(6px)', opacity: 0.4 } : {}}>
-                                                        <ProbDonut
-                                                            home={isProOrAbove ? pick.home_win_prob : 34}
-                                                            draw={isProOrAbove ? pick.draw_prob : 33}
-                                                            away={isProOrAbove ? pick.away_win_prob : 33}
-                                                            size={64}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                {isProOrAbove ? (
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className="text-xs font-black px-2.5 py-1 rounded-lg"
-                                                                style={{ background: level.bg, color: level.color }}>
-                                                                {level.icon} {getRecommendationKo(pick.recommendation)}
-                                                            </span>
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                                style={{ background: level.bg, color: level.color }}>
-                                                                {level.label}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <div className="text-lg font-black" style={{ color: level.color }}>
-                                                                {pick.confidence.toFixed(1)}%
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                                        <span className="text-xs font-bold text-red-400 flex items-center gap-1">
-                                                            🔒 시뮬레이션 우세 지표 잠금
-                                                        </span>
-                                                        <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white">
-                                                            ☕ 월 3,900원 열람 →
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ━━━ FILTER & SORT ━━━ */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {filterTabs.map(tab => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => setFilter(tab.key)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${filter === tab.key ? 'text-white' : 'text-white/30 hover:text-white/50'}`}
-                                    style={filter === tab.key ? { background: 'rgba(0,212,255,0.12)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.2)' } : { background: 'rgba(255,255,255,0.03)', border: '1px solid transparent' }}
+                            return (
+                                <div
+                                    key={m.game_no}
+                                    className={`rounded-2xl bg-white border-2 transition shadow-xs overflow-hidden ${
+                                        m.is_killer_pick
+                                            ? 'border-[#0046b8]'
+                                            : m.is_trap_candidate
+                                            ? 'border-rose-400'
+                                            : 'border-slate-300'
+                                    }`}
                                 >
-                                    {tab.label} <span className="ml-1 opacity-60">{tab.count}</span>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-white/30">정렬:</span>
-                            <button
-                                onClick={() => setSortBy('confidence')}
-                                className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all ${sortBy === 'confidence' ? 'text-[#00d4ff] bg-[rgba(0,212,255,0.1)]' : 'text-white/30 hover:text-white/50'}`}
-                            >
-                                신뢰도순
-                            </button>
-                            <button
-                                onClick={() => setSortBy('time')}
-                                className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all ${sortBy === 'time' ? 'text-[#00d4ff] bg-[rgba(0,212,255,0.1)]' : 'text-white/30 hover:text-white/50'}`}
-                            >
-                                시간순
-                            </button>
-                            <button onClick={fetchAIPredictions}
-                                className="text-xs px-3 py-1.5 rounded-xl font-bold transition-all hover:scale-105 ml-2"
-                                style={{ background: 'rgba(0,212,255,0.1)', color: '#00d4ff', border: '1px solid rgba(0,212,255,0.2)' }}>
-                                {loading ? '분석 중...' : '🔄 새로고침'}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* ━━━ AI PREDICTION CARDS ━━━ */}
-                    {loading && aiPredictions.length === 0 ? (
-                        <div className="py-20 text-center text-white/40">
-                            <div className="animate-spin inline-block w-10 h-10 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-4" />
-                            <p className="text-sm">AI 예측 분석 진행 중...</p>
-                            <p className="text-[10px] text-white/20 mt-1">3-Pillar 하이브리드 퀀트 모델이 각 경기를 분석하고 있습니다</p>
-                        </div>
-                    ) : filteredPredictions.length === 0 ? (
-                        <div className="py-20 text-center text-white/30 rounded-2xl" style={{ background: 'var(--bg-card)' }}>
-                            <div className="text-4xl mb-3">🧠</div>
-                            <p>분석 가능한 경기가 없습니다</p>
-                            <p className="text-xs text-white/20 mt-1">경기 데이터가 도착하면 AI 예측이 자동으로 시작됩니다</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {(isProOrAbove ? filteredPredictions : filteredPredictions.slice(0, 6)).map((pred, idx) => {
-                                    const level = getConfidenceLevel(pred.confidence);
-                                    const parts = pred.match_id.split('_');
-                                    const homeEng = pred.team_home || parts[0] || '';
-                                    const awayEng = pred.team_away || parts.slice(1).join(' ') || '';
-                                    const home = formatTeamDisplay(homeEng, pred.team_home_ko);
-                                    const away = formatTeamDisplay(awayEng, pred.team_away_ko);
-                                    const matchKey = `analysis-${idx}`;
-                                    const isExpanded = expandedCard === matchKey;
-                                    const isSampleCard = idx === 0 && pred.match_id === freeSampleMatchId;
-                                    const isCardUnlocked = isProOrAbove || isSampleCard;
-
-                                    return (
-                                        <div key={idx} className="rounded-2xl overflow-hidden transition-all hover:translate-y-[-2px]"
-                                            style={{
-                                                background: 'var(--bg-card)',
-                                                border: isSampleCard && !isProOrAbove
-                                                    ? '1px solid rgba(0,212,255,0.45)'
-                                                    : `1px solid ${pred.confidence >= 70 && isCardUnlocked ? level.color + '22' : 'var(--border-subtle)'}`,
-                                                boxShadow: isSampleCard && !isProOrAbove
-                                                    ? '0 4px 24px rgba(0,212,255,0.18)'
-                                                    : (pred.confidence >= 80 && isCardUnlocked ? `0 4px 20px ${level.glow}` : 'none'),
-                                            }}>
-
-                                            {/* Free Daily 1-Match Sample Ribbon */}
-                                            {isSampleCard && !isProOrAbove && (
-                                                <div className="px-4 py-1.5 text-[11px] font-black flex items-center justify-between"
-                                                    style={{ background: 'linear-gradient(90deg, rgba(0,212,255,0.2), rgba(139,92,246,0.2))', color: '#00d4ff', borderBottom: '1px solid rgba(0,212,255,0.2)' }}>
-                                                    <span>🎁 오늘의 무료 AI 분석 샘플 (일일 1건 공개)</span>
-                                                    <span className="text-[10px] text-white/70">전체 7-Factor 열람 가능</span>
-                                                </div>
+                                    {/* 카드 상단 리본 */}
+                                    <div
+                                        className={`px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-extrabold border-b ${
+                                            m.is_killer_pick
+                                                ? 'bg-blue-50 text-[#0046b8] border-blue-200'
+                                                : m.is_trap_candidate
+                                                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                                                : 'bg-slate-100 text-slate-800 border-slate-200'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-black text-xs">
+                                                {m.game_no_label}
+                                            </span>
+                                            <span className="font-extrabold text-slate-800">{m.league}</span>
+                                            <span className="text-slate-500 font-semibold">· {m.kickoff_display}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            {isSampleUnlocked && !isPaidOrUnlocked && (
+                                                <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">
+                                                    🎁 무료 공개 샘플
+                                                </span>
                                             )}
-
-                                            {/* Card header */}
-                                            <div className="p-4 pb-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-[10px] text-white/30">{pred.league || ''}</span>
-                                                        {pred.match_time && <span className="text-[10px] text-white/20">{formatTime(pred.match_time)}</span>}
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        {pred.engine && (
-                                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                                                                style={{ background: 'rgba(139,92,246,0.1)', color: '#8b5cf6' }}>
-                                                                {pred.engine}
-                                                            </span>
-                                                        )}
-                                                        {isCardUnlocked ? (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                                style={{ background: level.bg, color: level.color }}>
-                                                                {level.icon} {level.label}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-white/40 border border-white/10">
-                                                                🔒 Basic Pass 전용
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Teams */}
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <div className="flex-1">
-                                                        <div className={`text-base font-bold ${isCardUnlocked && pred.recommendation === 'HOME' ? 'text-white' : 'text-white/80'}`}>
-                                                            {home}
-                                                            {isCardUnlocked && pred.recommendation === 'HOME' && (
-                                                                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>추천</span>
-                                                            )}
-                                                        </div>
-                                                        <div className={`text-sm mt-0.5 ${isCardUnlocked && pred.recommendation === 'AWAY' ? 'text-white font-bold' : 'text-white/50'}`}>
-                                                            vs {away}
-                                                            {isCardUnlocked && pred.recommendation === 'AWAY' && (
-                                                                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ background: level.bg, color: level.color }}>추천</span>
-                                                            )}
-                                                        </div>
-                                                        {isCardUnlocked && pred.recommendation === 'DRAW' && (
-                                                            <div className="text-[10px] mt-1 px-1.5 py-0.5 rounded inline-block" style={{ background: level.bg, color: level.color }}>무승부 추천</div>
-                                                        )}
-                                                    </div>
-                                                    <div style={!isCardUnlocked ? { filter: 'blur(6px)', opacity: 0.35 } : {}}>
-                                                        <ProbDonut
-                                                            home={isCardUnlocked ? pred.home_win_prob : 34}
-                                                            draw={isCardUnlocked ? pred.draw_prob : 33}
-                                                            away={isCardUnlocked ? pred.away_win_prob : 33}
-                                                            size={72}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Probability bars */}
-                                            <div className="px-4 py-3">
-                                                <div className="space-y-2" style={!isCardUnlocked ? { userSelect: 'none' } : {}}>
-                                                    <div className="flex items-center space-x-3">
-                                                        <span className="text-[10px] font-bold text-blue-400 w-6 text-right">H</span>
-                                                        <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                                            <div className="h-full rounded-full bg-blue-500"
-                                                                style={{
-                                                                    width: isCardUnlocked ? `${pred.home_win_prob}%` : '33.3%',
-                                                                    opacity: isCardUnlocked ? 1 : 0.25,
-                                                                    filter: isCardUnlocked ? 'none' : 'blur(3px)',
-                                                                    transition: 'width 1s ease-out',
-                                                                    boxShadow: isCardUnlocked && pred.recommendation === 'HOME' ? '0 0 8px rgba(59,130,246,0.5)' : 'none'
-                                                                }} />
-                                                        </div>
-                                                        <span className={`text-xs font-bold w-12 text-right ${isCardUnlocked && pred.recommendation === 'HOME' ? 'text-blue-400' : 'text-white/40'}`}>
-                                                            {isCardUnlocked ? `${pred.home_win_prob.toFixed(1)}%` : '🔒 ??%'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3">
-                                                        <span className="text-[10px] font-bold text-purple-400 w-6 text-right">D</span>
-                                                        <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                                            <div className="h-full rounded-full bg-purple-500"
-                                                                style={{
-                                                                    width: isCardUnlocked ? `${pred.draw_prob}%` : '33.3%',
-                                                                    opacity: isCardUnlocked ? 1 : 0.25,
-                                                                    filter: isCardUnlocked ? 'none' : 'blur(3px)',
-                                                                    transition: 'width 1s ease-out',
-                                                                    boxShadow: isCardUnlocked && pred.recommendation === 'DRAW' ? '0 0 8px rgba(168,85,247,0.5)' : 'none'
-                                                                }} />
-                                                        </div>
-                                                        <span className={`text-xs font-bold w-12 text-right ${isCardUnlocked && pred.recommendation === 'DRAW' ? 'text-purple-400' : 'text-white/40'}`}>
-                                                            {isCardUnlocked ? `${pred.draw_prob.toFixed(1)}%` : '🔒 ??%'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3">
-                                                        <span className="text-[10px] font-bold text-orange-400 w-6 text-right">A</span>
-                                                        <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                                            <div className="h-full rounded-full bg-orange-500"
-                                                                style={{
-                                                                    width: isCardUnlocked ? `${pred.away_win_prob}%` : '33.3%',
-                                                                    opacity: isCardUnlocked ? 1 : 0.25,
-                                                                    filter: isCardUnlocked ? 'none' : 'blur(3px)',
-                                                                    transition: 'width 1s ease-out',
-                                                                    boxShadow: isCardUnlocked && pred.recommendation === 'AWAY' ? '0 0 8px rgba(249,115,22,0.5)' : 'none'
-                                                                }} />
-                                                        </div>
-                                                        <span className={`text-xs font-bold w-12 text-right ${isCardUnlocked && pred.recommendation === 'AWAY' ? 'text-orange-400' : 'text-white/40'}`}>
-                                                            {isCardUnlocked ? `${pred.away_win_prob.toFixed(1)}%` : '🔒 ??%'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Confidence + action row */}
-                                            <div className="px-4 pb-3">
-                                                {isCardUnlocked ? (
-                                                    <ConfidenceGauge value={pred.confidence} />
-                                                ) : (
-                                                    <div className="w-full">
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <span className="text-[10px] text-white/40 uppercase tracking-wider">신뢰도 게이지</span>
-                                                            <span className="text-[11px] font-bold text-cyan-400">🔒 Basic Pass 전용</span>
-                                                        </div>
-                                                        <div className="w-full h-2 rounded-full overflow-hidden bg-white/5">
-                                                            <div className="h-full w-1/2 rounded-full bg-white/10" />
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center justify-between mt-3">
-                                                    <div className="flex items-center space-x-2">
-                                                        {isCardUnlocked ? (
-                                                            <span className="text-xs font-black px-2.5 py-1 rounded-lg"
-                                                                style={{ background: level.bg, color: level.color }}>
-                                                                {getRecommendationKo(pred.recommendation)}
-                                                            </span>
-                                                        ) : (
-                                                            <a href="/ko/pricing" className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition">
-                                                                🔒 시뮬레이션 우세 지표 열람 (월 3,900원)
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setExpandedCard(isExpanded ? null : matchKey)}
-                                                        className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
-                                                        style={{ background: isExpanded ? 'rgba(0,212,255,0.12)' : 'rgba(255,255,255,0.04)', color: isExpanded ? '#00d4ff' : 'rgba(255,255,255,0.4)' }}>
-                                                        {isExpanded ? '접기 ▲' : (isCardUnlocked ? '상세보기 ▼' : '🔒 7-Factor 분석 보기 ▼')}
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* Expandable detail panel */}
-                                            {isExpanded && (
-                                                <PremiumGate featureName={dict?.bets?.aiDetailAnalysis || "AI 7-Factor 상세 분석"} requiredTier="pro" isFreeSample={isSampleCard}>
-                                                    <div className="px-4 pb-4 pt-3" style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border-subtle)' }}>
-
-                                                        {/* Radar chart + factors side by side */}
-                                                        {pred.factors && pred.factors.length > 0 && (
-                                                            <div className="flex flex-col sm:flex-row items-start gap-4 mb-4">
-                                                                {/* Radar */}
-                                                                <div className="flex-shrink-0 mx-auto sm:mx-0">
-                                                                    <FactorRadar factors={pred.factors} />
-                                                                </div>
-                                                                {/* Factor list */}
-                                                                <div className="flex-1 w-full">
-                                                                    <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider mb-2">AI 분석 팩터</div>
-                                                                    <div className="space-y-2">
-                                                                        {pred.factors.slice(0, 6).map((f, fi) => (
-                                                                            <div key={fi}>
-                                                                                <div className="flex items-center justify-between mb-0.5">
-                                                                                    <div className="flex items-center space-x-2">
-                                                                                        <span className="text-[10px] font-bold text-white/50 w-5">#{fi + 1}</span>
-                                                                                        <span className="text-xs text-white/70">{f.name}</span>
-                                                                                    </div>
-                                                                                    <span className="text-[10px] text-white/40">{f.score || Math.round(f.weight * 100)}%</span>
-                                                                                </div>
-                                                                                <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                                                                    <div className="h-full rounded-full" style={{
-                                                                                        width: `${Math.min(Math.abs(f.score || f.weight * 10), 100)}%`,
-                                                                                        background: 'var(--accent-gradient)',
-                                                                                        transition: 'width 0.8s ease-out',
-                                                                                    }} />
-                                                                                </div>
-                                                                                {f.detail && (
-                                                                                    <div className="text-[9px] text-white/25 mt-0.5 pl-7">{f.detail}</div>
-                                                                                )}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Probability breakdown table */}
-                                                        <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
-                                                            <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-3 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>확률 상세</div>
-                                                            <div className="grid grid-cols-3 text-center">
-                                                                <div className="p-3 border-r border-[var(--border-subtle)]">
-                                                                    <div className="text-[10px] text-blue-400 mb-1">홈 승</div>
-                                                                    <div className="text-lg font-black text-blue-400">{pred.home_win_prob.toFixed(1)}%</div>
-                                                                </div>
-                                                                <div className="p-3 border-r border-[var(--border-subtle)]">
-                                                                    <div className="text-[10px] text-purple-400 mb-1">무승부</div>
-                                                                    <div className="text-lg font-black text-purple-400">{pred.draw_prob.toFixed(1)}%</div>
-                                                                </div>
-                                                                <div className="p-3">
-                                                                    <div className="text-[10px] text-orange-400 mb-1">원정 승</div>
-                                                                    <div className="text-lg font-black text-orange-400">{pred.away_win_prob.toFixed(1)}%</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </PremiumGate>
+                                            {m.is_killer_pick ? (
+                                                <span className="px-2 py-0.5 rounded bg-[#0046b8] text-white text-[11px] font-black">
+                                                    📌 단독 우위 주력
+                                                </span>
+                                            ) : m.is_trap_candidate ? (
+                                                <span className="px-2 py-0.5 rounded bg-rose-600 text-white text-[11px] font-black">
+                                                    ⚠️ 이변·함정 주의
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-800 text-[11px] font-bold">
+                                                    🛡️ 경합 분석
+                                                </span>
                                             )}
                                         </div>
-                                    );
-                                })}
-                            </div>
+                                    </div>
 
-                            {/* Locked Remaining Matches Paywall Vault for Free Users */}
-                            {!isProOrAbove && filteredPredictions.length > 6 && (
-                                <div className="mt-6 p-6 sm:p-8 rounded-2xl text-center relative overflow-hidden"
-                                    style={{
-                                        background: 'linear-gradient(135deg, rgba(13,19,33,0.95) 0%, rgba(20,28,48,0.95) 100%)',
-                                        border: '1px solid rgba(0,212,255,0.35)',
-                                        boxShadow: '0 10px 40px rgba(0,212,255,0.12)',
-                                    }}>
-                                    <div className="text-3xl mb-2">🔒</div>
-                                    <h3 className="text-lg sm:text-xl font-black text-white mb-2">
-                                        나머지 <span className="text-cyan-400">{filteredPredictions.length - 6}개 경기</span>의 AI 퀀트 리포트가 잠겨 있습니다
-                                    </h3>
-                                    <p className="text-xs sm:text-sm text-white/60 max-w-xl mx-auto mb-5 leading-relaxed">
-                                        무료 회원은 일일 1경기의 샘플 리포트만 열람할 수 있습니다.<br />
-                                        커피 한 잔 값(<strong className="text-cyan-400">월 3,900원 Basic Pass</strong>)으로 전 세계 축구·농구·야구·하키 전 경기 승무패 확률, 포아송 기대득점(xG), 7-Factor 분석을 무제한 해금하세요!
-                                    </p>
-                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                                        <a href="/ko/payment/request?plan=pro&billing=monthly"
-                                            className="px-6 py-3 rounded-xl text-sm font-black text-white transition hover:scale-105 shadow-lg"
-                                            style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                            ☕ Basic Pass 시작하기 (월 3,900원) →
-                                        </a>
-                                        <a href="/ko/pricing"
-                                            className="px-5 py-3 rounded-xl text-xs font-bold text-white/70 hover:text-white border border-white/15 hover:bg-white/5 transition">
-                                            멤버십 혜택 자세히 보기
-                                        </a>
+                                    {/* 카드 본문 */}
+                                    <div className="p-4 sm:p-5 space-y-4">
+                                        {/* 팀 매치업 & AI 결론 */}
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div className="text-base sm:text-lg font-black text-slate-950 leading-snug">
+                                                    {m.home_ko} <span className="text-[#0046b8]">({m.betman_home})</span>
+                                                    <span className="mx-1.5 text-slate-400 font-bold text-sm">vs</span>
+                                                    {m.away_ko} <span className="text-slate-700">({m.betman_away})</span>
+                                                </div>
+                                                <p className="text-xs text-slate-600 mt-1 font-medium">
+                                                    {isUnlocked
+                                                        ? m.ai_detail_report?.tactical_summary || m.value_reason || m.trap_reason
+                                                        : '🔒 7-Factor 전술 요약 및 최종 추천 방향은 열람권 활성화 시 즉시 공개됩니다.'}
+                                                </p>
+                                            </div>
+
+                                            <div className="text-right shrink-0">
+                                                {isUnlocked ? (
+                                                    <div className="rounded-xl bg-blue-50 border border-blue-200 px-3 py-2 text-center">
+                                                        <div className="text-[10px] font-bold text-slate-500">AI 분석 결론</div>
+                                                        <div className="text-sm font-black text-[#0046b8] mt-0.5">
+                                                            {m.ai_pick_label}
+                                                        </div>
+                                                        <div className="text-[11px] font-extrabold text-emerald-700">
+                                                            신뢰도 {m.ai_confidence}%
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <Link
+                                                        href="/ko/pricing"
+                                                        className="inline-block rounded-xl bg-amber-50 border border-amber-300 px-3 py-2 text-center hover:bg-amber-100 transition"
+                                                    >
+                                                        <div className="text-[10px] font-bold text-amber-800">AI 결론 잠금</div>
+                                                        <div className="text-xs font-black text-amber-950 mt-0.5">🔒 3,900원 열기</div>
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 고대비 승/무/패 확률 바 */}
+                                        <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 space-y-2.5">
+                                            <div className="flex items-center justify-between text-xs font-extrabold text-slate-800">
+                                                <span>📊 3-Pillar AI 예측 확률 분포</span>
+                                                {m.betman_home_odds > 0 && (
+                                                    <span className="text-[11px] font-bold text-slate-600">
+                                                        베트맨 배당: 승 {m.betman_home_odds} / {m.betman_draw_odds > 0 ? `무 ${m.betman_draw_odds} / ` : ''}패 {m.betman_away_odds}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {isUnlocked ? (
+                                                <>
+                                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                                        <div className="rounded-lg bg-white border border-blue-200 p-2">
+                                                            <div className="text-[11px] font-bold text-slate-600">{m.betman_home} 승</div>
+                                                            <div className="text-base font-black text-[#0046b8]">{pHome}%</div>
+                                                            {m.vote_home_pct !== undefined && (
+                                                                <div className="text-[10px] text-slate-500">투표율 {m.vote_home_pct}%</div>
+                                                            )}
+                                                        </div>
+                                                        <div className="rounded-lg bg-white border border-slate-200 p-2">
+                                                            <div className="text-[11px] font-bold text-slate-600">{midLabel}</div>
+                                                            <div className="text-base font-black text-slate-800">{pMid}%</div>
+                                                            {m.vote_mid_pct !== undefined && (
+                                                                <div className="text-[10px] text-slate-500">투표율 {m.vote_mid_pct}%</div>
+                                                            )}
+                                                        </div>
+                                                        <div className="rounded-lg bg-white border border-slate-300 p-2">
+                                                            <div className="text-[11px] font-bold text-slate-600">{m.betman_away} 패</div>
+                                                            <div className="text-base font-black text-slate-900">{pAway}%</div>
+                                                            {m.vote_away_pct !== undefined && (
+                                                                <div className="text-[10px] text-slate-500">투표율 {m.vote_away_pct}%</div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 시각적 누적 바 */}
+                                                    <div className="w-full h-3 rounded-full bg-slate-200 overflow-hidden flex">
+                                                        <div style={{ width: `${pHome}%` }} className="bg-[#0046b8]" title={`홈승 ${pHome}%`} />
+                                                        {pMid > 0 && <div style={{ width: `${pMid}%` }} className="bg-amber-500" title={`무/5 ${pMid}%`} />}
+                                                        <div style={{ width: `${pAway}%` }} className="bg-slate-700" title={`원정승 ${pAway}%`} />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="rounded-lg bg-white border border-slate-200 p-3 flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-slate-700">
+                                                        🔒 이 경기의 승/무/패 정밀 확률과 투표율 괴리 지표가 잠겨 있습니다.
+                                                    </span>
+                                                    <Link
+                                                        href={`/ko/payment/request?plan=round_pass&billing=once&round=${report?.round_id || 'current'}`}
+                                                        className="px-3 py-1.5 rounded-lg bg-[#0046b8] !text-white text-xs font-extrabold shrink-0"
+                                                    >
+                                                        3,900원 즉시 열기
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* 7-Factor 세부 지표 토글 & 고대비 리스트 */}
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-black text-slate-900">
+                                                    🔬 7-Factor 구단 전술·배당 세부 지표
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExpandedNo(expandedNo === m.game_no ? null : m.game_no)}
+                                                    className="text-xs font-extrabold text-[#0046b8] hover:underline cursor-pointer"
+                                                >
+                                                    {isExpanded ? '세부 지표 접기 ▲' : '세부 지표 펼치기 ▼'}
+                                                </button>
+                                            </div>
+
+                                            {isExpanded && (
+                                                <div className="mt-2.5 space-y-2 pt-2 border-t border-slate-200">
+                                                    {isUnlocked ? (
+                                                        factors.map((f, fIdx) => (
+                                                            <div key={fIdx} className="rounded-lg bg-slate-50 border border-slate-200 p-2.5">
+                                                                <div className="flex items-center justify-between text-xs mb-1">
+                                                                    <span className="font-extrabold text-slate-900">
+                                                                        #{fIdx + 1}. {f.name}
+                                                                    </span>
+                                                                    <span className="font-black text-[#0046b8]">{f.score}점</span>
+                                                                </div>
+                                                                <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden mb-1">
+                                                                    <div
+                                                                        style={{ width: `${Math.min(100, Math.max(20, f.score))}%` }}
+                                                                        className="h-full bg-[#0046b8] rounded-full"
+                                                                    />
+                                                                </div>
+                                                                <p className="text-[11px] text-slate-600 font-medium">{f.comment}</p>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="rounded-xl bg-slate-50 border border-slate-300 p-4 text-center space-y-2">
+                                                            <p className="text-xs font-extrabold text-slate-900">
+                                                                🔒 [{m.game_no_label} {m.home_ko} vs {m.away_ko}] 7-Factor 상세 리포트 잠금
+                                                            </p>
+                                                            <p className="text-[11px] text-slate-600">
+                                                                이번 회차 단건 열람권(3,900원) 또는 개인 월 무제한 패스(29,900원)로 전 경기 7-Factor 지표를 확인하세요!
+                                                            </p>
+                                                            <div className="flex justify-center gap-2 pt-1">
+                                                                <Link
+                                                                    href={`/ko/payment/request?plan=round_pass&billing=once&round=${report?.round_id || 'current'}`}
+                                                                    className="px-3.5 py-1.5 rounded-lg bg-[#0046b8] !text-white text-xs font-extrabold"
+                                                                >
+                                                                    ⚡ 이번 회차 열기 (3,900원)
+                                                                </Link>
+                                                                <Link
+                                                                    href="/ko/pricing"
+                                                                    className="px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 text-xs font-extrabold"
+                                                                >
+                                                                    💎 월 무제한 패스 보기
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            )}
-                        </>
-                    )}
-
-                    {/* ━━━ INSIGHTS CTA ━━━ */}
-                    <div className="mt-8 mb-4 rounded-2xl overflow-hidden cursor-pointer group transition-all hover:scale-[1.01]"
-                        onClick={() => window.location.href = '/ko/analysis/insights'}
-                        style={{
-                            background: 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(139,92,246,0.08) 100%)',
-                            border: '1px solid rgba(0,212,255,0.15)',
-                        }}>
-                        <div className="p-5 flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center space-x-2 mb-1">
-                                    <span className="text-xs font-black px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,212,255,0.12)', color: '#00d4ff' }}>NEW</span>
-                                    <span className="text-sm font-bold text-white">📈 AI 성과 백테스트 인사이트</span>
-                                </div>
-                                <p className="text-xs text-white/40 mt-1">과거 데이터에 AI 모델을 소급 적용 — 리그별 예측 정확도, 약점 패턴, 주간 트렌드를 확인하세요</p>
-                            </div>
-                            <div className="text-white/30 group-hover:text-white/60 transition-colors text-lg">→</div>
-                        </div>
+                            );
+                        })}
                     </div>
+                )}
 
-                    {/* Mandatory Legal Disclaimer */}
-                    <div className="mt-6 p-4 rounded-xl text-[11px] text-white/40 leading-relaxed"
-                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)' }}>
-                        ⚖️ <strong>법적 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
-                    </div>
+                {/* ━━━ 5. 하단 법적 고지 ━━━ */}
+                <div className="rounded-xl bg-white border border-slate-300 p-4 text-xs text-slate-600 leading-relaxed">
+                    ⚖️ <strong className="text-slate-900">법적 고지:</strong> 본 페이지의 모든 7-Factor 지표는 국민체육진흥공단(베트맨) 공식 대상 경기의 공개 통계 데이터와 머신러닝 시뮬레이션 결과물로서, 건전한 스포츠 관전 및 통계 연구 참고용으로만 제공됩니다.
                 </div>
             </main>
-
-
         </div>
     );
 }

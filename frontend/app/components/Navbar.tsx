@@ -29,10 +29,10 @@ export default function Navbar() {
 
     const navLinks = [
         { href: `/${currentLang}`, label: "발매 게임별 AI 리포트", icon: "📋", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 통합 리포트" },
-        { href: `/${currentLang}#community-lounge`, label: "승부예측 커뮤니티 & 매장찾기", icon: "💬", desc: "회차별 유저 예측 토론방 & 우리 동네 판매점 리포트 비치 현황" },
-        { href: `/${currentLang}/store/print-report/current`, label: "판매점 A4 출력센터(B2B)", icon: "🖨️", desc: "오프라인 매장 전용 A4 원클릭 분석지 인쇄" },
-        { href: `/${currentLang}/analysis`, label: t.aiPredict || "7-Factor 전력 DB", icon: "📊", desc: "구단별 포아송 기대득점 및 전술 데이터" },
-        { href: `/${currentLang}/pricing`, label: "열람권 / 판매점 구독", icon: "💳", desc: "오프라인 판매점 월간 구독 및 온라인 열람권" },
+        { href: `/${currentLang}/analysis`, label: "베트맨 7-Factor 전력DB", icon: "📊", desc: "회차별 경기번호순 7-Factor 전술 & 배당흐름 비교" },
+        { href: `/${currentLang}/stores/`, label: "전국 6,277 판매점 백과", icon: "🗺️", desc: "시·군·구별 공식 프로토 판매점 도로명주소 & 간판 대조표" },
+        { href: `/${currentLang}/store/print-report/current`, label: "사장님 무료 A4 벽보", icon: "🖨️", desc: "오프라인 매장 전용 A4 원클릭 분석지 평생 무료 인쇄" },
+        { href: `/${currentLang}/pricing`, label: "개인 모바일 패스 안내", icon: "💎", desc: "집에서 편하게 보는 개인 월 무제한 패스 & 1회차 열람권" },
     ];
 
     useEffect(() => {
