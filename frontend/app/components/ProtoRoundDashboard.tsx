@@ -224,14 +224,15 @@ export default function ProtoRoundDashboard() {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            // 매장 QR코드(?utm_source=b2b_qr)로 접속한 오프라인 매장 방문객은 자동 잠금 해제
+            // 매장 QR코드(?utm_source=b2b_qr)로 접속한 오프라인 매장 방문객은 현재 세션 동안만 잠금 해제
             const params = new URLSearchParams(window.location.search);
             if (params.get("utm_source") === "b2b_qr") {
-                localStorage.setItem("scorenix_round_pass_unlocked", "true");
                 setUnlockedDemo(true);
-                setUnlockReasonBanner("🏪 오프라인 판매점 방문 QR 인증이 완료되어 전체 리포트가 무료 개방되었습니다.");
-            } else if (localStorage.getItem("scorenix_round_pass_unlocked") === "true") {
-                setUnlockedDemo(true);
+                setUnlockReasonBanner("🏪 오프라인 판매점 방문 QR 인증이 완료되어 현재 세션 동안 리포트가 무료 개방되었습니다.");
+            } else {
+                // 이전 데모 테스트로 남아있던 영구 잠금해제 플래그 정리 (비로그인 무료 유출 방지)
+                localStorage.removeItem("scorenix_round_pass_unlocked");
+                setUnlockedDemo(false);
             }
 
             const syncStore = () => {

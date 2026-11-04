@@ -149,24 +149,13 @@ export default function AnalysisPage() {
     const [roleFilter, setRoleFilter] = useState<'ALL' | 'KILLER' | 'TRAP' | 'NORMAL'>('ALL');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [expandedNo, setExpandedNo] = useState<number | null>(1);
-    const [isStoreMode, setIsStoreMode] = useState<boolean>(false);
-    const [unlockedDemo, setUnlockedDemo] = useState<boolean>(false);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const stMode = localStorage.getItem('scorenix_store_mode') === 'true';
-            const rPass = localStorage.getItem('scorenix_round_pass_unlocked') === 'true';
-            setIsStoreMode(stMode);
-            setUnlockedDemo(rPass);
-        }
-    }, []);
+    const [lockAlertMsg, setLockAlertMsg] = useState<string | null>(null);
 
     const isPaidOrUnlocked = useMemo(() => {
-        if (isStoreMode || unlockedDemo) return true;
         if (!user) return false;
         const r = (user.role || user.tier || '').toLowerCase();
         return ['pro', 'vip', 'premium', 'admin', 'round_pass', 'store_b2b'].includes(r);
-    }, [user, isStoreMode, unlockedDemo]);
+    }, [user]);
 
     const loadRound = async (gameKey: string) => {
         setLoading(true);
@@ -305,17 +294,25 @@ export default function AnalysisPage() {
                         <div className="space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="px-2.5 py-0.5 rounded bg-amber-400 text-slate-950 text-xs font-black">
-                                    🎁 무료 샘플 2경기 전체 공개 중
+                                    🔒 비로그인 · 무료 회원 잠금 모드 (01번 경기만 샘플 공개)
                                 </span>
                                 <span className="text-xs font-bold text-blue-100">
-                                    매번 판매점 방문 없이 내 스마트폰에서 마감 직전 실시간 7-Factor 지표 확인!
+                                    02번~{matches.length || 14}번 경기의 주력/함정 판정 및 7-Factor 정밀 지표는 유료 멤버십 전용입니다.
                                 </span>
                             </div>
                             <p className="text-xs sm:text-sm text-white font-semibold">
-                                일반 무료 화면에서는 상위 2경기 샘플의 7-Factor 세부 지표가 무료 공개됩니다. 전 경기 잠금 해제는 <strong>이번 회차 열람권(3,900원)</strong> 또는 <strong>개인 월 무제한 패스(29,900원)</strong>를 이용해 주세요.
+                                비로그인 상태에서는 <strong>01번 경기 1개만 무료 샘플</strong>로 공개됩니다. 나머지 전체 경기의 단통 주력·함정 경보 및 7-Factor 지표는 <strong>이번 회차 열람권(3,900원)</strong> 또는 <strong>개인 월 무제한 패스(29,900원)</strong> 로그인 후 즉시 열람하실 수 있습니다.
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            {!user && (
+                                <Link
+                                    href="/ko/login?redirect=/ko/analysis"
+                                    className="px-4 py-2.5 rounded-lg bg-white hover:bg-blue-50 !text-[#003996] font-black text-xs transition"
+                                >
+                                    🔑 로그인 / 무료 가입
+                                </Link>
+                            )}
                             <Link
                                 href={`/ko/payment/request?plan=round_pass&billing=once&round=${report?.round_id || 'current'}`}
                                 className="px-4 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 !text-slate-950 font-black text-xs transition"
@@ -324,40 +321,65 @@ export default function AnalysisPage() {
                             </Link>
                             <Link
                                 href="/ko/pricing"
-                                className="px-4 py-2.5 rounded-lg bg-white hover:bg-blue-50 !text-[#003996] font-black text-xs transition"
+                                className="px-3.5 py-2.5 rounded-lg bg-blue-800 hover:bg-blue-700 border border-blue-400 !text-white font-black text-xs transition"
                             >
-                                📱 개인 월 무제한 패스 (29,900원)
-                            </Link>
-                            <Link
-                                href="/ko/store/print-report/current"
-                                className="px-3.5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 !text-slate-950 font-black text-xs transition"
-                            >
-                                🖨️ 사장님 무료 A4 벽보 인쇄 (0원)
+                                📱 월 무제한 패스 (29,900원)
                             </Link>
                         </div>
                     </section>
+                )}
+
+                {lockAlertMsg && !isPaidOrUnlocked && (
+                    <div className="rounded-xl bg-amber-50 border-2 border-amber-400 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="text-xs sm:text-sm font-extrabold text-amber-950">
+                            {lockAlertMsg}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Link
+                                href={`/ko/payment/request?plan=round_pass&billing=once&round=${report?.round_id || 'current'}`}
+                                className="px-3.5 py-1.5 rounded-lg bg-[#0046b8] !text-white text-xs font-extrabold"
+                            >
+                                ⚡ 3,900원 열람권으로 즉시 필터 해제
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setLockAlertMsg(null)}
+                                className="px-2.5 py-1.5 rounded-lg bg-amber-200/70 text-amber-950 text-xs font-bold cursor-pointer"
+                            >
+                                닫기
+                            </button>
+                        </div>
+                    </div>
                 )}
 
                 {/* ━━━ 3. 경기 필터 & 검색 바 ━━━ */}
                 <section className="rounded-xl bg-white border border-slate-300 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-1.5">
                         {[
-                            { id: 'ALL', label: `전체 경기 (${matches.length})` },
-                            { id: 'KILLER', label: `📌 단독 우위 주력 (${stats.killer})` },
-                            { id: 'TRAP', label: `⚠️ 이변·함정 주의보 (${stats.trap})` },
-                            { id: 'NORMAL', label: `🛡️ 일반 경합 경기 (${matches.length - stats.killer - stats.trap})` },
+                            { id: 'ALL', label: `전체 경기 (${matches.length})`, locked: false },
+                            { id: 'KILLER', label: `📌 단독 우위 주력 (${stats.killer})`, locked: !isPaidOrUnlocked },
+                            { id: 'TRAP', label: `⚠️ 이변·함정 주의보 (${stats.trap})`, locked: !isPaidOrUnlocked },
+                            { id: 'NORMAL', label: `🛡️ 일반 경합 경기 (${matches.length - stats.killer - stats.trap})`, locked: !isPaidOrUnlocked },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
                                 type="button"
-                                onClick={() => setRoleFilter(tab.id as any)}
-                                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold border transition cursor-pointer ${
+                                onClick={() => {
+                                    if (tab.locked) {
+                                        setLockAlertMsg('🔒 [단독 우위 주력 / 이변·함정 주의보] 종목 자동 분류 필터는 유료 열람권(3,900원) 또는 PRO 멤버십 로그인 시 활성화됩니다.');
+                                        return;
+                                    }
+                                    setLockAlertMsg(null);
+                                    setRoleFilter(tab.id as any);
+                                }}
+                                className={`px-3.5 py-2 rounded-lg text-xs font-extrabold border transition cursor-pointer flex items-center gap-1 ${
                                     roleFilter === tab.id
                                         ? 'bg-[#0046b8] text-white border-[#0046b8]'
                                         : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
                                 }`}
                             >
-                                {tab.label}
+                                <span>{tab.label}</span>
+                                {tab.locked && <span className="text-[10px] text-amber-600 font-black">🔒</span>}
                             </button>
                         ))}
                     </div>
@@ -400,10 +422,10 @@ export default function AnalysisPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {filteredMatches.map((m, idx) => {
-                            const isSampleUnlocked = idx < 2; // 첫 2경기는 무료 샘플로 100% 공개
+                        {filteredMatches.map((m) => {
+                            const isSampleUnlocked = m.game_no === 1; // 오직 01번 경기 1개만 무료 샘플 공개
                             const isUnlocked = isPaidOrUnlocked || isSampleUnlocked;
-                            const isExpanded = expandedNo === m.game_no || idx < 2;
+                            const isExpanded = isUnlocked ? (expandedNo === m.game_no || m.game_no === 1) : expandedNo === m.game_no;
                             const factors = buildFallbackSevenFactors(m);
 
                             const pHome = m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
@@ -415,17 +437,21 @@ export default function AnalysisPage() {
                                 <div
                                     key={m.game_no}
                                     className={`rounded-2xl bg-white border-2 transition shadow-xs overflow-hidden ${
-                                        m.is_killer_pick
+                                        !isUnlocked
+                                            ? 'border-slate-300'
+                                            : m.is_killer_pick
                                             ? 'border-[#0046b8]'
                                             : m.is_trap_candidate
                                             ? 'border-rose-400'
                                             : 'border-slate-300'
                                     }`}
                                 >
-                                    {/* 카드 상단 리본 */}
+                                    {/* 카드 상단 리본 (비로그인 잠금 시 주력/함정 스포일러 완벽 차단) */}
                                     <div
                                         className={`px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-extrabold border-b ${
-                                            m.is_killer_pick
+                                            !isUnlocked
+                                                ? 'bg-slate-100 text-slate-800 border-slate-200'
+                                                : m.is_killer_pick
                                                 ? 'bg-blue-50 text-[#0046b8] border-blue-200'
                                                 : m.is_trap_candidate
                                                 ? 'bg-rose-50 text-rose-800 border-rose-200'
@@ -442,10 +468,14 @@ export default function AnalysisPage() {
                                         <div className="flex items-center gap-1.5">
                                             {isSampleUnlocked && !isPaidOrUnlocked && (
                                                 <span className="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-black">
-                                                    🎁 무료 공개 샘플
+                                                    🎁 01번 무료 샘플 공개
                                                 </span>
                                             )}
-                                            {m.is_killer_pick ? (
+                                            {!isUnlocked ? (
+                                                <span className="px-2.5 py-0.5 rounded bg-slate-800 text-amber-300 text-[11px] font-black">
+                                                    🔒 주력·함정 등급 잠금
+                                                </span>
+                                            ) : m.is_killer_pick ? (
                                                 <span className="px-2 py-0.5 rounded bg-[#0046b8] text-white text-[11px] font-black">
                                                     📌 단독 우위 주력
                                                 </span>
