@@ -548,7 +548,7 @@ export default function ProtoRoundDashboard() {
                         </span>
                         <div>
                             <p className="text-slate-900 font-extrabold text-sm sm:text-base">
-                                동네 프로토 판매점 벽보에서는 기본 요약이 무료! — <span className="text-[#0046b8]">집에서 편하게 실시간 배당 변동·전 경기 조합기를 보려면 모바일 패스를 이용하세요!</span>
+                                동네 프로토 판매점 벽보에서는 기본 요약이 무료! — <span className="text-[#0046b8]">집에서 편하게 실시간 배당 변동·전 경기 7-Factor 정밀 분석을 보려면 모바일 패스를 이용하세요!</span>
                             </p>
                             <p className="text-slate-500 text-xs mt-0.5">
                                 전국 6,277개 공식 판매점 사장님께는 매장 비치용 A4 분석 벽보를 100% 무료로 제공하며, 개인 고객은 모바일 구독 또는 커뮤니티 참여로 해금하실 수 있습니다.

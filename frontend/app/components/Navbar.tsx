@@ -202,7 +202,7 @@ export default function Navbar() {
                                         </div>
                                         <div className="py-1">
                                             <a href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
-                                                <span className="text-base">💼</span> 내 분석 보관함 / 구독관리
+                                                <span className="text-base">💼</span> 마이페이지 / 구독관리
                                             </a>
                                             <a href={`/${currentLang}/login?mode=store`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
                                                 <span className="text-base">🏪</span> 판매점 모드 전환

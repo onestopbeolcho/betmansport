@@ -1,7 +1,6 @@
 import { getDictionary } from '../lib/getDictionary';
 import { i18n, type Locale } from '../lib/i18n-config';
 import { DictionaryProvider } from '../context/DictionaryContext';
-import BetSlip from '../components/BetSlip';
 import Footer from '../components/Footer';
 
 const SITE_URL = 'https://scorenix.com';
@@ -72,7 +71,6 @@ export default async function LangLayout({
         <DictionaryProvider dictionary={dict}>
             {children}
             <Footer lang={lang} />
-            <BetSlip />
         </DictionaryProvider>
     );
 }

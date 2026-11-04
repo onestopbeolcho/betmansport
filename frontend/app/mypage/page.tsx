@@ -221,18 +221,18 @@ export default function MyPage() {
                             color: '#4ade80',
                         },
                         {
-                            label: t.statCombos || '저장된 시뮬레이션',
-                            value: totalSlips,
-                            sub: '나의 관심 조합 슬립',
-                            icon: '📋',
+                            label: '프로토 14경기 AI 엔진',
+                            value: '3-Pillar',
+                            sub: '7-Factor 정량 모델 가동 중',
+                            icon: '🤖',
                             gradient: 'from-[#8b5cf6]/20 to-[#8b5cf6]/5',
                             border: 'border-[rgba(139,92,246,0.2)]',
                             color: '#8b5cf6',
                         },
                         {
-                            label: t.statWonLost || '적중 / 미적중 슬립',
-                            value: `${wonSlips} / ${lostSlips}`,
-                            sub: '6시간 주기 자동 채점',
+                            label: '멤버십 등급',
+                            value: (user?.role || 'free').toUpperCase(),
+                            sub: '프로토 회차 패스 상태',
                             icon: '📈',
                             gradient: 'from-[#f59e0b]/20 to-[#f59e0b]/5',
                             border: 'border-[rgba(245,158,11,0.2)]',
@@ -462,96 +462,6 @@ export default function MyPage() {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Analysis History & Saved Slips */}
-                <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
-                    <button
-                        onClick={() => setShowSlips(!showSlips)}
-                        className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-                        style={{ background: 'var(--bg-elevated)' }}
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="text-lg">📋</span>
-                            <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                                {t.savedCombosTitle || '저장된 시뮬레이션 및 분석 기록'}
-                            </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                                style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)' }}>
-                                {totalSlips} {t.items || 'items'}
-                            </span>
-                        </div>
-                        <svg
-                            className={`w-4 h-4 transition-transform ${showSlips ? 'rotate-180' : ''}`}
-                            style={{ color: 'var(--text-muted)' }}
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-
-                    {showSlips && (
-                        <div className="p-5 border-t border-[var(--border-subtle)]">
-                            {slipsLoading ? (
-                                <div className="py-8 text-center" style={{ color: 'var(--text-muted)' }}>
-                                    <div className="animate-spin inline-block w-6 h-6 border-2 border-white/10 border-t-[var(--accent-primary)] rounded-full mb-2"></div>
-                                    <p className="text-xs">{t.loading || 'Loading...'}</p>
-                                </div>
-                            ) : slips.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <div className="text-3xl mb-2 opacity-30">📊</div>
-                                    <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>{t.noCombos || 'No saved combos yet.'}</p>
-                                    <a href={`/${currentLang}/bets`} className="btn-primary text-xs px-4 py-2 inline-block rounded-lg">
-                                        {t.goToAnalysis || '데이터 분석 바로가기 →'}
-                                    </a>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {slips.map((slip) => (
-                                        <div key={slip.id} className="rounded-xl border border-[var(--border-subtle)] overflow-hidden hover:border-[rgba(0,212,255,0.2)] transition-all">
-                                            <div className="px-4 py-2.5 flex justify-between items-center" style={{ background: 'var(--bg-elevated)' }}>
-                                                <div className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                                                    {t.combo || 'Combo'} #{slip.id}
-                                                    <span className="font-normal ml-2" style={{ color: 'var(--text-muted)' }}>
-                                                        {new Date(slip.created_at).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold font-mono gradient-text">{slip.total_odds.toFixed(2)}x</span>
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${slip.status === 'active' ? 'bg-[rgba(0,212,255,0.1)] text-[var(--accent-primary)]' :
-                                                        slip.status === 'won' ? 'bg-[rgba(34,197,94,0.15)] text-[#4ade80]' :
-                                                            slip.status === 'lost' ? 'bg-[rgba(239,68,68,0.15)] text-[#f87171]' :
-                                                                'bg-white/5 text-[var(--text-muted)]'
-                                                        }`}>
-                                                        {slip.status === 'active' ? (t.statusActive || '진행중') : slip.status === 'won' ? (t.statusWon || '적중') : slip.status === 'lost' ? (t.statusLost || '미적중') : slip.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="px-4 py-2 space-y-1">
-                                                {slip.items.map((item, idx) => (
-                                                    <div key={idx} className="flex justify-between items-center text-xs py-1">
-                                                        <div>
-                                                            <span className="font-medium mr-1.5" style={{ color: 'var(--accent-primary)' }}>
-                                                                [{item.selection === 'Home' ? 'W' : item.selection === 'Away' ? 'L' : 'D'}]
-                                                            </span>
-                                                            <span style={{ color: 'var(--text-secondary)' }}>
-                                                                {item.team_home && item.team_away
-                                                                    ? `${mapTeamName(item.team_home)} vs ${mapTeamName(item.team_away)}`
-                                                                    : item.match_name.includes(' vs ')
-                                                                        ? item.match_name.split(' vs ').map(t => mapTeamName(t.trim())).join(' vs ')
-                                                                        : item.match_name}
-                                                            </span>
-                                                        </div>
-                                                        <span className="font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{item.odds.toFixed(2)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
                 </div>
 
                 {/* Self-Service Subscription Management (1-Click Cancel) */}

@@ -332,85 +332,10 @@ export default function BetsPage() {
     const animatedStrong = useCountUp(strongPicks);
     const animatedAvg = useCountUp(Math.round(avgConfidence));
 
-    /* Toggle bet selection */
-    const toggleBet = (matchId: string, match: MatchBet, type: BetType) => {
-        const parts = match.match_name.split(' vs ');
-        const home = parts[0] || '';
-        const away = parts[1] || '';
-        const odds = type === 'Home' ? match.home_odds : type === 'Draw' ? match.draw_odds : match.away_odds;
-        if (odds <= 1) return;
-
-        const key = `${matchId}-${type}`;
-        const cartId = `${home}_${away}_${type}`;
-        const wasSelected = selectedBets.has(key);
-
-        setSelectedBets(prev => {
-            const next = new Map(prev);
-            (['Home', 'Draw', 'Away'] as BetType[]).forEach(t => {
-                next.delete(`${matchId}-${t}`);
-                removeFromCart(`${home}_${away}_${t}`);
-            });
-            if (!wasSelected) {
-                next.set(key, { match, type, odds });
-                addToCart({
-                    id: cartId,
-                    match_name: match.match_name,
-                    selection: type,
-                    odds,
-                    team_home: home,
-                    team_away: away,
-                    time: formatTime(match.match_time),
-                });
-            }
-            return next;
-        });
-    };
-
-    /* Save combo */
-    const handleSaveCombo = async () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            if (confirm(tb.loginRequired || 'Login required. Proceed to login?')) router.push('/login');
-            return;
-        }
-        if (selectedBets.size < 2) return;
-
-        setSaving(true);
-        const items = Array.from(selectedBets.values()).map(v => {
-            const parts = v.match.match_name.split(' vs ');
-            return {
-                id: `${parts[0]}_${parts[1]}_${v.type}`,
-                match_name: v.match.match_name,
-                selection: v.type,
-                odds: v.odds,
-                team_home: parts[0],
-                team_away: parts[1],
-                time: formatTime(v.match.match_time),
-            };
-        });
-        const totalOdds = items.reduce((acc, i) => acc * i.odds, 1);
-
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/portfolio/slip/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ items, stake: 10000, total_odds: totalOdds, potential_return: Math.floor(10000 * totalOdds) }),
-            });
-            if (res.ok) { alert(tb.comboSaved || 'Combination saved! 💾'); setSelectedBets(new Map()); }
-            else { const err = await res.json(); alert((tb.saveFailed || 'Save failed') + ': ' + (err.detail || '')); }
-        } catch { alert(tb.networkError || 'Network error'); }
-        finally { setSaving(false); }
-    };
-
-    const comboOdds = useMemo(() => {
-        if (selectedBets.size === 0) return 0;
-        let prod = 1;
-        selectedBets.forEach(v => { prod *= v.odds; });
-        return Math.round(prod * 100) / 100;
-    }, [selectedBets]);
-
+    /* Toggle bet selection (Combo save disabled) */
+    const toggleBet = (_matchId: string, _match: MatchBet, _type: BetType) => {};
     const betTypeLabel = (t: string) => t === 'Home' ? (tb.homeWin || '홈 승') : t === 'Draw' ? (tb.draw || '무승부') : (tb.awayWin || '원정 승');
-    const isSelected = (matchId: string, type: BetType) => selectedBets.has(`${matchId}-${type}`);
+    const isSelected = (_matchId: string, _type: BetType) => false;
 
     return (
         <>
@@ -421,7 +346,7 @@ export default function BetsPage() {
                 <main className="flex-grow max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 w-full">
                     <PageHeader 
                         title="데이터 추세 분석 (Value Analytics)" 
-                        description="해외 주요 스프레드 시장의 흐름과 통계적 괴리를 추적합니다. 머신러닝 알고리즘이 산출한 통계적 확률과 현재 시장의 지표 차이를 비교하여 수학적으로 유리한 분석 모델을 탐색하고 저장해 보세요." 
+                        description="해외 주요 스프레드 시장의 흐름과 통계적 괴리를 추적합니다. 머신러닝 알고리즘이 산출한 통계적 확률과 현재 시장의 지표 차이를 비교하여 수학적으로 유리한 분석 모델을 탐색해 보세요." 
                         icon="📊" 
                     />
 
@@ -1157,83 +1082,6 @@ export default function BetsPage() {
                         ⚖️ <strong>법적 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
                     </div>
                 </main>
-
-                {/* ━━━ COMBO ANALYSIS FLOATING PANEL ━━━ */}
-                {selectedBets.size > 0 && (
-                    <div className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl"
-                        style={{
-                            background: 'rgba(12,12,20,0.94)',
-                            backdropFilter: 'blur(20px)',
-                            borderTop: '1px solid rgba(0,212,255,0.2)',
-                            borderRadius: '20px 20px 0 0',
-                        }}>
-                        <div className="max-w-7xl mx-auto px-4 py-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-bold text-white flex items-center">
-                                    🎯 다중 경기 확률 시뮬레이터
-                                    <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold"
-                                        style={{ background: 'rgba(0,212,255,0.12)', color: '#00d4ff' }}>
-                                        {selectedBets.size} {tb.matches || '경기'}
-                                    </span>
-                                    {!isProOrAbove && (
-                                        <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400">
-                                            🔒 멤버십 전용
-                                        </span>
-                                    )}
-                                </h3>
-                                <button onClick={() => setSelectedBets(new Map())}
-                                    className="text-xs text-white/30 hover:text-white/60 transition">
-                                    {tb.clearAll || '전체 삭제'} ✕
-                                </button>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 mb-3">
-                                {Array.from(selectedBets.entries()).map(([key, val]) => {
-                                    const parts = val.match.match_name.split(' vs ');
-                                    return (
-                                        <div key={key} className="flex items-center space-x-2 px-3 py-2 rounded-xl text-xs"
-                                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}>
-                                            <span className="text-white/60">{parts[0]} vs {parts[1]}</span>
-                                            <span className="font-bold" style={{ color: '#00d4ff' }}>{betTypeLabel(val.type)}</span>
-                                            <span className="text-white font-bold font-mono">{val.odds.toFixed(2)}</span>
-                                            <button onClick={() => { setSelectedBets(prev => { const n = new Map(prev); n.delete(key); return n; }); }}
-                                                className="text-white/20 hover:text-white/50">✕</button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {isProOrAbove ? (
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <span className="text-xs text-white/40">{tb.totalOdds || '합산 지수 배율'}</span>
-                                        <span className="text-lg font-black ml-2 font-mono gradient-text">{comboOdds.toFixed(2)}</span>
-                                        <span className="text-xs text-white/30 ml-3">
-                                            {selectedBets.size}개 경기 시뮬레이션
-                                        </span>
-                                    </div>
-                                    <button onClick={handleSaveCombo}
-                                        disabled={saving || selectedBets.size < 2}
-                                        className={`text-sm px-6 py-2.5 rounded-xl font-bold transition-all ${saving ? 'opacity-50' : 'hover:scale-105'}`}
-                                        style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)', color: 'white' }}>
-                                        {saving ? (tb.saving || '저장 중...') : `💾 시뮬레이션 기록 저장 →`}
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-white/10">
-                                    <div className="text-xs text-white/60">
-                                        🔒 다중 경기 확률 시뮬레이션 및 기록 저장은 <strong className="text-cyan-400">Basic Pass (월 3,900원)</strong> 이상 멤버십 전용 기능입니다.
-                                    </div>
-                                    <a href="/ko/payment/request?plan=pro&billing=monthly"
-                                        className="text-xs px-5 py-2.5 rounded-xl font-black text-white transition-all hover:scale-105"
-                                        style={{ background: 'linear-gradient(135deg, #00d4ff, #8b5cf6)' }}>
-                                        ☕ 월 3,900원 구독하고 시뮬레이터 열기 →
-                                    </a>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
             </div>
         </>
     );
