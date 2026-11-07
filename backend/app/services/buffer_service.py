@@ -84,6 +84,8 @@ class BufferService:
                 name
                 service
                 avatar
+                isLocked
+                isDisconnected
             }
         }
         """
@@ -121,6 +123,8 @@ class BufferService:
                         "service": ch.get("service", ""),
                         "avatar": ch.get("avatar", ""),
                         "disabled": not is_enabled,
+                        "is_locked": bool(ch.get("isLocked", False)),
+                        "is_disconnected": bool(ch.get("isDisconnected", False)),
                         "org_id": self._org_id,
                     })
 
