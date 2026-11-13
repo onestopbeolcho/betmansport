@@ -183,7 +183,7 @@ interface MatchMarkingStrategy {
 export default function ProtoRoundDashboard() {
     const { user } = useAuth();
     const [data, setData] = useState<ProtoReportData | null>(null);
-    const [selectedGameKey, setSelectedGameKey] = useState<string>("G011_260065");
+    const [selectedGameKey, setSelectedGameKey] = useState<string>("current");
     const [gameCatFilter, setGameCatFilter] = useState<string>("ALL");
     const [loading, setLoading] = useState(true);
     const [switchingGame, setSwitchingGame] = useState(false);
@@ -250,7 +250,7 @@ export default function ProtoRoundDashboard() {
     }, []);
 
     useEffect(() => {
-        loadGameReport("G011_260065", true);
+        loadGameReport("current", true);
     }, []);
 
     const catalogGames: BetmanGameCatalogItem[] = useMemo(() => {

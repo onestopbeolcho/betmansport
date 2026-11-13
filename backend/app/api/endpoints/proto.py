@@ -48,6 +48,24 @@ async def get_betman_games_list():
     return await get_betman_games_catalog()
 
 
+@router.post("/sync-live-cache")
+async def sync_betman_live_cache_endpoint():
+    """베트맨 공식 사이트 활성 회차 카탈로그 및 경기 스케줄 캐시 강제 갱신."""
+    from app.services.proto_round_service import _catalog_cache, _game_detail_cache
+    _catalog_cache["ts"] = 0.0
+    _catalog_cache["games"] = []
+    _game_detail_cache.clear()
+    catalog = await get_betman_games_catalog()
+    games = catalog.get("games") or []
+    synced_keys = []
+    for g in games[:8]:
+        gkey = g.get("game_key")
+        if gkey:
+            await build_proto_round_report(round_id=gkey, include_archive=False)
+            synced_keys.append(gkey)
+    return {"status": "ok", "total_games": len(games), "synced_keys": synced_keys}
+
+
 @router.get("/game/{gm_id}/{gm_ts}")
 async def get_betman_game_report(gm_id: str, gm_ts: str):
     """특정 베트맨 게임(예: G011/260065 축구토토 승무패 65회차, G055/260098 스페셜N 더블 98회차)의 경기 목록 및 AI 리포트 조회."""

@@ -139,7 +139,7 @@ export default function StorePrintReportView({ initialRoundId }: { initialRoundI
         if (idx >= 0 && parts[idx + 1] && parts[idx + 1] !== "current" && parts[idx + 1] !== "latest") {
             return parts[idx + 1];
         }
-        return "G011_260065";
+        return "current";
     }, [initialRoundId, pathname, selectedGameKey]);
 
     useEffect(() => {

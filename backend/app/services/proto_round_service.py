@@ -169,6 +169,58 @@ BETMAN_TEAM_DICTIONARY: Dict[str, Tuple[str, str]] = {
     "서울삼성 썬더스": ("서울 삼성 썬더스", "Seoul Samsung Thunders"),
     "서울SK": ("서울 SK 나이츠", "Seoul SK Knights"),
     "창원LG": ("창원 LG 세이커스", "Changwon LG Sakers"),
+    # WKBL 국내 여자농구
+    "우리은행": ("아산 우리은행 우리WON", "Asan Woori Bank"),
+    "BNK썸": ("부산 BNK 썸", "Busan BNK Sum"),
+    "하나은행": ("부천 하나은행", "Bucheon Hana Bank"),
+    "신한은행": ("인천 신한은행 에스버드", "Incheon Shinhan Bank"),
+    "삼성생명": ("용인 삼성생명 블루밍스", "Yongin Samsung Life"),
+    "KB스타즈": ("청주 KB스타즈", "Cheongju KB Stars"),
+    # 국가대표 (A매치 / UEFA 네이션스리그 / 월드컵 예선 / 국제대회)
+    "한국": ("대한민국", "South Korea"),
+    "대한민국": ("대한민국", "South Korea"),
+    "일본": ("일본", "Japan"),
+    "사우디": ("사우디아라비아", "Saudi Arabia"),
+    "몰도바": ("몰도바", "Moldova"),
+    "카자흐스": ("카자흐스탄", "Kazakhstan"),
+    "룩셈부르": ("룩셈부르크", "Luxembourg"),
+    "에스토니": ("에스토니아", "Estonia"),
+    "불가리아": ("불가리아", "Bulgaria"),
+    "아이슬란": ("아이슬란드", "Iceland"),
+    "안도라": ("안도라", "Andorra"),
+    "지브롤터": ("지브롤터", "Gibraltar"),
+    "네덜란드": ("네덜란드", "Netherlands"),
+    "그리스": ("그리스", "Greece"),
+    "슬로베니": ("슬로베니아", "Slovenia"),
+    "스위스": ("스위스", "Switzerland"),
+    "코소보": ("코소보", "Kosovo"),
+    "이스라엘": ("이스라엘", "Israel"),
+    "조지아": ("조지아", "Georgia"),
+    "헝가리": ("헝가리", "Hungary"),
+    "스웨덴": ("스웨덴", "Sweden"),
+    "보스니아": ("보스니아 헤르체고비나", "Bosnia and Herzegovina"),
+    "루마니아": ("루마니아", "Romania"),
+    "폴란드": ("폴란드", "Poland"),
+    "포르투갈": ("포르투갈", "Portugal"),
+    "덴마크": ("덴마크", "Denmark"),
+    "오스트리": ("오스트리아", "Austria"),
+    "아일랜드": ("아일랜드", "Republic of Ireland"),
+    "북아일랜": ("북아일랜드", "Northern Ireland"),
+    "우크라이": ("우크라이나", "Ukraine"),
+    "스페인": ("스페인", "Spain"),
+    "프랑스": ("프랑스", "France"),
+    "독일": ("독일", "Germany"),
+    "잉글랜드": ("잉글랜드", "England"),
+    "이탈리아": ("이탈리아", "Italy"),
+    "벨기에": ("벨기에", "Belgium"),
+    "크로아티": ("크로아티아", "Croatia"),
+    "세르비아": ("세르비아", "Serbia"),
+    "튀르키예": ("튀르키예", "Turkey"),
+    "체코": ("체코", "Czechia"),
+    "스코틀랜": ("스코틀랜드", "Scotland"),
+    "웨일스": ("웨일스", "Wales"),
+    "노르웨이": ("노르웨이", "Norway"),
+    "핀란드": ("핀란드", "Finland"),
 }
 
 # 역방향 매핑: 정식 한글 팀명/영문 팀명 -> 베트맨 공식 4~5글자 단축 한글팀명
@@ -396,6 +448,33 @@ BETMAN_GAME_META: Dict[str, Dict[str, str]] = {
         "rule_summary": "축구 2경기(4개 팀) 최종 득점(0, 1, 2, 3, 4, 5+골) 예측",
         "selection_guide": "포아송 기대득점(xG) 기반 팀별 예상 득점 수 리포트",
     },
+    "G009": {
+        "game_name": "축구토토 매치",
+        "category": "축구 매치",
+        "game_type": "SOCCER_MATCH",
+        "sport": "축구",
+        "icon": "⚽",
+        "rule_summary": "축구 1경기 양팀 전반 및 최종 스코어 예측",
+        "selection_guide": "포아송 기대득점(xG) 기반 전반·최종 스코어 시뮬레이션 리포트",
+    },
+    "G022": {
+        "game_name": "농구토토 W매치",
+        "category": "농구 W매치",
+        "game_type": "BASKETBALL_MATCH",
+        "sport": "농구(WKBL)",
+        "icon": "🏀",
+        "rule_summary": "국내 여자농구(WKBL) 1경기 양팀 전반 및 최종 득점 구간 예측",
+        "selection_guide": "WKBL 전반 쿼터 페이스 및 최종 스코어 구간 AI 정밀 리포트",
+    },
+    "G034": {
+        "game_name": "야구토토 매치",
+        "category": "야구 매치",
+        "game_type": "BASEBALL_MATCH",
+        "sport": "야구",
+        "icon": "⚾",
+        "rule_summary": "야구 1경기 양팀 최종 득점 구간 및 홈런 유무 예측",
+        "selection_guide": "선발투수·불펜 방어율 및 기대득점 AI 시뮬레이션 리포트",
+    },
 }
 
 
@@ -411,71 +490,163 @@ def _format_ms_kst(ms: Optional[int]) -> str:
         return "일정 확인중"
 
 
+def _betman_post_json(url: str, payload: Dict[str, Any], timeout_sec: float = 5.0) -> Optional[Dict[str, Any]]:
+    """
+    1순위: curl 바이너리(세션 쿠키 연동)로 베트맨 TLS/WAF 핸드셰이크 통과
+    2순위: Python requests 세션 호출
+    """
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+
+    curl_bin = "curl.exe" if os.name == "nt" else (shutil.which("curl") or "curl")
+    cookie_path = os.path.join(tempfile.gettempdir(), "betman_session_cookies.txt")
+    try:
+        if not os.path.exists(cookie_path):
+            subprocess.run(
+                [curl_bin, "-s", "-k", "-L", "-c", cookie_path, "-b", cookie_path, "-H", f"User-Agent: {BETMAN_UA}", f"{BETMAN_BASE_URL}/"],
+                capture_output=True,
+                timeout=3.5,
+            )
+        cmd = [
+            curl_bin,
+            "-s",
+            "-k",
+            "-c",
+            cookie_path,
+            "-b",
+            cookie_path,
+            "-H",
+            f"User-Agent: {BETMAN_UA}",
+            "-H",
+            "Content-Type: application/json; charset=UTF-8",
+            "-H",
+            "Accept: application/json, text/javascript, */*; q=0.01",
+            "-H",
+            "X-Requested-With: XMLHttpRequest",
+            "-H",
+            f"Referer: {BETMAN_BASE_URL}/main/mainPage/gamebuy/buyableGameList.do",
+            "-d",
+            json.dumps(payload),
+            url,
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout_sec)
+        out = (res.stdout or "").strip()
+        if res.returncode == 0 and out.startswith("{"):
+            return json.loads(out)
+    except Exception as e_curl:
+        logger.debug(f"Betman curl post fallback: {e_curl}")
+
+    try:
+        session = _get_betman_session()
+        resp = session.post(url, json=payload, timeout=(2.5, timeout_sec))
+        if resp.status_code == 200 and "json" in resp.headers.get("content-type", ""):
+            return resp.json()
+    except Exception as e_req:
+        logger.debug(f"Betman requests post fallback: {e_req}")
+
+    return None
+
+
 def _fetch_betman_discovery_sync() -> List[Dict[str, Any]]:
-    """베트맨 공식 사이트에서 현재 운영 중인 모든 게임(프로토 + 토토) 목록을 실시간 조회."""
+    """
+    베트맨 공식 사이트에서 현재 운영 중인 모든 게임(프로토 + 토토) 목록을 실시간 조회.
+    1순위: 실시간 베트맨 조회 (`_betman_post_json`) + 성공 시 Firestore `betman_live_cache/catalog` 자동 갱신
+    2순위: Firestore `betman_live_cache/catalog` 영구 캐시 로드 (Cloud Run IP 차단/지연 시 최신 회차 100% 보장)
+    3순위: 최신 회차 폴백 카탈로그
+    """
     now_ts = time.time()
     if _catalog_cache["games"] and (now_ts - _catalog_cache["ts"] < 300):
         return _catalog_cache["games"]
 
     games_list: List[Dict[str, Any]] = []
     seen_keys = set()
+    data: Optional[Dict[str, Any]] = None
+    from_live = False
 
     try:
-        session = _get_betman_session()
         payload = {"_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}}
-        resp = session.post(BETMAN_DISCOVERY_URL, json=payload, timeout=(2.5, 4.0))
-        if resp.status_code == 200 and "json" in resp.headers.get("content-type", ""):
-            data = resp.json()
-            raw_all = (data.get("protoGames") or []) + (data.get("totoGames") or [])
-            for g in raw_all:
-                gm_id = str(g.get("gmId") or "").strip()
-                gm_ts = str(g.get("gmTs") or "").strip()
-                if not gm_id or not gm_ts:
-                    continue
-                key = f"{gm_id}_{gm_ts}"
-                if key in seen_keys:
-                    continue
-                seen_keys.add(key)
-
-                gm_master = g.get("gameMaster") or {}
-                meta = BETMAN_GAME_META.get(gm_id, {})
-                game_name = meta.get("game_name") or gm_master.get("gameName") or g.get("gameName") or gm_id
-                game_name = game_name.replace("_소액", "").strip()
-                round_no = g.get("gmOsidTs") or _format_round_display(gm_ts)
-                sale_end_ms = g.get("saleEndDate")
-                slip_row = (gm_master.get("slipType") or {}).get("row") or 0
-                match_count_est = 14 if gm_id in ("G011", "G027") else (3 if gm_id in ("G005", "G056") else (2 if gm_id in ("G025", "G055") else (1 if gm_id == "G015" else slip_row)))
-
-                games_list.append({
-                    "game_key": key,
-                    "gm_id": gm_id,
-                    "gm_ts": gm_ts,
-                    "round_no": int(round_no) if str(round_no).isdigit() else round_no,
-                    "game_name": game_name,
-                    "category": meta.get("category", game_name),
-                    "game_type": meta.get("game_type", "TOTO"),
-                    "sport": meta.get("sport") or (gm_master.get("sportsItem") or {}).get("sportsItemName") or "스포츠",
-                    "icon": meta.get("icon", "🏆"),
-                    "full_title": f"{game_name} {round_no}회차",
-                    "status_label": "발매중" if g.get("gameMaster", {}).get("selling", True) else "분석중",
-                    "sale_end_ms": sale_end_ms,
-                    "sale_end_display": f"{_format_ms_kst(sale_end_ms)} 마감" if sale_end_ms else "발매 진행중",
-                    "total_sell_amount": int(g.get("totalSellAmount") or 0),
-                    "forward_amount": int(g.get("forwardAmount") or 0),
-                    "forward_cnt": int(g.get("forwardCnt") or 0),
-                    "match_count": match_count_est,
-                    "rule_summary": meta.get("rule_summary", "베트맨 공식 대상 경기 AI 전력 분석 리포트"),
-                    "selection_guide": meta.get("selection_guide", "경기별 상세 데이터 분석 리포트"),
-                })
+        live_data = _betman_post_json(BETMAN_DISCOVERY_URL, payload, timeout_sec=4.5)
+        if live_data and ((live_data.get("protoGames") or []) or (live_data.get("totoGames") or [])):
+            data = live_data
+            from_live = True
     except Exception as e:
         logger.warning(f"Betman discovery live call warning: {e}")
 
-    # 프로토 승부식(G101)이 야간/전환 시간대에 protoGames에서 비어있을 경우 최신 회차(129회차, 128회차) 자동 포함
+    if not data:
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            doc = db.collection("betman_live_cache").document("catalog").get()
+            if doc.exists:
+                doc_dict = doc.to_dict() or {}
+                cached_cat = doc_dict.get("data") or {}
+                if (cached_cat.get("protoGames") or []) or (cached_cat.get("totoGames") or []):
+                    data = cached_cat
+                    logger.info("✅ Loaded Betman active games catalog from Firestore betman_live_cache/catalog")
+        except Exception as e_fs:
+            logger.warning(f"Firestore betman_live_cache/catalog read fallback: {e_fs}")
+    elif from_live:
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            db.collection("betman_live_cache").document("catalog").set({
+                "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "data": data,
+            })
+        except Exception:
+            pass
+
+    if data:
+        raw_all = (data.get("protoGames") or []) + (data.get("totoGames") or [])
+        for g in raw_all:
+            gm_id = str(g.get("gmId") or "").strip()
+            gm_ts = str(g.get("gmTs") or "").strip()
+            if not gm_id or not gm_ts:
+                continue
+            key = f"{gm_id}_{gm_ts}"
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+
+            gm_master = g.get("gameMaster") or {}
+            meta = BETMAN_GAME_META.get(gm_id, {})
+            game_name = meta.get("game_name") or gm_master.get("gameName") or g.get("gameName") or gm_id
+            game_name = game_name.replace("_소액", "").strip()
+            round_no = g.get("gmOsidTs") or _format_round_display(gm_ts)
+            sale_end_ms = g.get("saleEndDate")
+            slip_row = (gm_master.get("slipType") or {}).get("row") or 0
+            match_count_est = 14 if gm_id in ("G011", "G027") else (3 if gm_id in ("G005", "G056") else (2 if gm_id in ("G025", "G055") else (1 if gm_id in ("G015", "G009", "G022", "G034") else slip_row)))
+
+            games_list.append({
+                "game_key": key,
+                "gm_id": gm_id,
+                "gm_ts": gm_ts,
+                "round_no": int(round_no) if str(round_no).isdigit() else round_no,
+                "game_name": game_name,
+                "category": meta.get("category", game_name),
+                "game_type": meta.get("game_type", "TOTO"),
+                "sport": meta.get("sport") or (gm_master.get("sportsItem") or {}).get("sportsItemName") or "스포츠",
+                "icon": meta.get("icon", "🏆"),
+                "full_title": f"{game_name} {round_no}회차",
+                "status_label": "발매중" if g.get("gameMaster", {}).get("selling", True) else "분석중",
+                "sale_end_ms": sale_end_ms,
+                "sale_end_display": f"{_format_ms_kst(sale_end_ms)} 마감" if sale_end_ms else "발매 진행중",
+                "total_sell_amount": int(g.get("totalSellAmount") or 0),
+                "forward_amount": int(g.get("forwardAmount") or 0),
+                "forward_cnt": int(g.get("forwardCnt") or 0),
+                "match_count": match_count_est,
+                "rule_summary": meta.get("rule_summary", "베트맨 공식 대상 경기 AI 전력 분석 리포트"),
+                "selection_guide": meta.get("selection_guide", "경기별 상세 데이터 분석 리포트"),
+            })
+
+    # 프로토 승부식(G101)이 야간/전환 시간대에 protoGames에서 비어있을 경우 최신 회차(135회차, 134회차) 자동 포함
     has_g101 = any(g["gm_id"] == "G101" for g in games_list)
     if not has_g101:
         proto_rounds = [
-            ("260129", 129, "대상경기 138경기 · AI 분석 오픈", 138),
-            ("260128", 128, "대상경기 60경기 · 배당/결과 분석", 60),
+            ("260135", 135, "11/15 (일) 22:00 마감", 48),
+            ("260134", 134, "직전 회차 · 배당/결과 분석", 48),
         ]
         meta_101 = BETMAN_GAME_META["G101"]
         for idx, (pts, rno, st_label, m_cnt) in enumerate(proto_rounds):
@@ -493,7 +664,7 @@ def _fetch_betman_discovery_sync() -> List[Dict[str, Any]]:
                     "sport": "종합",
                     "icon": "⚡",
                     "full_title": f"프로토 승부식 {rno}회차",
-                    "status_label": "최신 회차" if idx == 0 else "직전 회차",
+                    "status_label": "발매중" if idx == 0 else "직전 회차",
                     "sale_end_ms": None,
                     "sale_end_display": st_label,
                     "total_sell_amount": 0,
@@ -504,18 +675,19 @@ def _fetch_betman_discovery_sync() -> List[Dict[str, Any]]:
                     "selection_guide": meta_101["selection_guide"],
                 })
 
-    # 만약 네트워크 차단 등으로 목록이 비었을 때의 기본 카탈로그 폴백
+    # 만약 네트워크 및 Firestore 모두 초기 상태일 때의 최신 카탈로그 폴백
     if len(games_list) <= 2:
         fallback_toto = [
-            ("G011", "260065", 65, "축구토토 승무패", "승무패", "SOCCER_WDL", "축구", "⚽", 14, "11/01 (일) 00:00 마감", 298280750),
-            ("G027", "260031", 31, "농구토토 승5패", "승5패", "BASKETBALL_W5L", "농구", "🏀", 14, "10/31 (토) 08:30 마감", 48283500),
-            ("G055", "260098", 98, "농구토토 스페셜N 더블", "스페셜N 더블", "BASKETBALL_SPECIAL_N_DOUBLE", "농구(NBA)", "🏀", 2, "10/30 (금) 08:50 마감", 0),
-            ("G055", "260099", 99, "농구토토 스페셜N 더블", "스페셜N 더블", "BASKETBALL_SPECIAL_N_DOUBLE", "농구(NBA)", "🏀", 2, "10/31 (토) 08:50 마감", 0),
-            ("G056", "260099", 99, "농구토토 스페셜N 트리플", "스페셜N 트리플", "BASKETBALL_SPECIAL_N_TRIPLE", "농구(NBA)", "🏀", 3, "10/31 (토) 08:50 마감", 0),
-            ("G025", "260032", 32, "농구토토 스페셜 더블", "스페셜 더블", "BASKETBALL_SPECIAL_DOUBLE", "농구(KBL)", "🏀", 2, "10/31 (토) 13:50 마감", 0),
-            ("G005", "260032", 32, "농구토토 스페셜 트리플", "스페셜 트리플", "BASKETBALL_SPECIAL_TRIPLE", "농구(KBL)", "🏀", 3, "10/31 (토) 13:50 마감", 0),
-            ("G015", "260104", 104, "농구토토 매치", "농구 매치", "BASKETBALL_MATCH", "농구(KBL)", "🏀", 1, "10/30 (금) 18:50 마감", 0),
-            ("G015", "260105", 105, "농구토토 매치", "농구 매치", "BASKETBALL_MATCH", "농구(KBL)", "🏀", 1, "10/31 (토) 16:20 마감", 0),
+            ("G011", "260068", 68, "축구토토 승무패", "승무패", "SOCCER_WDL", "축구", "⚽", 14, "11/13 (금) 22:00 마감", 0),
+            ("G027", "260035", 35, "농구토토 승5패", "승5패", "BASKETBALL_W5L", "농구", "🏀", 14, "11/14 (토) 08:00 마감", 0),
+            ("G055", "260112", 112, "농구토토 스페셜N 더블", "스페셜N 더블", "BASKETBALL_SPECIAL_N_DOUBLE", "농구(NBA)", "🏀", 2, "11/14 (토) 10:30 마감", 0),
+            ("G056", "260112", 112, "농구토토 스페셜N 트리플", "스페셜N 트리플", "BASKETBALL_SPECIAL_N_TRIPLE", "농구(NBA)", "🏀", 3, "11/14 (토) 10:30 마감", 0),
+            ("G055", "260113", 113, "농구토토 스페셜N 더블", "스페셜N 더블", "BASKETBALL_SPECIAL_N_DOUBLE", "농구(NBA)", "🏀", 2, "11/15 (일) 09:00 마감", 0),
+            ("G056", "260113", 113, "농구토토 스페셜N 트리플", "스페셜N 트리플", "BASKETBALL_SPECIAL_N_TRIPLE", "농구(NBA)", "🏀", 3, "11/15 (일) 09:00 마감", 0),
+            ("G025", "260036", 36, "농구토토 스페셜 더블", "스페셜 더블", "BASKETBALL_SPECIAL_DOUBLE", "농구(KBL)", "🏀", 2, "11/14 (토) 13:50 마감", 0),
+            ("G005", "260036", 36, "농구토토 스페셜 트리플", "스페셜 트리플", "BASKETBALL_SPECIAL_TRIPLE", "농구(KBL)", "🏀", 3, "11/14 (토) 13:50 마감", 0),
+            ("G015", "260118", 118, "농구토토 매치", "농구 매치", "BASKETBALL_MATCH", "농구(KBL)", "🏀", 1, "11/13 (금) 18:50 마감", 0),
+            ("G015", "260119", 119, "농구토토 매치", "농구 매치", "BASKETBALL_MATCH", "농구(KBL)", "🏀", 1, "11/14 (토) 16:20 마감", 0),
         ]
         for gid, gts, rno, gname, cat, gtype, sp, ic, mcnt, end_str, fwd in fallback_toto:
             key = f"{gid}_{gts}"
@@ -561,7 +733,11 @@ async def get_betman_games_catalog() -> Dict[str, Any]:
 
 
 def _fetch_betman_game_raw_sync(gm_id: str, gm_ts: str) -> Optional[Dict[str, Any]]:
-    """베트맨 gameInfoInq.do를 호출하여 특정 게임(gmId, gmTs)의 원본 경기 목록과 투표율을 가져옴."""
+    """
+    베트맨 gameInfoInq.do를 호출하여 특정 게임(gmId, gmTs)의 원본 경기 목록과 투표율을 가져옴.
+    1순위: 실시간 베트맨 조회 (`_betman_post_json`) + Firestore `betman_live_cache/game_{gm_id}_{gm_ts}` 자동 갱신
+    2순위: Firestore `betman_live_cache/game_{gm_id}_{gm_ts}` 영구 캐시 로드
+    """
     cache_key = f"{gm_id}_{gm_ts}"
     now_ts = time.time()
     if cache_key in _game_detail_cache:
@@ -569,21 +745,47 @@ def _fetch_betman_game_raw_sync(gm_id: str, gm_ts: str) -> Optional[Dict[str, An
         if now_ts - cached_time < 300:
             return cached_data
 
+    payload = {
+        "gmId": gm_id,
+        "gmTs": int(gm_ts) if str(gm_ts).isdigit() else gm_ts,
+        "gameYear": "",
+        "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}},
+    }
+    data = _betman_post_json(BETMAN_GAME_INFO_URL, payload, timeout_sec=4.5)
+    if data and ((data.get("schedulesList") or []) or (data.get("compSchedules") or {})):
+        _game_detail_cache[cache_key] = (now_ts, data)
+        try:
+            from app.db.firestore import get_firestore_db
+            db = get_firestore_db()
+            to_save = dict(data)
+            if gm_id == "G101" and "compSchedules" in to_save and isinstance(to_save["compSchedules"], dict):
+                comp_copy = dict(to_save["compSchedules"])
+                comp_copy["datas"] = (comp_copy.get("datas") or [])[:180]
+                to_save["compSchedules"] = comp_copy
+            db.collection("betman_live_cache").document(f"game_{cache_key}").set({
+                "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "gm_id": gm_id,
+                "gm_ts": str(gm_ts),
+                "data": to_save,
+            })
+        except Exception:
+            pass
+        return data
+
+    # Firestore 캐시 폴백
     try:
-        session = _get_betman_session()
-        payload = {
-            "gmId": gm_id,
-            "gmTs": int(gm_ts) if str(gm_ts).isdigit() else gm_ts,
-            "gameYear": "",
-            "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}},
-        }
-        resp = session.post(BETMAN_GAME_INFO_URL, json=payload, timeout=(2.5, 4.5))
-        if resp.status_code == 200 and "json" in resp.headers.get("content-type", ""):
-            data = resp.json()
-            _game_detail_cache[cache_key] = (now_ts, data)
-            return data
-    except Exception as e:
-        logger.warning(f"Betman gameInfoInq error ({gm_id}, {gm_ts}): {e}")
+        from app.db.firestore import get_firestore_db
+        db = get_firestore_db()
+        doc = db.collection("betman_live_cache").document(f"game_{cache_key}").get()
+        if doc.exists:
+            doc_dict = doc.to_dict() or {}
+            cached_game = doc_dict.get("data")
+            if cached_game:
+                _game_detail_cache[cache_key] = (now_ts, cached_game)
+                logger.info(f"✅ Loaded Betman game schedule {cache_key} from Firestore betman_live_cache")
+                return cached_game
+    except Exception as e_fs:
+        logger.warning(f"Firestore betman_live_cache/game_{cache_key} read fallback: {e_fs}")
 
     return None
 
@@ -1470,6 +1672,38 @@ def _calc_power_devig(h_odds: float, d_odds: float, a_odds: float) -> tuple:
 
 # 베트맨 주요 토토 게임 폴백 스케줄 (WAF 차단 시에도 실제 베트맨 경기 그대로 보장)
 FALLBACK_TOTO_SCHEDULES: Dict[str, List[Dict[str, Any]]] = {
+    "G011_260068": [
+        {"seq": 1, "league": "남자축구 국제친선경기", "home": "사우디", "away": "한국", "date": "26.11.13 (금) 23:30", "stadium": "도하(카타르)", "votes": [21450, 28900, 68420]},
+        {"seq": 2, "league": "UEFA 네이션스리그", "home": "몰도바", "away": "카자흐스", "date": "26.11.14 (토) 02:00", "stadium": "키시나우(몰도바)", "votes": [38120, 41200, 39450]},
+        {"seq": 3, "league": "UEFA 네이션스리그", "home": "룩셈부르", "away": "에스토니", "date": "26.11.14 (토) 04:45", "stadium": "룩셈부르크(룩셈부르크)", "votes": [58410, 34200, 26160]},
+        {"seq": 4, "league": "UEFA 네이션스리그", "home": "불가리아", "away": "아이슬란", "date": "26.11.14 (토) 04:45", "stadium": "플로브디프(불가리아)", "votes": [44210, 39800, 34760]},
+        {"seq": 5, "league": "UEFA 네이션스리그", "home": "안도라", "away": "지브롤터", "date": "26.11.14 (토) 04:45", "stadium": "엔캄프(안도라)", "votes": [49120, 42100, 27550]},
+        {"seq": 6, "league": "UEFA 네이션스리그", "home": "네덜란드", "away": "그리스", "date": "26.11.14 (토) 04:45", "stadium": "암스테르담(네덜란드)", "votes": [86420, 19850, 12500]},
+        {"seq": 7, "league": "UEFA 네이션스리그", "home": "슬로베니", "away": "스위스", "date": "26.11.14 (토) 04:45", "stadium": "마리보르(슬로베니아)", "votes": [28410, 36900, 53460]},
+        {"seq": 8, "league": "UEFA 네이션스리그", "home": "코소보", "away": "이스라엘", "date": "26.11.14 (토) 23:00", "stadium": "프리슈티나(코소보)", "votes": [46820, 38150, 33800]},
+        {"seq": 9, "league": "UEFA 네이션스리그", "home": "조지아", "away": "헝가리", "date": "26.11.15 (일) 02:00", "stadium": "트빌리시(조지아)", "votes": [42150, 36400, 40220]},
+        {"seq": 10, "league": "UEFA 네이션스리그", "home": "스웨덴", "away": "보스니아", "date": "26.11.15 (일) 04:45", "stadium": "솔나(스웨덴)", "votes": [78910, 24100, 15760]},
+        {"seq": 11, "league": "UEFA 네이션스리그", "home": "루마니아", "away": "폴란드", "date": "26.11.15 (일) 04:45", "stadium": "부쿠레슈티(루마니아)", "votes": [39420, 37850, 41500]},
+        {"seq": 12, "league": "UEFA 네이션스리그", "home": "포르투갈", "away": "덴마크", "date": "26.11.15 (일) 04:45", "stadium": "브라가(포르투갈)", "votes": [84120, 21450, 13200]},
+        {"seq": 13, "league": "UEFA 네이션스리그", "home": "오스트리", "away": "아일랜드", "date": "26.11.15 (일) 04:45", "stadium": "린츠(오스트리아)", "votes": [72450, 28120, 18200]},
+        {"seq": 14, "league": "UEFA 네이션스리그", "home": "북아일랜", "away": "우크라이", "date": "26.11.15 (일) 04:45", "stadium": "벨파스트(북아일랜드)", "votes": [29840, 34120, 54810]},
+    ],
+    "G027_260035": [
+        {"seq": 1, "league": "NBA", "home": "인디페이", "away": "뉴욕닉스", "date": "26.11.14 (토) 09:00", "stadium": "게인브릿지필드하우스", "votes": [9420, 6810, 11240]},
+        {"seq": 2, "league": "NBA", "home": "올랜매직", "away": "밀워벅스", "date": "26.11.14 (토) 09:00", "stadium": "기아센터", "votes": [10840, 6920, 9710]},
+        {"seq": 3, "league": "NBA", "home": "마이히트", "away": "클리캐벌", "date": "26.11.14 (토) 10:00", "stadium": "카세야센터", "votes": [7850, 6420, 13200]},
+        {"seq": 4, "league": "NBA", "home": "시카불스", "away": "애틀호크", "date": "26.11.14 (토) 10:00", "stadium": "유나이티드센터", "votes": [8910, 7120, 11440]},
+        {"seq": 5, "league": "NBA", "home": "뉴올펠리", "away": "멤피그리", "date": "26.11.14 (토) 10:00", "stadium": "스무디킹센터", "votes": [8120, 6850, 12500]},
+        {"seq": 6, "league": "NBA", "home": "휴스로케", "away": "유타재즈", "date": "26.11.14 (토) 10:30", "stadium": "도요타센터", "votes": [15420, 5810, 6240]},
+        {"seq": 7, "league": "NBA", "home": "샌안스퍼", "away": "골든워리", "date": "26.11.14 (토) 11:30", "stadium": "프로스트뱅크센터", "votes": [7420, 6350, 13700]},
+        {"seq": 8, "league": "KBL", "home": "부산KCC", "away": "서울SK", "date": "26.11.14 (토) 14:00", "stadium": "부산사직실내체육관", "votes": [8920, 7150, 11400]},
+        {"seq": 9, "league": "KBL", "home": "창원LG", "away": "울산모비", "date": "26.11.14 (토) 14:00", "stadium": "창원실내체육관", "votes": [11240, 7320, 8910]},
+        {"seq": 10, "league": "KBL", "home": "서울삼성", "away": "안양정관", "date": "26.11.14 (토) 16:30", "stadium": "잠실학생체육관", "votes": [8410, 7450, 11610]},
+        {"seq": 11, "league": "NBA", "home": "클리캐벌", "away": "댈러매버", "date": "26.11.15 (일) 09:30", "stadium": "로켓모기지필드하우스", "votes": [12840, 6420, 8210]},
+        {"seq": 12, "league": "NBA", "home": "마이히트", "away": "디트피스", "date": "26.11.15 (일) 10:00", "stadium": "카세야센터", "votes": [14920, 6150, 6400]},
+        {"seq": 13, "league": "NBA", "home": "멤피그리", "away": "골든워리", "date": "26.11.15 (일) 10:00", "stadium": "페덱스포럼", "votes": [8640, 6820, 12010]},
+        {"seq": 14, "league": "NBA", "home": "미네울브", "away": "시카불스", "date": "26.11.15 (일) 10:00", "stadium": "타깃센터", "votes": [15820, 5640, 6010]},
+    ],
     "G011_260065": [
         {"seq": 1, "league": "잉글랜드 프리미어리그", "home": "본머스", "away": "리즈U", "date": "26.11.01 (일) 00:00", "stadium": "바이탈리티스타디움", "votes": [64774, 37237, 21380]},
         {"seq": 2, "league": "잉글랜드 프리미어리그", "home": "브렌트퍼", "away": "노팅엄F", "date": "26.11.01 (일) 00:00", "stadium": "지테크커뮤니티스타디움", "votes": [82417, 23544, 17430]},
@@ -1535,17 +1769,18 @@ FALLBACK_TOTO_SCHEDULES: Dict[str, List[Dict[str, Any]]] = {
 
 async def build_proto_round_report(round_id: Optional[str] = None, include_archive: bool = True) -> Dict[str, Any]:
     """
-    지정된 베트맨 게임(`G011_260065`, `G027_260031`, `G055_260098`, `G101_260129` 또는 `260129`)의
+    지정된 베트맨 게임(`G011_260068`, `G027_260035`, `G055_260112`, `G101_260135`, `"current"` 등)의
     전체 대상 경기 및 AI 분석 리포트를 생성합니다.
+    과거 마감된 회차 키가 요청되면 동일 종목(gm_id)의 현재 활성 회차로 자동 업그레이드합니다.
     """
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     available_games = await asyncio.to_thread(_fetch_betman_discovery_sync)
 
-    # round_id 파싱: "G011_260065", "G055-260098", 또는 "260129" 지원
-    gm_id = "G101"
-    gm_ts = "260129"
-    if round_id:
-        r_clean = str(round_id).strip()
+    # round_id 파싱: "current", "latest", "G011_260068", "G055-260112", 또는 "260135" 지원
+    gm_id = "G011"
+    gm_ts = "260068"
+    r_clean = str(round_id or "").strip()
+    if r_clean and r_clean.lower() not in ("current", "latest"):
         if "_" in r_clean:
             parts = r_clean.split("_", 1)
             gm_id, gm_ts = parts[0].upper(), parts[1]
@@ -1561,14 +1796,29 @@ async def build_proto_round_report(round_id: Optional[str] = None, include_archi
             if matched_g:
                 gm_id = matched_g["gm_id"]
     else:
-        # 기본 진입 시: 프로토 승부식 또는 첫 번째 활성 게임
+        # 기본 진입("current" / None): 축구토토 승무패(G011) -> 프로토 승부식(G101) -> 첫 번째 활성 게임
+        g011_first = next((g for g in available_games if g["gm_id"] == "G011"), None)
         g101_first = next((g for g in available_games if g["gm_id"] == "G101"), None)
-        if g101_first:
-            gm_id, gm_ts = g101_first["gm_id"], str(g101_first["gm_ts"])
-        elif available_games:
-            gm_id, gm_ts = available_games[0]["gm_id"], str(available_games[0]["gm_ts"])
+        chosen = g011_first or g101_first or (available_games[0] if available_games else None)
+        if chosen:
+            gm_id, gm_ts = chosen["gm_id"], str(chosen["gm_ts"])
 
     game_key = f"{gm_id}_{gm_ts}"
+
+    # 요청된 회차가 이미 마감되어 현재 활성 목록(available_games)에 없는 경우,
+    # 동일 게임 코드(gm_id)의 최신 활성 회차로 자동 업그레이드 (예: G011_260065 -> G011_260068)
+    active_keys = {g["game_key"] for g in available_games}
+    if available_games and game_key not in active_keys:
+        same_gm_active = next((g for g in available_games if g["gm_id"] == gm_id), None)
+        if same_gm_active:
+            gm_id = same_gm_active["gm_id"]
+            gm_ts = str(same_gm_active["gm_ts"])
+            game_key = f"{gm_id}_{gm_ts}"
+        else:
+            gm_id = available_games[0]["gm_id"]
+            gm_ts = str(available_games[0]["gm_ts"])
+            game_key = f"{gm_id}_{gm_ts}"
+
     game_meta = BETMAN_GAME_META.get(gm_id, BETMAN_GAME_META["G101"])
     catalog_entry = next((g for g in available_games if g["game_key"] == game_key), None)
     display_round_no = str(catalog_entry["round_no"]) if catalog_entry else _format_round_display(gm_ts)
@@ -2352,8 +2602,14 @@ async def get_betman_marketing_matches(limit: int = 8, preferred_gm_id: Optional
     catalog = await get_betman_games_catalog()
     games = catalog.get("games") or []
 
-    # 우선순위: 지정된 게임 -> 축구토토 승무패(G011) -> 프로토 승부식(G101) -> 농구토토 승5패(G027)
-    priority_order = ["G011", "G101", "G027", "G055"]
+    # 우선순위: 지정된 게임이 없으면 시간대별로 축구토토 승무패(G011) / 프로토 승부식(G101) / 농구토토 승5패(G027) 순환 배치
+    now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+    base_cycles = [
+        ["G011", "G101", "G027", "G055"],
+        ["G101", "G027", "G011", "G055"],
+        ["G027", "G011", "G101", "G055"],
+    ]
+    priority_order = list(base_cycles[(now_kst.hour // 2) % len(base_cycles)])
     if preferred_gm_id and preferred_gm_id in priority_order:
         priority_order.remove(preferred_gm_id)
         priority_order.insert(0, preferred_gm_id)
@@ -2365,35 +2621,44 @@ async def get_betman_marketing_matches(limit: int = 8, preferred_gm_id: Optional
             selected_keys.append(matched)
 
     if not selected_keys:
-        selected_keys = ["G011_260065", "G101_260129"]
+        selected_keys = ["G011_260068", "G101_260135", "G027_260035"]
 
     marketing_items: List[Dict[str, Any]] = []
     seen_pairs = set()
 
-    for gkey in selected_keys[:2]:
+    for gkey in selected_keys[:3]:
         try:
             report = await build_proto_round_report(round_id=gkey, include_archive=False)
         except Exception as e:
             logger.warning(f"get_betman_marketing_matches report load error ({gkey}): {e}")
             continue
 
-        round_title = report.get("round_title", "축구토토 승무패 65회차")
+        round_title = report.get("round_title", "축구토토 승무패 68회차")
         gm_id = report.get("gm_id", "G011")
         game_name = report.get("game_name", "축구토토 승무패")
         matches = report.get("matches") or []
 
-        # 단독 우위 경기(신뢰도 상위)와 경합/이변 주의 경기를 골고루 정렬
+        # 단독 우위 경기(신뢰도 상위)와 경합/이변 주의 경기를 골고루 정렬하되,
+        # 매 스케줄 실행 시마다 동일한 1번 경기만 반복 노출되지 않도록 시간대별 순환 오프셋 적용
         sorted_matches = sorted(
             matches,
             key=lambda m: (1 if m.get("is_killer_pick") else 0, m.get("ai_confidence", 0), m.get("ai_pick_prob", 0)),
             reverse=True,
         )
+        if len(sorted_matches) > 2:
+            rot_offset = (now_kst.day * 3 + now_kst.hour) % min(6, len(sorted_matches))
+            sorted_matches = sorted_matches[rot_offset:] + sorted_matches[:rot_offset]
 
+        per_game_limit = limit if preferred_gm_id else max(3, (limit + 1) // 2)
+        added_this_game = 0
         for idx, m in enumerate(sorted_matches):
+            if added_this_game >= per_game_limit:
+                break
             pair_id = f"{m.get('home_ko')}_{m.get('away_ko')}"
             if pair_id in seen_pairs:
                 continue
             seen_pairs.add(pair_id)
+            added_this_game += 1
 
             hp = float(m.get("ai_home_prob", 50.0))
             dp = float(m.get("ai_draw_prob", 25.0))

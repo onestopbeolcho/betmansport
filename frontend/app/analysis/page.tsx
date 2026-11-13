@@ -196,7 +196,7 @@ function buildFallbackSevenFactors(m: ProtoMatch): SevenFactorItem[] {
 export default function AnalysisPage() {
     const { user } = useAuth();
     const [report, setReport] = useState<ProtoReportData | null>(null);
-    const [selectedGameKey, setSelectedGameKey] = useState<string>('G011_260065');
+    const [selectedGameKey, setSelectedGameKey] = useState<string>('current');
     const [loading, setLoading] = useState<boolean>(true);
     const [roleFilter, setRoleFilter] = useState<'ALL' | 'KILLER' | 'TRAP' | 'NORMAL'>('ALL');
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -223,7 +223,7 @@ export default function AnalysisPage() {
     };
 
     useEffect(() => {
-        loadRound('G011_260065');
+        loadRound('current');
     }, []);
 
     const catalogList = useMemo(() => {

@@ -10,6 +10,8 @@ WORKDIR /app
 #   ffmpeg         - MoviePy video encoding
 #   Playwright OS deps - Chromium headless browser for screen recording
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
     libgomp1 \
     fonts-nanum \
     ffmpeg \
