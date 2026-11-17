@@ -185,6 +185,7 @@ export default function ProtoRoundDashboard() {
     const [data, setData] = useState<ProtoReportData | null>(null);
     const [selectedGameKey, setSelectedGameKey] = useState<string>("current");
     const [gameCatFilter, setGameCatFilter] = useState<string>("ALL");
+    const [showAllGames, setShowAllGames] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const [switchingGame, setSwitchingGame] = useState(false);
     const [simModel, setSimModel] = useState<SimulationModelId>("MODEL_STANDARD");
@@ -539,38 +540,7 @@ export default function ProtoRoundDashboard() {
                         </div>
                     </div>
                 </div>
-            ) : (
-                /* 일반 방문자용 상단 O2O 안내 배너 (오프라인 판매점 유도 + 점주 로그인 안내) */
-                <div className="rounded-xl bg-white border border-slate-200 border-l-4 border-l-[#0046b8] p-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-xs">
-                    <div className="flex items-start sm:items-center gap-3">
-                        <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold tracking-tight shrink-0">
-                            전국 6,277개 판매점 상생 연동
-                        </span>
-                        <div>
-                            <p className="text-slate-900 font-extrabold text-sm sm:text-base">
-                                동네 프로토 판매점 벽보에서는 기본 요약이 무료! — <span className="text-[#0046b8]">집에서 편하게 실시간 배당 변동·전 경기 7-Factor 정밀 분석을 보려면 모바일 패스를 이용하세요!</span>
-                            </p>
-                            <p className="text-slate-500 text-xs mt-0.5">
-                                전국 6,277개 공식 판매점 사장님께는 매장 비치용 A4 분석 벽보를 100% 무료로 제공하며, 개인 고객은 모바일 구독 또는 커뮤니티 참여로 해금하실 수 있습니다.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        <a
-                            href="/ko/stores/"
-                            className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-extrabold transition whitespace-nowrap"
-                        >
-                            🗺️ 시·구별 공식 판매점 지도
-                        </a>
-                        <a
-                            href="#community-lounge"
-                            className="px-4 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs whitespace-nowrap"
-                        >
-                            💬 커뮤니티 참여 · 단골매장 추천 ↓
-                        </a>
-                    </div>
-                </div>
-            )}
+            ) : null}
 
             {unlockReasonBanner && (
                 <div className="rounded-xl bg-emerald-50 border border-emerald-300 px-4 py-3 text-xs sm:text-sm font-extrabold text-emerald-900 flex items-center justify-between">
@@ -585,38 +555,37 @@ export default function ProtoRoundDashboard() {
                 </div>
             )}
 
-            {/* 1. 베트맨 공식 운영 게임 선택 섹션 */}
-            <section className="rounded-xl bg-white border border-slate-200 border-t-4 border-t-[#0046b8] p-5 sm:p-6 shadow-xs space-y-4">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#0046b8]" />
-                            <span className="text-[#0046b8] text-xs font-extrabold tracking-wide">
-                                현재 운영 중인 공식 회차 목록 ({catalogGames.length}개 회차)
-                            </span>
+            {/* 1. 베트맨 공식 운영 게임 선택 섹션 (핵심 4개 게임 우선 노출 + 더보기 접기/펼치기) */}
+            <section className="rounded-xl bg-white border border-slate-200 border-t-4 border-t-[#0046b8] p-4 sm:p-5 shadow-xs space-y-3.5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                        <span className="px-2.5 py-1 rounded-md bg-[#0046b8] text-white text-xs font-extrabold">
+                            회차 선택
+                        </span>
+                        <div>
+                            <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                                베트맨 발매 회차별 AI 분석 리포트
+                            </h2>
                         </div>
-                        <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                            베트맨 공식 회차별 AI 통합 데이터 리포트 선택
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            회차를 선택하면 해당 종목 규격(14경기 통합 승무패·승5패 / 농구 6구간 득점 분포 / 프로토 승부식)에 최적화된 통합 리포트가 즉시 표시됩니다.
-                        </p>
                     </div>
 
                     {/* 게임 카테고리 필터 탭 */}
                     <div className="flex flex-wrap gap-1.5">
                         {[
-                            { id: "ALL", label: "전체 회차" },
-                            { id: "WDL", label: "⚽ 축구토토 승무패 (14경기)" },
-                            { id: "W5L", label: "🏀 농구토토 승5패 (14경기)" },
-                            { id: "SPECIAL_N", label: "🏀 스페셜N (NBA 득점구간)" },
-                            { id: "SPECIAL_KBL", label: "🏀 스페셜·매치 (KBL)" },
+                            { id: "ALL", label: "주요 회차" },
+                            { id: "WDL", label: "⚽ 축구 승무패" },
                             { id: "PROTO", label: "⚡ 프로토 승부식" },
+                            { id: "W5L", label: "🏀 농구 승5패" },
+                            { id: "SPECIAL_N", label: "🏀 스페셜N" },
+                            { id: "SPECIAL_KBL", label: "🏀 스페셜·매치" },
                         ].map((cat) => (
                             <button
                                 key={cat.id}
-                                onClick={() => setGameCatFilter(cat.id)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
+                                onClick={() => {
+                                    setGameCatFilter(cat.id);
+                                    if (cat.id !== "ALL") setShowAllGames(true);
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all border cursor-pointer ${
                                     gameCatFilter === cat.id
                                         ? "bg-[#0046b8] text-white border-[#0046b8] shadow-xs"
                                         : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
@@ -628,152 +597,166 @@ export default function ProtoRoundDashboard() {
                     </div>
                 </div>
 
-                {/* 베트맨 게임 카드 그리드 */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {filteredCatalogGames.map((g) => {
-                        const isSelected = g.game_key === (data.game_key || selectedGameKey);
-                        return (
-                            <button
-                                key={g.game_key}
-                                onClick={() => loadGameReport(g.game_key)}
-                                className={`text-left rounded-xl p-4 transition-all border relative cursor-pointer ${
-                                    isSelected
-                                        ? "bg-blue-50/70 border-2 border-[#0046b8] shadow-sm"
-                                        : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300"
-                                }`}
-                            >
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    <span
-                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
-                                            isSelected
-                                                ? "bg-[#0046b8] text-white"
-                                                : "bg-slate-100 text-slate-700 border border-slate-200"
-                                        }`}
+                {/* 베트맨 게임 카드 그리드 (기본 4개 핵심 종목만 노출하여 가독성 극대화) */}
+                {(() => {
+                    const activeKey = data.game_key || selectedGameKey;
+                    let visibleGames = filteredCatalogGames;
+                    if (gameCatFilter === "ALL" && !showAllGames && filteredCatalogGames.length > 4) {
+                        const priorityGmIds = ["G011", "G101", "G027", "G055"];
+                        const picked: BetmanGameCatalogItem[] = [];
+                        for (const pid of priorityGmIds) {
+                            const found = filteredCatalogGames.find((g) => g.gm_id === pid);
+                            if (found && !picked.some((p) => p.game_key === found.game_key)) {
+                                picked.push(found);
+                            }
+                        }
+                        for (const g of filteredCatalogGames) {
+                            if (picked.length >= 4) break;
+                            if (!picked.some((p) => p.game_key === g.game_key)) {
+                                picked.push(g);
+                            }
+                        }
+                        const currentSelectedObj = filteredCatalogGames.find((g) => g.game_key === activeKey);
+                        if (currentSelectedObj && !picked.some((p) => p.game_key === currentSelectedObj.game_key)) {
+                            picked[picked.length - 1] = currentSelectedObj;
+                        }
+                        visibleGames = picked;
+                    }
+
+                    return (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                                {visibleGames.map((g) => {
+                                    const isSelected = g.game_key === activeKey;
+                                    return (
+                                        <button
+                                            key={g.game_key}
+                                            onClick={() => loadGameReport(g.game_key)}
+                                            className={`text-left rounded-xl p-3.5 transition-all border relative cursor-pointer ${
+                                                isSelected
+                                                    ? "bg-blue-50/80 border-2 border-[#0046b8] shadow-xs"
+                                                    : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300"
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                                <span
+                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-extrabold ${
+                                                        isSelected
+                                                            ? "bg-[#0046b8] text-white"
+                                                            : "bg-slate-100 text-slate-700"
+                                                    }`}
+                                                >
+                                                    {g.icon} {g.category}
+                                                </span>
+                                                <span
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                                                        g.status_label === "발매중"
+                                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                            : "bg-slate-100 text-slate-600"
+                                                    }`}
+                                                >
+                                                    {g.status_label}
+                                                </span>
+                                            </div>
+                                            <div className="font-black text-slate-900 text-sm sm:text-base tracking-tight truncate">
+                                                {g.full_title}
+                                            </div>
+                                            <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                                                <span className="font-bold text-slate-700">대상 {g.match_count}경기</span>
+                                                <span className="text-slate-500 truncate ml-2">{g.sale_end_display}</span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {gameCatFilter === "ALL" && filteredCatalogGames.length > 4 && (
+                                <div className="pt-1 text-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllGames(!showAllGames)}
+                                        className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold transition cursor-pointer"
                                     >
-                                        {g.icon} {g.sport} · {g.category}
-                                    </span>
-                                    <span
-                                        className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${
-                                            g.status_label === "발매중"
-                                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                : "bg-slate-100 text-slate-700 border border-slate-200"
-                                        }`}
-                                    >
-                                        {g.status_label}
-                                    </span>
+                                        {showAllGames
+                                            ? "▲ 주요 4개 회차만 간략히 보기"
+                                            : `▼ 기타 발매 회차 더보기 (+${filteredCatalogGames.length - 4}개 게임)`}
+                                    </button>
                                 </div>
-                                <div className="font-black text-slate-900 text-base tracking-tight">
-                                    {g.full_title}
-                                </div>
-                                <div className="text-[11px] text-slate-500 mt-1.5 flex items-center justify-between border-t border-slate-100 pt-2">
-                                    <span className="font-semibold text-slate-700">대상 {g.match_count}경기</span>
-                                    <span className="text-slate-600 font-medium">{g.sale_end_display}</span>
-                                </div>
-                                {isSelected && (
-                                    <div className="mt-2 text-[11px] font-extrabold text-[#0046b8] flex items-center justify-between">
-                                        <span>✓ 현재 조회 중인 회차</span>
-                                        <span>통합 리포트 열람 중 ↓</span>
-                                    </div>
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
+                            )}
+                        </>
+                    );
+                })()}
             </section>
 
-            {/* 2. 선택된 게임 공식 헤더 */}
-            <section className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-xs relative overflow-hidden">
+            {/* 2. 선택된 게임 핵심 타이틀 & 빠른 액션 바 */}
+            <section className="rounded-xl bg-white border border-slate-200 p-4 sm:p-5 shadow-xs relative overflow-hidden">
                 {switchingGame && (
                     <div className="absolute inset-0 bg-white/85 backdrop-blur-xs z-20 flex items-center justify-center">
                         <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 font-bold text-sm shadow-lg">
                             <div className="w-5 h-5 rounded-full border-2 border-[#0046b8] border-t-transparent animate-spin" />
-                            <span>선택하신 회차의 통합 AI 데이터 리포트를 생성하는 중...</span>
+                            <span>선택하신 회차의 통합 AI 데이터 리포트를 불러오는 중...</span>
                         </div>
                     </div>
                 )}
 
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                    <div className="space-y-2.5">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="px-2.5 py-1 rounded bg-slate-100 border border-slate-300 text-slate-800 text-xs font-extrabold">
-                                종목코드: {data.gm_id || "G011"} · 제 {data.display_round_no}회차
-                            </span>
-                            <span className="px-2.5 py-1 rounded bg-blue-50 border border-blue-200 text-[#0046b8] text-xs font-bold">
-                                ✓ {is14PoolGame ? "14경기 전체 단독우위·경합구간 통합 분류" : isSpecialGame ? "전 경기 6구간 득점 분포 통합 시뮬레이션" : "베트맨 정식 구단 매칭 완료"}
+                            <span className="px-2.5 py-0.5 rounded bg-blue-50 border border-blue-200 text-[#0046b8] text-xs font-extrabold">
+                                {data.gm_id || "G011"} · 제 {data.display_round_no}회차
                             </span>
                             {data.sale_end_display && (
-                                <span className="px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+                                <span className="px-2.5 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
                                     ⏰ {data.sale_end_display}
                                 </span>
                             )}
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                             {data.round_title}{" "}
                             <span className="text-[#0046b8]">
                                 {is14PoolGame
-                                    ? "14경기 통합 AI 밸런스 분석 리포트"
+                                    ? "14경기 AI 전력 분석표"
                                     : isSpecialGame
-                                    ? "전 경기 6구간 득점 분포 AI 통합 리포트"
-                                    : "AI 핵심 우위 경기 & 전력 리포트"}
+                                    ? "6구간 득점 분포 리포트"
+                                    : "AI 핵심 우위 & 전력 분석표"}
                             </span>
                         </h1>
-                        <div className="inline-block rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2 text-xs text-slate-700 font-semibold">
-                            📌 <strong>회차 통합 분석 안내:</strong>{" "}
-                            {is14PoolGame
-                                ? "14경기 전체의 전력 격차와 선호도 분포를 종합 평가하여, 1순위 확률이 뚜렷한 [단독 우위 경기]와 박빙 변수가 존재하는 [경합·복수 검토 경기]를 한 판의 표로 분류해 제공합니다."
-                                : isSpecialGame
-                                ? "대상 2~3경기의 홈·원정 예상 득점 구간(6구간) 분포를 시뮬레이션하여 각 팀의 1순위 유력 구간과 2순위 보조 구간을 한눈에 제시합니다."
-                                : data.rule_summary}
-                        </div>
                     </div>
 
-                    {/* 우측 오프라인 판매점 & 온라인 열람 안내 박스 */}
-                    <div className="flex flex-col gap-2 shrink-0 min-w-[310px] bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    {/* 우측 간편 버튼 */}
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                         {!isPaidUser ? (
                             <>
-                                <div className="text-xs font-extrabold text-slate-800 text-center mb-0.5">
-                                    🔒 스마트폰 전 경기 실시간 해금 (개인 / 점주)
-                                </div>
+                                <Link
+                                    href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
+                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs"
+                                >
+                                    🔓 이번 회차 전체 해금 (3,900원)
+                                </Link>
                                 <Link
                                     href="/ko/pricing"
-                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white font-extrabold text-xs text-center shadow-xs transition"
+                                    className="px-3.5 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-extrabold transition"
                                 >
-                                    📱 집에서 편하게! 개인 월 무제한 패스 (29,900원)
+                                    💎 월 무제한 패스 안내
                                 </Link>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Link
-                                        href={`/ko/payment/request?plan=round_pass&billing=once&round=${data.round_id}`}
-                                        className="px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold text-center transition"
-                                    >
-                                        ⚡ 이번 회차만 (3,900원)
-                                    </Link>
-                                    <Link
-                                        href="/ko/login?mode=store"
-                                        className="px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-extrabold text-center transition"
-                                    >
-                                        🏪 점주 무료 A4 인쇄
-                                    </Link>
-                                </div>
+                                <Link
+                                    href="/ko/login?mode=store"
+                                    className="px-3.5 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-extrabold transition"
+                                >
+                                    🏪 판매점 무료 인쇄
+                                </Link>
                             </>
                         ) : (
                             <>
-                                <div className="px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs text-center">
-                                    ✅ {isStoreMode ? `[${storeName}] 판매점 모드 전체 개방 중` : "이번 회차 통합 리포트 전체 열람 중"}
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Link
-                                        href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                        className="px-3 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold text-center transition"
-                                    >
-                                        🖨️ A4 한장 인쇄뷰
-                                    </Link>
-                                    <a
-                                        href="#community-lounge"
-                                        className="px-3 py-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold text-center transition"
-                                    >
-                                        💬 승부예측 토론방
-                                    </a>
-                                </div>
+                                <span className="px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-extrabold text-xs">
+                                    ✅ 전 경기 잠금 해제됨
+                                </span>
+                                <Link
+                                    href={`/ko/store/print-report/${data.game_key || data.round_id}`}
+                                    className="px-4 py-2 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition"
+                                >
+                                    🖨️ A4 한장 인쇄뷰
+                                </Link>
                             </>
                         )}
                     </div>
@@ -785,168 +768,46 @@ export default function ProtoRoundDashboard() {
                ═══════════════════════════════════════════════════════════════════════════ */}
             {is14PoolGame && (
                 <>
-                    {/* A-1. 시뮬레이션 모델 선택 & 단독우위/경합구간 자동 분류 요약 */}
-                    <section className="rounded-xl bg-white border-2 border-[#0046b8] p-5 sm:p-6 shadow-xs space-y-5">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                            <div>
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 text-[#0046b8] border border-blue-200 text-xs font-extrabold">
-                                    📋 STEP 1 · 14경기 단독 우위 &amp; 경합 주의 구간 자동 분류 모델
-                                </span>
-                                <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1.5">
-                                    {data.round_title} — 한눈에 보는 14경기 전력 밸런스 분류표
-                                </h2>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    분석 모델을 선택하면 AI가 14경기 전체의 기대 승률 격차와 대중 선호도 괴리를 계산해 <strong>단독 우위 경기(1순위 고정)</strong>와 <strong>경합 주의 경기(1·2순위 병행 검토)</strong>를 자동 분류합니다.
+                    {/* A-2. 14경기 전체 통합 시뮬레이션 지표 표 (상단 모델 선택 스위치 통합) */}
+                    <section className="rounded-xl bg-white border border-slate-300 overflow-hidden shadow-xs">
+                        <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="px-2.5 py-1 rounded bg-[#0046b8] text-white text-xs font-extrabold">
+                                        📌 단독 우위 {poolSummary.bankers}경기
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded bg-amber-500 text-white text-xs font-extrabold">
+                                        🛡️ 경합 주의 {poolSummary.duals}경기
+                                    </span>
+                                    <span className="px-2.5 py-1 rounded bg-rose-600 text-white text-xs font-extrabold">
+                                        ⚠️ 이변 주의보 {data.section_c_traps.length}경기
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-600 pt-1">
+                                    파란색(<strong className="text-[#0046b8]">● 1순위 주력</strong>)과 주황색(<strong className="text-amber-600">● 2순위 복수검토</strong>)으로 14경기 전체 밸런스를 한눈에 확인하세요.
                                 </p>
                             </div>
-
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
                                 {(
                                     [
-                                        { id: "MODEL_CONSERVATIVE", title: "안정형 분석 모델", sub: "단독우위 11 + 경합검토 3경기" },
-                                        { id: "MODEL_STANDARD", title: "표준형 분석 모델", sub: "단독우위 10 + 경합검토 4경기" },
-                                        { id: "MODEL_EXTENDED", title: "정밀형 분석 모델", sub: "단독우위 9 + 경합검토 5경기" },
-                                        { id: "MODEL_DEFENSIVE", title: "심층방어형 모델", sub: "단독우위 9 + 경합 4 + 혼전 1" },
+                                        { id: "MODEL_CONSERVATIVE", title: "안정형 (복수3)" },
+                                        { id: "MODEL_STANDARD", title: "표준형 (복수4)" },
+                                        { id: "MODEL_EXTENDED", title: "정밀형 (복수5)" },
+                                        { id: "MODEL_DEFENSIVE", title: "방어형 (복수4+혼전1)" },
                                     ] as const
                                 ).map((p) => (
                                     <button
                                         key={p.id}
                                         onClick={() => setSimModel(p.id)}
-                                        className={`px-3.5 py-2 rounded-xl text-left border transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-extrabold border transition cursor-pointer ${
                                             simModel === p.id
-                                                ? "bg-[#0046b8] text-white border-[#0046b8] shadow-sm"
-                                                : "bg-slate-50 text-slate-800 border-slate-300 hover:bg-slate-100"
+                                                ? "bg-[#0046b8] text-white border-[#0046b8]"
+                                                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
                                         }`}
                                     >
-                                        <div className="text-xs font-black">{p.title}</div>
-                                        <div className={`text-[10px] mt-0.5 ${simModel === p.id ? "text-blue-100" : "text-slate-500"}`}>
-                                            {p.sub}
-                                        </div>
+                                        {p.title}
                                     </button>
                                 ))}
-                            </div>
-                        </div>
-
-                        {/* 3대 분류 요약 박스 */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {/* 1) 단독 우위 경기 */}
-                            <div className="rounded-xl bg-blue-50/50 border border-blue-200 p-4 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <span className="px-2.5 py-1 rounded bg-[#0046b8] text-white text-xs font-extrabold">
-                                        📌 단독 우위 구간 ({poolSummary.bankers}경기)
-                                    </span>
-                                    <span className="text-xs font-bold text-[#0046b8]">1순위 확률 우세</span>
-                                </div>
-                                <p className="text-xs text-slate-600">
-                                    AI 1순위 기대 확률 우위가 명확하여 <strong>단일 방향(1순위)</strong> 신뢰도가 가장 높은 핵심 경기입니다.
-                                </p>
-                                <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {pool14Strategies
-                                        .filter((s) => s.role === "BANKER")
-                                        .map((s) => (
-                                            <span
-                                                key={s.match.game_no}
-                                                className="px-2 py-1 rounded bg-white border border-blue-200 text-xs font-extrabold text-slate-900"
-                                            >
-                                                {s.match.game_no}번 {s.match.betman_home} ({s.primaryMark})
-                                            </span>
-                                        ))}
-                                </div>
-                            </div>
-
-                            {/* 2) 경합 주의 (오프라인 매장 / 커뮤니티 해금 대상) */}
-                            <div className="rounded-xl bg-amber-50/60 border border-amber-200 p-4 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <span className="px-2.5 py-1 rounded bg-amber-500 text-white text-xs font-extrabold">
-                                        🛡️ 경합 주의 구간 ({poolSummary.duals}경기)
-                                    </span>
-                                    <span className="text-xs font-bold text-amber-800">
-                                        {isPaidUser ? "전체 공개됨" : "🏪 판매점/커뮤니티 공개"}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-slate-600">
-                                    전력 차가 좁거나 {isW5LGame ? "5점차 이내 접전(5)" : "무승부"} 가능성이 높아 <strong>1·2순위 복수 지표 검토</strong>가 권장되는 핵심 승부처입니다.
-                                </p>
-                                {isPaidUser ? (
-                                    <div className="flex flex-wrap gap-1.5 pt-1">
-                                        {pool14Strategies
-                                            .filter((s) => s.role === "DUAL")
-                                            .map((s) => (
-                                                <span
-                                                    key={s.match.game_no}
-                                                    className="px-2 py-1 rounded bg-white border border-amber-300 text-xs font-extrabold text-amber-900"
-                                                >
-                                                    {s.match.game_no}번 {s.match.betman_home} ({s.activeMarks.join("+")})
-                                                </span>
-                                            ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-2.5 rounded-lg bg-white border border-amber-300 text-xs text-amber-900 font-bold flex items-center justify-between">
-                                        <span>🔒 경합 {poolSummary.duals}경기 복수 지표는 판매점 비치본 또는 커뮤니티 참여 시 열립니다.</span>
-                                        <a href="#community-lounge" className="text-[#0046b8] underline shrink-0 ml-2">
-                                            무료 열기 ↓
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* 3) 선호도 쏠림 & 이변 주의 경보 */}
-                            <div className="rounded-xl bg-rose-50/60 border border-rose-200 p-4 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                    <span className="px-2.5 py-1 rounded bg-rose-600 text-white text-xs font-extrabold">
-                                        ⚠️ 이변 · 혼전 주의보 ({data.section_c_traps.length}경기)
-                                    </span>
-                                    <span className="text-xs font-bold text-rose-700">선호도·AI 데이터 괴리</span>
-                                </div>
-                                <p className="text-xs text-slate-600">
-                                    대중 투표 선호도는 한쪽으로 쏠렸으나 AI 기대 승률은 낮아 <strong>이변 및 접전 변수</strong>가 가장 큰 구간입니다.
-                                </p>
-                                <div className="space-y-1 pt-1">
-                                    {data.section_c_traps.slice(0, 3).map((tm) => (
-                                        <div
-                                            key={tm.game_no}
-                                            className="px-2.5 py-1 rounded bg-white border border-rose-200 text-xs flex items-center justify-between"
-                                        >
-                                            <span className="font-extrabold text-slate-900">
-                                                {tm.game_no}번 {tm.betman_home} vs {tm.betman_away}
-                                            </span>
-                                            <span className="text-[11px] font-bold text-rose-700">
-                                                접전·변수 지수 {tm.upset_or_draw_prob}%
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* A-2. 14경기 전체 통합 시뮬레이션 지표 표 */}
-                    <section className="rounded-xl bg-white border border-slate-300 overflow-hidden shadow-xs">
-                        <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="px-2.5 py-0.5 rounded bg-[#0046b8] text-white text-xs font-extrabold">
-                                        STEP 2 · 14경기 통합 분석표
-                                    </span>
-                                    <span className="text-xs font-bold text-slate-600">
-                                        단독 우위 {poolSummary.bankers}경기 · 경합 주의 {poolSummary.duals}경기
-                                        {poolSummary.triples > 0 ? ` · 혼전 경보 ${poolSummary.triples}경기` : ""}
-                                    </span>
-                                </div>
-                                <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                                    📊 {data.round_title} — 1번~14번 통합 AI 예측 지표 &amp; 전술 코멘트
-                                </h2>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    파란색(<strong className="text-[#0046b8]">● 1순위 주력 지표</strong>)과 주황색(<strong className="text-amber-600">● 2순위 경합 보조 지표</strong>)으로 표시된 14경기 전체 밸런스를 한눈에 확인하실 수 있습니다.
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <Link
-                                    href={`/ko/store/print-report/${data.game_key || data.round_id}`}
-                                    className="px-4 py-2.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs"
-                                >
-                                    🖨️ 이 14경기 통합표 A4 출력하기
-                                </Link>
                             </div>
                         </div>
 

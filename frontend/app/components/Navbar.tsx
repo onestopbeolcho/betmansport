@@ -224,7 +224,7 @@ export default function Navbar() {
                                 <a href={`/${currentLang}/login`} className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition">
                                     회원 로그인
                                 </a>
-                                <a href={`/${currentLang}/register`} className="px-3 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] text-white text-xs font-bold transition shadow-xs">
+                                <a href={`/${currentLang}/register`} className="px-3.5 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs">
                                     회원가입
                                 </a>
                             </div>
@@ -267,7 +267,7 @@ export default function Navbar() {
                                     <a href={`/${currentLang}/login`} className="block text-center py-2.5 text-sm font-bold rounded-xl border border-slate-300 text-slate-700" onClick={() => setMobileOpen(false)}>
                                         회원 로그인
                                     </a>
-                                    <a href={`/${currentLang}/register`} className="block text-center py-2.5 text-sm font-bold rounded-xl bg-[#0046b8] text-white" onClick={() => setMobileOpen(false)}>
+                                    <a href={`/${currentLang}/register`} className="block text-center py-2.5 text-sm font-extrabold rounded-xl bg-[#0046b8] !text-white" onClick={() => setMobileOpen(false)}>
                                         회원가입
                                     </a>
                                 </div>

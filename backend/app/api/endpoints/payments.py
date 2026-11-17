@@ -99,7 +99,7 @@ PLANS = {
 # ─── Schemas ──────────────────────────────────────────────────
 class VerifyRequest(BaseModel):
     payment_id: str   # 프론트에서 생성한 paymentId
-    plan_id: str      # "pro" or "vip"
+    plan_id: str      # "round_pass", "pro", or "vip"
     billing: str = "monthly"  # "monthly" or "annual"
 
 
@@ -126,12 +126,6 @@ async def verify_payment(
     """
     프론트에서 PortOne 결제 완료 후 호출.
     PortOne API로 결제 내역을 조회하여 검증 후 DB에 저장.
-
-    Flow:
-    1. 프론트: PortOne.requestPayment() → 결제 완료
-    2. 프론트: POST /api/payments/verify { payment_id, plan_id }
-    3. 백엔드: PortOne API로 결제 내역 조회 → 금액 검증
-    4. 백엔드: 유저 tier 업그레이드 + 결제 기록 저장
     """
     plan = PLANS.get(req.plan_id)
     if not plan:
@@ -160,18 +154,18 @@ async def verify_payment(
         if status != "PAID":
             raise HTTPException(400, f"결제가 완료되지 않았습니다. (상태: {status})")
 
-        # 결제 금액 검증 (1,500원 회차권 / 3,900원 / 9,900원 / 39,000원~49,000원 판매점 B2B 지원)
+        # 결제 금액 검증
         paid_amount = payment_data.get("amount", {}).get("total", 0)
         monthly_price = plan["price"]
         annual_price = round(monthly_price * 0.8) * 12  # 20% 할인 * 12개월
-        usd_price = 150 if req.plan_id == "round_pass" else (699 if req.plan_id in ("pro", "vip") else 2900)
-        valid_amounts = [monthly_price, annual_price, usd_price, 1500, 3900, 9900, 39000, 49000, 55000, 105000]
+        usd_price = 299 if req.plan_id == "round_pass" else (2199 if req.plan_id == "pro" else 2900)
+        valid_amounts = [monthly_price, annual_price, usd_price, 1500, 3900, 9900, 29900, 39000, 49000, 55000, 105000]
         if paid_amount not in valid_amounts:
             logger.error(
                 f"금액 불일치: 결제={paid_amount}, 허용={valid_amounts}"
             )
             raise HTTPException(400, "결제 금액이 일치하지 않습니다.")
-        is_annual = (paid_amount == annual_price)
+        is_annual = (paid_amount == annual_price and req.plan_id != "round_pass")
 
         # 유저 tier 업그레이드
         default_days = plan.get("duration_days", 30)
@@ -267,14 +261,11 @@ PORTONE_WEBHOOK_SECRET = os.getenv("PORTONE_WEBHOOK_SECRET", "")
 def _verify_webhook_signature(body_bytes: bytes, headers: dict) -> bool:
     """
     Standard Webhooks 스펙에 따른 HMAC-SHA256 시그니처 검증.
-    포트원 웹훅 헤더:
-      - webhook-id: 메시지 고유 ID
-      - webhook-timestamp: 발송 시각 (Unix timestamp)
-      - webhook-signature: 쉼표 구분된 서명 목록 (v1,xxxx 형식)
     """
-    if not PORTONE_WEBHOOK_SECRET:
+    webhook_secret = os.getenv("PORTONE_WEBHOOK_SECRET", PORTONE_WEBHOOK_SECRET)
+    if not webhook_secret:
         logger.warning("⚠️ PORTONE_WEBHOOK_SECRET 미설정 — 시그니처 검증 건너뜀")
-        return True  # 시크릿 미설정 시 검증 스킵 (개발 단계)
+        return True
 
     import base64
     import hashlib
@@ -289,7 +280,6 @@ def _verify_webhook_signature(body_bytes: bytes, headers: dict) -> bool:
         logger.error("❌ 웹훅 헤더 누락 (webhook-id/timestamp/signature)")
         return False
 
-    # 타임스탬프 유효성 (5분 이내)
     try:
         ts = int(timestamp)
         if abs(time.time() - ts) > 300:
@@ -298,9 +288,7 @@ def _verify_webhook_signature(body_bytes: bytes, headers: dict) -> bool:
     except ValueError:
         return False
 
-    # 서명 검증
-    # 포트원 시크릿은 "whsec_" 접두어 + base64 인코딩된 키
-    secret = PORTONE_WEBHOOK_SECRET
+    secret = webhook_secret
     if secret.startswith("whsec_"):
         secret = secret[6:]
 
@@ -314,7 +302,6 @@ def _verify_webhook_signature(body_bytes: bytes, headers: dict) -> bool:
         hmac.new(secret_bytes, signed_content, hashlib.sha256).digest()
     ).decode("utf-8")
 
-    # signature_header는 "v1,xxxx" 형식 (쉼표 구분 가능)
     for sig_part in signature_header.split(" "):
         sig_parts = sig_part.split(",", 1)
         if len(sig_parts) == 2 and sig_parts[0] == "v1":
@@ -329,17 +316,10 @@ def _verify_webhook_signature(body_bytes: bytes, headers: dict) -> bool:
 async def portone_webhook(request: Request):
     """
     PortOne V2 웹훅 수신 (2024-04-25 버전 대응).
-
-    주요 이벤트 처리:
-    - Transaction.Paid    → 결제 누락 복구 (브라우저 이탈 등)
-    - Transaction.Cancelled → 환불/취소 시 tier 다운그레이드
-    - Transaction.Failed  → 실패 기록
-    - 기타 이벤트         → 로깅 후 무시 (에러 발생시키지 않음)
     """
     body_bytes = await request.body()
     headers = dict(request.headers)
 
-    # 1. 시그니처 검증
     if not _verify_webhook_signature(body_bytes, headers):
         logger.error("🚨 웹훅 시그니처 검증 실패 — 위조 요청 의심")
         return {"error": "Invalid signature"}, 400
@@ -360,12 +340,12 @@ async def portone_webhook(request: Request):
     # ─── Transaction.Paid: 결제 완료 (누락 복구) ──────────────
     if event_type == "Transaction.Paid" and payment_id:
         try:
-            # PortOne API로 실제 결제 상태 조회 (웹훅만 신뢰하지 않음)
+            api_secret = os.getenv("PORTONE_API_SECRET", PORTONE_API_SECRET)
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{PORTONE_API_BASE}/payments/{payment_id}",
                     headers={
-                        "Authorization": f"PortOne {PORTONE_API_SECRET}",
+                        "Authorization": f"PortOne {api_secret}",
                         "Content-Type": "application/json",
                     },
                 )
@@ -385,10 +365,10 @@ async def portone_webhook(request: Request):
 
             # paymentId에서 planId 추출 (SPI_{planId}_{timestamp}_{random})
             plan_id = None
-            if payment_id.startswith("SPI_"):
-                parts = payment_id.split("_")
-                if len(parts) >= 2:
-                    plan_id = parts[1]  # "pro" or "vip"
+            for known_pid in PLANS.keys():
+                if payment_id.startswith(f"SPI_{known_pid}_"):
+                    plan_id = known_pid
+                    break
 
             plan = PLANS.get(plan_id) if plan_id else None
 
@@ -396,36 +376,35 @@ async def portone_webhook(request: Request):
                 logger.warning(f"플랜 식별 불가: paymentId={payment_id}")
                 return {"received": True}
 
-            # 금액 검증
-            if paid_amount != plan["price"]:
+            monthly_price = plan["price"]
+            annual_price = round(monthly_price * 0.8) * 12
+            valid_amounts = [monthly_price, annual_price, 1500, 3900, 9900, 29900, 39000, 49000]
+            if paid_amount not in valid_amounts:
                 logger.error(f"⚠️ 금액 불일치 (웹훅): 결제={paid_amount}, 플랜={plan['price']}")
                 return {"received": True}
 
-            # 결제 기록 존재 여부 확인 (중복 방지)
             from app.models.user_db import get_payment_by_portone_id
             existing = None
             try:
                 existing = await get_payment_by_portone_id(payment_id)
             except Exception:
-                pass  # 함수 미존재 시 무시
+                pass
 
             if existing:
                 logger.info(f"✅ 이미 처리된 결제 (중복 웹훅 무시): {payment_id}")
                 return {"received": True}
 
-            # custom_data에서 user_id 추출 시도
-            custom_data = payment_data.get("customData")
             customer = payment_data.get("customer", {})
             user_email = customer.get("email", "")
 
-            # 이메일로 유저 찾기
             if user_email:
                 from app.models.user_db import get_user_by_email
                 try:
                     user = await get_user_by_email(user_email)
                     if user:
                         user_id = user.get("id") or user.get("uid")
-                        expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
+                        sub_days = plan.get("duration_days", 30)
+                        expires_at = (datetime.utcnow() + timedelta(days=sub_days)).isoformat()
 
                         await update_user(user_id, {
                             "tier": plan["tier"],
@@ -456,7 +435,6 @@ async def portone_webhook(request: Request):
     # ─── Transaction.Cancelled: 결제 취소/환불 ────────────────
     elif event_type in ("Transaction.Cancelled", "Transaction.PartialCancelled") and payment_id:
         try:
-            # 해당 결제건의 유저 찾아서 tier 다운그레이드
             from app.models.user_db import get_user_by_payment_id
             try:
                 user = await get_user_by_payment_id(payment_id)
@@ -469,7 +447,7 @@ async def portone_webhook(request: Request):
                     })
                     logger.info(f"🔄 결제 취소 → tier 다운그레이드: user={user_id}")
             except Exception:
-                pass  # 함수 미존재 시 무시
+                pass
 
             logger.info(f"💸 결제 취소 웹훅 처리: {payment_id} ({event_type})")
 
@@ -480,7 +458,6 @@ async def portone_webhook(request: Request):
     elif event_type == "Transaction.Failed":
         logger.warning(f"❌ 결제 실패 웹훅: paymentId={payment_id}")
 
-    # ─── 기타 이벤트: 로깅만 (에러 발생시키지 않음) ──────────
     else:
         logger.info(f"ℹ️ 미처리 웹훅 이벤트: {event_type}")
 

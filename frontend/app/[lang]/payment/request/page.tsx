@@ -9,6 +9,15 @@ import { useDictionary } from '../../../context/DictionaryContext';
 import { i18n } from '../../../lib/i18n-config';
 import * as PortOne from '@portone/browser-sdk/v2';
 
+type PayMethodType = 'CARD' | 'EASY_PAY' | 'TRANSFER' | 'VIRTUAL_ACCOUNT';
+
+const PAY_METHODS: { id: PayMethodType; label: string; sub: string; icon: string }[] = [
+    { id: 'CARD', label: '신용 / 체크카드', sub: '전 카드사 일반·앱카드', icon: '💳' },
+    { id: 'EASY_PAY', label: '간편결제', sub: '카카오·네이버·토스페이', icon: '⚡' },
+    { id: 'TRANSFER', label: '실시간 계좌이체', sub: '은행 계좌 즉시 출금', icon: '🏦' },
+    { id: 'VIRTUAL_ACCOUNT', label: '가상계좌 (무통장)', sub: '전용 입금계좌 발급', icon: '🏧' },
+];
+
 const PLANS: Record<string, Record<string, { name: string; orderLabel: string; price: number; features: string[] }>> = {
     ko: {
         round_pass: {
@@ -18,29 +27,27 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
             features: [
                 "현재 발매 회차 승무패 14경기 경합 구간 복수 지표 전체 오픈",
                 "프로토 승부식 AI 확신도 85%+ 핵심 주력 픽 전체 잠금 해제",
-                "환급률 극대화 주력 2폴더 & 중배당 3폴더 추천 조합 열람",
                 "베트맨 공시 배당 대비 +EV 데이터 가치 Top 5 제공",
+                "5일간 모든 발매 게임 리포트 무제한 열람 (자동 정기결제 없음)",
             ],
         },
         pro: {
-            name: "개인 올인원 월 무제한 패스 (전 회차 모바일 무제한 구독권)",
+            name: "개인 올인원 월 무제한 패스 (전 회차 모바일 구독권)",
             orderLabel: "스코어닉스 데이터 분석 리포트 월 구독권 (Pro Pass)",
             price: 29900,
             features: [
                 "한 달간 발행되는 모든 베트맨 회차(승무패·승5패·스페셜N·프로토) 무제한 열람",
                 "매장 방문 없이 스마트폰에서 마감 직전 실시간 배당 변동 및 결장자 반영 픽 확인",
-                "AI 확신도 85%+ 핵심 우위 픽 & 2·3폴더 조합 계산기 무제한",
-                "7-Factor 팀 전력·포아송 기대득점(xG) 교차 검증 상세 리포트",
+                "AI 확신도 85%+ 핵심 우위 픽 & 7-Factor 팀 전력·포아송 기대득점(xG) 리포트",
             ],
         },
         vip: {
-            name: "VIP 프로 퀀트 & 14경기 예산별 조합기 패스",
+            name: "VIP 프로 퀀트 & 14경기 예산별 분석 패스",
             orderLabel: "스코어닉스 통합 퀀트 데이터 멤버십 (VIP Quant)",
             price: 39000,
             features: [
                 "개인 올인원 월 무제한 패스(월 29,900원)의 전 기능 100% 포함",
-                "승무패·승5패 14경기 예산별 복수 마킹 OMR 자동 배분 시뮬레이터 무제한",
-                "켈리 공식(Kelly Criterion) 비중 배분 및 다폴더 기댓값 시뮬레이터",
+                "승무패·승5패 14경기 복수 마킹 시뮬레이터 무제한",
                 "글로벌 배당 왜곡 감지 실시간 알림 & 백테스트 원본 지표 전체 열람",
             ],
         },
@@ -62,7 +69,6 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
             price: 299,
             features: [
                 "Unlock all 85%+ confidence AI Killer Picks for this round",
-                "2-Folder & 3-Folder optimal combination calculator",
                 "Top 5 +EV Value Bet matches unlocked",
             ],
         },
@@ -74,17 +80,15 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
                 "Unlimited access to all Proto & Toto rounds for 30 days",
                 "Real-time pre-kickoff odds movement & lineup updates on mobile",
                 "Poisson xG & 7-Factor tactical index breakdown",
-                "Global market implied probability gap analysis",
             ],
         },
         vip: {
-            name: "VIP Pro Quant & 14-Match Budget Simulator Pass",
+            name: "VIP Pro Quant & 14-Match Simulator Pass",
             orderLabel: "Scorenix Digital Data Report Membership (VIP Quant)",
             price: 2900,
             features: [
                 "All Monthly Unlimited Pass features included",
-                "14-Match pool budget OMR combination simulator",
-                "Kelly Criterion capital allocation simulator",
+                "14-Match pool OMR simulator",
                 "Real-time odds distortion alerts & raw backtest logs",
             ],
         },
@@ -94,7 +98,6 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
             price: 0,
             features: [
                 "100% Free A4 1-Click Print/PDF Reports for official retail stores",
-                "Custom store name header & QR code footer",
             ],
         },
     },
@@ -103,10 +106,8 @@ const PLANS: Record<string, Record<string, { name: string; orderLabel: string; p
 export default function PaymentRequestPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-                <div className="text-center">
-                    <div className="inline-block w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mb-3" style={{ borderColor: 'var(--accent-primary)', borderTopColor: 'transparent' }} />
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-[#f4f6f9]">
+                <div className="inline-block w-8 h-8 border-2 border-[#0046b8] border-t-transparent rounded-full animate-spin" />
             </div>
         }>
             <PaymentRequestContent />
@@ -125,7 +126,7 @@ function PaymentRequestContent() {
     const plan = planSet[planId] || planSet.pro;
     const { user, token } = useAuth();
 
-    const finalAmount = billingParam === 'annual' && currency === 'KRW'
+    const finalAmount = billingParam === 'annual' && currency === 'KRW' && planId !== 'round_pass'
         ? Math.round(plan.price * 0.8) * 12
         : plan.price;
 
@@ -138,6 +139,7 @@ function PaymentRequestContent() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [payMethod, setPayMethod] = useState<PayMethodType>('CARD');
     const [buyerName, setBuyerName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [agreedTerms, setAgreedTerms] = useState(false);
@@ -153,7 +155,7 @@ function PaymentRequestContent() {
                 }
             }
         }
-    }, [user]);
+    }, [user, buyerName, phoneNumber]);
 
     const formatPhone = (value: string) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -173,32 +175,46 @@ function PaymentRequestContent() {
         if (!user) { setError(t.errorLogin || '로그인이 필요합니다.'); return; }
         if (!buyerName.trim()) { setError('구매자명을 입력해주세요.'); return; }
         if (!isPhoneValid) { setError('휴대폰 번호를 정확히 입력해주세요.'); return; }
-        if (!agreedTerms || !agreedAge) { setError(t.errorAgree || '모든 동의 항목을 체크해주세요.'); return; }
+        if (!agreedTerms || !agreedAge) { setError(t.errorAgree || '모든 필수 동의 항목에 체크해주세요.'); return; }
 
-        setLoading(true); setError('');
+        setLoading(true);
+        setError('');
 
         try {
             const storeId = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || '';
             const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || '';
             const paymentId = `SPI_${planId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-            const response = await PortOne.requestPayment({
-                storeId, channelKey, paymentId,
+            const paymentReq: any = {
+                storeId,
+                channelKey,
+                paymentId,
                 orderName: plan.orderLabel,
                 totalAmount: finalAmount,
                 currency: currency === 'USD' ? 'CURRENCY_USD' : 'CURRENCY_KRW',
-                payMethod: 'CARD',
+                payMethod,
                 customer: {
                     fullName: buyerName.trim() || undefined,
                     email: user.email || undefined,
                     phoneNumber: phoneDigits || undefined,
                 },
                 redirectUrl: `${window.location.origin}/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}`,
-            });
+            };
+
+            if (payMethod === 'VIRTUAL_ACCOUNT') {
+                paymentReq.virtualAccount = {
+                    accountExpiry: { validHours: 24 },
+                };
+            }
+
+            const response = await PortOne.requestPayment(paymentReq);
 
             if (response?.code) {
-                if (response.code === 'FAILURE_TYPE_PG') throw new Error(response.message || 'Payment failed.');
-                setLoading(false); return;
+                if (response.code === 'FAILURE_TYPE_PG') {
+                    throw new Error(response.message || '결제 승인 중 오류가 발생했습니다.');
+                }
+                setLoading(false);
+                return;
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -210,142 +226,178 @@ function PaymentRequestContent() {
 
             if (!verifyRes.ok) {
                 const data = await verifyRes.json().catch(() => ({}));
-                throw new Error(data.detail || 'Payment verification failed.');
+                throw new Error(data.detail || '결제 검증에 실패했습니다.');
             }
 
             window.location.href = `/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}&status=success`;
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : (t.errorGeneral || '결제 처리 중 오류가 발생했습니다.'));
+            const rawMsg = err instanceof Error ? err.message : (t.errorGeneral || '결제 처리 중 오류가 발생했습니다.');
+            if (rawMsg.includes('결제가능한 카드가 없습니다') || rawMsg.includes('[01]')) {
+                setError(`${rawMsg} — 현재 일부 카드사 가맹점 심사가 진행 중일 수 있습니다. 아래 결제수단에서 [간편결제] 또는 [실시간 계좌이체 / 가상계좌]를 선택해 결제를 진행해 주세요.`);
+            } else {
+                setError(rawMsg);
+            }
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-primary)' }}>
+        <div className="min-h-screen flex flex-col bg-[#f4f6f9] text-slate-900">
             <DeadlineBanner />
             <Navbar />
 
-            <main className="max-w-lg mx-auto px-4 py-16 flex-grow">
-                <h1 className="text-2xl font-extrabold mb-3 text-center" style={{ color: 'var(--text-primary)' }}>
-                    데이터 분석 리포트 구독 결제
-                </h1>
-                <p className="text-xs text-center mb-8" style={{ color: 'var(--text-muted)' }}>
-                    스포츠 통계 데이터베이스 및 알고리즘 시뮬레이션 SaaS 멤버십
-                </p>
+            <main className="max-w-lg mx-auto px-4 py-10 sm:py-14 flex-grow w-full">
+                <div className="text-center mb-6">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0046b8] text-xs font-extrabold">
+                        KG이니시스 보안 결제 센터
+                    </span>
+                    <h1 className="text-2xl font-black mt-2 text-slate-900">
+                        데이터 분석 리포트 열람권 결제
+                    </h1>
+                </div>
 
-                <div className="glass-card p-6 space-y-6">
-                    <div className="text-center p-4 rounded-xl" style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.08), rgba(139,92,246,0.08))', border: '1px solid rgba(0,212,255,0.2)' }}>
-                        <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>선택한 디지털 리포트 구독권</p>
-                        <p className="text-lg font-extrabold mt-1 gradient-text">{plan.name}</p>
-                        <p className="text-3xl font-extrabold mt-2" style={{ color: 'var(--text-primary)' }}>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                    {/* 선택한 요금제 요약 */}
+                    <div className="text-center p-4 rounded-xl bg-blue-50/70 border border-blue-200">
+                        <p className="text-xs font-extrabold text-[#0046b8]">선택한 디지털 리포트 이용권</p>
+                        <p className="text-lg font-black mt-1 text-slate-900">{plan.name}</p>
+                        <p className="text-3xl font-black mt-2 text-[#0046b8]">
                             {formatPrice(finalAmount)}
-                            <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>
-                                {billingParam === 'annual' ? '/연 (20% 할인)' : '/월'}
+                            <span className="text-sm font-bold text-slate-500 ml-1">
+                                {planId === 'round_pass' ? '/ 1회차 (단건)' : billingParam === 'annual' ? '/ 연 (20% 할인)' : '/ 월'}
                             </span>
                         </p>
                     </div>
 
-                    <ul className="space-y-2.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
                         {plan.features.map((f, i) => (
-                            <li key={i} className="flex items-center gap-2">
-                                <span style={{ color: 'var(--accent-primary)' }}>✓</span>{f}
+                            <li key={i} className="flex items-start gap-2">
+                                <span className="text-[#0046b8] font-black">✓</span>
+                                <span className="font-medium">{f}</span>
                             </li>
                         ))}
                     </ul>
 
-                    <div className="flex items-center justify-center gap-2 py-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                            <line x1="1" y1="10" x2="23" y2="10" />
-                        </svg>
-                        KG이니시스 보안 결제 · 신용/체크카드 / 카카오페이 / 네이버페이
+                    {/* ── 결제 수단 선택 ── */}
+                    <div className="space-y-2.5 pt-4 border-t border-slate-200">
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs font-extrabold text-slate-800">결제 수단 선택</p>
+                            <span className="text-[11px] text-slate-500">카드 오류 시 계좌이체·간편결제 가능</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {PAY_METHODS.map((pm) => {
+                                const active = payMethod === pm.id;
+                                return (
+                                    <button
+                                        key={pm.id}
+                                        type="button"
+                                        onClick={() => setPayMethod(pm.id)}
+                                        className={`p-3 rounded-xl text-left border transition cursor-pointer ${
+                                            active
+                                                ? 'bg-blue-50 border-2 border-[#0046b8] text-slate-900 shadow-xs'
+                                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-black">{pm.icon} {pm.label}</span>
+                                            {active && <span className="text-[10px] font-black text-[#0046b8]">✓ 선택</span>}
+                                        </div>
+                                        <div className="text-[11px] text-slate-500 mt-0.5">{pm.sub}</div>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* ── 구매자 정보 (KG이니시스 필수) ── */}
-                    <div className="space-y-3 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                        <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>구매자 정보 (필수)</p>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                                👤 구매자명 <span style={{ color: '#ef4444' }}>*</span>
+                    <div className="space-y-3 pt-4 border-t border-slate-200">
+                        <p className="text-xs font-extrabold text-slate-800">구매자 정보 (KG이니시스 필수)</p>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700">
+                                👤 구매자 성명 <span className="text-rose-600">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={buyerName}
                                 onChange={(e) => setBuyerName(e.target.value)}
                                 placeholder="홍길동"
-                                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                                style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}
+                                className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:border-[#0046b8] focus:bg-white"
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                                📱 휴대폰 번호 <span style={{ color: '#ef4444' }}>*</span>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700">
+                                📱 휴대폰 번호 <span className="text-rose-600">*</span>
                             </label>
                             <input
                                 type="tel"
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(formatPhone(e.target.value))}
                                 placeholder="010-0000-0000"
-                                className="w-full px-4 py-3 rounded-xl text-sm outline-none"
+                                className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-slate-50 text-slate-900 border focus:outline-none focus:border-[#0046b8] focus:bg-white"
                                 style={{
-                                    background: 'var(--bg-elevated)',
-                                    color: 'var(--text-primary)',
-                                    border: `1px solid ${phoneNumber && !isPhoneValid ? '#ef4444' : 'var(--border-subtle)'}`,
+                                    borderColor: phoneNumber && !isPhoneValid ? '#ef4444' : '#cbd5e1',
                                 }}
                             />
                         </div>
                     </div>
 
                     {/* ── 필수 법적 면책 조항 고지 ── */}
-                    <div className="p-3.5 rounded-xl text-[11px] leading-relaxed"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-                        ⚖️ <strong>필수 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다. 모든 스포츠 관전 및 분석의 최종 판단과 책임은 사용자 본인에게 있습니다.
+                    <div className="p-3.5 rounded-xl text-xs leading-relaxed bg-slate-50 border border-slate-200 text-slate-600">
+                        ⚖️ <strong className="text-slate-800">필수 고지:</strong> 본 서비스는 공개된 스포츠 데이터와 머신러닝 알고리즘에 기반한 통계적 시뮬레이션 지표를 제공하며, 특정 베팅을 권유하거나 결과를 보장하지 않습니다.
                     </div>
 
-                    <div className="space-y-3 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                        <label className="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)} className="mt-0.5 accent-[var(--accent-primary)]" />
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                <Link href={`/${currentLang}/terms`} className="underline" style={{ color: 'var(--accent-primary)' }}>이용약관</Link>,{' '}
-                                <Link href={`/${currentLang}/privacy`} className="underline" style={{ color: 'var(--accent-primary)' }}>개인정보처리방침</Link>,{' '}
-                                <Link href={`/${currentLang}/refund`} className="underline" style={{ color: 'var(--accent-primary)' }}>환불 및 해지 정책</Link>,{' '}
-                                <Link href={`/${currentLang}/disclaimer`} className="underline" style={{ color: 'var(--accent-primary)' }}>통계 시뮬레이션 면책 고지</Link>에 동의합니다.
+                    <div className="space-y-2.5 pt-2 border-t border-slate-200">
+                        <label className="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#0046b8]" />
+                            <span className="text-xs text-slate-700 font-medium">
+                                <Link href={`/${currentLang}/terms`} className="underline text-[#0046b8] font-bold">이용약관</Link>,{' '}
+                                <Link href={`/${currentLang}/privacy`} className="underline text-[#0046b8] font-bold">개인정보처리방침</Link>,{' '}
+                                <Link href={`/${currentLang}/refund`} className="underline text-[#0046b8] font-bold">환불 정책</Link>,{' '}
+                                <Link href={`/${currentLang}/disclaimer`} className="underline text-[#0046b8] font-bold">면책 고지</Link>에 동의합니다.
                             </span>
                         </label>
-                        <label className="flex items-start gap-3 cursor-pointer">
-                            <input type="checkbox" checked={agreedAge} onChange={(e) => setAgreedAge(e.target.checked)} className="mt-0.5 accent-[var(--accent-primary)]" />
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                만 19세 이상이며, 본 상품이 디지털 통계 데이터 리포트 구독권임을 이해합니다.
+                        <label className="flex items-start gap-2.5 cursor-pointer">
+                            <input type="checkbox" checked={agreedAge} onChange={(e) => setAgreedAge(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#0046b8]" />
+                            <span className="text-xs text-slate-700 font-medium">
+                                만 19세 이상이며, 본 상품이 디지털 통계 데이터 리포트 이용권임을 확인합니다.
                             </span>
                         </label>
                     </div>
 
                     {error && (
-                        <div className="p-3 rounded-lg text-xs text-center" style={{ background: 'rgba(255,59,48,0.1)', color: '#FF3B30', border: '1px solid rgba(255,59,48,0.3)' }}>
-                            {error}
+                        <div className="p-3.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 leading-relaxed">
+                            ⚠️ {error}
                         </div>
                     )}
 
                     {!user ? (
-                        <Link href={`/${currentLang}/login?redirect=${encodeURIComponent(pathname + '?' + searchParams.toString())}`} className="block w-full py-3 text-sm font-bold text-center rounded-xl transition"
-                            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(0,212,255,0.3)' }}>
-                            로그인 후 결제하기
+                        <Link
+                            href={`/${currentLang}/login?redirect=${encodeURIComponent(pathname + '?' + searchParams.toString())}`}
+                            className="block w-full py-3.5 text-sm font-black text-center rounded-xl bg-[#0046b8] hover:bg-[#00358e] !text-white transition shadow-xs"
+                        >
+                            로그인 후 결제 진행하기 →
                         </Link>
                     ) : (
-                        <button onClick={handleCheckout} disabled={loading || !buyerName.trim() || !isPhoneValid || !agreedTerms || !agreedAge}
-                            className="btn-primary w-full py-3.5 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <button
+                            onClick={handleCheckout}
+                            disabled={loading || !buyerName.trim() || !isPhoneValid || !agreedTerms || !agreedAge}
+                            className="w-full py-3.5 rounded-xl bg-[#0046b8] hover:bg-[#00358e] !text-white text-sm font-black disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                        >
                             {loading ? (
-                                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />결제 처리 중...</>
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    결제창 호출 중...
+                                </>
                             ) : (
-                                `💳 ${formatPrice(finalAmount)} 데이터 멤버십 결제하기`
+                                `💳 ${formatPrice(finalAmount)} 결제하기 (${PAY_METHODS.find((p) => p.id === payMethod)?.label})`
                             )}
                         </button>
                     )}
 
-                    <p className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
-                        언제든 마이페이지에서 원클릭으로 해지할 수 있습니다 ·{' '}
-                        <Link href={`/${currentLang}/pricing`} className="underline" style={{ color: 'var(--accent-primary)' }}>
-                            요금제 변경
+                    <p className="text-center text-xs text-slate-500">
+                        결제 완료 즉시 전 경기 리포트 잠금이 해제됩니다 ·{' '}
+                        <Link href={`/${currentLang}/pricing`} className="underline text-[#0046b8] font-bold">
+                            다른 요금제 보기
                         </Link>
                     </p>
                 </div>
