@@ -197,6 +197,7 @@ export default function AnalysisPage() {
     const { user } = useAuth();
     const [report, setReport] = useState<ProtoReportData | null>(null);
     const [selectedGameKey, setSelectedGameKey] = useState<string>('current');
+    const [showAllCatalog, setShowAllCatalog] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const [roleFilter, setRoleFilter] = useState<'ALL' | 'KILLER' | 'TRAP' | 'NORMAL'>('ALL');
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -309,28 +310,56 @@ export default function AnalysisPage() {
                         </div>
                     </div>
 
-                    {/* ━━━ 베트맨 공식 회차 전환 탭 ━━━ */}
+                    {/* ━━━ 베트맨 공식 회차 전환 탭 (핵심 4종목 우선 노출 + 더보기) ━━━ */}
                     <div className="mt-5 pt-4 border-t border-slate-200">
-                        <div className="text-xs font-extrabold text-slate-700 mb-2">
-                            🎯 분석할 베트맨 공식 발매 회차 선택:
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="text-xs font-extrabold text-slate-700">
+                                🎯 분석할 베트맨 공식 발매 회차 선택:
+                            </div>
+                            {catalogList.length > 4 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAllCatalog(!showAllCatalog)}
+                                    className="text-xs font-extrabold text-[#0046b8] hover:underline cursor-pointer"
+                                >
+                                    {showAllCatalog ? '▲ 주요 회차만 보기' : `▼ 전체 회차 펼치기 (+${catalogList.length - 4})`}
+                                </button>
+                            )}
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {catalogList.map((g) => {
+                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                            {(() => {
+                                const activeKey = report?.game_key || selectedGameKey;
+                                if (showAllCatalog || catalogList.length <= 4) return catalogList;
+                                const priorityIds = ['G011', 'G101', 'G027', 'G055'];
+                                const picked: typeof catalogList = [];
+                                for (const pid of priorityIds) {
+                                    const found = catalogList.find((g) => g.gm_id === pid);
+                                    if (found && !picked.some((p) => p.game_key === found.game_key)) picked.push(found);
+                                }
+                                for (const g of catalogList) {
+                                    if (picked.length >= 4) break;
+                                    if (!picked.some((p) => p.game_key === g.game_key)) picked.push(g);
+                                }
+                                const curObj = catalogList.find((g) => g.game_key === activeKey);
+                                if (curObj && !picked.some((p) => p.game_key === curObj.game_key)) {
+                                    picked[picked.length - 1] = curObj;
+                                }
+                                return picked;
+                            })().map((g) => {
                                 const active = g.game_key === (report?.game_key || selectedGameKey);
                                 return (
                                     <button
                                         key={g.game_key}
                                         type="button"
                                         onClick={() => loadRound(g.game_key)}
-                                        className={`px-3.5 py-2 rounded-xl text-xs font-extrabold border transition cursor-pointer flex items-center gap-1.5 ${
+                                        className={`px-3 py-2 rounded-xl text-xs font-extrabold border transition cursor-pointer flex items-center justify-between sm:justify-start gap-1.5 ${
                                             active
                                                 ? 'bg-[#0046b8] text-white border-[#0046b8] shadow-xs'
                                                 : 'bg-slate-50 text-slate-800 border-slate-300 hover:bg-blue-50 hover:border-blue-300'
                                         }`}
                                     >
-                                        <span>{g.icon}</span>
-                                        <span>{g.full_title}</span>
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                                        <span className="truncate">{g.icon} {g.full_title}</span>
+                                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] ${active ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
                                             {g.match_count}경기
                                         </span>
                                     </button>
@@ -549,14 +578,20 @@ export default function AnalysisPage() {
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <div className="text-base sm:text-lg font-black text-slate-950 leading-snug">
-                                                    {m.home_ko} <span className="text-[#0046b8]">({m.betman_home})</span>
+                                                    {m.home_ko}
+                                                    {m.betman_home && m.betman_home !== m.home_ko && (
+                                                        <span className="text-[#0046b8] ml-1">({m.betman_home})</span>
+                                                    )}
                                                     {isUnlocked && m.home_stat?.rank ? (
                                                         <span className="ml-1 px-1.5 py-0.5 rounded bg-blue-50 text-[#0046b8] text-[10px] font-extrabold border border-blue-200">
                                                             {m.home_stat.rank}위 · {m.home_stat.form_hyphen}
                                                         </span>
                                                     ) : null}
                                                     <span className="mx-1.5 text-slate-400 font-bold text-sm">vs</span>
-                                                    {m.away_ko} <span className="text-slate-700">({m.betman_away})</span>
+                                                    {m.away_ko}
+                                                    {m.betman_away && m.betman_away !== m.away_ko && (
+                                                        <span className="text-slate-700 ml-1">({m.betman_away})</span>
+                                                    )}
                                                     {isUnlocked && m.away_stat?.rank ? (
                                                         <span className="ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-extrabold border border-slate-300">
                                                             {m.away_stat.rank}위 · {m.away_stat.form_hyphen}

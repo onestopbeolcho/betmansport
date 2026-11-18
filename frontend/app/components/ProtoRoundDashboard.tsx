@@ -626,22 +626,22 @@ export default function ProtoRoundDashboard() {
 
                     return (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
                                 {visibleGames.map((g) => {
                                     const isSelected = g.game_key === activeKey;
                                     return (
                                         <button
                                             key={g.game_key}
                                             onClick={() => loadGameReport(g.game_key)}
-                                            className={`text-left rounded-xl p-3.5 transition-all border relative cursor-pointer ${
+                                            className={`text-left rounded-xl p-2.5 sm:p-3.5 transition-all border relative cursor-pointer ${
                                                 isSelected
                                                     ? "bg-blue-50/80 border-2 border-[#0046b8] shadow-xs"
                                                     : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300"
                                             }`}
                                         >
-                                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                            <div className="flex items-center justify-between gap-1 mb-1">
                                                 <span
-                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-extrabold ${
+                                                    className={`inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-extrabold truncate ${
                                                         isSelected
                                                             ? "bg-[#0046b8] text-white"
                                                             : "bg-slate-100 text-slate-700"
@@ -650,7 +650,7 @@ export default function ProtoRoundDashboard() {
                                                     {g.icon} {g.category}
                                                 </span>
                                                 <span
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                                                    className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-extrabold ${
                                                         g.status_label === "발매중"
                                                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                             : "bg-slate-100 text-slate-600"
@@ -659,12 +659,12 @@ export default function ProtoRoundDashboard() {
                                                     {g.status_label}
                                                 </span>
                                             </div>
-                                            <div className="font-black text-slate-900 text-sm sm:text-base tracking-tight truncate">
+                                            <div className="font-black text-slate-900 text-xs sm:text-base tracking-tight truncate">
                                                 {g.full_title}
                                             </div>
-                                            <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                                                <span className="font-bold text-slate-700">대상 {g.match_count}경기</span>
-                                                <span className="text-slate-500 truncate ml-2">{g.sale_end_display}</span>
+                                            <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                                                <span className="font-bold text-slate-700 shrink-0">{g.match_count}경기</span>
+                                                <span className="text-slate-500 truncate ml-1">{g.sale_end_display}</span>
                                             </div>
                                         </button>
                                     );
@@ -812,7 +812,143 @@ export default function ProtoRoundDashboard() {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto">
+                        {/* 모바일 전용: 가로 스크롤 없는 14경기 고대비 카드 리스트 */}
+                        <div className="md:hidden divide-y divide-slate-200">
+                            {pool14Strategies.map((item) => {
+                                const m = item.match;
+                                const midLabel: "무" | "5" = isW5LGame ? "5" : "무";
+                                const pHome = isW5LGame && m.w5l_analysis ? m.w5l_analysis.win_prob : m.ai_home_prob;
+                                const pMid = isW5LGame && m.w5l_analysis ? m.w5l_analysis.close5_prob : m.ai_draw_prob;
+                                const pAway = isW5LGame && m.w5l_analysis ? m.w5l_analysis.lose_prob : m.ai_away_prob;
+                                const isLockedRow = !isPaidUser && (item.role !== "BANKER" || m.is_killer_pick);
+
+                                return (
+                                    <div
+                                        key={m.game_no}
+                                        className={`p-3.5 space-y-2.5 ${
+                                            item.role === "TRIPLE_TRAP"
+                                                ? "bg-rose-50/40"
+                                                : item.role === "DUAL"
+                                                ? "bg-amber-50/30"
+                                                : "bg-white"
+                                        }`}
+                                    >
+                                        {/* 상단: 경기번호 + 대회/일시 + 구간 배지 */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className="shrink-0 px-2 py-0.5 rounded bg-slate-900 text-white font-black text-xs">
+                                                    {m.game_no}번
+                                                </span>
+                                                <span className="text-[11px] font-bold text-slate-600 truncate">
+                                                    {m.league} · {m.kickoff_display}
+                                                </span>
+                                            </div>
+                                            <span
+                                                className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-extrabold border ${
+                                                    item.role === "TRIPLE_TRAP"
+                                                        ? "bg-rose-100 text-rose-800 border-rose-300"
+                                                        : item.role === "DUAL"
+                                                        ? "bg-amber-100 text-amber-900 border-amber-300"
+                                                        : "bg-blue-50 text-[#0046b8] border-blue-200"
+                                                }`}
+                                            >
+                                                {item.roleBadge}
+                                            </span>
+                                        </div>
+
+                                        {/* 중단: 홈 vs 원정 팀명 + 우측 [승][무][패] 마킹 박스 */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <div className="font-black text-slate-950 text-base leading-tight">
+                                                    <span className="text-[#0046b8]">{m.betman_home}</span>
+                                                    <span className="text-slate-400 text-xs font-normal mx-1.5">vs</span>
+                                                    <span>{m.betman_away}</span>
+                                                </div>
+                                                {(m.home_ko !== m.betman_home || m.away_ko !== m.betman_away) && (
+                                                    <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                                                        {m.home_ko} vs {m.away_ko}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="shrink-0">
+                                                {isLockedRow ? (
+                                                    <a
+                                                        href="#community-lounge"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px]"
+                                                    >
+                                                        🔒 무료 열기
+                                                    </a>
+                                                ) : (
+                                                    <div className="inline-flex items-center gap-1">
+                                                        {(["승", midLabel, "패"] as ("승" | "무" | "5" | "패")[]).map((code) => {
+                                                            const isPrimary = item.primaryMark === code;
+                                                            const isSecondary = item.secondaryMark === code || item.tertiaryMark === code;
+                                                            return (
+                                                                <span
+                                                                    key={code}
+                                                                    className={`w-9 h-8 rounded-md flex items-center justify-center font-black text-xs border ${
+                                                                        isPrimary
+                                                                            ? "bg-[#0046b8] text-white border-[#0046b8]"
+                                                                            : isSecondary
+                                                                            ? "bg-amber-500 text-white border-amber-600"
+                                                                            : "bg-slate-50 text-slate-300 border-slate-200"
+                                                                    }`}
+                                                                >
+                                                                    {code}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 확률 게이지 바 */}
+                                        <div className="bg-slate-50 rounded-lg p-2 border border-slate-200/80 space-y-1">
+                                            <div className="flex justify-between text-[11px] font-extrabold">
+                                                <span className="text-[#0046b8]">홈승 {pHome}%</span>
+                                                <span className="text-amber-700">{midLabel} {pMid}%</span>
+                                                <span className="text-slate-700">원정승 {pAway}%</span>
+                                            </div>
+                                            <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden flex">
+                                                <div style={{ width: `${pHome}%` }} className="bg-[#0046b8]" />
+                                                <div style={{ width: `${pMid}%` }} className="bg-amber-500" />
+                                                <div style={{ width: `${pAway}%` }} className="bg-slate-600" />
+                                            </div>
+                                        </div>
+
+                                        {/* 하단: 핵심 배지 + 1줄 요약 */}
+                                        {isLockedRow ? (
+                                            <p className="text-[11px] text-slate-500 font-semibold">
+                                                🔒 경합·승부처 복수 마킹은 아래 <a href="#community-lounge" className="text-[#0046b8] underline font-bold">커뮤니티 참여</a> 또는 판매점 비치본에서 즉시 공개됩니다.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {m.ai_detail_report?.metric_pills && m.ai_detail_report.metric_pills.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {m.ai_detail_report.metric_pills.map((pill, pIdx) => (
+                                                            <span
+                                                                key={pIdx}
+                                                                className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700"
+                                                            >
+                                                                {pill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <p className="text-xs font-bold text-slate-800 leading-snug">
+                                                    {m.ai_detail_report?.tactical_summary || item.strategyReason}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* 데스크톱/태블릿 전용: 7열 통합 테이블 */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[#1e293b] text-white text-xs font-bold">
@@ -1326,7 +1462,110 @@ export default function ProtoRoundDashboard() {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto">
+                        {/* 모바일 전용: 가로 스크롤 없는 프로토 승부식 고대비 카드 리스트 */}
+                        <div className="md:hidden divide-y divide-slate-200">
+                            {filteredMatches.map((m) => {
+                                const lockedKiller = m.is_killer_pick && !isPaidUser;
+                                return (
+                                    <div key={m.game_no} className="p-3.5 bg-white space-y-2.5">
+                                        {/* 상단: 경기번호 + 종목/대회/일시 */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className="shrink-0 px-2 py-0.5 rounded bg-slate-900 text-white font-black text-xs">
+                                                    {m.game_no_label}
+                                                </span>
+                                                <span className="text-[11px] font-bold text-slate-600 truncate">
+                                                    {m.league}
+                                                </span>
+                                            </div>
+                                            <span className="shrink-0 text-[11px] text-slate-500 font-semibold">
+                                                {m.kickoff_display}
+                                            </span>
+                                        </div>
+
+                                        {/* 중단: 대상 경기 + 우측 AI 분석 결론 */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <div className="font-black text-slate-950 text-base leading-tight">
+                                                    <span className="text-[#0046b8]">{m.betman_home}</span>
+                                                    <span className="text-slate-400 text-xs font-normal mx-1.5">vs</span>
+                                                    <span>{m.betman_away}</span>
+                                                </div>
+                                                {(m.home_ko !== m.betman_home || m.away_ko !== m.betman_away) && (
+                                                    <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                                                        {m.home_ko} vs {m.away_ko}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="shrink-0">
+                                                {lockedKiller ? (
+                                                    <a
+                                                        href="#community-lounge"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-extrabold text-[11px]"
+                                                    >
+                                                        🔒 킬러픽 열기
+                                                    </a>
+                                                ) : (
+                                                    <div className="flex flex-col items-end">
+                                                        <span className="inline-block px-3 py-1 rounded-lg bg-[#0046b8] text-white font-black text-xs shadow-sm">
+                                                            {m.ai_pick_label}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-emerald-700 mt-0.5">
+                                                            신뢰도 {m.ai_confidence}%
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 확률 게이지 바 */}
+                                        <div className="bg-slate-50 rounded-lg p-2 border border-slate-200/80 space-y-1">
+                                            <div className="flex justify-between text-[11px] font-extrabold">
+                                                <span className="text-[#0046b8]">홈승 {m.ai_home_prob}%</span>
+                                                {m.ai_draw_prob > 0 && (
+                                                    <span className="text-amber-700">무 {m.ai_draw_prob}%</span>
+                                                )}
+                                                <span className="text-slate-700">원정승 {m.ai_away_prob}%</span>
+                                            </div>
+                                            <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden flex">
+                                                <div style={{ width: `${m.ai_home_prob}%` }} className="bg-[#0046b8]" />
+                                                <div style={{ width: `${m.ai_draw_prob}%` }} className="bg-amber-500" />
+                                                <div style={{ width: `${m.ai_away_prob}%` }} className="bg-slate-600" />
+                                            </div>
+                                        </div>
+
+                                        {/* 하단: 3대 배지 + 1줄 요약 */}
+                                        {lockedKiller ? (
+                                            <p className="text-[11px] text-slate-500 font-semibold">
+                                                🔒 고신뢰 킬러픽은 아래 <a href="#community-lounge" className="text-[#0046b8] underline font-bold">커뮤니티 참여</a> 또는 판매점 비치본에서 무료 열람 가능합니다.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {m.ai_detail_report?.metric_pills && m.ai_detail_report.metric_pills.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {m.ai_detail_report.metric_pills.map((pill, pIdx) => (
+                                                            <span
+                                                                key={pIdx}
+                                                                className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700"
+                                                            >
+                                                                {pill}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <p className="text-xs font-bold text-slate-800 leading-snug">
+                                                    {m.ai_detail_report?.tactical_summary || m.trap_reason}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* 데스크톱/태블릿 전용: 6열 테이블 */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[#1e293b] text-white text-xs font-bold">

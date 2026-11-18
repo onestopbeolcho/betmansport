@@ -220,11 +220,11 @@ export default function Navbar() {
                                 )}
                             </div>
                         ) : (
-                            <div className="hidden sm:flex items-center space-x-2">
-                                <a href={`/${currentLang}/login`} className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition">
-                                    회원 로그인
+                            <div className="flex items-center space-x-1.5 sm:space-x-2">
+                                <a href={`/${currentLang}/login`} className="px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-[11px] sm:text-xs font-bold transition whitespace-nowrap">
+                                    로그인
                                 </a>
-                                <a href={`/${currentLang}/register`} className="px-3.5 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-xs font-extrabold transition shadow-xs">
+                                <a href={`/${currentLang}/register`} className="px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-[#0046b8] hover:bg-[#00358e] !text-white text-[11px] sm:text-xs font-extrabold transition shadow-xs whitespace-nowrap">
                                     회원가입
                                 </a>
                             </div>
@@ -276,6 +276,31 @@ export default function Navbar() {
                     </div>
                 </div>
             </nav>
+
+            {/* 모바일 전용 1-Tap 빠른 메뉴 바 (햄버거 메뉴 열지 않고도 핵심 메뉴 즉시 이동) */}
+            <div className="lg:hidden border-t border-slate-200 bg-slate-50/90 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-1 px-3 py-1.5 min-w-max">
+                    {navLinks.map((link) => {
+                        const cleanPath = link.href.split('#')[0];
+                        const isActive = cleanPath === `/${currentLang}`
+                            ? pathname === `/${currentLang}`
+                            : pathname.startsWith(cleanPath);
+                        return (
+                            <a
+                                key={link.href}
+                                href={link.href}
+                                className={`px-2.5 py-1.5 rounded-lg text-xs font-extrabold whitespace-nowrap transition ${
+                                    isActive
+                                        ? 'bg-[#0046b8] !text-white shadow-2xs'
+                                        : 'bg-white text-slate-700 border border-slate-200/80'
+                                }`}
+                            >
+                                {link.icon} {link.label}
+                            </a>
+                        );
+                    })}
+                </div>
+            </div>
         </header>
     );
 }
