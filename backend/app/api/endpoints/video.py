@@ -206,33 +206,36 @@ async def list_jobs():
 
 
 class VideoDistributeRequest(BaseModel):
-    mode: str = "top_picks"  # marketing, winning, educational, top_picks
+    mode: str = "marketing"  # marketing, winning, educational, top_picks
     avatar: bool = False
+    async_bg: bool = False
 
 
 @router.post("/distribute")
 async def trigger_video_distribution(req: VideoDistributeRequest, background_tasks: BackgroundTasks):
     """
-    고화질 하이브리드 비디오 생성 및 유튜브 + 구글 드라이브 + 텔레그램 배포 파이프라인 트리거
+    고화질 하이브리드 비디오 생성 및 유튜브 + 텔레그램 배포 파이프라인 트리거.
+    Cloud Run에서 응답 반환 후 CPU가 스로틀링되어 FFmpeg 인코딩이 멈추는 현상을 방지하기 위해
+    기본값(async_bg=False)으로 요청 처리 중 동기 실행하여 100% CPU 할당을 보장합니다.
     """
     job_id = str(uuid.uuid4())[:8]
     _jobs[job_id] = {
         "job_id": job_id,
         "type": f"distribute_{req.mode}",
-        "status": "queued",
+        "status": "processing",
         "created_at": datetime.now().isoformat(),
+        "started_at": datetime.now().isoformat(),
     }
-    
+
     async def run_pipeline_job():
-        _jobs[job_id]["status"] = "processing"
-        _jobs[job_id]["started_at"] = datetime.now().isoformat()
         try:
             from distribution_scheduler import run_distribution_pipeline
             res = await run_distribution_pipeline(req.mode, req.avatar)
             if res.get("status") == "success":
                 _jobs[job_id]["status"] = "done"
-                _jobs[job_id]["youtube_url"] = res.get("youtube_url")
-                _jobs[job_id]["google_drive_link"] = res.get("google_drive_link")
+                _jobs[job_id]["results"] = res.get("results", {})
+                ko_r = (res.get("results") or {}).get("ko") or {}
+                _jobs[job_id]["youtube_url"] = ko_r.get("youtube_url")
             else:
                 _jobs[job_id]["status"] = "failed"
                 _jobs[job_id]["error"] = res.get("reason", "Unknown reason")
@@ -241,10 +244,14 @@ async def trigger_video_distribution(req: VideoDistributeRequest, background_tas
             _jobs[job_id]["error"] = str(e)
         _jobs[job_id]["finished_at"] = datetime.now().isoformat()
 
-    background_tasks.add_task(run_pipeline_job)
-    return {
-        "job_id": job_id,
-        "status": "queued",
-        "message": f"배포 파이프라인이 백그라운드에서 트리거되었습니다. /api/video/status/{job_id} 에서 확인하세요."
-    }
+    if req.async_bg:
+        background_tasks.add_task(run_pipeline_job)
+        return {
+            "job_id": job_id,
+            "status": "queued",
+            "message": f"배포 파이프라인이 백그라운드에서 트리거되었습니다. /api/video/status/{job_id} 에서 확인하세요.",
+        }
+
+    await run_pipeline_job()
+    return _jobs[job_id]
 
