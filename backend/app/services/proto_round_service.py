@@ -45,6 +45,7 @@ BETMAN_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 # 인메모리 캐시 (5분 TTL)
 _catalog_cache: Dict[str, Any] = {"ts": 0.0, "games": []}
 _game_detail_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_built_report_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 _betman_http_session: Optional[req_lib.Session] = None
 
 # 베트맨 단축 팀명 <-> 정식 한글명 / 영문 표준명 통합 사전
@@ -221,6 +222,47 @@ BETMAN_TEAM_DICTIONARY: Dict[str, Tuple[str, str]] = {
     "웨일스": ("웨일스", "Wales"),
     "노르웨이": ("노르웨이", "Norway"),
     "핀란드": ("핀란드", "Finland"),
+    "미국": ("미국", "United States"),
+    "아이티": ("아이티", "Haiti"),
+    "자메이카": ("자메이카", "Jamaica"),
+    "캐나다": ("캐나다", "Canada"),
+    "멕시코": ("멕시코", "Mexico"),
+    "온두라스": ("온두라스", "Honduras"),
+    "파나마": ("파나마", "Panama"),
+    "코스타리카": ("코스타리카", "Costa Rica"),
+    "코스타리": ("코스타리카", "Costa Rica"),
+    "아르헨티나": ("아르헨티나", "Argentina"),
+    "아르헨티": ("아르헨티나", "Argentina"),
+    "브라질": ("브라질", "Brazil"),
+    "우루과이": ("우루과이", "Uruguay"),
+    "콜롬비아": ("콜롬비아", "Colombia"),
+    "칠레": ("칠레", "Chile"),
+    "페루": ("페루", "Peru"),
+    "파라과이": ("파라과이", "Paraguay"),
+    "에콰도르": ("에콰도르", "Ecuador"),
+    "볼리비아": ("볼리비아", "Bolivia"),
+    "베네수엘라": ("베네수엘라", "Venezuela"),
+    "사우디아라비아": ("사우디아라비아", "Saudi Arabia"),
+    "아랍에미리트": ("아랍에미리트", "United Arab Emirates"),
+    "말레이시아": ("말레이시아", "Malaysia"),
+    "슬로바키아": ("슬로바키아", "Slovakia"),
+    "슬로바키": ("슬로바키아", "Slovakia"),
+    "북아일랜드": ("북아일랜드", "Northern Ireland"),
+    "리히텐슈타인": ("리히텐슈타인", "Liechtenstein"),
+    "리히텐슈": ("리히텐슈타인", "Liechtenstein"),
+    "라트비아": ("라트비아", "Latvia"),
+    "북마케도니아": ("북마케도니아", "North Macedonia"),
+    "북마케도": ("북마케도니아", "North Macedonia"),
+    "슬로베니아": ("슬로베니아", "Slovenia"),
+    "룩셈부르크": ("룩셈부르크", "Luxembourg"),
+    "에스토니아": ("에스토니아", "Estonia"),
+    "아이슬란드": ("아이슬란드", "Iceland"),
+    "카자흐스탄": ("카자흐스탄", "Kazakhstan"),
+    "보스니아 헤르체고비나": ("보스니아 헤르체고비나", "Bosnia and Herzegovina"),
+    "원주DB 프로미": ("원주 DB 프로미", "Wonju DB Promy"),
+    "수원KT 소닉붐": ("수원 KT 소닉붐", "Suwon KT Sonicboom"),
+    "우리은행 우리WON": ("아산 우리은행 우리WON", "Asan Woori Bank"),
+    "BNK 썸": ("부산 BNK 썸", "Busan BNK Sum"),
 }
 
 # 역방향 매핑: 정식 한글 팀명/영문 팀명 -> 베트맨 공식 4~5글자 단축 한글팀명
@@ -1436,50 +1478,72 @@ def _build_ai_detail_report(
         {"name": "3-Pillar 앙상블 종합 합의도", "score": f7_balance, "comment": f7_comment},
     ]
 
+    metric_pills: List[str] = []
     if gtype == "BASKETBALL_W5L" and match_item.get("w5l_analysis"):
         w5l = match_item["w5l_analysis"]
-        headline = f"[농구토토 승5패 정밀 분석] {ko_h}({h_stat['rank']}위) vs {ko_a}({a_stat['rank']}위) — AI 1순위 '{w5l['primary_label']}' ({w5l['primary_prob']}%)"
+        headline = f"{ko_h} vs {ko_a} — {w5l['primary_label']} ({w5l['primary_prob']}%)"
+        metric_pills = [
+            f"예상마진 {w5l['expected_margin']:+.1f}점",
+            f"권장마킹 [{w5l['multi_recommend']}]",
+            f"평균득점 {h_stat['avg_gf']} vs {a_stat['avg_gf']}점",
+        ]
         tactical_summary = (
-            f"홈 {ko_h}(평균 {h_stat['avg_gf']}점/실점 {h_stat['avg_ga']}점, 최근 {h_stat['form_hyphen']})와 "
-            f"원정 {ko_a}(평균 {a_stat['avg_gf']}점/실점 {a_stat['avg_ga']}점, 최근 {a_stat['form_hyphen']})의 가우시안 마진 시뮬레이션 결과, "
-            f"예상 득점 마진은 {w5l['expected_margin']:+.1f}점입니다. "
-            f"홈 6점차+ 승({w5l['win_prob']}%) · 5점차 이내 접전({w5l['close5_prob']}%) · 원정 6점차+ 승({w5l['lose_prob']}%)으로 산출되어 권장 마킹은 [{w5l['multi_recommend']}]입니다."
+            f"{fav_team} 공수 득실 마진 우위 (예상 마진 {w5l['expected_margin']:+.1f}점 · 권장 [{w5l['multi_recommend']}])"
         )
     elif "SPECIAL" in gtype and match_item.get("special_brackets"):
         sp = match_item["special_brackets"]
-        headline = f"[{game_meta.get('game_name')} 득점대 분석] {ko_h} ({sp['home_top1_bracket']}) vs {ko_a} ({sp['away_top1_bracket']})"
+        headline = f"{ko_h} ({sp['home_top1_bracket']}) vs {ko_a} ({sp['away_top1_bracket']})"
+        metric_pills = [
+            f"예상점수 {sp['expected_home_pts']} : {sp['expected_away_pts']}",
+            f"홈 1순위 {sp['home_top1_bracket']}",
+            f"원정 1순위 {sp['away_top1_bracket']}",
+        ]
         tactical_summary = (
-            f"시즌 평균 득실({ko_h} {h_stat['avg_gf']}득점/{h_stat['avg_ga']}실점 vs {ko_a} {a_stat['avg_gf']}득점/{a_stat['avg_ga']}실점) 기반 가우시안 적분 결과, "
-            f"{ko_h} 예상 {sp['expected_home_pts']}점(1순위: {sp['home_top1_bracket']} {sp['home_top1_prob']}%, 2순위: {sp['home_top2_bracket']} {sp['home_top2_prob']}%), "
-            f"{ko_a} 예상 {sp['expected_away_pts']}점(1순위: {sp['away_top1_bracket']} {sp['away_top1_prob']}%, 2순위: {sp['away_top2_bracket']} {sp['away_top2_prob']}%)으로 산출되었습니다."
+            f"기대득점 {sp['expected_home_pts']} : {sp['expected_away_pts']} — 홈 [{sp['home_top1_bracket']}] · 원정 [{sp['away_top1_bracket']}] 구간 유력"
         )
     elif gtype == "BASKETBALL_MATCH" and match_item.get("special_brackets"):
         sp = match_item["special_brackets"]
-        headline = f"[농구토토 매치 전반·최종 분석] {ko_h} vs {ko_a} 쿼터별 득점 구간 리포트"
+        headline = f"{ko_h} vs {ko_a} 전반·최종 득점 구간"
+        metric_pills = [
+            f"전반 {sp['half_expected_home_pts']}:{sp['half_expected_away_pts']}",
+            f"최종 {sp['expected_home_pts']}:{sp['expected_away_pts']}",
+        ]
         tactical_summary = (
-            f"전반(1·2Q) 예상 스코어 {sp['half_expected_home_pts']} : {sp['half_expected_away_pts']} "
-            f"(전반 유력 구간: 홈 {sp['half_home_top_bracket']} / 원정 {sp['half_away_top_bracket']}), "
-            f"최종 예상 스코어 {sp['expected_home_pts']} : {sp['expected_away_pts']} "
-            f"(최종 유력 구간: 홈 {sp['home_top1_bracket']} / 원정 {sp['away_top1_bracket']})입니다."
+            f"전반 [{sp['half_home_top_bracket']} / {sp['half_away_top_bracket']}] · 최종 [{sp['home_top1_bracket']} / {sp['away_top1_bracket']}] 유력"
         )
+    elif is_basketball:
+        headline = f"{ko_h} vs {ko_a} — {match_item['ai_pick_full_label']} ({match_item['ai_pick_prob']}%)"
+        metric_pills = [
+            f"평균득점 {h_stat['avg_gf']} vs {a_stat['avg_gf']}점",
+            f"최근폼 {h_stat['form_hyphen']} vs {a_stat['form_hyphen']}",
+            consensus_label,
+        ]
+        if match_item.get("is_trap_candidate"):
+            tactical_summary = f"{fav_team} 소폭 우세하나 상대 저항력이 강해 접전 변수 주의 ({consensus_label})"
+        else:
+            tactical_summary = f"{fav_team} 공수 코트 마진 및 최근 5경기 흐름 우세 ({consensus_label})"
     else:
         lam_h = poisson_sim["expected_home_goals"] if poisson_sim else round(1.15 + (ai_hp - 35.0) * 0.022, 2)
         lam_a = poisson_sim["expected_away_goals"] if poisson_sim else round(0.95 + (ai_ap - 30.0) * 0.022, 2)
-        top_sc_txt = ""
+        top_sc_short = ""
         if poisson_sim and poisson_sim.get("top_exact_scores"):
             top2 = poisson_sim["top_exact_scores"][:2]
-            top_sc_txt = f" (유력 스코어: {top2[0]['score']} [{top2[0]['prob_pct']}%], {top2[1]['score']} [{top2[1]['prob_pct']}%])"
-        headline = f"[{game_meta.get('game_name')} AI 전력 리포트] {ko_h}({h_stat['rank']}위) vs {ko_a}({a_stat['rank']}위) — {match_item['ai_pick_full_label']} ({match_item['ai_pick_prob']}%)"
-        tactical_summary = (
-            f"홈 {ko_h}({h_stat['record_summary']}, 최근 {h_stat['form_hyphen']}) vs "
-            f"원정 {ko_a}({a_stat['record_summary']}, 최근 {a_stat['form_hyphen']}) 매치업입니다. "
-            f"Dixon-Coles 포아송 기대득점(xG) 시뮬레이션 기준 {ko_h} {lam_h:.2f}골 vs {ko_a} {lam_a:.2f}골{top_sc_txt}이 예상되며, "
-            f"3-Pillar 앙상블 확률은 홈 승 {ai_hp}% · 무승부 {ai_dp}% · 원정 승 {ai_ap}% ({consensus_label})입니다."
-        )
+            top_sc_short = f"{top2[0]['score']} · {top2[1]['score']}"
+        headline = f"{ko_h} vs {ko_a} — {match_item['ai_pick_full_label']} ({match_item['ai_pick_prob']}%)"
+        metric_pills = [
+            f"기대득점 {lam_h:.2f} : {lam_a:.2f}골",
+            f"유력스코어 {top_sc_short}" if top_sc_short else f"최근폼 {h_stat['form_hyphen']}",
+            consensus_label,
+        ]
+        if match_item.get("is_trap_candidate"):
+            tactical_summary = f"{fav_team} 배당 우세이나 무승부·역배 변수({match_item['upset_or_draw_prob']}%)가 높아 복수 검토 권장"
+        else:
+            tactical_summary = f"{fav_team} 기대득점({lam_h:.2f} vs {lam_a:.2f}골) 및 배당 흐름 우세 ({consensus_label})"
 
     return {
         "headline": headline,
         "tactical_summary": tactical_summary,
+        "metric_pills": metric_pills,
         "pillar_weights": {
             "market_probability_pct": 45,
             "poisson_pythagorean_pct": 30,
@@ -1579,7 +1643,7 @@ async def match_betman_entities_with_gemini(
                 "cutoff_time": b_item.get("cutoff_time", ""),
             })
 
-    if unresolved_betman and canonical_fixtures:
+    if False and unresolved_betman and canonical_fixtures:
         try:
             import os
             api_key = os.getenv("GEMINI_API_KEY", "").strip()
@@ -1819,6 +1883,14 @@ async def build_proto_round_report(round_id: Optional[str] = None, include_archi
             gm_ts = str(available_games[0]["gm_ts"])
             game_key = f"{gm_id}_{gm_ts}"
 
+    # 0. 사전 생성된 리포트 캐시 조회 (접속자마다 매번 생성하지 않고 즉시 반환)
+    now_ts = time.time()
+    if game_key in _built_report_cache:
+        cached_ts, cached_rep = _built_report_cache[game_key]
+        if now_ts - cached_ts < 1800:
+            cached_rep["available_games"] = available_games
+            return cached_rep
+
     game_meta = BETMAN_GAME_META.get(gm_id, BETMAN_GAME_META["G101"])
     catalog_entry = next((g for g in available_games if g["game_key"] == game_key), None)
     display_round_no = str(catalog_entry["round_no"]) if catalog_entry else _format_round_display(gm_ts)
@@ -1944,16 +2016,20 @@ async def build_proto_round_report(round_id: Optional[str] = None, include_archi
             handi_label_map = {0: "일반", 2: "핸디캡", 9: "언더오버", 21: "핸디캡", 23: "언더오버", 27: "SUM"}
             seen_pair_std = set()
 
-            for row in datas:
+            # 1차: 일반(handi==0) 경기 우선 추출, 동일 매치업(홈 vs 원정) 중복 제거 (같은 경기가 일반/핸디캡/언더오버 3줄로 중복 노출되는 현상 방지)
+            sorted_datas = sorted(
+                datas,
+                key=lambda r: (0 if (int(r[idx_map["handi"]] or 0) if r[idx_map["handi"]] is not None else 0) == 0 else 1, int(r[idx_map.get("matchSeq", 0)] or 0)),
+            )
+            for row in sorted_datas:
                 b_home = str(row[idx_map["homeName"]] or "").strip()
                 b_away = str(row[idx_map["awayName"]] or "").strip()
                 if not b_home or not b_away or b_home == "미정" or b_away == "미정":
                     continue
                 handi = int(row[idx_map["handi"]] or 0) if row[idx_map["handi"]] is not None else 0
-                # 일반 경기(0) 우선 표시 (최대 50경기)
-                if handi not in (0, 2, 9):
+                if handi not in (0, 2):
                     continue
-                pair_key = f"{b_home}_{b_away}_{handi}"
+                pair_key = f"{b_home}_{b_away}"
                 if pair_key in seen_pair_std:
                     continue
                 seen_pair_std.add(pair_key)
@@ -2398,7 +2474,7 @@ async def build_proto_round_report(round_id: Optional[str] = None, include_archi
     else:
         banner_txt = "최근 5회차 주력 조합 적중률 80.0%"
 
-    return {
+    final_report = {
         "game_key": game_key,
         "gm_id": gm_id,
         "gm_ts": str(gm_ts),
@@ -2444,6 +2520,8 @@ async def build_proto_round_report(round_id: Optional[str] = None, include_archi
             },
         },
     }
+    _built_report_cache[game_key] = (time.time(), final_report)
+    return final_report
 
 
 async def get_proto_archive_history() -> Dict[str, Any]:

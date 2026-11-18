@@ -51,10 +51,11 @@ async def get_betman_games_list():
 @router.post("/sync-live-cache")
 async def sync_betman_live_cache_endpoint():
     """베트맨 공식 사이트 활성 회차 카탈로그 및 경기 스케줄 캐시 강제 갱신."""
-    from app.services.proto_round_service import _catalog_cache, _game_detail_cache
+    from app.services.proto_round_service import _catalog_cache, _game_detail_cache, _built_report_cache
     _catalog_cache["ts"] = 0.0
     _catalog_cache["games"] = []
     _game_detail_cache.clear()
+    _built_report_cache.clear()
     catalog = await get_betman_games_catalog()
     games = catalog.get("games") or []
     synced_keys = []

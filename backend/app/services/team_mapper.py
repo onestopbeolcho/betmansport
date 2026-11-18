@@ -918,18 +918,27 @@ class TeamMapper:
     def _build_caches(self):
         """Build normalized lookup caches for fast, accent-insensitive matching."""
         for kr, en in self.kr_to_en.items():
-            self._kr_norm_cache[self._normalize(kr)] = en
+            nk = self._normalize(kr)
+            if nk:
+                self._kr_norm_cache[nk] = en
         for en, kr in self.en_to_kr.items():
-            self._en_norm_cache[self._normalize(en)] = kr
+            ne = self._normalize(en)
+            if ne:
+                self._en_norm_cache[ne] = kr
 
     @staticmethod
     def _strip_accents(text: str) -> str:
-        """Strip diacritics (é->e, ö->o, ã->a, ø->o, etc.)."""
+        """Strip Latin diacritics (é->e, ö->o, ã->a, ø->o) while preserving Korean Hangul syllables intact."""
         text = text.replace("ø", "o").replace("Ø", "O").replace("&", "and")
-        return "".join(
-            ch for ch in unicodedata.normalize("NFKD", text)
-            if not unicodedata.combining(ch)
-        )
+        out = []
+        for ch in text:
+            if "\uac00" <= ch <= "\ud7a3":
+                out.append(ch)
+            else:
+                for decomp in unicodedata.normalize("NFKD", ch):
+                    if not unicodedata.combining(decomp):
+                        out.append(decomp)
+        return "".join(out)
 
     @classmethod
     def _normalize(cls, name: str) -> str:
@@ -949,11 +958,11 @@ class TeamMapper:
             return self.kr_to_en[korean_name]
 
         norm = self._normalize(korean_name)
-        if norm in self._kr_norm_cache:
+        if norm and norm in self._kr_norm_cache:
             return self._kr_norm_cache[norm]
 
         for kr_key in self.kr_to_en:
-            if len(korean_name) >= 2 and (kr_key.startswith(korean_name) or korean_name.startswith(kr_key)):
+            if len(korean_name) >= 2 and len(kr_key) >= 2 and (kr_key.startswith(korean_name) or korean_name.startswith(kr_key)):
                 return self.kr_to_en[kr_key]
 
         return None

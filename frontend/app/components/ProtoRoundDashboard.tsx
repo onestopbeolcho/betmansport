@@ -52,6 +52,7 @@ interface SpecialBrackets {
 interface AiDetailReport {
     headline: string;
     tactical_summary: string;
+    metric_pills?: string[];
     pillar_weights: {
         market_probability_pct: number;
         poisson_pythagorean_pct: number;
@@ -873,9 +874,11 @@ export default function ProtoRoundDashboard() {
                                                         <span className="text-slate-400 text-xs font-normal">vs</span>
                                                         <span className="text-slate-800">{m.betman_away}</span>
                                                     </div>
-                                                    <div className="text-[11px] text-slate-500 mt-0.5">
-                                                        {m.home_ko} vs {m.away_ko}
-                                                    </div>
+                                                    {(m.home_ko !== m.betman_home || m.away_ko !== m.betman_away) && (
+                                                        <div className="text-[11px] text-slate-500 mt-0.5">
+                                                            {m.home_ko} vs {m.away_ko}
+                                                        </div>
+                                                    )}
                                                 </td>
 
                                                 {/* 4. AI 확률 vs 투표 선호도 */}
@@ -964,14 +967,23 @@ export default function ProtoRoundDashboard() {
                                                             🔒 핵심 경합·승부처 상세 해설은 <strong className="text-[#0046b8]">오프라인 판매점 전광판/A4 벽보</strong> 또는 아래 <a href="#community-lounge" className="text-[#0046b8] underline">승부예측 커뮤니티 참여</a> 시 즉시 공개됩니다.
                                                         </p>
                                                     ) : (
-                                                        <>
+                                                        <div className="space-y-1.5">
+                                                            {m.ai_detail_report?.metric_pills && m.ai_detail_report.metric_pills.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {m.ai_detail_report.metric_pills.map((pill, pIdx) => (
+                                                                        <span
+                                                                            key={pIdx}
+                                                                            className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                                                                        >
+                                                                            {pill}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                             <p className="text-xs font-bold text-slate-800 leading-snug">
-                                                                {item.strategyReason}
+                                                                {m.ai_detail_report?.tactical_summary || item.strategyReason}
                                                             </p>
-                                                            <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                                                {m.ai_detail_report?.tactical_summary || m.trap_reason}
-                                                            </p>
-                                                        </>
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>
@@ -1366,9 +1378,11 @@ export default function ProtoRoundDashboard() {
                                                     <div className="font-black text-slate-900 text-sm">
                                                         {m.betman_home} <span className="text-slate-400 font-normal text-xs">vs</span> {m.betman_away}
                                                     </div>
-                                                    <div className="text-[11px] text-slate-500 mt-0.5">
-                                                        {m.home_ko} vs {m.away_ko}
-                                                    </div>
+                                                    {(m.home_ko !== m.betman_home || m.away_ko !== m.betman_away) && (
+                                                        <div className="text-[11px] text-slate-500 mt-0.5">
+                                                            {m.home_ko} vs {m.away_ko}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="py-3.5 px-3 border-r border-slate-200">
                                                     <div className="flex justify-between text-[11px] font-bold mb-1">
@@ -1409,17 +1423,31 @@ export default function ProtoRoundDashboard() {
                                                             🔒 핵심 우위 경기 상세 해설은 오프라인 판매점 비치본 또는 아래 커뮤니티 참여 시 공개됩니다.
                                                         </p>
                                                     ) : (
-                                                        <>
-                                                            <p className="text-xs text-slate-700 leading-relaxed">
-                                                                {m.ai_detail_report?.tactical_summary || m.trap_reason}
-                                                            </p>
-                                                            <button
-                                                                onClick={() => setActiveReportMatch(m)}
-                                                                className="mt-1 text-[11px] font-extrabold text-[#0046b8] hover:underline cursor-pointer"
-                                                            >
-                                                                + 7-Factor 세부 지표 보기
-                                                            </button>
-                                                        </>
+                                                        <div className="space-y-1.5">
+                                                            {m.ai_detail_report?.metric_pills && m.ai_detail_report.metric_pills.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {m.ai_detail_report.metric_pills.map((pill, pIdx) => (
+                                                                        <span
+                                                                            key={pIdx}
+                                                                            className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700"
+                                                                        >
+                                                                            {pill}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <p className="text-xs font-bold text-slate-800 leading-snug">
+                                                                    {m.ai_detail_report?.tactical_summary || m.trap_reason}
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => setActiveReportMatch(m)}
+                                                                    className="shrink-0 px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-[11px] font-extrabold text-[#0046b8] transition cursor-pointer"
+                                                                >
+                                                                    상세지표 →
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </td>
                                             </tr>
