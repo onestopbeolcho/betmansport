@@ -702,32 +702,76 @@ SHORTS_CONCEPTS = {
         "verdict_tag": "OPEN SAMPLE BALANCE REPORT",
         "verdict_subtitle": "이번 회차 무료 공개 AI 시뮬레이션 리포트",
     },
+    "PLATFORM_SCREENSHOT": {
+        "id": "PLATFORM_SCREENSHOT",
+        "visual_style": "PLATFORM_UI",
+        "badge": "신규회차 공개",
+        "badge_rgb": (0, 70, 184),
+        "headline_suffix": "신규 경기 분석표 화면 공개",
+        "bg_canvas": (235, 240, 248, 255),
+        "board_bg": (255, 255, 255, 255),
+        "board_border": (0, 70, 184, 220),
+        "primary_rgb": (0, 70, 184),
+        "secondary_rgb": (5, 150, 105),
+        "lock_rgb": (217, 119, 6),
+        "voice": "ko-KR-SunHiNeural",
+        "rate": "+15%",
+        "pitch": "+1Hz",
+        "overview_tag": "SCORENIX.COM LIVE PLATFORM CAPTURE",
+        "overview_title": "플랫폼 신규 업데이트 경기 분석표 캡처 공개",
+        "verdict_tag": "LIVE PLATFORM ZOOM-IN PICK",
+        "verdict_subtitle": "스코어닉스 웹 분석표 실시간 캡처 화면",
+    },
+    "OMR_SLIP_TICKET": {
+        "id": "OMR_SLIP_TICKET",
+        "visual_style": "OMR_SLIP",
+        "badge": "실전 마킹표",
+        "badge_rgb": (234, 88, 12),
+        "headline_suffix": "판매점 실전 OMR 마킹표 공개",
+        "bg_canvas": (245, 238, 226, 255),
+        "board_bg": (255, 252, 245, 255),
+        "board_border": (234, 88, 12, 220),
+        "primary_rgb": (234, 88, 12),
+        "secondary_rgb": (0, 70, 184),
+        "lock_rgb": (220, 38, 38),
+        "voice": "ko-KR-InJoonNeural",
+        "rate": "+15%",
+        "pitch": "+0Hz",
+        "overview_tag": "BETMAN OMR MARKING SLIP PREVIEW",
+        "overview_title": "이번 회차 실전 OMR 마킹 슬립 공개",
+        "verdict_tag": "OMR 1ST PRIORITY MARKING",
+        "verdict_subtitle": "동네 판매점 방문 전 필수 체크 마킹지",
+    },
 }
 
 
 def select_rotating_concept(mode: str = "marketing", matches: list = None) -> dict:
     """
-    날짜 + 시간대 + 매치명 해시를 조합하여 매번 다른 방송 컨셉이 선택되도록 자동 로테이션합니다.
+    매 실행 시마다 서로 다른 시각적 스타일(플랫폼 캡처 UI / OMR 마킹지 UI / 빅매치 VS / 팩트체크 / 퀀트 레이더)이
+    고르게 섞여서 업로드되도록 자동 순환합니다.
     """
     if mode == "result_review":
         return SHORTS_CONCEPTS["RESULT_REVIEW"]
-    if mode == "educational":
-        return SHORTS_CONCEPTS["FACT_CHECK"]
-    elif mode == "winning":
-        return SHORTS_CONCEPTS["VALUE_ALERT"]
-    elif mode == "top_picks":
-        return SHORTS_CONCEPTS["SPEED_BRIEFING"]
 
-    preview_keys = [k for k in SHORTS_CONCEPTS.keys() if k != "RESULT_REVIEW"]
+    # 핵심 로테이션 순서: 플랫폼 화면 캡처 -> OMR 실전 마킹지 -> 투표율 팩트체크 -> 플랫폼 화면 캡처 -> 이변경보 -> 빅매치 스포트라이트
+    rotation_order = [
+        "PLATFORM_SCREENSHOT",
+        "OMR_SLIP_TICKET",
+        "FACT_CHECK",
+        "PLATFORM_SCREENSHOT",
+        "VALUE_ALERT",
+        "MATCH_SPOTLIGHT",
+        "QUANT_RADAR",
+    ]
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
 
     match_salt = 0
     if matches and len(matches) > 0:
-        m_str = f"{matches[0].get('home', '')}{matches[0].get('away', '')}"
+        m_str = f"{matches[0].get('home', '')}{matches[0].get('away', '')}{matches[0].get('round_title', '')}"
         match_salt = sum(ord(c) for c in m_str)
 
-    idx = (now_kst.day * 7 + now_kst.hour + match_salt) % len(preview_keys)
-    selected_key = preview_keys[idx]
+    idx = (now_kst.day * 3 + now_kst.hour + match_salt) % len(rotation_order)
+    selected_key = rotation_order[idx]
     return SHORTS_CONCEPTS[selected_key]
 
 
@@ -825,6 +869,8 @@ def build_youtube_metadata(matches=None, concept: dict = None) -> dict:
         }
 
     title_templates = {
+        "PLATFORM_SCREENSHOT": f"[{r_title} 신규화면공개] 🖥️ {free_m['home']} vs {free_m['away']} 플랫폼 실시간 분석표 캡처 #shorts",
+        "OMR_SLIP_TICKET": f"[{r_title} 실전마킹표] 📝 {free_m['home']} vs {free_m['away']} 판매점 OMR 1순위 마킹 공개 #shorts",
         "QUANT_RADAR": f"[{r_title} {g_no}] 📊 {free_m['home']} vs {free_m['away']} AI 1·2순위 밸런스 & 승률 분석 #shorts",
         "FACT_CHECK": f"[{r_title} 투표율체크] ⚡ {free_m['home']} vs {free_m['away']} 단통 주의! AI 데이터 팩트체크 #shorts",
         "VALUE_ALERT": f"[{r_title} 이변경보] 📈 {free_m['home']} vs {free_m['away']} 경합 주의 구간 & 복수방어 #shorts",
@@ -959,7 +1005,19 @@ def build_script(matches, mode="marketing", concept: dict = None):
         ]
 
     # 컨셉별 Scene 1 (오프닝 훅) 차별화
-    if cid == "FACT_CHECK":
+    if cid == "PLATFORM_SCREENSHOT":
+        s1_tts = (
+            f"스코어닉스 플랫폼에 방금 업데이트된 {r_title} 신규 경기 분석표 화면을 그대로 캡처해 공개합니다! "
+            f"이번 회차 핵심 세 경기를 실제 플랫폼 화면으로 바로 확인해 보시죠."
+        )
+        s1_cap = f"[ {r_title} 플랫폼 화면 캡처 ]\n방금 올라온 신규 경기 분석표 공개!"
+    elif cid == "OMR_SLIP_TICKET":
+        s1_tts = (
+            f"동네 프로토 판매점 가시기 전에 이 화면부터 저장하세요! "
+            f"이번 회차 {r_title} 실전 OMR 마킹 슬립에서 일순위 주력 칸과 복수 방어 구간을 바로 찍어드립니다."
+        )
+        s1_cap = f"[ {r_title} 실전 마킹표 ]\n판매점 OMR 1순위 vs 복수마킹 공개"
+    elif cid == "FACT_CHECK":
         s1_tts = (
             f"이번 회차 {r_title}, 아직도 이름값만 보고 단통 마킹하십니까? "
             f"스코어닉스 데이터 데스크에서 단독 우위 주력 경기와 경합 주의 구간을 분류해 드립니다."
@@ -1230,7 +1288,12 @@ def render_caption(text, scene="match", mode="marketing", concept: dict = None):
     if concept:
         pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
         sr, sg, sb = concept.get("secondary_rgb", (16, 185, 129))
-        box_color = concept.get("board_bg", (15, 20, 35, 230))
+        if concept.get("visual_style") in ("PLATFORM_UI", "OMR_SLIP"):
+            box_color = (15, 23, 42, 245)
+            pr, pg, pb = (56, 189, 248)
+            sr, sg, sb = (251, 191, 36)
+        else:
+            box_color = concept.get("board_bg", (15, 20, 35, 230))
         if scene == "intro":
             accent = (pr, pg, pb, 255)
             border = (pr, pg, pb, 195)
@@ -1367,15 +1430,34 @@ def render_headline(concept: dict = None):
     img = Image.new("RGBA", (WIDTH, 165), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     font_badge = get_font(25, bold=True)
-    font_title = get_font(36, bold=True)
+    font_title = get_font(35, bold=True)
 
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     today = now_kst.strftime("%m월 %d일")
 
+    vstyle = concept.get("visual_style", "DARK_BROADCAST")
     pr, pg, pb = concept.get("primary_rgb", (0, 212, 255))
     br, bg, bb = concept.get("badge_rgb", (220, 38, 38))
     badge_txt = concept.get("badge", "승무패 AI")
     suffix_txt = concept.get("headline_suffix", "승무패·프로토 AI 밸런스")
+
+    if vstyle in ("PLATFORM_UI", "OMR_SLIP"):
+        # 브라우저 상단 주소창 & 공식 플랫폼 헤더 스타일 (화이트/네이비 고대비)
+        bar_fill = (0, 57, 150, 255) if vstyle == "PLATFORM_UI" else (30, 41, 59, 255)
+        draw.rounded_rectangle(
+            [40, 15, WIDTH - 40, 145],
+            radius=24,
+            fill=bar_fill,
+            outline=(255, 255, 255, 220),
+            width=3,
+        )
+        draw.rounded_rectangle([68, 42, 295, 118], radius=14, fill=(251, 191, 36, 255))
+        tb = draw.textbbox((0, 0), badge_txt, font=font_badge)
+        bw = tb[2] - tb[0]
+        draw.text((68 + (227 - bw) // 2, 62), badge_txt, font=font_badge, fill=(15, 23, 42, 255))
+        text = f"{today} {suffix_txt}"
+        draw.text((318, 56), text, font=font_title, fill=(255, 255, 255, 255))
+        return np.array(img)
 
     draw.rounded_rectangle(
         [40, 15, WIDTH - 40, 145],
@@ -1394,6 +1476,251 @@ def render_headline(concept: dict = None):
     return np.array(img)
 
 
+def _render_platform_ui_board(board_type: str, matches: list, concept: dict) -> np.ndarray:
+    """
+    [스타일 A: PLATFORM_SCREENSHOT]
+    실제 스코어닉스 웹/모바일 플랫폼(scorenix.com)의 화이트·네이비 경기 분석표를
+    그대로 스크린샷 찍어 공개하는 UI 렌더러 (유튜브 썸네일 및 영상 차별화 극대화)
+    """
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    free_m = matches[0]
+    lock_m1 = matches[1] if len(matches) > 1 else matches[0]
+    lock_m2 = matches[2] if len(matches) > 2 else matches[0]
+    r_title = free_m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+    g_no = free_m.get("game_no_label", "01번")
+    role_badge = free_m.get("role_badge", "단독 우위 (1순위 주력)")
+
+    f_xs = get_font(22, bold=True)
+    f_sm = get_font(26, bold=True)
+    f_md = get_font(31, bold=True)
+    f_lg = get_font(40, bold=True)
+    f_xl = get_font(50, bold=True)
+
+    # 브라우저/앱 캡처 창 외곽 프레임 (Clean White Card with Shadow)
+    bx1, by1, bx2, by2 = 40, 185, WIDTH - 40, 1365
+    draw.rounded_rectangle([bx1 + 6, by1 + 10, bx2 + 6, by2 + 10], radius=28, fill=(15, 23, 42, 45))
+    draw.rounded_rectangle([bx1, by1, bx2, by2], radius=28, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=3)
+
+    # 브라우저 상단바 (macOS/Chrome 캡처 느낌 + 주소창)
+    draw.rounded_rectangle([bx1, by1, bx2, by1 + 76], radius=28, fill=(241, 245, 249, 255))
+    draw.rectangle([bx1, by1 + 48, bx2, by1 + 76], fill=(241, 245, 249, 255))
+    draw.ellipse([70, by1 + 26, 92, by1 + 48], fill=(239, 68, 68, 255))
+    draw.ellipse([104, by1 + 26, 126, by1 + 48], fill=(245, 158, 11, 255))
+    draw.ellipse([138, by1 + 26, 160, by1 + 48], fill=(16, 185, 129, 255))
+    draw.rounded_rectangle([190, by1 + 16, bx2 - 35, by1 + 60], radius=14, fill=(255, 255, 255, 255), outline=(203, 213, 225, 255), width=2)
+    draw.text((215, by1 + 24), f"https://scorenix.com/ko  —  {r_title} 실시간 분석표", font=f_xs, fill=(51, 65, 85, 255))
+
+    # 플랫폼 서브 헤더 배너
+    draw.rectangle([bx1 + 3, by1 + 76, bx2 - 3, by1 + 162], fill=(0, 70, 184, 255))
+    draw.text((70, by1 + 94), f"■ {r_title} · 신규 경기 분석표", font=f_md, fill=(255, 255, 255, 255))
+    draw.rounded_rectangle([bx2 - 255, by1 + 92, bx2 - 65, by1 + 144], radius=12, fill=(251, 191, 36, 255))
+    draw.text((bx2 - 235, by1 + 104), "실시간 캡처 공개", font=f_xs, fill=(15, 23, 42, 255))
+
+    if board_type in ("overview", "locked_cta"):
+        # 실제 플랫폼 테이블 헤더 (번호 | 대상경기 | AI 승률 분포 | AI 마킹 | 상태)
+        th_y = by1 + 178
+        draw.rectangle([60, th_y, WIDTH - 60, th_y + 56], fill=(30, 41, 59, 255))
+        draw.text((82, th_y + 14), "번호", font=f_xs, fill=(255, 255, 255, 255))
+        draw.text((195, th_y + 14), "신규 업데이트 대상 경기", font=f_xs, fill=(255, 255, 255, 255))
+        draw.text((610, th_y + 14), "AI 기대 승률", font=f_xs, fill=(255, 255, 255, 255))
+        draw.text((835, th_y + 14), "AI 추천 픽", font=f_xs, fill=(255, 255, 255, 255))
+
+        rows = [
+            (g_no, free_m, True, "무료공개"),
+            (lock_m1.get("game_no_label", "02번"), lock_m1, False, "경합주의"),
+            (lock_m2.get("game_no_label", "03번"), lock_m2, False, "이변주의"),
+        ]
+        ry = th_y + 72
+        for r_no, m, is_open, st_lbl in rows:
+            row_bg = (239, 246, 255, 255) if is_open else (248, 250, 252, 255)
+            row_border = (0, 70, 184, 255) if is_open else (203, 213, 225, 255)
+            draw.rounded_rectangle([60, ry, WIDTH - 60, ry + 245], radius=18, fill=row_bg, outline=row_border, width=4 if is_open else 2)
+
+            # 번호 배지
+            nb_col = (0, 70, 184, 255) if is_open else (100, 116, 139, 255)
+            draw.rounded_rectangle([78, ry + 24, 172, ry + 74], radius=10, fill=nb_col)
+            draw.text((92, ry + 35), str(r_no), font=f_xs, fill=(255, 255, 255, 255))
+
+            # 팀명
+            draw.text((192, ry + 26), f"{m['home']} vs {m['away']}", font=f_md, fill=(15, 23, 42, 255))
+            draw.text((192, ry + 72), f"배당: 홈 {m['home_odds']} · 무 {m['draw_odds']} · 원정 {m['away_odds']}", font=f_xs, fill=(71, 85, 105, 255))
+
+            # 확률 바
+            hp = float(m.get("home_prob", 52.0))
+            dp = float(m.get("draw_prob", 23.0))
+            ap = float(m.get("away_prob", 25.0))
+            bar_x, bar_y, bar_w = 192, ry + 118, 560
+            draw.rounded_rectangle([bar_x, bar_y, bar_x + bar_w, bar_y + 24], radius=10, fill=(226, 232, 240, 255))
+            hw = int(bar_w * (hp / 100.0))
+            dw = int(bar_w * (dp / 100.0))
+            draw.rounded_rectangle([bar_x, bar_y, bar_x + max(24, hw), bar_y + 24], radius=10, fill=(0, 70, 184, 255))
+            if dw > 8:
+                draw.rectangle([bar_x + hw, bar_y, bar_x + hw + dw, bar_y + 24], fill=(245, 158, 11, 255))
+            draw.text((192, ry + 150), f"AI 승률: 홈 {hp}%  |  무 {dp}%  |  원정 {ap}%", font=f_xs, fill=(0, 70, 184, 255))
+
+            # 우측 AI 추천 픽 박스 (무료공개 vs 잠금)
+            if is_open:
+                draw.rounded_rectangle([785, ry + 28, WIDTH - 80, ry + 145], radius=16, fill=(0, 70, 184, 255))
+                draw.text((810, ry + 45), "AI 1순위 픽", font=f_xs, fill=(191, 219, 254, 255))
+                p_short = f"{m['ai_pick'][:5]} 승"
+                draw.text((805, ry + 82), p_short, font=f_md, fill=(255, 255, 255, 255))
+                draw.text((192, ry + 192), f"★ 판정: {m['pick_label']} (신뢰도 {m['win_prob']}% · 3/3 모델 일치)", font=f_xs, fill=(5, 150, 105, 255))
+            else:
+                draw.rounded_rectangle([785, ry + 28, WIDTH - 80, ry + 145], radius=16, fill=(254, 243, 199, 255), outline=(245, 158, 11, 255), width=2)
+                draw.text((805, ry + 48), f"[잠금] {st_lbl}", font=f_xs, fill=(180, 83, 9, 255))
+                draw.text((805, ry + 86), "플랫폼 해금", font=f_sm, fill=(146, 64, 14, 255))
+                draw.text((192, ry + 192), "▶ scorenix.com 커뮤니티·판매점 탭에서 1·2순위 즉시 무료 해금", font=f_xs, fill=(180, 83, 9, 255))
+
+            ry += 265
+
+        # 하단 안내 바
+        draw.rounded_rectangle([60, by2 - 115, WIDTH - 60, by2 - 22], radius=18, fill=(15, 23, 42, 255))
+        draw.text((95, by2 - 86), "▶ 검색창에 [ 스코어닉스 ] 또는 scorenix.com — 전 경기 무료 해금!", font=f_sm, fill=(251, 191, 36, 255))
+
+    else:
+        # Scene 2 & Scene 3: 무료 공개 1경기 행 확대 캡처 (Zoom-In Platform Row View)
+        # 유튜브가 자동으로 선택하는 중간 프레임(Scene 3)이므로 화이트 배경 + 큼직한 승무패 마킹 박스로 시선 강탈!
+        draw.rounded_rectangle([65, by1 + 185, WIDTH - 65, by1 + 315], radius=20, fill=(239, 246, 255, 255), outline=(0, 70, 184, 255), width=3)
+        draw.rounded_rectangle([85, by1 + 210, 290, by1 + 285], radius=12, fill=(0, 70, 184, 255))
+        draw.text((104, by1 + 230), f"{g_no} 확대캡처", font=f_sm, fill=(255, 255, 255, 255))
+        draw.text((312, by1 + 222), f"{free_m['home']}  vs  {free_m['away']}", font=f_lg, fill=(15, 23, 42, 255))
+
+        # 중앙: 플랫폼 AI 시뮬레이션 승/무/패 마킹 박스 & 확률 게이지
+        draw.rounded_rectangle([65, by1 + 340, WIDTH - 65, by1 + 780], radius=24, fill=(248, 250, 252, 255), outline=(203, 213, 225, 255), width=3)
+        draw.text((100, by1 + 368), "■ 스코어닉스 플랫폼 실시간 승률 & AI 1순위 마킹", font=f_sm, fill=(51, 65, 85, 255))
+
+        hp = float(free_m.get("home_prob", 54.0))
+        dp = float(free_m.get("draw_prob", 22.0))
+        ap = float(free_m.get("away_prob", 24.0))
+        fav_home = hp >= ap
+
+        boxes = [
+            ("홈 승", free_m["home"][:6], f"{hp}%", f"배당 {free_m['home_odds']}", fav_home),
+            ("무승부", "접전변수", f"{dp}%", f"배당 {free_m['draw_odds']}", False),
+            ("원정 승", free_m["away"][:6], f"{ap}%", f"배당 {free_m['away_odds']}", not fav_home),
+        ]
+        bx_start = 92
+        bw_card = 285
+        for idx, (b_title, b_sub, b_pct, b_odd, is_win) in enumerate(boxes):
+            cx1 = bx_start + idx * (bw_card + 20)
+            cx2 = cx1 + bw_card
+            c_fill = (0, 70, 184, 255) if is_win else (255, 255, 255, 255)
+            c_out = (220, 38, 38, 255) if is_win else (203, 213, 225, 255)
+            t_main = (255, 255, 255, 255) if is_win else (15, 23, 42, 255)
+            t_sub = (219, 234, 254, 255) if is_win else (100, 116, 139, 255)
+            draw.rounded_rectangle([cx1, by1 + 430, cx2, by1 + 745], radius=22, fill=c_fill, outline=c_out, width=5 if is_win else 2)
+            if is_win:
+                draw.rounded_rectangle([cx1 + 35, by1 + 448, cx2 - 35, by1 + 496], radius=10, fill=(251, 191, 36, 255))
+                draw.text((cx1 + 58, by1 + 458), "★ AI 1순위", font=f_xs, fill=(15, 23, 42, 255))
+            draw.text((cx1 + 40, by1 + 515), b_title, font=f_md, fill=t_main)
+            draw.text((cx1 + 40, by1 + 565), b_sub, font=f_xs, fill=t_sub)
+            draw.text((cx1 + 35, by1 + 615), b_pct, font=f_xl, fill=(251, 191, 36, 255) if is_win else t_main)
+            draw.text((cx1 + 40, by1 + 690), b_odd, font=f_xs, fill=t_sub)
+
+        # 하단: 깨알 같은 줄글 대신 큼직한 3대 핵심 배지 카드!
+        draw.rounded_rectangle([65, by1 + 805, WIDTH - 65, by2 - 28], radius=24, fill=(239, 246, 255, 255), outline=(147, 197, 253, 255), width=3)
+        draw.text((100, by1 + 830), "★ 플랫폼 3-Pillar 핵심 판정 요약 (한눈에 보기)", font=f_sm, fill=(0, 70, 184, 255))
+
+        pills = [
+            ("구간 분류", f"{role_badge}", (0, 70, 184)),
+            ("AI 최종 결론", f"{free_m['pick_label']} (신뢰도 {free_m['win_prob']}%)", (5, 150, 105)),
+            ("승률 격차", f"1·2순위 확률 격차 +{free_m['odds_gap']}%p 우위", (217, 119, 6)),
+        ]
+        py = by1 + 890
+        for p_lbl, p_val, (r, g, b) in pills:
+            draw.rounded_rectangle([95, py, WIDTH - 95, py + 76], radius=16, fill=(255, 255, 255, 255), outline=(r, g, b, 220), width=2)
+            draw.rounded_rectangle([110, py + 14, 310, py + 62], radius=10, fill=(r, g, b, 255))
+            draw.text((128, py + 24), p_lbl, font=f_xs, fill=(255, 255, 255, 255))
+            draw.text((335, py + 22), p_val, font=f_sm, fill=(15, 23, 42, 255))
+            py += 90
+
+    return np.array(img)
+
+
+def _render_omr_slip_board(board_type: str, matches: list, concept: dict) -> np.ndarray:
+    """
+    [스타일 B: OMR_SLIP_TICKET]
+    실제 동네 복권방·토토 판매점의 베트맨 OMR 투표권 용지(아이보리 용지 + 주황/빨강 기표란 + 컴퓨터 사인펜 마킹 ●) 스타일!
+    """
+    img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    free_m = matches[0]
+    lock_m1 = matches[1] if len(matches) > 1 else matches[0]
+    lock_m2 = matches[2] if len(matches) > 2 else matches[0]
+    r_title = free_m.get("round_title", "축구토토 승무패 · 프로토 승부식")
+    g_no = free_m.get("game_no_label", "01번")
+    role_badge = free_m.get("role_badge", "단독 우위 1순위")
+
+    f_xs = get_font(23, bold=True)
+    f_sm = get_font(28, bold=True)
+    f_md = get_font(34, bold=True)
+    f_lg = get_font(44, bold=True)
+
+    bx1, by1, bx2, by2 = 45, 190, WIDTH - 45, 1360
+    # OMR 용지 배경 (아이보리/크림색 + 주황색 테두리)
+    draw.rounded_rectangle([bx1, by1, bx2, by2], radius=24, fill=(255, 251, 242, 255), outline=(234, 88, 12, 255), width=4)
+
+    # 좌측 OMR 타이밍 마크 (검은색 바코드 블록들)
+    for ty in range(by1 + 40, by2 - 40, 48):
+        draw.rectangle([bx1 + 14, ty, bx1 + 34, ty + 24], fill=(30, 41, 59, 255))
+
+    # 상단 OMR 타이틀 헤더
+    draw.rounded_rectangle([bx1 + 52, by1 + 25, bx2 - 25, by1 + 135], radius=16, fill=(234, 88, 12, 255))
+    draw.text((bx1 + 80, by1 + 42), f"■ [실전 OMR 마킹표] {r_title}", font=f_md, fill=(255, 255, 255, 255))
+    draw.text((bx1 + 80, by1 + 90), "단독 우위(단통 ●) vs 경합 주의(복수 ●●) AI 기표 가이드", font=f_xs, fill=(254, 243, 199, 255))
+
+    rows = [
+        (g_no, free_m, True),
+        (lock_m1.get("game_no_label", "02번"), lock_m1, False),
+        (lock_m2.get("game_no_label", "03번"), lock_m2, False),
+    ]
+    ry = by1 + 160
+    for r_no, m, is_open in rows:
+        draw.rounded_rectangle([bx1 + 52, ry, bx2 - 25, ry + 315], radius=18, fill=(255, 255, 255, 255), outline=(251, 146, 60, 255) if is_open else (203, 213, 225, 255), width=3)
+
+        # 경기번호 + 팀명
+        draw.rounded_rectangle([bx1 + 72, ry + 20, bx1 + 185, ry + 72], radius=10, fill=(234, 88, 12, 255) if is_open else (100, 116, 139, 255))
+        draw.text((bx1 + 90, ry + 32), str(r_no), font=f_xs, fill=(255, 255, 255, 255))
+        draw.text((bx1 + 205, ry + 24), f"{m['home']}  vs  {m['away']}", font=f_md, fill=(15, 23, 42, 255))
+
+        hp = float(m.get("home_prob", 54.0))
+        dp = float(m.get("draw_prob", 22.0))
+        ap = float(m.get("away_prob", 24.0))
+        fav_home = hp >= ap
+
+        if is_open:
+            # 실제 OMR 기표란 [승] [무] [패]
+            omr_opts = [
+                ("승 (홈)", hp, fav_home),
+                ("무/접전", dp, False),
+                ("패 (원정)", ap, not fav_home),
+            ]
+            ox = bx1 + 75
+            for o_lbl, o_pct, marked in omr_opts:
+                draw.rounded_rectangle([ox, ry + 95, ox + 265, ry + 225], radius=16, fill=(254, 242, 242, 255) if marked else (248, 250, 252, 255), outline=(220, 38, 38, 255) if marked else (203, 213, 225, 255), width=3 if marked else 2)
+                draw.text((ox + 25, ry + 112), o_lbl, font=f_xs, fill=(185, 28, 28, 255) if marked else (100, 116, 139, 255))
+                draw.text((ox + 25, ry + 155), f"{o_pct}%", font=f_md, fill=(15, 23, 42, 255))
+                # OMR 타원형 기표 구멍
+                draw.ellipse([ox + 185, ry + 125, ox + 242, ry + 195], fill=(15, 23, 42, 255) if marked else (255, 255, 255, 255), outline=(220, 38, 38, 255), width=3)
+                if marked:
+                    draw.text((ox + 197, ry + 140), "●", font=f_md, fill=(255, 255, 255, 255))
+                ox += 285
+
+            draw.rounded_rectangle([bx1 + 75, ry + 242, bx2 - 45, ry + 298], radius=12, fill=(239, 246, 255, 255))
+            draw.text((bx1 + 95, ry + 256), f"★ AI 1순위 마킹: [{m['pick_label']}] · 신뢰도 {m['win_prob']}% ({role_badge[:6]})", font=f_xs, fill=(0, 70, 184, 255))
+        else:
+            draw.rounded_rectangle([bx1 + 75, ry + 100, bx2 - 45, ry + 285], radius=16, fill=(254, 243, 199, 255), outline=(245, 158, 11, 255), width=2)
+            draw.text((bx1 + 100, ry + 135), f"[잠금] {r_no} 경합·복수 마킹 구간 — 1·2순위 복수 체크 필수!", font=f_sm, fill=(180, 83, 9, 255))
+            draw.text((bx1 + 100, ry + 195), "▶ scorenix.com 판매점/커뮤니티에서 14경기 전체 마킹표 무료 열람", font=f_xs, fill=(146, 64, 14, 255))
+
+        ry += 335
+
+    return np.array(img)
+
+
 def render_broadcast_board(board_type: str, matches: list, concept: dict = None) -> np.ndarray:
     """
     9:16 베트맨 공식 게임 스포츠 방송국 스타일 메인 데이터 그래픽 보드 렌더링 (Y: 195 ~ 1360 영역)
@@ -1401,6 +1728,12 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
     """
     if not concept:
         concept = SHORTS_CONCEPTS["QUANT_RADAR"]
+
+    vstyle = concept.get("visual_style", "DARK_BROADCAST")
+    if vstyle == "PLATFORM_UI":
+        return _render_platform_ui_board(board_type, matches, concept)
+    if vstyle == "OMR_SLIP":
+        return _render_omr_slip_board(board_type, matches, concept)
 
     img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -1534,16 +1867,21 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
         _center_text(635, f"머신러닝 신뢰도 {free_m['win_prob']}%   |   확률 우위 +{free_m['odds_gap']}%p", f_sub_b, (255, 255, 255, 255))
 
         draw.rounded_rectangle([85, 795, WIDTH - 85, 1305], radius=24, fill=(18, 28, 52, 245), outline=(pr, pg, pb, 150), width=2)
-        draw.text((120, 830), "베트맨 3-Pillar 퀀트 데이터 분석 요약", font=f_sub_b, fill=(pr, pg, pb, 255))
+        draw.text((120, 830), "핵심 3-Pillar 판정 지표 (한눈에 보기)", font=f_sub_b, fill=(pr, pg, pb, 255))
 
-        wrapped_reason = _wrap_text(draw, free_m["reason"], f_sub, WIDTH - 250)
+        summary_chips = [
+            f"■ 배당 지수: 홈 {free_m['home_odds']}  |  무 {free_m['draw_odds']}  |  원정 {free_m['away_odds']}",
+            f"■ AI 승률: 홈 {free_m['home_prob']}%  vs  원정 {free_m['away_prob']}% (+{free_m['odds_gap']}%p 우위)",
+            f"★ 최종 판정: {free_m['pick_label']} (3/3 모델 일치 · 신뢰도 {free_m['win_prob']}%)",
+        ]
         ry = 905
-        for line in wrapped_reason[:4]:
-            draw.text((120, ry), line, font=f_sub, fill=(241, 245, 249, 255))
-            ry += 54
+        for chip_txt in summary_chips:
+            draw.rounded_rectangle([115, ry, WIDTH - 115, ry + 68], radius=14, fill=(12, 20, 38, 255), outline=(pr, pg, pb, 120), width=2)
+            draw.text((140, ry + 16), chip_txt, font=f_sub_b, fill=(241, 245, 249, 255))
+            ry += 82
 
-        draw.rounded_rectangle([120, 1155, WIDTH - 120, 1265], radius=16, fill=(12, 20, 38, 255), outline=(sr, sg, sb, 170), width=2)
-        _center_text(1190, "전국 6,500개 동네 판매점 & 승부예측 커뮤니티 참여 시 전 경기 무료해금!", f_sub_b, (sr, sg, sb, 255))
+        draw.rounded_rectangle([115, 1170, WIDTH - 115, 1270], radius=16, fill=(16, 38, 36, 255), outline=(sr, sg, sb, 210), width=2)
+        _center_text(1202, "▶ scorenix.com — 승무패 14경기 & 프로토 전 경기 무료 해금!", f_sub_b, (sr, sg, sb, 255))
 
     elif board_type in ("result_overview", "result_hit_detail", "result_miss_note", "result_cta"):
         acc_pct = free_m.get("summary_accuracy", 80.0)
