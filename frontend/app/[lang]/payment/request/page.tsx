@@ -10,12 +10,21 @@ import { i18n } from '../../../lib/i18n-config';
 import * as PortOne from '@portone/browser-sdk/v2';
 
 type PayMethodType = 'CARD' | 'EASY_PAY' | 'TRANSFER' | 'VIRTUAL_ACCOUNT';
+type EasyPayProviderType = 'KAKAOPAY' | 'NAVERPAY' | 'TOSSPAY' | 'PAYCO' | 'SAMSUNGPAY';
 
 const PAY_METHODS: { id: PayMethodType; label: string; sub: string; icon: string }[] = [
     { id: 'CARD', label: '신용 / 체크카드', sub: '전 카드사 일반·앱카드', icon: '💳' },
-    { id: 'EASY_PAY', label: '간편결제', sub: '카카오·네이버·토스페이', icon: '⚡' },
+    { id: 'EASY_PAY', label: '간편결제 (페이)', sub: '카카오·네이버·토스·삼성페이', icon: '⚡' },
     { id: 'TRANSFER', label: '실시간 계좌이체', sub: '은행 계좌 즉시 출금', icon: '🏦' },
     { id: 'VIRTUAL_ACCOUNT', label: '가상계좌 (무통장)', sub: '전용 입금계좌 발급', icon: '🏧' },
+];
+
+const EASY_PAY_PROVIDERS: { id: EasyPayProviderType; label: string; badge: string }[] = [
+    { id: 'KAKAOPAY', label: '카카오페이', badge: 'Kakao' },
+    { id: 'NAVERPAY', label: '네이버페이', badge: 'Naver' },
+    { id: 'TOSSPAY', label: '토스페이', badge: 'Toss' },
+    { id: 'SAMSUNGPAY', label: '삼성페이', badge: 'Samsung' },
+    { id: 'PAYCO', label: '페이코', badge: 'PAYCO' },
 ];
 
 const PLANS: Record<string, Record<string, { name: string; orderLabel: string; price: number; features: string[] }>> = {
@@ -140,6 +149,7 @@ function PaymentRequestContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [payMethod, setPayMethod] = useState<PayMethodType>('CARD');
+    const [easyPayProvider, setEasyPayProvider] = useState<EasyPayProviderType>('KAKAOPAY');
     const [buyerName, setBuyerName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [agreedTerms, setAgreedTerms] = useState(false);
@@ -201,7 +211,11 @@ function PaymentRequestContent() {
                 redirectUrl: `${window.location.origin}/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}`,
             };
 
-            if (payMethod === 'VIRTUAL_ACCOUNT') {
+            if (payMethod === 'EASY_PAY') {
+                paymentReq.easyPay = {
+                    easyPayProvider,
+                };
+            } else if (payMethod === 'VIRTUAL_ACCOUNT') {
                 paymentReq.virtualAccount = {
                     accountExpiry: { validHours: 24 },
                 };
@@ -210,11 +224,7 @@ function PaymentRequestContent() {
             const response = await PortOne.requestPayment(paymentReq);
 
             if (response?.code) {
-                if (response.code === 'FAILURE_TYPE_PG') {
-                    throw new Error(response.message || '결제 승인 중 오류가 발생했습니다.');
-                }
-                setLoading(false);
-                return;
+                throw new Error(response.message || `결제가 취소되었거나 호출에 실패했습니다. (${response.code})`);
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -307,6 +317,34 @@ function PaymentRequestContent() {
                                 );
                             })}
                         </div>
+
+                        {/* KG이니시스 V2 간편결제 선택 시 필수: easyPayProvider 선택 */}
+                        {payMethod === 'EASY_PAY' && (
+                            <div className="mt-2 p-3 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2">
+                                <p className="text-[11px] font-extrabold text-[#0046b8]">
+                                    ⚡ 간편결제 서비스 선택 (KG이니시스 V2 필수)
+                                </p>
+                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                                    {EASY_PAY_PROVIDERS.map((ep) => {
+                                        const isEpActive = easyPayProvider === ep.id;
+                                        return (
+                                            <button
+                                                key={ep.id}
+                                                type="button"
+                                                onClick={() => setEasyPayProvider(ep.id)}
+                                                className={`py-2 px-2 rounded-lg text-center text-xs font-black border transition cursor-pointer ${
+                                                    isEpActive
+                                                        ? 'bg-[#0046b8] text-white border-[#0046b8] shadow-xs'
+                                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                                                }`}
+                                            >
+                                                {ep.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* ── 구매자 정보 (KG이니시스 필수) ── */}
@@ -389,7 +427,11 @@ function PaymentRequestContent() {
                                     결제창 호출 중...
                                 </>
                             ) : (
-                                `💳 ${formatPrice(finalAmount)} 결제하기 (${PAY_METHODS.find((p) => p.id === payMethod)?.label})`
+                                `💳 ${formatPrice(finalAmount)} 결제하기 (${
+                                    payMethod === 'EASY_PAY'
+                                        ? EASY_PAY_PROVIDERS.find((ep) => ep.id === easyPayProvider)?.label || '간편결제'
+                                        : PAY_METHODS.find((p) => p.id === payMethod)?.label
+                                })`
                             )}
                         </button>
                     )}
