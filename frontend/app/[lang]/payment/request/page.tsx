@@ -152,12 +152,15 @@ function PaymentRequestContent() {
     const [easyPayProvider, setEasyPayProvider] = useState<EasyPayProviderType>('KAKAOPAY');
     const [buyerName, setBuyerName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [agreedTerms, setAgreedTerms] = useState(false);
-    const [agreedAge, setAgreedAge] = useState(false);
+    const [agreedTerms, setAgreedTerms] = useState(true);
+    const [agreedAge, setAgreedAge] = useState(true);
+    const nameInputRef = React.useRef<HTMLInputElement>(null);
+    const phoneInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (user) {
-            if (user.full_name && !buyerName) setBuyerName(user.full_name);
+            const defaultName = user.full_name || user.nickname || '';
+            if (defaultName && !buyerName) setBuyerName(defaultName);
             if (user.phone && !phoneNumber) {
                 const digits = user.phone.replace(/\D/g, '');
                 if (digits.length >= 10) {
@@ -183,9 +186,20 @@ function PaymentRequestContent() {
 
     const handleCheckout = async () => {
         if (!user) { setError(t.errorLogin || '로그인이 필요합니다.'); return; }
-        if (!buyerName.trim()) { setError('구매자명을 입력해주세요.'); return; }
-        if (!isPhoneValid) { setError('휴대폰 번호를 정확히 입력해주세요.'); return; }
-        if (!agreedTerms || !agreedAge) { setError(t.errorAgree || '모든 필수 동의 항목에 체크해주세요.'); return; }
+        if (!buyerName.trim()) {
+            setError('구매자 성명을 입력해 주세요.');
+            nameInputRef.current?.focus();
+            return;
+        }
+        if (!isPhoneValid) {
+            setError('휴대폰 번호(10~11자리 숫자)를 정확히 입력해 주세요.');
+            phoneInputRef.current?.focus();
+            return;
+        }
+        if (!agreedTerms || !agreedAge) {
+            setError(t.errorAgree || '아래 필수 이용약관 및 만 19세 이상 동의 항목에 체크해 주세요.');
+            return;
+        }
 
         setLoading(true);
         setError('');
@@ -355,9 +369,10 @@ function PaymentRequestContent() {
                                 👤 구매자 성명 <span className="text-rose-600">*</span>
                             </label>
                             <input
+                                ref={nameInputRef}
                                 type="text"
                                 value={buyerName}
-                                onChange={(e) => setBuyerName(e.target.value)}
+                                onChange={(e) => { setBuyerName(e.target.value); if (error) setError(''); }}
                                 placeholder="홍길동"
                                 className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-slate-50 text-slate-900 border border-slate-300 focus:outline-none focus:border-[#0046b8] focus:bg-white"
                             />
@@ -367,9 +382,10 @@ function PaymentRequestContent() {
                                 📱 휴대폰 번호 <span className="text-rose-600">*</span>
                             </label>
                             <input
+                                ref={phoneInputRef}
                                 type="tel"
                                 value={phoneNumber}
-                                onChange={(e) => setPhoneNumber(formatPhone(e.target.value))}
+                                onChange={(e) => { setPhoneNumber(formatPhone(e.target.value)); if (error) setError(''); }}
                                 placeholder="010-0000-0000"
                                 className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-slate-50 text-slate-900 border focus:outline-none focus:border-[#0046b8] focus:bg-white"
                                 style={{
@@ -418,7 +434,7 @@ function PaymentRequestContent() {
                     ) : (
                         <button
                             onClick={handleCheckout}
-                            disabled={loading || !buyerName.trim() || !isPhoneValid || !agreedTerms || !agreedAge}
+                            disabled={loading}
                             className="w-full py-3.5 rounded-xl bg-[#0046b8] hover:bg-[#00358e] !text-white text-sm font-black disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
                         >
                             {loading ? (
