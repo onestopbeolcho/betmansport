@@ -136,19 +136,26 @@ function PaymentRequestContent() {
     const [agreedAge, setAgreedAge] = useState(true);
     const nameInputRef = React.useRef<HTMLInputElement>(null);
     const phoneInputRef = React.useRef<HTMLInputElement>(null);
+    const didAutoFillRef = React.useRef(false);
 
     React.useEffect(() => {
-        if (user) {
-            const defaultName = user.full_name || user.nickname || '';
-            if (defaultName && !buyerName) setBuyerName(defaultName);
-            if (user.phone && !phoneNumber) {
-                const digits = user.phone.replace(/\D/g, '');
-                if (digits.length >= 10) {
-                    setPhoneNumber(`${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`);
+        if (user && !didAutoFillRef.current) {
+            didAutoFillRef.current = true;
+            const rawName = (user.full_name || '').trim();
+            // 전화번호/숫자 형태가 아닌 실제 이름일 때만 1회 초기값 세팅
+            if (rawName && !/^[0-9+\-\s]+$/.test(rawName)) {
+                setBuyerName(rawName);
+            }
+            const rawPhone = user.phone || (/^[0-9+\-\s]{10,}$/.test(user.nickname || '') ? user.nickname : '') || '';
+            if (rawPhone) {
+                const digits = rawPhone.replace(/\D/g, '');
+                const cleanDigits = digits.startsWith('8210') ? '0' + digits.slice(2) : digits;
+                if (cleanDigits.length >= 10) {
+                    setPhoneNumber(`${cleanDigits.slice(0, 3)}-${cleanDigits.slice(3, 7)}-${cleanDigits.slice(7, 11)}`);
                 }
             }
         }
-    }, [user, buyerName, phoneNumber]);
+    }, [user]);
 
     const formatPhone = (value: string) => {
         const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -275,6 +282,8 @@ function PaymentRequestContent() {
                             <input
                                 ref={nameInputRef}
                                 type="text"
+                                name="buyer_name"
+                                autoComplete="name"
                                 value={buyerName}
                                 onChange={(e) => { setBuyerName(e.target.value); if (error) setError(''); }}
                                 placeholder="홍길동"
@@ -288,6 +297,8 @@ function PaymentRequestContent() {
                             <input
                                 ref={phoneInputRef}
                                 type="tel"
+                                name="buyer_tel"
+                                autoComplete="tel"
                                 value={phoneNumber}
                                 onChange={(e) => { setPhoneNumber(formatPhone(e.target.value)); if (error) setError(''); }}
                                 placeholder="010-0000-0000"
