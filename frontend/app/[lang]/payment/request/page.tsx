@@ -9,24 +9,6 @@ import { useDictionary } from '../../../context/DictionaryContext';
 import { i18n } from '../../../lib/i18n-config';
 import * as PortOne from '@portone/browser-sdk/v2';
 
-type PayMethodType = 'CARD' | 'EASY_PAY' | 'TRANSFER' | 'VIRTUAL_ACCOUNT';
-type EasyPayProviderType = 'KAKAOPAY' | 'NAVERPAY' | 'TOSSPAY' | 'PAYCO' | 'SAMSUNGPAY';
-
-const PAY_METHODS: { id: PayMethodType; label: string; sub: string; icon: string }[] = [
-    { id: 'CARD', label: '신용 / 체크카드', sub: '전 카드사 일반·앱카드', icon: '💳' },
-    { id: 'EASY_PAY', label: '간편결제 (페이)', sub: '카카오·네이버·토스·삼성페이', icon: '⚡' },
-    { id: 'TRANSFER', label: '실시간 계좌이체', sub: '은행 계좌 즉시 출금', icon: '🏦' },
-    { id: 'VIRTUAL_ACCOUNT', label: '가상계좌 (무통장)', sub: '전용 입금계좌 발급', icon: '🏧' },
-];
-
-const EASY_PAY_PROVIDERS: { id: EasyPayProviderType; label: string; badge: string }[] = [
-    { id: 'KAKAOPAY', label: '카카오페이', badge: 'Kakao' },
-    { id: 'NAVERPAY', label: '네이버페이', badge: 'Naver' },
-    { id: 'TOSSPAY', label: '토스페이', badge: 'Toss' },
-    { id: 'SAMSUNGPAY', label: '삼성페이', badge: 'Samsung' },
-    { id: 'PAYCO', label: '페이코', badge: 'PAYCO' },
-];
-
 const PLANS: Record<string, Record<string, { name: string; orderLabel: string; price: number; features: string[] }>> = {
     ko: {
         round_pass: {
@@ -148,8 +130,6 @@ function PaymentRequestContent() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [payMethod, setPayMethod] = useState<PayMethodType>('CARD');
-    const [easyPayProvider, setEasyPayProvider] = useState<EasyPayProviderType>('KAKAOPAY');
     const [buyerName, setBuyerName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [agreedTerms, setAgreedTerms] = useState(true);
@@ -209,36 +189,24 @@ function PaymentRequestContent() {
             const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || '';
             const paymentId = `SPI_${planId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-            const paymentReq: any = {
+            const response = await PortOne.requestPayment({
                 storeId,
                 channelKey,
                 paymentId,
                 orderName: plan.orderLabel,
                 totalAmount: finalAmount,
                 currency: currency === 'USD' ? 'CURRENCY_USD' : 'CURRENCY_KRW',
-                payMethod,
+                payMethod: 'CARD',
                 customer: {
                     fullName: buyerName.trim() || undefined,
                     email: user.email || undefined,
                     phoneNumber: phoneDigits || undefined,
                 },
                 redirectUrl: `${window.location.origin}/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}`,
-            };
-
-            if (payMethod === 'EASY_PAY') {
-                paymentReq.easyPay = {
-                    easyPayProvider,
-                };
-            } else if (payMethod === 'VIRTUAL_ACCOUNT') {
-                paymentReq.virtualAccount = {
-                    accountExpiry: { validHours: 24 },
-                };
-            }
-
-            const response = await PortOne.requestPayment(paymentReq);
+            });
 
             if (response?.code) {
-                throw new Error(response.message || `결제가 취소되었거나 호출에 실패했습니다. (${response.code})`);
+                throw new Error(response.message || `결제가 취소되었거나 실패했습니다. (${response.code})`);
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -255,12 +223,7 @@ function PaymentRequestContent() {
 
             window.location.href = `/${currentLang}/payment/complete?paymentId=${paymentId}&planId=${planId}&status=success`;
         } catch (err: unknown) {
-            const rawMsg = err instanceof Error ? err.message : (t.errorGeneral || '결제 처리 중 오류가 발생했습니다.');
-            if (rawMsg.includes('결제가능한 카드가 없습니다') || rawMsg.includes('[01]')) {
-                setError(`${rawMsg} — 현재 일부 카드사 가맹점 심사가 진행 중일 수 있습니다. 아래 결제수단에서 [간편결제] 또는 [실시간 계좌이체 / 가상계좌]를 선택해 결제를 진행해 주세요.`);
-            } else {
-                setError(rawMsg);
-            }
+            setError(err instanceof Error ? err.message : (t.errorGeneral || '결제 처리 중 오류가 발생했습니다.'));
             setLoading(false);
         }
     };
@@ -301,65 +264,6 @@ function PaymentRequestContent() {
                             </li>
                         ))}
                     </ul>
-
-                    {/* ── 결제 수단 선택 ── */}
-                    <div className="space-y-2.5 pt-4 border-t border-slate-200">
-                        <div className="flex items-center justify-between">
-                            <p className="text-xs font-extrabold text-slate-800">결제 수단 선택</p>
-                            <span className="text-[11px] text-slate-500">카드 오류 시 계좌이체·간편결제 가능</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            {PAY_METHODS.map((pm) => {
-                                const active = payMethod === pm.id;
-                                return (
-                                    <button
-                                        key={pm.id}
-                                        type="button"
-                                        onClick={() => setPayMethod(pm.id)}
-                                        className={`p-3 rounded-xl text-left border transition cursor-pointer ${
-                                            active
-                                                ? 'bg-blue-50 border-2 border-[#0046b8] text-slate-900 shadow-xs'
-                                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-black">{pm.icon} {pm.label}</span>
-                                            {active && <span className="text-[10px] font-black text-[#0046b8]">✓ 선택</span>}
-                                        </div>
-                                        <div className="text-[11px] text-slate-500 mt-0.5">{pm.sub}</div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* KG이니시스 V2 간편결제 선택 시 필수: easyPayProvider 선택 */}
-                        {payMethod === 'EASY_PAY' && (
-                            <div className="mt-2 p-3 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2">
-                                <p className="text-[11px] font-extrabold text-[#0046b8]">
-                                    ⚡ 간편결제 서비스 선택 (KG이니시스 V2 필수)
-                                </p>
-                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                                    {EASY_PAY_PROVIDERS.map((ep) => {
-                                        const isEpActive = easyPayProvider === ep.id;
-                                        return (
-                                            <button
-                                                key={ep.id}
-                                                type="button"
-                                                onClick={() => setEasyPayProvider(ep.id)}
-                                                className={`py-2 px-2 rounded-lg text-center text-xs font-black border transition cursor-pointer ${
-                                                    isEpActive
-                                                        ? 'bg-[#0046b8] text-white border-[#0046b8] shadow-xs'
-                                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                                }`}
-                                            >
-                                                {ep.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
                     {/* ── 구매자 정보 (KG이니시스 필수) ── */}
                     <div className="space-y-3 pt-4 border-t border-slate-200">
@@ -443,11 +347,7 @@ function PaymentRequestContent() {
                                     결제창 호출 중...
                                 </>
                             ) : (
-                                `💳 ${formatPrice(finalAmount)} 결제하기 (${
-                                    payMethod === 'EASY_PAY'
-                                        ? EASY_PAY_PROVIDERS.find((ep) => ep.id === easyPayProvider)?.label || '간편결제'
-                                        : PAY_METHODS.find((p) => p.id === payMethod)?.label
-                                })`
+                                `💳 ${formatPrice(finalAmount)} 결제하기`
                             )}
                         </button>
                     )}
