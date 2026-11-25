@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 
-from app.models.user_db import get_user_by_email, create_user, get_user_by_id
+from app.models.user_db import get_user_by_email, create_user, get_user_by_id, update_user
 from app.core import security
+from app.core.deps import is_admin_user
 from pydantic import BaseModel, EmailStr
 import logging
 
@@ -99,16 +100,25 @@ async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
 @router.get("/me", response_model=UserInfo)
 async def get_me(current_user: dict = Depends(get_current_user)):
     """Get current user info from JWT token."""
+    role = current_user.get("role", "free") or "free"
+    tier = current_user.get("tier", "free") or "free"
+    if is_admin_user(current_user):
+        if role != "admin":
+            role = "admin"
+            try:
+                await update_user(current_user["id"], {"role": "admin"})
+            except Exception:
+                pass
     return UserInfo(
         id=current_user["id"],
         email=current_user["email"],
         nickname=current_user.get("nickname", current_user["email"].split("@")[0]),
-        role=current_user.get("role", "free"),
-        tier=current_user.get("tier", "free"),
+        role=role,
+        tier=tier,
         subscription_plan=current_user.get("subscription_plan", "") or "",
         subscription_expires_at=current_user.get("subscription_expires_at", "") or "",
-        full_name=current_user.get("full_name", ""),
-        phone=current_user.get("phone", ""),
+        full_name=current_user.get("full_name", "") or "",
+        phone=current_user.get("phone", "") or "",
     )
 
 
@@ -165,4 +175,3 @@ async def google_login(req: GoogleAuthRequest):
         "access_token": security.create_access_token(user["id"]),
         "token_type": "bearer",
     }
-

@@ -27,6 +27,15 @@ export default function Navbar() {
     }
     const t = dict?.nav || {};
 
+    const isAdmin = Boolean(
+        user && (
+            user.role === 'admin' ||
+            user.tier === 'admin' ||
+            ['miso87254591@gmail.com', 'miso4591@naver.com', 'phone_821087254591@scorenix.phone', 'scorenix@gmail.com'].includes((user.email || '').toLowerCase()) ||
+            (user.phone && user.phone.replace(/\D/g, '').endsWith('1087254591'))
+        )
+    );
+
     const navLinks = [
         { href: `/${currentLang}`, label: "발매 게임별 AI 리포트", icon: "📋", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 통합 리포트" },
         { href: `/${currentLang}/analysis`, label: "베트맨 7-Factor 전력DB", icon: "📊", desc: "회차별 경기번호순 7-Factor 전술 & 배당흐름 비교" },
@@ -176,6 +185,16 @@ export default function Navbar() {
                         </div>
                     )}
 
+                    {!loading && isAdmin && (
+                        <a
+                            href="/admin"
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 !text-amber-300 border border-amber-400/50 text-xs font-black transition shadow-xs whitespace-nowrap flex items-center gap-1"
+                        >
+                            <span>⚙️</span>
+                            <span>통합 어드민</span>
+                        </a>
+                    )}
+
                     {!loading && user && <NotificationBell />}
 
                     {!loading && (
@@ -201,6 +220,11 @@ export default function Navbar() {
                                             <span className="mt-1.5 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#0046b8] uppercase tracking-wider">{user.role}</span>
                                         </div>
                                         <div className="py-1">
+                                            {isAdmin && (
+                                                <a href="/admin" className="flex items-center gap-2 px-4 py-2.5 text-sm font-black text-amber-900 bg-amber-50 hover:bg-amber-100 transition-all" onClick={() => setProfileOpen(false)}>
+                                                    <span className="text-base">⚙️</span> 통합 관리자 센터 (모바일/PC)
+                                                </a>
+                                            )}
                                             <a href={`/${currentLang}/mypage`} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-all" onClick={() => setProfileOpen(false)}>
                                                 <span className="text-base">💼</span> 마이페이지 / 구독관리
                                             </a>
@@ -259,6 +283,11 @@ export default function Navbar() {
                         ))}
 
                         <div className="border-t border-slate-200 pt-2 mt-2 flex flex-col gap-2">
+                            {isAdmin && (
+                                <a href="/admin" className="block text-center py-2.5 text-sm font-black rounded-xl bg-slate-900 !text-amber-300 border border-amber-400/50" onClick={() => setMobileOpen(false)}>
+                                    ⚙️ 통합 관리자 센터 (가입자/결제 실시간 현황)
+                                </a>
+                            )}
                             <a href={`/${currentLang}/login?mode=store`} className="block text-center py-2.5 text-sm font-extrabold rounded-xl bg-amber-50 border border-amber-300 text-amber-900" onClick={() => setMobileOpen(false)}>
                                 🏪 판매점(점주) 전용 로그인 (PC전광판/인쇄)
                             </a>
@@ -280,6 +309,18 @@ export default function Navbar() {
             {/* 모바일 전용 1-Tap 빠른 메뉴 바 (햄버거 메뉴 열지 않고도 핵심 메뉴 즉시 이동) */}
             <div className="lg:hidden border-t border-slate-200 bg-slate-50/90 overflow-x-auto no-scrollbar">
                 <div className="flex items-center gap-1 px-3 py-1.5 min-w-max">
+                    {isAdmin && (
+                        <a
+                            href="/admin"
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-black whitespace-nowrap transition ${
+                                pathname.startsWith('/admin')
+                                    ? 'bg-slate-900 !text-amber-300 shadow-2xs'
+                                    : 'bg-slate-900 !text-amber-300 border border-amber-400/50'
+                            }`}
+                        >
+                            ⚙️ 통합 어드민
+                        </a>
+                    )}
                     {navLinks.map((link) => {
                         const cleanPath = link.href.split('#')[0];
                         const isActive = cleanPath === `/${currentLang}`

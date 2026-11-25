@@ -59,12 +59,38 @@ async def require_current_user(token: str = Depends(oauth2_scheme)) -> str:
         )
 
 
+ADMIN_WHITELIST_EMAILS = {
+    "miso87254591@gmail.com",
+    "miso4591@naver.com",
+    "phone_821087254591@scorenix.phone",
+    "scorenix@gmail.com",
+}
+ADMIN_WHITELIST_PHONES = {
+    "01087254591",
+    "+821087254591",
+    "821087254591",
+}
+
+
+def is_admin_user(user: dict) -> bool:
+    if not user:
+        return False
+    if str(user.get("role", "")).lower() == "admin" or str(user.get("tier", "")).lower() == "admin":
+        return True
+    email = str(user.get("email", "")).strip().lower()
+    if email in ADMIN_WHITELIST_EMAILS:
+        return True
+    phone = str(user.get("phone", "")).replace("-", "").replace(" ", "").strip()
+    if phone in ADMIN_WHITELIST_PHONES:
+        return True
+    return False
+
+
 async def require_admin(user_id: str = Depends(require_current_user)) -> str:
     """
-    Admin Guard — JWT에서 user_id 추출 후 Firestore에서 role 확인.
-    role이 'admin'이 아니면 403 Forbidden.
+    Admin Guard — JWT에서 user_id 추출 후 Firestore에서 role 또는 화이트리스트 확인.
     """
-    from app.models.user_db import get_user_by_id
+    from app.models.user_db import get_user_by_id, update_user
 
     user = await get_user_by_id(user_id)
     if not user:
@@ -73,11 +99,16 @@ async def require_admin(user_id: str = Depends(require_current_user)) -> str:
             detail="User not found",
         )
 
-    if user.get("role") != "admin":
+    if not is_admin_user(user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="관리자 권한이 필요합니다.",
         )
 
-    return user_id
+    if user.get("role") != "admin":
+        try:
+            await update_user(user_id, {"role": "admin"})
+        except Exception:
+            pass
 
+    return user_id
