@@ -138,6 +138,25 @@ function PaymentRequestContent() {
     const phoneInputRef = React.useRef<HTMLInputElement>(null);
     const didAutoFillRef = React.useRef(false);
 
+    const normalizeKoreanPhoneDigits = (raw: string) => {
+        let digits = raw.replace(/\D/g, '');
+        if (digits.startsWith('0082')) {
+            digits = '0' + digits.slice(4);
+        } else if (digits.startsWith('082')) {
+            digits = '0' + digits.slice(3);
+        } else if (digits.startsWith('82')) {
+            digits = '0' + digits.slice(2);
+        }
+        return digits.slice(0, 11);
+    };
+
+    const formatPhone = (value: string) => {
+        const digits = normalizeKoreanPhoneDigits(value);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+        return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+    };
+
     React.useEffect(() => {
         if (user && !didAutoFillRef.current) {
             didAutoFillRef.current = true;
@@ -148,22 +167,16 @@ function PaymentRequestContent() {
             }
             const rawPhone = user.phone || (/^[0-9+\-\s]{10,}$/.test(user.nickname || '') ? user.nickname : '') || '';
             if (rawPhone) {
-                const digits = rawPhone.replace(/\D/g, '');
-                const cleanDigits = digits.startsWith('8210') ? '0' + digits.slice(2) : digits;
-                if (cleanDigits.length >= 10) {
-                    setPhoneNumber(`${cleanDigits.slice(0, 3)}-${cleanDigits.slice(3, 7)}-${cleanDigits.slice(7, 11)}`);
+                const formatted = formatPhone(rawPhone);
+                if (formatted.replace(/\D/g, '').length >= 10) {
+                    setPhoneNumber(formatted);
                 }
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
-    const formatPhone = (value: string) => {
-        const digits = value.replace(/\D/g, '').slice(0, 11);
-        if (digits.length <= 3) return digits;
-        if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-        return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-    };
-    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    const phoneDigits = normalizeKoreanPhoneDigits(phoneNumber);
     const isPhoneValid = phoneDigits.length === 10 || phoneDigits.length === 11;
 
     const formatPrice = (amount: number) => {
