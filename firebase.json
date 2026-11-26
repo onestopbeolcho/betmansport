@@ -38,6 +38,13 @@
         }
       },
       {
+        "source": "/ko/round/**",
+        "run": {
+          "serviceId": "scorenix-backend",
+          "region": "asia-northeast3"
+        }
+      },
+      {
         "source": "/ko/match/**",
         "run": {
           "serviceId": "scorenix-backend",

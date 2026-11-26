@@ -82,6 +82,7 @@ SEO_EXEMPT_PREFIXES = (
     "/robots.txt",
     "/ko/date",
     "/ko/match",
+    "/ko/round",
     "/ko/seo-check",
     "/api/seo",
     "/api/odds",

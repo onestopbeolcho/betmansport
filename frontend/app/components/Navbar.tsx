@@ -39,6 +39,7 @@ export default function Navbar() {
     const navLinks = [
         { href: `/${currentLang}`, label: "발매 게임별 AI 리포트", icon: "📋", desc: "승무패 · 승5패 · 스페셜N · 프로토 승부식 통합 리포트" },
         { href: `/${currentLang}/analysis`, label: "베트맨 7-Factor 전력DB", icon: "📊", desc: "회차별 경기번호순 7-Factor 전술 & 배당흐름 비교" },
+        { href: `/${currentLang}/archive/history`, label: "AI 실제 적중 성적표", icon: "🎯", desc: "ESPN 실제 종료 스코어 대조 적중 결과 & AI 오답노트" },
         { href: `/${currentLang}/stores/`, label: "전국 6,277 판매점 백과", icon: "🗺️", desc: "시·군·구별 공식 프로토 판매점 도로명주소 & 간판 대조표" },
         { href: `/${currentLang}/store/print-report/current`, label: "사장님 무료 A4 벽보", icon: "🖨️", desc: "오프라인 매장 전용 A4 원클릭 분석지 평생 무료 인쇄" },
         { href: `/${currentLang}/pricing`, label: "개인 모바일 패스 안내", icon: "💎", desc: "집에서 편하게 보는 개인 월 무제한 패스 & 1회차 열람권" },

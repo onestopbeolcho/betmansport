@@ -167,6 +167,24 @@ async def dynamic_sitemap():
             f"  </url>"
         )
 
+    # 베트맨 발매 회차별 SEO 랜딩페이지 (/ko/round/G011_260065, /ko/round/G101_260129 등)
+    try:
+        from app.services.proto_round_service import get_betman_games_catalog
+        cat = await get_betman_games_catalog()
+        for g in (cat.get("games") or []):
+            gkey = g.get("game_key")
+            if gkey:
+                urls_xml.append(
+                    f"  <url>\n"
+                    f"    <loc>https://scorenix.com/ko/round/{gkey}</loc>\n"
+                    f"    <lastmod>{today_str}</lastmod>\n"
+                    f"    <changefreq>hourly</changefreq>\n"
+                    f"    <priority>0.98</priority>\n"
+                    f"  </url>"
+                )
+    except Exception as _re:
+        logger.warning(f"Sitemap betman rounds error: {_re}")
+
     # 날짜별 허브 페이지 (/ko/date/YYYY-MM-DD)
     unique_dates = sorted({m["date"] for m in matches})
     for d_str in unique_dates:
@@ -812,3 +830,199 @@ async def ssr_seo_verification_dashboard():
 </body>
 </html>"""
     return HTMLResponse(content=html_doc, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/ko/round/{round_id}", response_class=HTMLResponse)
+@router.get("/ko/round/{round_id}/", response_class=HTMLResponse)
+async def ssr_betman_round_seo_page(round_id: str):
+    """
+    [네이버·구글 베트맨 회차 검색어 독점 SSR 페이지]
+    '축구토토 승무패 68회차 분석', '프로토 승부식 135회차 예상', '농구토토 승5패 35회차' 등
+    베트맨 발매 회차 키워드를 타겟팅하여 전체 경기 일정, 해외배당 내재 확률, Dixon-Coles 기대득점(xG)을 SSR HTML로 제공.
+    """
+    from app.services.proto_round_service import build_proto_round_report, get_betman_games_catalog
+
+    clean_rid = re.sub(r"[^A-Za-z0-9_]", "", round_id) or "current"
+    report = await build_proto_round_report(round_id=None if clean_rid == "current" else clean_rid)
+    catalog = await get_betman_games_catalog()
+    all_games = catalog.get("games") or []
+
+    round_title = report.get("round_title") or "베트맨 발매 회차"
+    game_name = report.get("game_name") or "프로토·승무패"
+    disp_no = report.get("display_round_no") or ""
+    game_key = report.get("game_key") or clean_rid
+    matches = report.get("matches") or []
+    match_count = len(matches)
+
+    title = f"{round_title} 전 경기 AI 승률 예측·해외배당 흐름·복수 마킹 분석 ({match_count}경기) | 스코어닉스"
+    desc = (
+        f"[베트맨 {round_title} 공식 대상 경기 총정리] {game_name} {disp_no}회차 {match_count}경기의 "
+        f"글로벌 해외배당 마진 제거 승률, 포아송 기대득점(xG), 대중 투표 쏠림 함정 주의보 및 OMR 마킹 전략을 확인하세요."
+    )
+    canonical = f"https://scorenix.com/ko/round/{game_key}"
+
+    other_rounds_html = "".join(
+        f'<a href="/ko/round/{g["game_key"]}" class="round-chip {"active" if g["game_key"] == game_key else ""}">'
+        f'{html.escape(g.get("round_title") or g.get("game_name") or g["game_key"])}</a>'
+        for g in all_games[:12]
+    )
+
+    rows_html = []
+    faq_entities = []
+    for idx, m in enumerate(matches):
+        gno_label = m.get("game_no_label") or f"{idx+1:02d}번"
+        home_ko = m.get("home_ko") or m.get("betman_home") or "홈팀"
+        away_ko = m.get("away_ko") or m.get("betman_away") or "원정팀"
+        b_home = m.get("betman_home") or home_ko
+        b_away = m.get("betman_away") or away_ko
+        lg = m.get("league") or "주요리그"
+        kickoff = m.get("kickoff_display") or ""
+        hp = m.get("ai_home_prob", 45)
+        dp = m.get("ai_draw_prob", 25)
+        ap = m.get("ai_away_prob", 30)
+        detail = m.get("ai_detail_report") or {}
+        pills = detail.get("metric_pills") or []
+        summary_line = detail.get("tactical_summary") or m.get("trap_reason") or ""
+
+        is_unlocked_sample = (idx < 3)
+        pick_label = m.get("ai_pick_label") or "AI 분석 완료"
+        conf = m.get("ai_confidence", 82)
+
+        if idx < 5:
+            faq_entities.append({
+                "@type": "Question",
+                "name": f"{round_title} {gno_label} {b_home} vs {b_away} 경기의 AI 예측 승률은?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": f"{round_title} {gno_label} {home_ko} vs {away_ko} ({lg}) 경기는 3-Pillar 정량 모델 기준 홈승 {hp}%, 무승부 {dp}%, 원정승 {ap}%로 분석되었습니다. {summary_line}",
+                },
+            })
+
+        pills_html = "".join(f'<span class="pill">{html.escape(str(p))}</span>' for p in pills[:3])
+        if is_unlocked_sample:
+            pick_box = f'<span class="pick-badge">추천: {html.escape(pick_label)} (신뢰도 {conf}%)</span>'
+            summary_box = f'<p class="summary">{html.escape(summary_line)}</p>'
+        else:
+            pick_box = '<a href="/ko" class="lock-badge">🔒 주력·복수 마킹 열기 →</a>'
+            summary_box = '<p class="summary locked">🔒 경합 구간 복수 마킹 및 이변 주의보는 스코어닉스 메인 대시보드 또는 오프라인 판매점 비치본에서 확인하실 수 있습니다.</p>'
+
+        rows_html.append(f"""
+        <article class="match-card">
+          <div class="card-top">
+            <div>
+              <span class="gno">{html.escape(gno_label)}</span>
+              <span class="lg">{html.escape(lg)} · {html.escape(kickoff)}</span>
+            </div>
+            {pick_box}
+          </div>
+          <h3 class="teams">{html.escape(b_home)} <span class="vs">vs</span> {html.escape(b_away)}
+            <span class="full-ko">({html.escape(home_ko)} vs {html.escape(away_ko)})</span>
+          </h3>
+          <div class="prob-bar-wrap">
+            <div class="prob-nums">
+              <span style="color:#0046b8;">홈승 {hp}%</span>
+              {f'<span style="color:#b45309;">무/접전 {dp}%</span>' if dp > 0 else ''}
+              <span style="color:#334155;">원정승 {ap}%</span>
+            </div>
+            <div class="bar">
+              <div style="width:{hp}%;background:#0046b8;"></div>
+              <div style="width:{dp}%;background:#f59e0b;"></div>
+              <div style="width:{ap}%;background:#475569;"></div>
+            </div>
+          </div>
+          <div class="pills">{pills_html}</div>
+          {summary_box}
+        </article>
+        """)
+
+    json_ld = [
+        {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": title,
+            "description": desc,
+            "author": {"@type": "Organization", "name": "Scorenix 스포츠데이터연구소"},
+            "publisher": {"@type": "Organization", "name": "Scorenix", "url": "https://scorenix.com"},
+            "mainEntityOfPage": canonical,
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faq_entities,
+        },
+    ]
+
+    html_doc = f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{html.escape(title)}</title>
+  <meta name="description" content="{html.escape(desc)}" />
+  <meta name="keywords" content="{html.escape(round_title)}, {html.escape(game_name)} {html.escape(str(disp_no))}회차, {html.escape(round_title)} 분석, {html.escape(round_title)} 예상, 베트맨 토토 분석, 프로토 승부식 AI 예측, 축구토토 승무패 14경기 마킹, 스코어닉스" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="{canonical}" />
+  <meta property="og:title" content="{html.escape(title)}" />
+  <meta property="og:description" content="{html.escape(desc)}" />
+  <meta property="og:url" content="{canonical}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Scorenix 스포츠데이터연구소" />
+  <script type="application/ld+json">{json.dumps(json_ld, ensure_ascii=False)}</script>
+  <style>
+    * {{ box-sizing:border-box; margin:0; padding:0; }}
+    body {{ background:#f4f6f9; color:#0f172a; font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif; line-height:1.6; }}
+    .topbar {{ background:#003996; color:#fff; padding:10px 16px; font-size:12px; font-weight:700; text-align:center; }}
+    .wrap {{ max-width:920px; margin:0 auto; padding:24px 14px 64px; }}
+    .hero {{ background:#fff; border:1px solid #cbd5e1; border-top:4px solid #0046b8; border-radius:16px; padding:22px; margin-bottom:18px; }}
+    .badge {{ display:inline-block; background:#eff6ff; color:#0046b8; border:1px solid #bfdbfe; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:800; margin-bottom:8px; }}
+    h1 {{ font-size:22px; font-weight:900; color:#0f172a; line-height:1.35; margin-bottom:8px; }}
+    .sub {{ font-size:13px; color:#475569; margin-bottom:14px; }}
+    .round-chips {{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }}
+    .round-chip {{ padding:7px 12px; border-radius:10px; background:#fff; border:1px solid #cbd5e1; color:#334155; font-size:12px; font-weight:800; text-decoration:none; }}
+    .round-chip.active {{ background:#0046b8; color:#fff; border-color:#0046b8; }}
+    .cta-banner {{ background:linear-gradient(135deg,#0f172a,#003996); color:#fff; border-radius:16px; padding:18px 20px; margin-bottom:18px; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; }}
+    .cta-btn {{ background:#facc15; color:#0f172a; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:900; text-decoration:none; }}
+    .match-card {{ background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:12px; }}
+    .card-top {{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }}
+    .gno {{ background:#0f172a; color:#fff; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:900; margin-right:6px; }}
+    .lg {{ font-size:12px; color:#64748b; font-weight:700; }}
+    .pick-badge {{ background:#0046b8; color:#fff; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:900; }}
+    .lock-badge {{ background:#fef3c7; color:#92400e; border:1px solid #fcd34d; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:900; text-decoration:none; }}
+    .teams {{ font-size:16px; font-weight:900; color:#0f172a; margin-bottom:8px; }}
+    .vs {{ color:#94a3b8; font-weight:400; font-size:13px; margin:0 4px; }}
+    .full-ko {{ font-size:12px; color:#64748b; font-weight:600; margin-left:4px; }}
+    .prob-bar-wrap {{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:8px 10px; margin-bottom:8px; }}
+    .prob-nums {{ display:flex; justify-content:space-between; font-size:11px; font-weight:800; margin-bottom:4px; }}
+    .bar {{ display:flex; height:8px; border-radius:99px; overflow:hidden; background:#e2e8f0; }}
+    .pills {{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }}
+    .pill {{ background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:700; }}
+    .summary {{ font-size:12px; font-weight:700; color:#1e293b; }}
+    .summary.locked {{ color:#64748b; }}
+  </style>
+</head>
+<body>
+  <div class="topbar">SCORENIX 스포츠데이터연구소 · 베트맨 공식 발매 회차 3-Pillar 7-Factor 정량 분석 리포트</div>
+  <div class="wrap">
+    <div class="round-chips">{other_rounds_html}</div>
+    <section class="hero">
+      <span class="badge">📊 베트맨 공식 발매 회차 실시간 연동</span>
+      <h1>{html.escape(round_title)} 전 경기 AI 승률 예측 &amp; 복수 마킹 분석표 ({match_count}경기)</h1>
+      <p class="sub">{html.escape(desc)}</p>
+    </section>
+
+    <div class="cta-banner">
+      <div>
+        <div style="font-size:15px;font-weight:900;">🔓 {html.escape(round_title)} 14경기 예산별 OMR 마킹표 &amp; 킬러픽 전체 열람</div>
+        <div style="font-size:12px;color:#cbd5e1;margin-top:2px;">단통(축) 고정 경기와 투마킹 방어 경기를 스마트폰 대시보드에서 즉시 확인하세요.</div>
+      </div>
+      <a href="/ko?round={html.escape(game_key)}" class="cta-btn">⚡ 실시간 대화형 마킹표 열기 →</a>
+    </div>
+
+    <section>
+      {"".join(rows_html)}
+    </section>
+  </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html_doc, headers={"Cache-Control": "public, max-age=300"})
+

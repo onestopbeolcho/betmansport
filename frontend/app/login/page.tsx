@@ -23,6 +23,7 @@ function LoginContent() {
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect');
     const initialMode = searchParams.get('mode') === 'store' ? 'store' : 'member';
+    const initialTab: LoginTab = searchParams.get('tab') === 'phone' ? 'phone' : 'email';
 
     const { login, googleLogin, sendPhoneCode, verifyPhoneCode } = useAuth();
     const dict = useDictionarySafe();
@@ -31,7 +32,7 @@ function LoginContent() {
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
 
     const [loginMode, setLoginMode] = useState<LoginMode>(initialMode);
-    const [tab, setTab] = useState<LoginTab>('email');
+    const [tab, setTab] = useState<LoginTab>(initialTab);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');

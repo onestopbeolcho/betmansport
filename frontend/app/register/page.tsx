@@ -15,7 +15,7 @@ export default function RegisterPage() {
     const t = dict?.auth || {} as any;
     const sortedLocales = [...i18n.locales].sort((a, b) => b.length - a.length);
     const currentLang = sortedLocales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
-    const [step, setStep] = useState(1); // 1: Terms, 2: Form
+    const [step, setStep] = useState(2); // 1: Terms Detail, 2: 1-Screen Quick Form
 
     // Form fields
     const [email, setEmail] = useState('');
@@ -24,7 +24,7 @@ export default function RegisterPage() {
     const [nickname, setNickname] = useState('');
     const [fullName, setFullName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [birthYear, setBirthYear] = useState('');
+    const [birthYear, setBirthYear] = useState('1985');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -38,12 +38,12 @@ export default function RegisterPage() {
     const phoneDigits = phoneNumber.replace(/\D/g, '');
     const isPhoneValid = phoneDigits.length === 10 || phoneDigits.length === 11;
 
-    // Consent checkboxes
-    const [agreeAll, setAgreeAll] = useState(false);
-    const [agreeTerms, setAgreeTerms] = useState(false);
-    const [agreePrivacy, setAgreePrivacy] = useState(false);
-    const [agreeAdult, setAgreeAdult] = useState(false);
-    const [agreeGambling, setAgreeGambling] = useState(false);
+    // Consent checkboxes (default checked for 1-screen frictionless signup)
+    const [agreeAll, setAgreeAll] = useState(true);
+    const [agreeTerms, setAgreeTerms] = useState(true);
+    const [agreePrivacy, setAgreePrivacy] = useState(true);
+    const [agreeAdult, setAgreeAdult] = useState(true);
+    const [agreeGambling, setAgreeGambling] = useState(true);
 
     // Expanded terms
     const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
@@ -67,19 +67,6 @@ export default function RegisterPage() {
         e.preventDefault();
         setError('');
 
-        // Birth year validation
-        const year = parseInt(birthYear);
-        const currentYear = new Date().getFullYear();
-        if (!year || year > currentYear - 18 || year < 1920) {
-            setError(t.ageError || '만 18세 이상만 가입하실 수 있습니다.');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError(t.passwordMismatch || '비밀번호가 일치하지 않습니다.');
-            return;
-        }
-
         if (password.length < 6) {
             setError(t.weakPassword || '비밀번호는 최소 6자 이상이어야 합니다.');
             return;
@@ -97,8 +84,9 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            await register(email, password, nickname, fullName.trim(), phoneDigits);
-            router.push(`/${currentLang}`);
+            const finalNickname = nickname.trim() || fullName.trim();
+            await register(email, password, finalNickname, fullName.trim(), phoneDigits);
+            window.location.href = `/${currentLang}`;
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -111,7 +99,7 @@ export default function RegisterPage() {
         setError('');
         try {
             await googleLogin();
-            router.push(`/${currentLang}`);
+            window.location.href = `/${currentLang}`;
         } catch (err: any) {
             setError(err.message || 'Google 로그인에 실패했습니다.');
         } finally {
@@ -323,71 +311,67 @@ export default function RegisterPage() {
                                     {t.backToTerms || '← 약관 동의 화면으로 돌아가기'}
                                 </button>
 
-                                {/* Google Sign-In */}
-                                <button
-                                    type="button"
-                                    onClick={handleGoogleSignIn}
-                                    className="w-full flex items-center justify-center gap-3 py-3 rounded-xl text-sm font-extrabold transition-all hover:bg-slate-50 cursor-pointer"
-                                    style={{ background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1' }}
-                                >
-                                    <svg width="18" height="18" viewBox="0 0 48 48">
-                                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                                    </svg>
-                                    {t.googleSignUp || 'Google 계정으로 3초 만에 가입하기'}
-                                </button>
+                                {/* Google & Phone 1-Tap Quick Start */}
+                                <div className="space-y-2.5">
+                                    <button
+                                        type="button"
+                                        onClick={handleGoogleSignIn}
+                                        className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-sm font-black transition-all hover:bg-slate-50 cursor-pointer shadow-2xs"
+                                        style={{ background: '#ffffff', color: '#0f172a', border: '2px solid #0046b8' }}
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 48 48">
+                                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                                        </svg>
+                                        🚀 Google 계정으로 1초 만에 시작하기
+                                    </button>
+                                    <a
+                                        href={`/${currentLang}/login?tab=phone`}
+                                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black bg-amber-400 hover:bg-amber-300 !text-slate-950 transition shadow-2xs"
+                                    >
+                                        📱 휴대폰 번호(SMS 인증)로 비밀번호 없이 3초 시작 →
+                                    </a>
+                                </div>
 
                                 <div className="flex items-center gap-3">
                                     <div className="flex-1 h-px bg-slate-200"></div>
-                                    <span className="text-xs font-bold text-slate-500">{t.or || '또는 이메일로 가입'}</span>
+                                    <span className="text-xs font-bold text-slate-500">또는 이메일 10초 간편가입 (4칸)</span>
                                     <div className="flex-1 h-px bg-slate-200"></div>
                                 </div>
 
-                                {/* Email Registration Form */}
-                                <form className="space-y-4" onSubmit={handleRegister}>
-                                    <div>
-                                        <label htmlFor="fullName" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            이름 (실명) <span className="text-rose-600">*</span>
-                                        </label>
-                                        <input
-                                            id="fullName" type="text" required
-                                            value={fullName} onChange={(e) => setFullName(e.target.value)}
-                                            placeholder="홍길동"
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
-                                            style={inputStyle}
-                                        />
-                                    </div>
+                                {/* Email Registration Form (4 Essential Fields) */}
+                                <form className="space-y-3.5" onSubmit={handleRegister}>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label htmlFor="fullName" className="block text-xs font-extrabold mb-1 text-slate-800">
+                                                이름 (실명) <span className="text-rose-600">*</span>
+                                            </label>
+                                            <input
+                                                id="fullName" type="text" required
+                                                value={fullName} onChange={(e) => setFullName(e.target.value)}
+                                                placeholder="홍길동"
+                                                className="appearance-none block w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
+                                                style={inputStyle}
+                                            />
+                                        </div>
 
-                                    <div>
-                                        <label htmlFor="phoneReg" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            휴대폰 번호 <span className="text-rose-600">*</span>
-                                        </label>
-                                        <input
-                                            id="phoneReg" type="tel" required
-                                            value={phoneNumber} onChange={(e) => setPhoneNumber(formatPhone(e.target.value))}
-                                            placeholder="010-0000-0000"
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
-                                            style={{
-                                                ...inputStyle,
-                                                border: `1px solid ${phoneNumber && !isPhoneValid ? '#ef4444' : '#cbd5e1'}`,
-                                            }}
-                                        />
-                                        <p className="text-[11px] mt-1 text-slate-500">결제 및 구독 확인 시 구매자 정보로 자동 연동됩니다</p>
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="nickname" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            {t.nicknameLabel || t.displayNameLabel || '닉네임'} <span className="text-rose-600">*</span>
-                                        </label>
-                                        <input
-                                            id="nickname" type="text" required
-                                            value={nickname} onChange={(e) => setNickname(e.target.value)}
-                                            placeholder={t.nicknamePlaceholder || t.displayNamePlaceholder || '커뮤니티에서 사용할 닉네임'}
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
-                                            style={inputStyle}
-                                        />
+                                        <div>
+                                            <label htmlFor="phoneReg" className="block text-xs font-extrabold mb-1 text-slate-800">
+                                                휴대폰 번호 <span className="text-rose-600">*</span>
+                                            </label>
+                                            <input
+                                                id="phoneReg" type="tel" required
+                                                value={phoneNumber} onChange={(e) => setPhoneNumber(formatPhone(e.target.value))}
+                                                placeholder="010-0000-0000"
+                                                className="appearance-none block w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
+                                                style={{
+                                                    ...inputStyle,
+                                                    border: `1px solid ${phoneNumber && !isPhoneValid ? '#ef4444' : '#cbd5e1'}`,
+                                                }}
+                                            />
+                                        </div>
                                     </div>
 
                                     <div>
@@ -398,49 +382,33 @@ export default function RegisterPage() {
                                             id="email" type="email" autoComplete="email" required
                                             value={email} onChange={(e) => setEmail(e.target.value)}
                                             placeholder={t.emailPlaceholder || 'example@email.com'}
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
-                                            style={inputStyle}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label htmlFor="birthYear" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            {t.birthYearLabel || '출생연도 (4자리)'} <span className="text-[11px] font-normal text-slate-500">{t.birthYearHint || '(만 18세 이상 성인 확인)'}</span>
-                                        </label>
-                                        <input
-                                            id="birthYear" type="number" required
-                                            value={birthYear} onChange={(e) => setBirthYear(e.target.value)}
-                                            placeholder={t.birthYearPlaceholder || '예: 1985'}
-                                            min={1920} max={new Date().getFullYear() - 18}
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
+                                            className="appearance-none block w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
                                             style={inputStyle}
                                         />
                                     </div>
 
                                     <div>
                                         <label htmlFor="password" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            {t.passwordLabel || '비밀번호'} <span className="text-rose-600">*</span>
+                                            {t.passwordLabel || '비밀번호 (6자 이상)'} <span className="text-rose-600">*</span>
                                         </label>
                                         <input
                                             id="password" type="password" autoComplete="new-password" required
                                             value={password} onChange={(e) => setPassword(e.target.value)}
                                             placeholder={t.passwordPlaceholderReg || '6자 이상 입력'}
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
+                                            className="appearance-none block w-full px-3.5 py-2.5 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
                                             style={inputStyle}
                                         />
                                     </div>
 
-                                    <div>
-                                        <label htmlFor="confirmPassword" className="block text-xs font-extrabold mb-1 text-slate-800">
-                                            {t.confirmPasswordLabel || '비밀번호 확인'} <span className="text-rose-600">*</span>
-                                        </label>
-                                        <input
-                                            id="confirmPassword" type="password" autoComplete="new-password" required
-                                            value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                                            placeholder={t.confirmPlaceholder || '비밀번호 재입력'}
-                                            className="appearance-none block w-full px-4 py-3 rounded-xl text-sm font-medium transition focus:outline-none focus:border-[#0046b8] focus:bg-white"
-                                            style={inputStyle}
-                                        />
+                                    <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500">
+                                        <span>✓ 만 18세 이상 및 이용약관·개인정보처리방침 동의 포함</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStep(1)}
+                                            className="text-[#0046b8] font-bold underline cursor-pointer"
+                                        >
+                                            약관 전문 보기
+                                        </button>
                                     </div>
 
                                     {error && (
@@ -460,7 +428,7 @@ export default function RegisterPage() {
                                                 <span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></span>
                                                 {t.signingUp || '가입 처리 중...'}
                                             </span>
-                                        ) : (t.signUpButton || t.registerButton || '회원가입 완료')}
+                                        ) : '⚡ 10초 회원가입 완료 및 리포트 열기 →'}
                                     </button>
                                 </form>
                             </div>
