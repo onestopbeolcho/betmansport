@@ -79,7 +79,8 @@ const FAQ_ITEMS = [
 
 export default function PricingPage() {
     const pathname = usePathname() || '';
-    useAuth();
+    const { user } = useAuth();
+    const isRoundPassHolder = user?.subscription_plan === 'round_pass';
     const currentLang = i18n.locales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
     const [openFaq, setOpenFaq] = useState<number | null>(0);
     const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
@@ -226,15 +227,19 @@ export default function PricingPage() {
                                         ⚡ 3,900원으로 이번 회차 즉시 열기
                                     </a>
                                 ) : isPro ? (
-                                    <a href={`/${currentLang}/payment/request?plan=pro&billing=${billing}`}
+                                    <a href={`/${currentLang}/payment/request?plan=pro&billing=${billing}${isRoundPassHolder ? '&upgrade=round_credit' : ''}`}
                                         className="btn-primary mt-8 block w-full py-3.5 text-sm font-black text-center">
-                                        📱 월 29,900원 개인 무제한 패스 시작
+                                        {isRoundPassHolder && billing === 'monthly'
+                                            ? '🎁 3,900원 차감 → 차액 26,000원 월 무제한 전환'
+                                            : '📱 월 29,900원 개인 무제한 패스 시작'}
                                     </a>
                                 ) : (
-                                    <a href={`/${currentLang}/payment/request?plan=vip&billing=${billing}`}
+                                    <a href={`/${currentLang}/payment/request?plan=vip&billing=${billing}${isRoundPassHolder ? '&upgrade=round_credit' : ''}`}
                                         className="mt-8 block w-full py-3.5 text-sm font-black text-center rounded-xl transition-all hover:opacity-90"
                                         style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)', color: '#fff' }}>
-                                        👑 월 39,000원 VIP 프로 퀀트 시작
+                                        {isRoundPassHolder && billing === 'monthly'
+                                            ? '🎁 3,900원 차감 → 차액 35,100원 VIP 퀀트 전환'
+                                            : '👑 월 39,000원 VIP 프로 퀀트 시작'}
                                     </a>
                                 )}
                             </div>

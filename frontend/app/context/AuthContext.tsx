@@ -9,6 +9,8 @@ interface User {
     nickname: string;
     role: string;
     tier?: string;
+    subscription_plan?: string;
+    subscription_expires_at?: string;
     full_name?: string;
     phone?: string;
 }
@@ -111,11 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const googleLogin = async () => {
-        // 1. Firebase Google popup sign-in
         const result = await signInWithPopup(auth, googleProvider);
         const idToken = await result.user.getIdToken();
 
-        // 2. Send Firebase ID token to backend → get JWT
         const res = await fetch(`${apiUrl}/api/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -134,7 +134,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const sendPhoneCode = async (phone: string, recaptchaContainerId: string) => {
-        // Clean up previous verifier
         if (recaptchaVerifier) {
             try { recaptchaVerifier.clear(); } catch { /* ignore */ }
         }
@@ -149,7 +148,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const credential = await confirmationResult.confirm(code);
         const idToken = await credential.user.getIdToken();
 
-        // Send Firebase ID token to backend (reuse google endpoint)
         const res = await fetch(`${apiUrl}/api/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

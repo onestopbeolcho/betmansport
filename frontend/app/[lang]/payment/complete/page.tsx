@@ -170,6 +170,25 @@ function PaymentCompleteContent() {
                             </div>
 
                             <div className="space-y-2.5 pt-2">
+                                {planId === 'round_pass' && (
+                                    <div className="p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 text-left space-y-2 mb-3">
+                                        <div className="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-950 text-[10px] font-black">
+                                            🎁 1회차 구매 회원 전용 100% 페이백 특전
+                                        </div>
+                                        <p className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                                            방금 결제하신 3,900원을 100% 전액 차감해 드립니다!
+                                        </p>
+                                        <p className="text-[11px] text-slate-700 leading-relaxed">
+                                            이번 회차 이용 기간 내에 월 무제한 패스(정상가 29,900원 · 한 달 약 14회차)로 전환하시면 <strong>차액 26,000원</strong>만으로 30일 내내 모든 회차를 무제한 열람하실 수 있습니다.
+                                        </p>
+                                        <Link
+                                            href={`/${currentLang}/payment/request?plan=pro&upgrade=round_credit`}
+                                            className="block w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 !text-amber-300 text-xs font-black text-center transition"
+                                        >
+                                            ⚡ 차액 26,000원으로 30일 무제한 패스 업그레이드 →
+                                        </Link>
+                                    </div>
+                                )}
                                 <Link
                                     href={`/${currentLang}`}
                                     className="block w-full py-3.5 rounded-xl bg-[#0046b8] hover:bg-[#00358e] !text-white text-sm font-black text-center transition shadow-xs"

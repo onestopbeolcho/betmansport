@@ -556,6 +556,37 @@ export default function ProtoRoundDashboard() {
                 </div>
             )}
 
+            {/* 1회차 열람권(3,900원) 구매 고객 전용: 3,900원 100% 페이백 차감 → 차액 26,000원 월 무제한 패스 업그레이드 배너 */}
+            {user?.subscription_plan === "round_pass" && (
+                <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-[#003996] to-slate-900 text-white p-4 sm:p-5 border-2 border-amber-400 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[11px] font-black">
+                            🎁 1회차 열람권 회원 전용 · 3,900원 100% 전액 차감 특전
+                        </div>
+                        <h3 className="text-sm sm:text-base font-black text-white">
+                            이미 결제하신 3,900원을 전액 빼드립니다! <span className="text-amber-300">차액 26,000원</span>으로 30일 전 회차 무제한 패스로 업그레이드하세요
+                        </h3>
+                        <p className="text-xs text-blue-100">
+                            한 달(약 14회차) 매번 3,900원씩 결제하면 54,600원 → 지금 차액만 결제 시 30일간 축구 승무패·농구 승5패·프로토 전 회차 무제한 열람!
+                        </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                        <Link
+                            href="/ko/payment/request?plan=pro&upgrade=round_credit"
+                            className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 !text-slate-950 text-xs font-black text-center shadow-sm transition whitespace-nowrap"
+                        >
+                            ⚡ 차액 26,000원으로 월 무제한 전환 →
+                        </Link>
+                        <Link
+                            href="/ko/payment/request?plan=vip&upgrade=round_credit"
+                            className="px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 !text-white border border-white/25 text-xs font-extrabold text-center transition whitespace-nowrap"
+                        >
+                            👑 VIP 퀀트 전환 (차액 35,100원)
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* 1. 베트맨 공식 운영 게임 선택 섹션 (핵심 4개 게임 우선 노출 + 더보기 접기/펼치기) */}
             <section className="rounded-xl bg-white border border-slate-200 border-t-4 border-t-[#0046b8] p-4 sm:p-5 shadow-xs space-y-3.5">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">

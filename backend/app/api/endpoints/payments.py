@@ -154,12 +154,12 @@ async def verify_payment(
         if status != "PAID":
             raise HTTPException(400, f"결제가 완료되지 않았습니다. (상태: {status})")
 
-        # 결제 금액 검증
+        # 결제 금액 검증 (1회차 3,900원 결제 회원의 차액 26,000원/35,100원 월 패스 업그레이드 포함)
         paid_amount = payment_data.get("amount", {}).get("total", 0)
         monthly_price = plan["price"]
         annual_price = round(monthly_price * 0.8) * 12  # 20% 할인 * 12개월
         usd_price = 299 if req.plan_id == "round_pass" else (2199 if req.plan_id == "pro" else 2900)
-        valid_amounts = [monthly_price, annual_price, usd_price, 1500, 3900, 9900, 29900, 39000, 49000, 55000, 105000]
+        valid_amounts = [monthly_price, annual_price, usd_price, 1500, 3900, 9900, 26000, 29900, 35100, 39000, 49000, 55000, 105000]
         if paid_amount not in valid_amounts:
             logger.error(
                 f"금액 불일치: 결제={paid_amount}, 허용={valid_amounts}"
@@ -167,19 +167,28 @@ async def verify_payment(
             raise HTTPException(400, "결제 금액이 일치하지 않습니다.")
         is_annual = (paid_amount == annual_price and req.plan_id != "round_pass")
 
-        # 유저 tier 업그레이드
+        # 유저 tier 업그레이드 (+ 결제 시 입력한 실명/전화번호도 회원 정보에 함께 보존)
+        customer_info = payment_data.get("customer", {}) or {}
+        buyer_name = customer_info.get("name") or customer_info.get("fullName") or ""
+        buyer_phone = customer_info.get("phoneNumber") or ""
+
         default_days = plan.get("duration_days", 30)
         sub_days = 365 if is_annual else default_days
         expires_at = (datetime.utcnow() + timedelta(days=sub_days)).isoformat()
-        await update_user(user_id, {
+        user_updates = {
             "tier": plan["tier"],
             "subscription_plan": req.plan_id,
             "subscription_expires_at": expires_at,
             "subscription_cancel_requested": False,
             "portone_payment_id": req.payment_id,
-        })
+        }
+        if buyer_name:
+            user_updates["full_name"] = buyer_name
+        if buyer_phone:
+            user_updates["phone"] = buyer_phone
+        await update_user(user_id, user_updates)
 
-        # 결제 기록 저장
+        # 결제 기록 저장 (실제 PG 구매자 성명 및 전화번호 함께 기록)
         await create_payment({
             "user_id": user_id,
             "plan_id": req.plan_id,
@@ -187,6 +196,8 @@ async def verify_payment(
             "currency": plan["currency"],
             "portone_payment_id": req.payment_id,
             "payment_method": payment_data.get("method", {}).get("type", "CARD"),
+            "buyer_name": buyer_name,
+            "buyer_phone": buyer_phone,
             "status": "completed",
         })
 
@@ -378,7 +389,7 @@ async def portone_webhook(request: Request):
 
             monthly_price = plan["price"]
             annual_price = round(monthly_price * 0.8) * 12
-            valid_amounts = [monthly_price, annual_price, 1500, 3900, 9900, 29900, 39000, 49000]
+            valid_amounts = [monthly_price, annual_price, 1500, 3900, 9900, 26000, 29900, 35100, 39000, 49000]
             if paid_amount not in valid_amounts:
                 logger.error(f"⚠️ 금액 불일치 (웹훅): 결제={paid_amount}, 플랜={plan['price']}")
                 return {"received": True}
@@ -394,8 +405,10 @@ async def portone_webhook(request: Request):
                 logger.info(f"✅ 이미 처리된 결제 (중복 웹훅 무시): {payment_id}")
                 return {"received": True}
 
-            customer = payment_data.get("customer", {})
+            customer = payment_data.get("customer", {}) or {}
             user_email = customer.get("email", "")
+            buyer_name = customer.get("name") or customer.get("fullName") or ""
+            buyer_phone = customer.get("phoneNumber") or ""
 
             if user_email:
                 from app.models.user_db import get_user_by_email
@@ -406,13 +419,18 @@ async def portone_webhook(request: Request):
                         sub_days = plan.get("duration_days", 30)
                         expires_at = (datetime.utcnow() + timedelta(days=sub_days)).isoformat()
 
-                        await update_user(user_id, {
+                        user_updates = {
                             "tier": plan["tier"],
                             "subscription_plan": plan_id,
                             "subscription_expires_at": expires_at,
                             "subscription_cancel_requested": False,
                             "portone_payment_id": payment_id,
-                        })
+                        }
+                        if buyer_name:
+                            user_updates["full_name"] = buyer_name
+                        if buyer_phone:
+                            user_updates["phone"] = buyer_phone
+                        await update_user(user_id, user_updates)
 
                         await create_payment({
                             "user_id": user_id,
@@ -421,6 +439,8 @@ async def portone_webhook(request: Request):
                             "currency": plan["currency"],
                             "portone_payment_id": payment_id,
                             "payment_method": payment_data.get("method", {}).get("type", "CARD"),
+                            "buyer_name": buyer_name,
+                            "buyer_phone": buyer_phone,
                             "status": "completed",
                             "source": "webhook",
                         })

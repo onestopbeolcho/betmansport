@@ -111,15 +111,25 @@ function PaymentRequestContent() {
     const pathname = usePathname() || '';
     const planId = searchParams.get('plan') || 'pro';
     const billingParam = searchParams.get('billing') === 'annual' ? 'annual' : 'monthly';
+    const upgradeParam = searchParams.get('upgrade') === 'round_credit';
     const currentLang = i18n.locales.find((l) => pathname.startsWith(`/${l}/`) || pathname === `/${l}`) || i18n.defaultLocale;
     const currency = currentLang === 'en' ? 'USD' : 'KRW';
     const planSet = PLANS[currentLang] || PLANS.ko;
     const plan = planSet[planId] || planSet.pro;
     const { user, token } = useAuth();
 
-    const finalAmount = billingParam === 'annual' && currency === 'KRW' && planId !== 'round_pass'
+    const hasRoundPassCredit = Boolean(
+        currency === 'KRW' &&
+        (planId === 'pro' || planId === 'vip') &&
+        billingParam !== 'annual' &&
+        (upgradeParam || user?.subscription_plan === 'round_pass')
+    );
+
+    const baseAmount = billingParam === 'annual' && currency === 'KRW' && planId !== 'round_pass'
         ? Math.round(plan.price * 0.8) * 12
         : plan.price;
+
+    const finalAmount = hasRoundPassCredit ? Math.max(baseAmount - 3900, 1000) : baseAmount;
 
     let dict;
     try {
@@ -268,13 +278,33 @@ function PaymentRequestContent() {
                     <div className="text-center p-4 rounded-xl bg-blue-50/70 border border-blue-200">
                         <p className="text-xs font-extrabold text-[#0046b8]">선택한 디지털 리포트 이용권</p>
                         <p className="text-lg font-black mt-1 text-slate-900">{plan.name}</p>
+                        {hasRoundPassCredit && (
+                            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-black">
+                                🎁 1회차 열람권 결제금액 3,900원 전액 차감 적용! (정상가 {formatPrice(baseAmount)})
+                            </div>
+                        )}
                         <p className="text-3xl font-black mt-2 text-[#0046b8]">
+                            {hasRoundPassCredit && (
+                                <span className="text-base font-bold text-slate-400 line-through mr-2">
+                                    {formatPrice(baseAmount)}
+                                </span>
+                            )}
                             {formatPrice(finalAmount)}
                             <span className="text-sm font-bold text-slate-500 ml-1">
-                                {planId === 'round_pass' ? '/ 1회차 (단건)' : billingParam === 'annual' ? '/ 연 (20% 할인)' : '/ 월'}
+                                {planId === 'round_pass' ? '/ 1회차 (단건)' : billingParam === 'annual' ? '/ 연 (20% 할인)' : '/ 30일 무제한'}
                             </span>
                         </p>
                     </div>
+
+                    {/* 3,900원 단건 결제창에서 바로 월 무제한 패스로 유도하는 업셀 박스 */}
+                    {planId === 'round_pass' && currency === 'KRW' && (
+                        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div className="text-xs text-amber-950 leading-snug">
+                                💡 <strong>잠깐! 한 달(12~15회차) 내내 보실 예정인가요?</strong><br />
+                                먼저 3,900원으로 체험해 보세요! 이용 중 언제든 <strong>3,900원을 100% 차감(차액 26,000원)</strong>받고 월 무제한 패스로 전환할 수 있습니다.
+                            </div>
+                        </div>
+                    )}
 
                     <ul className="space-y-2 text-xs sm:text-sm text-slate-700">
                         {plan.features.map((f, i) => (

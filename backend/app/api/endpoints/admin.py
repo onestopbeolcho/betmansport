@@ -113,8 +113,13 @@ async def get_admin_overview(limit: int = 200, admin_id: str = Depends(require_a
         uid = p_copy.get("user_id")
         u_info = user_map.get(uid, {})
         p_copy["user_email"] = u_info.get("email") or p_copy.get("user_email") or "-"
-        p_copy["user_nickname"] = u_info.get("nickname") or u_info.get("full_name") or "-"
-        p_copy["user_phone"] = u_info.get("phone") or "-"
+        real_buyer_name = p_copy.get("buyer_name") or u_info.get("full_name") or ""
+        nickname = u_info.get("nickname") or ""
+        if real_buyer_name and nickname and real_buyer_name != nickname:
+            p_copy["user_nickname"] = f"{real_buyer_name} ({nickname})"
+        else:
+            p_copy["user_nickname"] = real_buyer_name or nickname or "-"
+        p_copy["user_phone"] = p_copy.get("buyer_phone") or u_info.get("phone") or "-"
 
         portone_id = p_copy.get("portone_payment_id") or p_copy.get("id")
         status = str(p_copy.get("status", "")).lower()
