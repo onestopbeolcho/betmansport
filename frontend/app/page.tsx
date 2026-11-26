@@ -1,16 +1,20 @@
-
 "use client";
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function RootPage() {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    const actualPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+    if (actualPath && actualPath !== '/' && actualPath !== '/index.html') {
+      return;
+    }
     const browserLang = navigator.language?.split('-')[0]?.toLowerCase();
     const locale = browserLang === 'en' ? 'en' : 'ko';
     router.replace(`/${locale}`);
-  }, [router]);
+  }, [router, pathname]);
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>

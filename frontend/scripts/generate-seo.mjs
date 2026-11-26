@@ -10,10 +10,35 @@
 const SITE_URL = 'https://scorenix.com';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://scorenix-backend-n5dv44kdaa-du.a.run.app';
 
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync, copyFileSync } from 'fs';
 import { join } from 'path';
 
 const OUT_DIR = join(process.cwd(), 'out');
+
+function ensureDirectoryIndexHtml(dir) {
+    if (!existsSync(dir)) return 0;
+    let copied = 0;
+    const entries = readdirSync(dir);
+    for (const entry of entries) {
+        const fullPath = join(dir, entry);
+        const st = statSync(fullPath);
+        if (st.isDirectory()) {
+            copied += ensureDirectoryIndexHtml(fullPath);
+        } else if (entry.endsWith('.html') && entry !== 'index.html' && entry !== '_not-found.html') {
+            const baseName = entry.slice(0, -5);
+            const targetDir = join(dir, baseName);
+            const targetIndex = join(targetDir, 'index.html');
+            if (!existsSync(targetDir)) {
+                mkdirSync(targetDir, { recursive: true });
+            }
+            if (!existsSync(targetIndex)) {
+                copyFileSync(fullPath, targetIndex);
+                copied++;
+            }
+        }
+    }
+    return copied;
+}
 
 function ensureDir(dir) {
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
@@ -637,6 +662,10 @@ async function main() {
     // 5. Robots.txt
     writeFileSync(join(OUT_DIR, 'robots.txt'), generateRobots(), 'utf-8');
     console.log('🤖 robots.txt 생성');
+
+    // 6. Ensure every <route>.html also has <route>/index.html for Firebase Hosting directory resolution
+    const mirroredCount = ensureDirectoryIndexHtml(OUT_DIR);
+    console.log(`📂 디렉토리 index.html ${mirroredCount}개 동기화 완료 (cleanUrls + trailingSlash 완벽 호환)`);
 
     console.log('\n🎉 SEO 파일 생성 완료!');
 }
