@@ -53,7 +53,7 @@ interface AccuracyData {
 export default function AdminPage() {
     const { user, loading: authLoading } = useAuth();
     const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'simulator' | 'accuracy' | 'notifications'>('users');
-    const API = process.env.NEXT_PUBLIC_API_URL || '';
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://scorenix-backend-n5dv44kdaa-du.a.run.app';
 
     const [summary, setSummary] = useState<OverviewSummary>({
         total_users: 0,

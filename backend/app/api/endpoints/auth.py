@@ -87,8 +87,20 @@ async def register(user_in: UserCreate):
 
 @router.post("/login/access-token", response_model=Token)
 async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await get_user_by_email(form_data.username)
-    if not user or not security.verify_password(form_data.password, user["hashed_password"]):
+    email_input = (form_data.username or "").strip()
+    user = await get_user_by_email(email_input)
+    if not user:
+        raise HTTPException(status_code=400, detail="등록되지 않은 이메일입니다. 회원가입 또는 Google/휴대폰 로그인을 이용해 주세요.")
+
+    hashed_pw = user.get("hashed_password") or user.get("password_hash") or ""
+    if not hashed_pw:
+        provider = user.get("provider") or user.get("auth_provider") or "Google"
+        raise HTTPException(
+            status_code=400,
+            detail=f"이 계정은 [{provider} 간편로그인]으로 가입된 계정입니다. 위 [Google 계정으로 1초 로그인] 또는 [휴대폰 번호 로그인] 버튼을 눌러주세요.",
+        )
+
+    if not security.verify_password(form_data.password, hashed_pw):
         raise HTTPException(status_code=400, detail="이메일 또는 비밀번호가 일치하지 않습니다.")
 
     return {

@@ -90,10 +90,11 @@ function LoginContent() {
     }, [searchParams]);
 
     const navigateAfterLogin = () => {
-        if (redirectTo) {
-            router.push(redirectTo);
+        const target = redirectTo || `/${currentLang}`;
+        if (typeof window !== 'undefined') {
+            window.location.href = target;
         } else {
-            router.push(`/${currentLang}`);
+            router.push(target);
         }
     };
 
@@ -119,13 +120,13 @@ function LoginContent() {
                 localStorage.setItem('scorenix_store_mode', 'true');
                 localStorage.setItem('scorenix_round_pass_unlocked', 'true');
                 localStorage.setItem('scorenix_store_kiosk', 'true');
-                router.push(`/${currentLang}`);
+                window.location.href = `/${currentLang}`;
             } else {
                 localStorage.setItem('scorenix_store_kiosk', 'false');
-                router.push(`/${currentLang}/store/print-report/current`);
+                window.location.href = `/${currentLang}/store/print-report/current`;
             }
         } catch {
-            router.push(`/${currentLang}`);
+            window.location.href = `/${currentLang}`;
         }
     };
 

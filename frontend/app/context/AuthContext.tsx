@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://scorenix-backend-n5dv44kdaa-du.a.run.app';
 
     // Load user from token on mount
     const fetchMe = useCallback(async (t: string) => {
