@@ -888,36 +888,58 @@ async def build_graded_recent_results(days_back: int = 2, limit: int = 12) -> di
         else:
             hp, dp, ap = 48.0, 22.0, 30.0
 
-        if hp >= ap and hp >= dp:
-            ai_rec = "HOME"
-            ai_pick_label = f"{home_ko} 승 우세"
-            ai_prob = hp
-        elif ap > hp and ap >= dp:
-            ai_rec = "AWAY"
-            ai_pick_label = f"{away_ko} 승 우세"
-            ai_prob = ap
+        # 1순위(Primary) 및 2순위(Secondary / 복수마킹) 산출
+        candidates = [("HOME", f"{home_ko} 승", hp), ("AWAY", f"{away_ko} 승", ap)]
+        if dp > 0:
+            candidates.append(("DRAW", "무승부", dp))
+        probs_ranked = sorted(candidates, key=lambda x: x[2], reverse=True)
+
+        primary_code, primary_label_short, primary_prob = probs_ranked[0]
+        secondary_code, secondary_label_short, secondary_prob = probs_ranked[1]
+
+        # 1·2순위 격차 기반 주력 단통 vs 복수 마킹(투마킹 이변 방어) 구간 분류
+        prob_gap = round(primary_prob - secondary_prob, 1)
+        is_dual_recommended = (dp > 0 and prob_gap < 22.0) or (dp == 0 and prob_gap < 15.0)
+
+        ai_rec = primary_code
+        ai_prob = primary_prob
+        if is_dual_recommended:
+            ai_pick_label = f"1순위 {primary_label_short} · 복수({secondary_label_short})"
+            marking_tier = "DUAL"
         else:
-            ai_rec = "DRAW"
-            ai_pick_label = "무승부 경합"
-            ai_prob = dp
+            ai_pick_label = f"주력 단통: {primary_label_short}"
+            marking_tier = "SINGLE"
 
         h_score = int(m.get("home_score", 0))
         a_score = int(m.get("away_score", 0))
         actual_winner = m.get("actual_winner", "DRAW")
 
-        is_hit = (ai_rec == actual_winner)
-        status_str = "HIT" if is_hit else "MISS"
+        is_single_hit = (primary_code == actual_winner)
+        is_dual_shield_hit = (not is_single_hit) and is_dual_recommended and (secondary_code == actual_winner)
+        is_hit = is_single_hit or is_dual_shield_hit
 
-        if is_hit:
+        if is_single_hit:
+            hit_type = "SINGLE_HIT"
+            status_str = "HIT"
             winner_ko = home_ko if actual_winner == "HOME" else away_ko if actual_winner == "AWAY" else "무승부"
             review_note = (
-                f"✅ [적중] 사전 3-Pillar 시뮬레이션 우세 지표({ai_pick_label} {ai_prob}%)가 "
-                f"실제 최종 스코어 {h_score}:{a_score} ({winner_ko})로 정확히 부합했습니다."
+                f"🎯 [주력 단통 적중] 사전 3-Pillar 시뮬레이션 1순위 지표({primary_label_short} {primary_prob}%)가 "
+                f"실제 최종 스코어 {h_score}:{a_score} ({winner_ko})로 정확히 적중했습니다."
+            )
+        elif is_dual_shield_hit:
+            hit_type = "DUAL_SHIELD"
+            status_str = "HIT"
+            winner_ko = home_ko if actual_winner == "HOME" else away_ko if actual_winner == "AWAY" else "무승부"
+            review_note = (
+                f"🛡️ [복수마킹 이변 방어 적중] 1·2순위 격차({prob_gap}%p) 경합 구간으로 [{primary_label_short} + {secondary_label_short}] "
+                f"복수 마킹을 권고하여 최종 {h_score}:{a_score} ({winner_ko}) 이변을 방어했습니다."
             )
         else:
+            hit_type = "MISS"
+            status_str = "MISS"
             actual_ko = f"{home_ko} 승" if actual_winner == "HOME" else f"{away_ko} 승" if actual_winner == "AWAY" else "무승부"
             review_note = (
-                f"📝 [AI 오답노트] 사전 데이터는 {ai_pick_label}({ai_prob}%)를 가리켰으나, "
+                f"📝 [AI 오답노트] 사전 데이터는 {primary_label_short}({primary_prob}%) 우세를 가리켰으나, "
                 f"실전 결정력 변수로 {h_score}:{a_score} ({actual_ko}) 이변이 발생해 모델 가중치에 피드백되었습니다."
             )
 
@@ -939,8 +961,12 @@ async def build_graded_recent_results(days_back: int = 2, limit: int = 12) -> di
             "draw_odds": do,
             "away_odds": ao,
             "ai_recommendation": ai_rec,
+            "secondary_recommendation": secondary_code,
+            "marking_tier": marking_tier,
+            "hit_type": hit_type,
             "ai_pick_label": ai_pick_label,
             "ai_prob": ai_prob,
+            "secondary_prob": secondary_prob,
             "actual_winner": actual_winner,
             "status": status_str,
             "review_note": review_note,
@@ -952,15 +978,19 @@ async def build_graded_recent_results(days_back: int = 2, limit: int = 12) -> di
     graded_items.sort(
         key=lambda x: (
             1 if (_has_ko(x["team_home_ko"]) and _has_ko(x["team_away_ko"])) else 0,
+            1 if x["hit_type"] == "SINGLE_HIT" else (0.5 if x["hit_type"] == "DUAL_SHIELD" else 0),
             x["ai_prob"],
         ),
         reverse=True,
     )
 
     total_all = len(graded_items)
-    hits_all = sum(1 for x in graded_items if x["status"] == "HIT")
+    single_hits_all = sum(1 for x in graded_items if x["hit_type"] == "SINGLE_HIT")
+    dual_hits_all = sum(1 for x in graded_items if x["hit_type"] == "DUAL_SHIELD")
+    hits_all = single_hits_all + dual_hits_all
     misses_all = total_all - hits_all
     acc_all = round((hits_all / total_all) * 100, 1) if total_all > 0 else 0.0
+    single_acc_all = round((single_hits_all / total_all) * 100, 1) if total_all > 0 else 0.0
 
     hits_list = [x for x in graded_items if x["status"] == "HIT"]
     miss_list = [x for x in graded_items if x["status"] == "MISS"]
@@ -968,7 +998,7 @@ async def build_graded_recent_results(days_back: int = 2, limit: int = 12) -> di
     curated: list = []
     h_idx, m_idx = 0, 0
     while len(curated) < limit and (h_idx < len(hits_list) or m_idx < len(miss_list)):
-        for _ in range(3):
+        for _ in range(4):
             if h_idx < len(hits_list) and len(curated) < limit:
                 curated.append(hits_list[h_idx])
                 h_idx += 1
@@ -981,8 +1011,11 @@ async def build_graded_recent_results(days_back: int = 2, limit: int = 12) -> di
         "summary": {
             "total_graded": total_all,
             "hits": hits_all,
+            "single_hits": single_hits_all,
+            "dual_shield_hits": dual_hits_all,
             "misses": misses_all,
             "accuracy_pct": acc_all,
+            "single_accuracy_pct": single_acc_all,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         },
         "results": curated,

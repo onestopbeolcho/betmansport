@@ -485,26 +485,29 @@ def fetch_graded_results_for_shorts(limit: int = 5) -> list:
 
         out = []
         for idx, r in enumerate(raw_results):
-            home = _translate_ko_team(r.get("home", "홈팀"))
-            away = _translate_ko_team(r.get("away", "원정팀"))
-            pred_winner = r.get("predicted_winner", "HOME")
+            home = _translate_ko_team(r.get("team_home_ko") or r.get("team_home") or r.get("home", "홈팀"))
+            away = _translate_ko_team(r.get("team_away_ko") or r.get("team_away") or r.get("away", "원정팀"))
+            pred_winner = r.get("ai_recommendation") or r.get("predicted_winner", "HOME")
             pick_team = home if pred_winner == "HOME" else (away if pred_winner == "AWAY" else "무승부")
-            pick_label = f"1순위: {pick_team} 승" if pred_winner != "DRAW" else "1순위: 무승부"
+            pick_label = r.get("ai_pick_label") or (f"1순위: {pick_team} 승" if pred_winner != "DRAW" else "1순위: 무승부")
             actual_w = r.get("actual_winner", "HOME")
             actual_label = f"{home} 승" if actual_w == "HOME" else (f"{away} 승" if actual_w == "AWAY" else "무승부")
             status = r.get("status", "HIT")
+            hit_type = r.get("hit_type", "SINGLE_HIT" if status == "HIT" else "MISS")
             hs = int(r.get("home_score", 2))
             as_ = int(r.get("away_score", 1))
             score_label = f"{hs} : {as_}"
             hp = float(r.get("home_prob", 55.0))
             dp = float(r.get("draw_prob", 22.0))
             ap = float(r.get("away_prob", 23.0))
-            win_prob = int(round(float(r.get("predicted_prob", max(hp, ap)))))
+            win_prob = int(round(float(r.get("ai_prob") or r.get("predicted_prob", max(hp, ap)))))
             gap = round(abs(hp - ap), 1)
 
-            if status == "HIT":
+            if r.get("review_note"):
+                note = r.get("review_note")
+            elif status == "HIT":
                 note = (
-                    f"사전 베트맨 3-Pillar 모델이 단독 우위 1순위 [{pick_team} ({win_prob}%)]를 지목했고, "
+                    f"사전 베트맨 3-Pillar 모델이 [{pick_label} ({win_prob}%)]를 지목했고, "
                     f"실제 경기에서도 최종 스코어 {score_label} ({actual_label})로 정확히 적중했습니다."
                 )
             else:
@@ -754,10 +757,12 @@ def select_rotating_concept(mode: str = "marketing", matches: list = None) -> di
         return SHORTS_CONCEPTS["RESULT_REVIEW"]
 
     # 핵심 로테이션 순서: 플랫폼 화면 캡처 -> OMR 실전 마킹지 -> 투표율 팩트체크 -> 플랫폼 화면 캡처 -> 이변경보 -> 빅매치 스포트라이트
+    # 기존 7종 프리뷰 소재를 그대로 유지하고, [RESULT_REVIEW(AI 적중 성적표 & 복수마킹 이변방어 노트)]를 추가 소재로 순환
     rotation_order = [
         "PLATFORM_SCREENSHOT",
         "OMR_SLIP_TICKET",
         "FACT_CHECK",
+        "RESULT_REVIEW",
         "PLATFORM_SCREENSHOT",
         "VALUE_ALERT",
         "MATCH_SPOTLIGHT",
@@ -1906,7 +1911,7 @@ def render_broadcast_board(board_type: str, matches: list, concept: dict = None)
             target_m = free_m if board_type == "result_hit_detail" else lock_m1
             is_hit = board_type == "result_hit_detail"
             c_rgb = (16, 185, 129) if is_hit else (244, 63, 94)
-            tag_str = "적중 영수증 상세 검증 (HIT)" if is_hit else "AI 오답노트 & 가중치 보정 (MISS)"
+            tag_str = "AI 적중 성적표 상세 검증 (HIT)" if is_hit else "AI 오답노트 & 가중치 보정 (MISS)"
             _draw_pill(85, 230, tag_str, *c_rgb, (255, 255, 255, 255))
             _center_text(325, f"{target_m['home']}  vs  {target_m['away']}", f_team, (255, 255, 255, 255))
             draw.rounded_rectangle([85, 415, WIDTH - 85, 755], radius=28, fill=(14, 34, 46, 250), outline=(*c_rgb, 245), width=4)

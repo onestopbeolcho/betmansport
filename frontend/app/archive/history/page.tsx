@@ -19,8 +19,12 @@ interface GradedResultItem {
     draw_prob: number;
     away_prob: number;
     ai_recommendation: string;
+    secondary_recommendation?: string;
+    marking_tier?: "SINGLE" | "DUAL";
+    hit_type?: "SINGLE_HIT" | "DUAL_SHIELD" | "MISS";
     ai_pick_label: string;
     ai_prob: number;
+    secondary_prob?: number;
     actual_winner: string;
     status: "HIT" | "MISS";
     review_note: string;
@@ -29,8 +33,11 @@ interface GradedResultItem {
 interface GradedSummary {
     total_graded: number;
     hits: number;
+    single_hits?: number;
+    dual_shield_hits?: number;
     misses: number;
     accuracy_pct: number;
+    single_accuracy_pct?: number;
     updated_at?: string;
 }
 
@@ -39,12 +46,15 @@ export default function ArchiveHistoryPage() {
     const [summary, setSummary] = useState<GradedSummary>({
         total_graded: 0,
         hits: 0,
+        single_hits: 0,
+        dual_shield_hits: 0,
         misses: 0,
         accuracy_pct: 0,
+        single_accuracy_pct: 0,
     });
     const [results, setResults] = useState<GradedResultItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<"ALL" | "HIT" | "MISS">("ALL");
+    const [filter, setFilter] = useState<"ALL" | "SINGLE_HIT" | "DUAL_SHIELD" | "MISS">("ALL");
 
     useEffect(() => {
         fetch(`${API}/api/ai/recent-results?days_back=3&limit=36`)
@@ -58,7 +68,8 @@ export default function ArchiveHistoryPage() {
     }, [API]);
 
     const filtered = results.filter((r) => {
-        if (filter === "HIT") return r.status === "HIT";
+        if (filter === "SINGLE_HIT") return r.hit_type === "SINGLE_HIT" || (r.status === "HIT" && !r.hit_type);
+        if (filter === "DUAL_SHIELD") return r.hit_type === "DUAL_SHIELD";
         if (filter === "MISS") return r.status === "MISS";
         return true;
     });
@@ -88,13 +99,13 @@ export default function ArchiveHistoryPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#0046b8] text-xs font-extrabold">
-                                📊 ESPN 공식 종료 스코어 × 3-Pillar 사전 예측 100% 자동 채점
+                                📊 ESPN 공식 종료 스코어 × 실전 마킹(주력 단통 + 복수 이변방어) 자동 채점
                             </span>
                             <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5">
-                                AI 스포츠 분석 실제 적중 성적표 &amp; 오답노트 아카이브
+                                AI 스포츠 분석 실전 적중 성적표 &amp; 오답노트 아카이브
                             </h1>
                             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                                종료된 실제 경기 스코어를 6시간마다 자동 수집하여 사전 AI 예측과 대조한 투명한 성적표입니다.
+                                종료된 실제 경기 스코어를 6시간마다 자동 수집하여 「🎯 주력 단통 적중」과 「🛡️ 복수마킹(투마킹) 이변 방어 적중」 및 「📝 AI 오답노트」로 투명하게 검증합니다.
                             </p>
                         </div>
                         <Link
@@ -107,32 +118,58 @@ export default function ArchiveHistoryPage() {
 
                     {/* 4대 적중 요약 KPI */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 mt-5">
-                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                            <div className="text-[11px] font-extrabold text-slate-500">최근 검증 완료 경기</div>
-                            <div className="text-2xl font-black text-slate-900 mt-0.5">{summary.total_graded}경기</div>
+                        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-center">
+                            <div className="text-[11px] font-extrabold text-[#0046b8]">실전 마킹 종합 적중률</div>
+                            <div className="text-2xl font-black text-[#0046b8] mt-0.5">{summary.accuracy_pct}%</div>
+                            <div className="text-[10px] font-bold text-slate-500 mt-0.5">
+                                {summary.total_graded}경기 중 {summary.hits}경기 방어 성공
+                            </div>
                         </div>
                         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-                            <div className="text-[11px] font-extrabold text-emerald-700">예측 적중 (HIT)</div>
-                            <div className="text-2xl font-black text-emerald-700 mt-0.5">{summary.hits}경기</div>
+                            <div className="text-[11px] font-extrabold text-emerald-700">🎯 주력 단통 적중</div>
+                            <div className="text-2xl font-black text-emerald-700 mt-0.5">
+                                {summary.single_hits ?? summary.hits}경기
+                            </div>
+                            <div className="text-[10px] font-bold text-emerald-700/80 mt-0.5">
+                                1순위 단통 적중률 {summary.single_accuracy_pct ?? summary.accuracy_pct}%
+                            </div>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 text-center">
+                            <div className="text-[11px] font-extrabold text-indigo-700">🛡️ 복수마킹 이변 방어</div>
+                            <div className="text-2xl font-black text-indigo-700 mt-0.5">
+                                {summary.dual_shield_hits ?? 0}경기
+                            </div>
+                            <div className="text-[10px] font-bold text-indigo-700/80 mt-0.5">
+                                경합 구간 1·2순위 투마킹 방어
+                            </div>
                         </div>
                         <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                            <div className="text-[11px] font-extrabold text-amber-800">이변·오차 보정</div>
+                            <div className="text-[11px] font-extrabold text-amber-800">📝 오답노트 (이변 보정)</div>
                             <div className="text-2xl font-black text-amber-800 mt-0.5">{summary.misses}경기</div>
-                        </div>
-                        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-center">
-                            <div className="text-[11px] font-extrabold text-[#0046b8]">실측 적중률</div>
-                            <div className="text-2xl font-black text-[#0046b8] mt-0.5">{summary.accuracy_pct}%</div>
+                            <div className="text-[10px] font-bold text-amber-800/80 mt-0.5">
+                                가중치 피드백 완료
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 필터 탭 */}
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex gap-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                         {[
                             { id: "ALL", label: `전체 검증 경기 (${results.length})` },
-                            { id: "HIT", label: `✅ 적중 경기만 (${results.filter((r) => r.status === "HIT").length})` },
-                            { id: "MISS", label: `📝 AI 오답노트 (${results.filter((r) => r.status === "MISS").length})` },
+                            {
+                                id: "SINGLE_HIT",
+                                label: `🎯 주력 단통 적중 (${results.filter((r) => r.hit_type === "SINGLE_HIT" || (r.status === "HIT" && !r.hit_type)).length})`,
+                            },
+                            {
+                                id: "DUAL_SHIELD",
+                                label: `🛡️ 복수마킹 이변 방어 (${results.filter((r) => r.hit_type === "DUAL_SHIELD").length})`,
+                            },
+                            {
+                                id: "MISS",
+                                label: `📝 AI 오답노트 (${results.filter((r) => r.status === "MISS").length})`,
+                            },
                         ].map((t) => (
                             <button
                                 key={t.id}
@@ -156,17 +193,22 @@ export default function ArchiveHistoryPage() {
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs font-bold text-slate-500">
-                        검증된 경기 내역이 없습니다.
+                        해당 조건의 검증된 경기 내역이 없습니다.
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                         {filtered.map((item, idx) => {
-                            const isHit = item.status === "HIT";
+                            const isSingleHit = item.hit_type === "SINGLE_HIT" || (item.status === "HIT" && !item.hit_type);
+                            const isDualShield = item.hit_type === "DUAL_SHIELD";
                             return (
                                 <div
                                     key={item.match_id || idx}
                                     className={`bg-white rounded-2xl border p-4 space-y-2.5 shadow-2xs ${
-                                        isHit ? "border-emerald-300" : "border-slate-200"
+                                        isSingleHit
+                                            ? "border-emerald-300"
+                                            : isDualShield
+                                            ? "border-indigo-300"
+                                            : "border-slate-200"
                                     }`}
                                 >
                                     <div className="flex items-center justify-between gap-2">
@@ -175,12 +217,18 @@ export default function ArchiveHistoryPage() {
                                         </span>
                                         <span
                                             className={`shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-black ${
-                                                isHit
+                                                isSingleHit
                                                     ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                                    : isDualShield
+                                                    ? "bg-indigo-100 text-indigo-800 border border-indigo-300"
                                                     : "bg-amber-100 text-amber-900 border border-amber-300"
                                             }`}
                                         >
-                                            {isHit ? "✅ AI 예측 적중" : "📝 오차 보정 (이변)"}
+                                            {isSingleHit
+                                                ? "🎯 주력 단통 적중"
+                                                : isDualShield
+                                                ? "🛡️ 복수마킹 이변 방어"
+                                                : "📝 오답노트 (이변)"}
                                         </span>
                                     </div>
 
@@ -190,7 +238,7 @@ export default function ArchiveHistoryPage() {
                                                 {item.team_home_ko} <span className="text-slate-400 font-normal text-xs">vs</span> {item.team_away_ko}
                                             </div>
                                             <div className="text-[11px] font-bold text-[#0046b8] mt-0.5">
-                                                사전 AI 예측: {item.ai_pick_label} ({item.ai_prob}%)
+                                                사전 AI 권고: {item.ai_pick_label} (1순위 {item.ai_prob}%)
                                             </div>
                                         </div>
                                         <div className="shrink-0 text-right">

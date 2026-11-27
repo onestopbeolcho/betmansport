@@ -73,6 +73,8 @@ async def run_distribution_pipeline(mode: str = "marketing", use_avatar: bool = 
         matches = fetch_graded_results_for_shorts(limit=5) if mode == "result_review" else fetch_top_matches(limit=5, lang="ko")
         concept = select_rotating_concept(mode, matches)
         concept_id = concept.get("id", "QUANT_RADAR")
+        if concept_id == "RESULT_REVIEW" and mode != "result_review":
+            matches = fetch_graded_results_for_shorts(limit=5)
         meta = build_youtube_metadata(matches, concept=concept)
 
         logger.info(f"🎬 [{lang.upper()}] Broadcast Shorts v8.0 [{concept_id}] 빌드 및 배포 시작...")
